@@ -1,0 +1,6 @@
+﻿App/DoutuApp.swift:63:28: error: value of optional type 'ScreenHostView?' must be unwrapped to refer to member 'screen' of wrapped base type 'ScreenHostView'
+App/DoutuApp.swift:63:46: error: value of optional type 'ScreenHostView?' must be unwrapped to refer to member 'state' of wrapped base type 'ScreenHostView'
+App/DoutuApp.swift:64:14: error: value of optional type 'ScreenHostView?' must be unwrapped to refer to member 'setScreen' of wrapped base type 'ScreenHostView'
+App/DoutuApp.swift:70:14: error: value of optional type 'ScreenHostView?' must be unwrapped to refer to member 'setScreen' of wrapped base type 'ScreenHostView'
+App/DoutuApp.swift:120:19: error: value of type 'ScreenHostView?' has no member 'present'
+App/DoutuApp.swift:128:19: error: value of type 'ScreenHostView?' has no member 'present'

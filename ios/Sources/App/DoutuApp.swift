@@ -60,14 +60,14 @@ final class Router {
     /// 进入新页面（保留当前页面的状态，返回时恢复）
     private func push(_ screen: Screen, state: ScreenState = ScreenState()) {
         guard let host else { return }
-        stack.append((self.host.screen, self.host.state))
-        self.host.setScreen(screen, state: state)
+        stack.append((host.screen, host.state))
+        host.setScreen(screen, state: state)
     }
 
     /// 返回上一页；栈空时什么也不做
     private func pop() {
         guard let host, let previous = stack.popLast() else { return }
-        self.host.setScreen(previous.screen, state: previous.state)
+        host.setScreen(previous.screen, state: previous.state)
     }
 
     /// 微模块（小微主页）4×4 宫格（`MainActivity:1736-1799`）。
@@ -117,7 +117,7 @@ final class Router {
         alert.addAction(UIAlertAction(title: "再复制一次", style: .default) { _ in
             UIPasteboard.general.string = store.shareLink
         })
-        self.host.present(alert, animated: true)
+        host.present(alert, animated: true)
     }
 
     /// 全屏弹出小微主页并把路由交过去
@@ -125,7 +125,7 @@ final class Router {
         guard let host = UpdatePrompt.topViewController() else { return }
         let web = WebHostController(route: route)
         web.modalPresentationStyle = .fullScreen
-        self.host.present(web, animated: true)
+        host.present(web, animated: true)
     }
 
     /// 支模块 4×4 宫格（`MainActivity:501-520` 的 `zhiGridIntent`）。
