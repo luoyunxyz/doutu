@@ -183,12 +183,12 @@ final class ReceiptDetailScreen: Screen {
                           height: colSeparatorBottom - colSeparatorTop), separator)
         }
 
-        let values = [item.monthSpend ?? stats.monthSpend,
+        let values: [Double] = [item.monthSpend ?? stats.monthSpend,
                       item.totalSpend ?? stats.totalSpend,
-                      item.avgPrice ?? (stats.totalCount == 0 ? 0
+                      item.avgPrice ?? (stats.totalCount == 0 ? 0.0
                                         : (item.totalSpend ?? stats.totalSpend)
                                         / Double(item.totalCount ?? stats.totalCount))]
-        let counts = [item.monthCount ?? stats.monthCount,
+        let counts: [Int] = [item.monthCount ?? stats.monthCount,
                       item.totalCount ?? stats.totalCount, -1]
         for i in 0..<3 {
             d.centerTextSqueezed(colLabels[i], cx: colCx[i], baseline: colLabelBase,

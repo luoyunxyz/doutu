@@ -233,7 +233,7 @@ final class PayMsgScreen: Screen {
     }
 
     static func monthTitle() -> String {
-        (Calendar.current.component(.month, from: Date())) + "月统计支出"
+        String(Calendar.current.component(.month, from: Date())) + "月统计支出"
     }
 
     func maxScroll(_ state: ScreenState) -> CGFloat { max(0, Self.contentH - Self.H) }
