@@ -107,7 +107,7 @@ final class Session {
         if let saved = Keychain.get(deviceKey), !saved.isEmpty { return saved }
         // 与服务端 / DtwSession 的 install_id 同样取 32 位小写十六进制
         let fresh = DtwCrypto.randomHex(16)
-        Keychain.set(fresh, forKey: deviceKey)
+        Keychain.set(fresh, for: deviceKey)
         return fresh
     }
 
@@ -118,7 +118,7 @@ final class Session {
     }
 
     private func setOrRemove(_ value: String, _ key: String) {
-        if value.isEmpty { Keychain.remove(key) } else { Keychain.set(value, forKey: key) }
+        if value.isEmpty { Keychain.remove(key) } else { Keychain.set(value, for: key) }
     }
 }
 

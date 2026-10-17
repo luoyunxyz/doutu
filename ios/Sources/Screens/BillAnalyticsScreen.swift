@@ -216,7 +216,8 @@ final class BillAnalyticsScreen: Screen {
                 ? [0xfffbe0bb, 0xfff7d6ab, 0xfffdf2e3]
                 : [0xffd2e9f9, 0xffe8f4fd, 0xfffbfdff]
             d.clipped(to: box, radius: 40) {
-                d.multiGradient(box, colors: colors, stops: [0, 0.45, 1], vertical: true)
+                d.multiGradient(box, colors: colors.map { Draw.color($0) }, stops: [0, 0.45, 1],
+                                   vertical: true)
             }
         }
 
@@ -650,7 +651,7 @@ final class BillAnalyticsScreen: Screen {
         let labels = ["大额消费", "自动扣款", "先用后付", "分期付款"]
         let values = [model.value("m.k.0", 0), Double(model.count("m.k.1", 4)),
                       model.value("m.k.2", 0), model.value("m.k.3", 0)]
-        let cw = (1140 - 3 * 20) / 4, cx0: CGFloat = 75, cy0 = top + 495, ch: CGFloat = 250
+        let cw: CGFloat = (1140 - 3 * 20) / 4, cx0: CGFloat = 75, cy0 = top + 495, ch: CGFloat = 250
         for i in 0..<4 {
             let x = cx0 + CGFloat(i) * (cw + 20)
             d.round(CGRect(x: x, y: cy0, width: cw, height: ch), radius: 24, tile)
@@ -701,7 +702,7 @@ final class BillAnalyticsScreen: Screen {
 
     private func monthCalendar(_ d: Draw, _ s: State, top: CGFloat) {
         let weekdays = ["日", "一", "二", "三", "四", "五", "六"]
-        let x0: CGFloat = 75, cw = 1130 / 7
+        let x0: CGFloat = 75, cw: CGFloat = 1130 / 7
         for i in 0..<7 {
             d.centerText(weekdays[i], cx: x0 + cw * CGFloat(i) + cw / 2, baseline: top + 45,
                          size: 38, Draw.color(0xff6b7480))
@@ -927,7 +928,7 @@ final class BillAnalyticsScreen: Screen {
             hot(CGRect(x: 60, y: ry - 60, width: 1155, height: 90), "y.cat:\(i)")
             if i == 0 { hot(CGRect(x: 1090, y: ry - 55, width: 125, height: 80), "y.exp:\(i)") }
             if open && i == 0 && z.amount > 0 {
-                let tx: CGFloat = 80, tw = (1120 - 2 * 16) / 3, th: CGFloat = 290
+                let tx: CGFloat = 80, tw: CGFloat = (1120 - 2 * 16) / 3, th: CGFloat = 290
                 for k in 0..<6 {
                     let rr2 = k / 3, cc = k % 3
                     let x = tx + CGFloat(cc) * (tw + 16)
