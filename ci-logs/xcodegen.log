@@ -1,0 +1,16 @@
+Version: 2.46.0
+⚙️  Generating plists...
+⚙️  Generating project...
+⚙️  Writing project...
+Created project at /Users/runner/work/doutu/doutu/ios/Doutu.xcodeproj
+Command line invocation:
+    /Applications/Xcode_15.4.app/Contents/Developer/usr/bin/xcodebuild -list -project Doutu.xcodeproj
+
+User defaults from command line:
+    IDEPackageSupportUseBuiltinSCM = YES
+
+2026-10-17 08:17:06.586 xcodebuild[12399:36938] Writing error result bundle to /var/folders/s6/5hzmn6lx4dz5nxs7k_0slzph0000gn/T/ResultBundle_2026-17-10_08-17-0006.xcresult
+xcodebuild: error: Unable to read project 'Doutu.xcodeproj'.
+	Reason: The project ‘Doutu’ cannot be opened because it is in a future Xcode project file format (77). Adjust the project format using a compatible version of Xcode to allow it to be opened by this version of Xcode.
+
+
