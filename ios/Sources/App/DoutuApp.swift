@@ -917,6 +917,12 @@ struct DoutuApp: App {
     /// 回到前台就复查版本（与 Android 在 onResume 里调 `UpdatePrompt.maybeCheck` 等价）
     @Environment(\.scenePhase) private var scenePhase
 
+    /// 启动最早时机：写一条 LAUNCH 记录 + 装崩溃钩子。
+    /// 排障用（真机闪退取现场），详见 CrashLog.swift 顶部说明。
+    init() {
+        CrashLog.install()
+    }
+
     var body: some Scene {
         WindowGroup {
             // 启动落地页：首页外壳（三栏 + 四平台页签），与 Android 一致

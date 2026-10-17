@@ -62,6 +62,16 @@ targets:
         # 这一项让 Xcode **生成**（而不是有现成的）UIApplicationSceneManifest，
         # 与 Xcode 新建 SwiftUI 工程的默认值一致。
         INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+        # 排障期打开「文件」共享：真机闪退时能直接在 文件 App 里取 Documents/crash.log
+        # （由 CrashLog.swift 写入）。正式发布前可以关掉。
+        INFOPLIST_KEY_UIFileSharingEnabled: YES
+        INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace: YES
+        # ⚠️ 必须声明 `@executable_path/Frameworks`：
+        # iOS 15 以下系统不自带 `libswift_Concurrency.dylib`，Xcode 会把它塞进
+        # App 的 Frameworks/ 目录；没有这条 rpath，dyld 找不到它就会**启动即闪退**。
+        LD_RUNPATH_SEARCH_PATHS: "@executable_path/Frameworks /usr/lib/swift"
+        # 把 Swift 标准库一起打进包（iOS 14 上少一层系统依赖，出包更稳）
+        ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES: YES
         # 竖屏、隐藏状态栏（与 Android 全屏绘制一致）
         INFOPLIST_KEY_UIStatusBarHidden: YES
         INFOPLIST_KEY_UIRequiresFullScreen: YES
