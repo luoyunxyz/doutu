@@ -112,6 +112,27 @@ jobs:
           /usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" Payload/*.app/Info.plist
           /usr/libexec/PlistBuddy -c "Print :MinimumOSVersion" Payload/*.app/Info.plist
 
+      # 「装到 iPhone 上」这件事真正依赖的键，这一屏就能看出来：
+      #   CFBundleIcons        —— 有没有 App 图标（没有就是白图标）
+      #   UIApplicationSceneManifest —— SwiftUI 生命周期必需（没有可能黑屏）
+      #   MinimumOSVersion / CFBundleIdentifier / CFBundleDisplayName
+      # 结果会随成功状态一起提交到 ci-logs/info-plist.log，本地 git fetch 即可核对。
+      - name: 核对产物 Info.plist（装机就绪自检）
+        working-directory: ios
+        run: |
+          set -o pipefail
+          PLIST=$(find Payload -maxdepth 2 -name Info.plist | head -1)
+          {
+            echo "=== Info.plist: $PLIST ==="
+            /usr/libexec/PlistBuddy -c "Print" "$PLIST"
+            echo "=== IPA 目录（前 30 行）==="
+            unzip -l Doutu-unsigned.ipa | head -30
+            echo "=== 图标文件 ==="
+            ls -la Payload/*.app/AppIcon*.png Payload/*.app/Assets.car 2>/dev/null || echo "(没有 AppIcon*.png / Assets.car)"
+            echo "=== 字体 ==="
+            ls -la Payload/*.app/*.ttf 2>/dev/null || echo "(没有 ttf)"
+          } 2>&1 | tee info-plist.log
+
       - name: 上传 IPA
         uses: actions/upload-artifact@v4
         with:
@@ -130,9 +151,10 @@ jobs:
             echo "run: $GITHUB_RUN_ID  commit: $GITHUB_SHA  at: $(date -u +%FT%TZ)"
             ls -lh ios/Doutu-unsigned.ipa
           } > ci-logs/status.txt
+          cp -f ios/info-plist.log ci-logs/info-plist.log 2>/dev/null || true
           git config user.name  "ci-log-bot"
           git config user.email "ci-log-bot@users.noreply.github.com"
-          git add -f ci-logs/status.txt || true
+          git add -f ci-logs/status.txt ci-logs/info-plist.log || true
           git commit -m "ci: 构建成功（run $GITHUB_RUN_ID）" || echo "没有可提交的状态"
           git push origin HEAD:${GITHUB_REF_NAME} || echo "推送状态失败"
 
