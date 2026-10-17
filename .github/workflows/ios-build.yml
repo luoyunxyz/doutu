@@ -175,6 +175,27 @@ jobs:
           path: ios/Doutu-unsigned.ipa
           if-no-files-found: error
 
+      # 把打好的包推到 `artifacts` 分支（每次 force push，只保留最新一份）。
+      # 目的：**不需要登录 GitHub 网页**也能拿到包 —— 本机 `git fetch origin artifacts`
+      # 就有最新的 Doutu-unsigned.ipa / Doutu-adhoc.ipa，可以直接用局域网分发给手机。
+      - name: 把 IPA 推到 artifacts 分支
+        if: success()
+        working-directory: ios
+        run: |
+          set -o pipefail
+          rm -rf /tmp/art && mkdir -p /tmp/art
+          cp Doutu-unsigned.ipa /tmp/art/ 2>/dev/null || true
+          cp Doutu-adhoc.ipa /tmp/art/ 2>/dev/null || true
+          cp info-plist.log /tmp/art/ 2>/dev/null || true
+          cd /tmp/art
+          git init -q
+          git config user.name  "ci-log-bot"
+          git config user.email "ci-log-bot@users.noreply.github.com"
+          git add -A
+          git commit -q -m "artifacts ${GITHUB_SHA}" || echo "没有变更"
+          git push -q --force "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" HEAD:artifacts \
+            && echo "已推送到 artifacts 分支" || echo "推送 artifacts 失败"
+
       # 成功时也写一个状态标记：开发侧 `git fetch` 后读 ci-logs/status.txt 就能确认成功，
       # 不需要登录 Actions 页面看结论（仓库私有，无 token 时 API 读不到）。
       - name: 成功时写入状态标记
