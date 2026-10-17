@@ -52,7 +52,11 @@ ok('ios/ 那份的产物路径不带 ios/ 前缀', /path:\s*Doutu-unsigned\.ipa/
 
 // ③ 两份共有的关键动作
 for (const [name, text] of [['仓库根', rootWf], ['ios/', iosWf]]) {
-  ok(`${name}那份装了 XcodeGen`, /brew install xcodegen/.test(text));
+  // 钉版本而不是 brew：XcodeGen 2.46 会写 objectVersion 77（Xcode 16 格式），
+// macos-14 上的 Xcode 15.4 读不了，报 "future Xcode project file format (77)"。
+ok(`${name}那份钉了 XcodeGen 2.38.0（不用 brew 的最新版）`,
+  /releases\/download\/2\.38\.0\/xcodegen\.zip/.test(text));
+ok(`${name}那份检查了 objectVersion`, /grep -m1 objectVersion/.test(text));
   ok(`${name}那份跑 xcodegen generate`, /xcodegen generate/.test(text));
   ok(`${name}那份关掉了签名`, /CODE_SIGNING_ALLOWED=NO/.test(text));
   ok(`${name}那份按 Payload 结构打包`, /mkdir -p Payload/.test(text) && /zip -qr/.test(text));

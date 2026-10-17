@@ -35,16 +35,33 @@ jobs:
             echo "=== swift ==="; swift --version
             echo "=== 已装的 xcodegen ==="; which xcodegen || echo "(未安装)"
           } 2>&1 | tee ci-logs/env.log
-      - name: 安装 XcodeGen
+      # ⚠️ 必须钉版本：XcodeGen 2.46 会写出 Xcode 16 的新工程格式（objectVersion 77），
+      # 而 macos-14 上是 Xcode 15.4，读不了 —— 报
+      #   "The project 'Doutu' cannot be opened because it is in a future
+      #    Xcode project file format (77)"
+      # 2.38.0 写的是 objectVersion 56，Xcode 15 完全兼容，且本项目用到的 yml 特性它都支持。
+      - name: 安装 XcodeGen（钉 2.38.0，理由见上）
         run: |
           set -o pipefail
-          brew install xcodegen 2>&1 | tee -a ci-logs/env.log
+          curl -fsSL -o /tmp/xcodegen.zip \
+            https://github.com/yonaskolb/XcodeGen/releases/download/2.38.0/xcodegen.zip 2>&1 | tee -a ci-logs/env.log
+          unzip -q -o /tmp/xcodegen.zip -d /tmp/xcodegen 2>&1 | tee -a ci-logs/env.log
+          # 不写死目录层级：zip 里可能是 xcodegen/bin/xcodegen，也可能直接是 bin/xcodegen
+          BIN=$(find /tmp/xcodegen -type f -name xcodegen | head -1)
+          echo "找到 xcodegen 二进制：$BIN" | tee -a ci-logs/env.log
+          test -n "$BIN" || { echo "解压后没找到 xcodegen 可执行文件"; exit 1; }
+          sudo cp "$BIN" /usr/local/bin/xcodegen
+          sudo chmod +x /usr/local/bin/xcodegen
+          xcodegen --version 2>&1 | tee -a ci-logs/env.log
       - name: 生成 Xcode 工程
         run: |
           set -o pipefail
           xcodegen --version 2>&1 | tee xcodegen.log
           xcodegen generate 2>&1 | tee -a xcodegen.log
           ls -la
+          # 生成的工程格式必须能被本机 Xcode 读（format 77 = Xcode 16，15.4 读不了）
+          echo "--- 检查 objectVersion ---" | tee -a xcodegen.log
+          grep -m1 objectVersion Doutu.xcodeproj/project.pbxproj | tee -a xcodegen.log
           xcodebuild -list -project Doutu.xcodeproj 2>&1 | tee -a xcodegen.log
       - name: 编译（不签名）
         run: |
