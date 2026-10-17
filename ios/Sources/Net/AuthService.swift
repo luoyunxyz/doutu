@@ -1,4 +1,5 @@
 import Foundation
+import UIKit
 
 /// 账号接口 —— 对应 Android `DoutuApi` 里的认证相关方法。
 ///

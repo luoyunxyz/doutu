@@ -1,4 +1,5 @@
 import Foundation
+import UIKit
 
 /// 娱乐页（更多玩法）的数据模型 —— 对应 `MainActivity` 里的
 /// `FeatureRow` / `Section` / `EntertainmentRow`，以及 `buildEntertainmentLayout()` 的排版计算。

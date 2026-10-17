@@ -1,5 +1,6 @@
 import Foundation
-import CommonCrypto
+import CryptoKit
+import Security
 import UIKit
 
 /// 登录态（token / signKey / 设备号），存 Keychain。
@@ -206,21 +207,14 @@ final class ApiClient {
     }
 
     /// HMAC-SHA256（小写 hex）—— 与服务端 `crypto.createHmac('sha256', key).update(payload).digest('hex')` 一致
+    ///
+    /// 用 CryptoKit 而不是 CommonCrypto：`import CommonCrypto` 在没有 bridging header
+    /// 的工程里不是可用的 Swift 模块（会报 `no such module 'CommonCrypto'`），
+    /// 而 CryptoKit 是系统模块、结果完全等价。
     static func hmacHex(key: String, message: String) -> String? {
         guard let keyData = DtwCrypto.fromHex(key) ?? key.data(using: .utf8) else { return nil }
-        let messageData = Data(message.utf8)
-        var digest = Data(count: Int(CC_SHA256_DIGEST_LENGTH))
-        let result = digest.withUnsafeMutableBytes { digestBytes -> CUnsignedChar in
-            keyData.withUnsafeBytes { keyBytes in
-                messageData.withUnsafeBytes { msgBytes in
-                    CCHmac(CCHmacAlgorithm(kCCHmacAlgSHA256),
-                           keyBytes.baseAddress, keyData.count,
-                           msgBytes.baseAddress, messageData.count,
-                           digestBytes.baseAddress)
-                    return 1
-                }
-            }
-        }
-        return result == 1 ? DtwCrypto.hex(digest) : nil
+        let mac = HMAC<SHA256>.authenticationCode(
+            for: Data(message.utf8), using: SymmetricKey(data: keyData))
+        return DtwCrypto.hex(Data(mac))
     }
 }

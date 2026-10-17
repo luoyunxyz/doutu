@@ -21,6 +21,8 @@ const PY = 'C:\\Users\\22594\\.dsh\\dsh-runtimes\\dsh-primary-runtime\\dependenc
 
 const steps = [
   { name: 'Swift 静态体检', cmd: NODE, args: [path.join(ROOT, '_ios', 'lint-swift.mjs')] },
+  { name: '框架 import 完整性', cmd: NODE, args: [path.join(ROOT, '_ios', 'check-imports.mjs')] },
+  { name: 'PBKDF2 算法镜像', cmd: NODE, args: [path.join(ROOT, '_ios', 'verify-pbkdf2.mjs')] },
   { name: '绘制 API 对账', cmd: NODE, args: [path.join(ROOT, '_ios', 'check-draw-api.mjs')] },
   { name: '符号一致性', cmd: NODE, args: [path.join(ROOT, '_ios', 'check-symbols.mjs')] },
   { name: '重复成员 / private 跨文件', cmd: NODE, args: [path.join(ROOT, '_ios', 'check-access.mjs')] },

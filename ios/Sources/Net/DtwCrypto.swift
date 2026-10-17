@@ -1,5 +1,4 @@
 import Foundation
-import CommonCrypto
 import CryptoKit
 import Security
 
@@ -63,26 +62,40 @@ enum DtwCrypto {
     ///
     /// ⚠️ 参数方向不能反：password 是 HMAC 的 key，salt 是被消息的前缀。
     /// 反了会得到一个「看起来正常但永远对不上」的值 —— 这个坑 Android 那边也踩过。
+    ///
+    /// 为什么手写：CryptoKit **没有** PBKDF2（CommonCrypto 才有 `CCKeyDerivationPBKDF`，
+    /// 但 `import CommonCrypto` 在没有 bridging header 的工程里不是可用模块）。
+    /// PBKDF2 本身很短，按 RFC 8018 直接实现即可，结果逐字节相同：
+    ///
+    ///     U1 = HMAC(P, S ‖ INT(1))       Ui = HMAC(P, Ui-1)
+    ///     T1 = U1 ⊕ U2 ⊕ … ⊕ Uc
+    ///
+    /// 这里 `keyLength` 恒为 32（= SHA256 输出长度），所以只有 1 个 block。
     static func pbkdf2Sha256(password: Data, salt: Data, iterations: Int, keyLength: Int) -> Data? {
-        var out = Data(count: keyLength)
-        let status = out.withUnsafeMutableBytes { outBytes -> Int32 in
-            password.withUnsafeBytes { passBytes in
-                salt.withUnsafeBytes { saltBytes in
-                    CCKeyDerivationPBKDF(
-                        CCPBKDFAlgorithm(kCCPBKDF2),
-                        passBytes.baseAddress?.assumingMemoryBound(to: Int8.self),
-                        password.count,
-                        saltBytes.baseAddress?.assumingMemoryBound(to: UInt8.self),
-                        salt.count,
-                        CCPseudoRandomAlgorithm(kCCPRFHmacAlgSHA256),
-                        UInt32(iterations),
-                        outBytes.baseAddress?.assumingMemoryBound(to: UInt8.self),
-                        keyLength
-                    )
+        guard !password.isEmpty, iterations > 0, keyLength > 0 else { return nil }
+        let hLen = 32
+        let blockCount = (keyLength + hLen - 1) / hLen
+        let key = SymmetricKey(data: password)
+        var derived = [UInt8]()
+        derived.reserveCapacity(blockCount * hLen)
+
+        for block in 1...blockCount {
+            var message = salt
+            message.append(contentsOf: [
+                UInt8((block >> 24) & 0xff), UInt8((block >> 16) & 0xff),
+                UInt8((block >> 8) & 0xff), UInt8(block & 0xff),
+            ])
+            var u = [UInt8](HMAC<SHA256>.authenticationCode(for: message, using: key))
+            var t = u
+            if iterations > 1 {
+                for _ in 2...iterations {
+                    u = Array(HMAC<SHA256>.authenticationCode(for: Data(u), using: key))
+                    for i in 0..<hLen { t[i] ^= u[i] }
                 }
             }
+            derived.append(contentsOf: t)
         }
-        return status == kCCSuccess ? out : nil
+        return Data(derived.prefix(keyLength))
     }
 
     // MARK: - RSA
