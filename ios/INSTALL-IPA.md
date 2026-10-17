@@ -9,9 +9,59 @@
 GitHub Actions（macOS 编译，出未签名 IPA）
         ↓ 下载
 Sideloadly（Windows，用你的 Apple ID 重签）
-        ↓ USB
+        ↓ USB（或 Wi-Fi，但首次要在 iTunes 里用线配对一次）
 iPhone（信任证书 + 开发者模式）
 ```
+
+> 没有数据线？先看下面的 **§0**，四种方案都列了代价。
+
+---
+
+## 0. 没有数据线怎么办？（先看这一节）
+
+**坏消息**：Sideloadly / AltStore / Xcode 的「无线安装」都要**先用线插一次**——
+Apple 的设备配对是走 USB 的，要在 iTunes 里勾上「通过 Wi-Fi 同步」之后才认网络上的这台电脑
+（[Sideloadly 官方 FAQ](https://github.com/SideloadlyiOS/Sideloadly-Download) 也是这么写的）。
+所以「一次线都不插、还想用电脑签名」这条路不存在。
+
+### 方案 A：只插一次线（推荐，最省事）
+
+1. 找一根线（Lightning 或 USB-C，安卓线只要接头对也能用），插一次 iPhone
+2. 打开 iTunes → 设备 → 摘要 → 选项 → 勾 **「通过 Wi-Fi 与此 iPhone 同步」** → 应用/同步
+3. **拔线**。之后 Sideloadly 列表里会直接出现这台手机，往后 7 天一次的重签**全程无线**
+
+无线装的时候要满足：电脑和手机**同一个 Wi-Fi**、手机**亮屏**（Sideloadly 日志会提示）、
+路由器的「AP 隔离/访客网络」关掉、Windows 服务里 `Apple Mobile Device Service` 在跑。
+
+### 方案 B：完全不碰线（手机上自己签）
+
+1. 先在手机 Safari 里 OTA 装一个手机端签名工具：**轻松签 / ESign**、**全能签**、**Feather**
+2. 把 `Doutu-unsigned.ipa` 传到手机上（**iCloud 云盘**网页版上传、微信/QQ 发文件、网盘都行，
+   全程不需要线）
+3. 在工具里导入证书（用 Apple ID 申请的个人证书，或工具自带的共享证书）→ 选择 IPA → 签名安装
+
+缺点：签名工具本身多半靠共享证书装，证书被吊销就得重装工具；界面和步骤比 Sideloadly 繁琐。
+适合「手边真的没有线、就想先看一眼界面」。
+
+### 方案 C：OTA 云签名（最无脑，但有风险）
+
+把 IPA 上传到**万能签 / 超级签**这类网站 → 它给你一个安装链接 → 手机 Safari 打开就装。
+不用电脑、不用线。缺点：用的是**共享企业证书**，随时可能被 Apple 吊销（一吊销 App 就打不开）；
+多数要收费或有广告；有些服务会改你的 bundle id。
+
+### 方案 D：TestFlight（最正规，完全无线，但要 $99/年）
+
+有付费 Apple 开发者账号的话，我可以把 CI 加一步「自动上传 TestFlight」：
+推代码 → 云端编译 → TestFlight 里出现新版本 → 手机点「安装」（**不需要电脑、不需要线**），
+每个构建 **90 天**有效，还能加最多 100 个外部测试者。
+需要你提供 **App Store Connect API Key**（.p8 + Key ID + Issuer ID）存进仓库 Secrets。
+
+| 方案 | 需要线 | 需要花钱 | 有效期 | 稳定性 |
+|---|---|---|---|---|
+| A 一次性插线 + Sideloadly 无线 | 一次 | 免费 | 7 天（重签即可）| 高 |
+| B 手机端自签工具 | 不用 | 免费（共享证书）| 7 天~随时吊销 | 中 |
+| C OTA 云签名 | 不用 | 多数收费 | 看证书 | 低 |
+| D TestFlight | 不用 | $99/年 | 90 天 | 最高 |
 
 ---
 
