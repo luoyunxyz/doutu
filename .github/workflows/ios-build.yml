@@ -28,13 +28,33 @@ jobs:
     name: 编译并打包未签名 IPA
     runs-on: macos-14
     timeout-minutes: 30
+    # 失败时要把日志提交回仓库，所以需要写权限
+    permissions:
+      contents: write
 
     steps:
       - name: 检出代码
         uses: actions/checkout@v4
+        with:
+          # 失败日志要 commit + push 回来，必须有完整历史与持久凭据
+          persist-credentials: true
+
+      # 先把环境信息记下来（失败时这些最有用）
+      - name: 环境信息
+        run: |
+          set -o pipefail
+          mkdir -p ci-logs
+          {
+            echo "=== sw_vers ==="; sw_vers
+            echo "=== xcodebuild ==="; xcodebuild -version
+            echo "=== swift ==="; swift --version
+            echo "=== 已装的 xcodegen ==="; which xcodegen || echo "(未安装)"
+          } 2>&1 | tee ci-logs/env.log
 
       - name: 安装 XcodeGen
-        run: brew install xcodegen
+        run: |
+          set -o pipefail
+          brew install xcodegen 2>&1 | tee -a ci-logs/env.log
 
       - name: 生成 Xcode 工程
         working-directory: ios
@@ -93,3 +113,22 @@ jobs:
             ios/build.log
             ios/xcodegen.log
           if-no-files-found: ignore
+
+      # 关键一步：失败时把日志**提交回仓库**。这样开发侧可以直接 `git pull` 读日志，
+      # 不需要人去 Actions 页面下载 artifact 再粘贴 —— 来回一轮就是几分钟。
+      # 注意：用 GITHUB_TOKEN 推送不会再次触发工作流，所以不会形成循环。
+      - name: 失败时把日志提交回仓库
+        if: failure()
+        run: |
+          set -o pipefail
+          mkdir -p ci-logs
+          cp -f ios/build.log ci-logs/build.log 2>/dev/null || true
+          cp -f ios/xcodegen.log ci-logs/xcodegen.log 2>/dev/null || true
+          cp -f ci-logs/env.log ci-logs/env.log 2>/dev/null || true
+          echo "run: $GITHUB_RUN_ID  commit: $GITHUB_SHA  at: $(date -u +%FT%TZ)" > ci-logs/meta.txt
+          ls -la ci-logs || true
+          git config user.name  "ci-log-bot"
+          git config user.email "ci-log-bot@users.noreply.github.com"
+          git add -f ci-logs || true
+          git commit -m "ci: 构建日志（run $GITHUB_RUN_ID）" || echo "没有可提交的日志"
+          git push origin HEAD:${GITHUB_REF_NAME} || echo "推送日志失败"

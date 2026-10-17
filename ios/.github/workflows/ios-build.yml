@@ -1,35 +1,44 @@
-# 在云端构建 iOS 包 —— **仓库根就是 `ios/` 时用这一份**
+# 在云端构建 iOS 包 —— 仓库根就是 ios/ 目录本身时用这一份
 #
-# 这一份与仓库根的 `.github/workflows/ios-build.yml` 内容等价，
-# 唯一区别是：**没有 `working-directory: ios`，所有路径都不带 `ios/` 前缀**
-# （因为此时 `ios/` 本身就是仓库根）。
-#
-# 如果你把整个 `doutu/` 推上 GitHub，请用仓库根那份，别用这份。
-#
-# 自动化核对：`node _ios/verify-ci.mjs`
-
+# 与仓库根的 .github/workflows/ios-build.yml 内容一致，只是没有 working-directory、
+# 路径也不带 ios/ 前缀。完整说明见 ios/INSTALL-IPA.md。
+# 自动化核对：node _ios/verify-ci.mjs
 name: build-ios-ipa
-
 on:
   push:
     paths:
-      - "**"
-      - "!build/**"
+      - "ios/**"
+      - ".github/workflows/ios-build.yml"
   workflow_dispatch:
-
 jobs:
   build:
     name: 编译并打包未签名 IPA
     runs-on: macos-14
     timeout-minutes: 30
-
+    # 失败时要把日志提交回仓库，所以需要写权限
+    permissions:
+      contents: write
     steps:
       - name: 检出代码
         uses: actions/checkout@v4
-
+        with:
+          # 失败日志要 commit + push 回来，必须有完整历史与持久凭据
+          persist-credentials: true
+      # 先把环境信息记下来（失败时这些最有用）
+      - name: 环境信息
+        run: |
+          set -o pipefail
+          mkdir -p ci-logs
+          {
+            echo "=== sw_vers ==="; sw_vers
+            echo "=== xcodebuild ==="; xcodebuild -version
+            echo "=== swift ==="; swift --version
+            echo "=== 已装的 xcodegen ==="; which xcodegen || echo "(未安装)"
+          } 2>&1 | tee ci-logs/env.log
       - name: 安装 XcodeGen
-        run: brew install xcodegen
-
+        run: |
+          set -o pipefail
+          brew install xcodegen 2>&1 | tee -a ci-logs/env.log
       - name: 生成 Xcode 工程
         run: |
           set -o pipefail
@@ -37,7 +46,6 @@ jobs:
           xcodegen generate 2>&1 | tee -a xcodegen.log
           ls -la
           xcodebuild -list -project Doutu.xcodeproj 2>&1 | tee -a xcodegen.log
-
       - name: 编译（不签名）
         run: |
           set -o pipefail
@@ -51,7 +59,6 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
             build 2>&1 | tee build.log | tail -60
-
       - name: 打包成 IPA（Payload 结构）
         run: |
           APP=$(find build/Build/Products/Release-iphoneos -maxdepth 1 -name "*.app" | head -1)
@@ -65,14 +72,12 @@ jobs:
           /usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" Payload/*.app/Info.plist
           /usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" Payload/*.app/Info.plist
           /usr/libexec/PlistBuddy -c "Print :MinimumOSVersion" Payload/*.app/Info.plist
-
       - name: 上传 IPA
         uses: actions/upload-artifact@v4
         with:
           name: Doutu-unsigned-ipa
           path: Doutu-unsigned.ipa
           if-no-files-found: error
-
       - name: 失败时保留日志
         if: failure()
         uses: actions/upload-artifact@v4
@@ -84,3 +89,21 @@ jobs:
             build.log
             xcodegen.log
           if-no-files-found: ignore
+      # 关键一步：失败时把日志**提交回仓库**。这样开发侧可以直接 `git pull` 读日志，
+      # 不需要人去 Actions 页面下载 artifact 再粘贴 —— 来回一轮就是几分钟。
+      # 注意：用 GITHUB_TOKEN 推送不会再次触发工作流，所以不会形成循环。
+      - name: 失败时把日志提交回仓库
+        if: failure()
+        run: |
+          set -o pipefail
+          mkdir -p ci-logs
+          cp -f build.log ci-logs/build.log 2>/dev/null || true
+          cp -f xcodegen.log ci-logs/xcodegen.log 2>/dev/null || true
+          cp -f ci-logs/env.log ci-logs/env.log 2>/dev/null || true
+          echo "run: $GITHUB_RUN_ID  commit: $GITHUB_SHA  at: $(date -u +%FT%TZ)" > ci-logs/meta.txt
+          ls -la ci-logs || true
+          git config user.name  "ci-log-bot"
+          git config user.email "ci-log-bot@users.noreply.github.com"
+          git add -f ci-logs || true
+          git commit -m "ci: 构建日志（run $GITHUB_RUN_ID）" || echo "没有可提交的日志"
+          git push origin HEAD:${GITHUB_REF_NAME} || echo "推送日志失败"
