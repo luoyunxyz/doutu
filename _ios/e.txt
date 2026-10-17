@@ -1,1 +1,17 @@
-﻿Screens/CollectMoneyScreen.swift:366:30: error: integer literal '11400714819323198485' overflows when stored into 'Int64'
+﻿Net/ApiClient.swift:110:21: error: incorrect argument label in call (have '_:forKey:', expected '_:for:')
+Net/ApiClient.swift:121:70: error: incorrect argument label in call (have '_:forKey:', expected '_:for:')
+Screens/BillAnalyticsScreen.swift:219:46: error: cannot convert value of type '[UInt32]' to expected argument type '[UIColor]'
+Screens/BillAnalyticsScreen.swift:655:44: error: cannot convert value of type 'Int' to expected argument type 'CGFloat'
+Screens/BillAnalyticsScreen.swift:656:49: error: cannot convert value of type 'Int' to expected argument type 'CGFloat'
+Screens/BillAnalyticsScreen.swift:660:34: error: cannot convert value of type 'Int' to expected argument type 'CGFloat'
+Screens/BillAnalyticsScreen.swift:661:45: error: cannot convert value of type 'Int' to expected argument type 'CGFloat'
+Screens/BillAnalyticsScreen.swift:706:13: error: the compiler is unable to type-check this expression in reasonable time; try breaking up the expression into distinct sub-expressions
+Screens/BillAnalyticsScreen.swift:732:26: error: cannot convert value of type 'Int' to expected argument type 'CGFloat'
+Screens/BillAnalyticsScreen.swift:737:50: error: cannot convert value of type 'Int' to expected argument type 'CGFloat'
+Screens/BillAnalyticsScreen.swift:739:75: error: cannot convert value of type 'Int' to expected argument type 'CGFloat'
+Screens/BillAnalyticsScreen.swift:742:67: error: cannot convert value of type 'Int' to expected argument type 'CGFloat'
+Screens/BillAnalyticsScreen.swift:747:56: error: cannot convert value of type 'Int' to expected argument type 'CGFloat'
+Screens/BillAnalyticsScreen.swift:749:46: error: cannot convert value of type 'Int' to expected argument type 'CGFloat'
+Screens/BillAnalyticsScreen.swift:933:52: error: cannot convert value of type 'Int' to expected argument type 'CGFloat'
+Screens/BillAnalyticsScreen.swift:935:56: error: cannot convert value of type 'Int' to expected argument type 'CGFloat'
+Screens/BillAnalyticsScreen.swift:942:52: error: cannot convert value of type 'Int' to expected argument type 'CGFloat'
