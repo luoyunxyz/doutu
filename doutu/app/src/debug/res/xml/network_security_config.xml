@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    调试包（debug）专用：允许明文 HTTP，方便真机内网联调（http://192.168.x.x:7199）。
+    这个文件只会在 debug 构建里生效，release 用的是 src/main 里那份「只允许 HTTPS」的策略。
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+            <!-- 调试时如果给内网服务挂了自签证书，可以打开下面这行（正式包绝不要开） -->
+            <!-- <certificates src="user" /> -->
+        </trust-anchors>
+    </base-config>
+</network-security-config>

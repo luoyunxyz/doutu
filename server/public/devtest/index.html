@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>真机联调自检 · 去水印平台</title>
+<style>
+  :root{--ok:#0a7d3f;--bad:#c02626;--ink:#1b1f27;--dim:#6b7280;--line:#e5e7eb}
+  *{box-sizing:border-box}
+  body{margin:0;padding:14px;font:14px/1.55 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif;color:var(--ink);background:#f6f7f9}
+  h1{font-size:17px;margin:4px 0 2px}
+  .sub{color:var(--dim);font-size:12px;margin-bottom:10px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px}
+  .row{display:flex;gap:8px;align-items:baseline;padding:5px 0;border-bottom:1px dashed var(--line)}
+  .row:last-child{border-bottom:0}
+  .row .k{flex:0 0 46%;color:var(--dim);font-size:12px}
+  .row .v{flex:1;word-break:break-all;font-size:12px}
+  .tag{display:inline-block;padding:1px 7px;border-radius:20px;font-size:11px;font-weight:600}
+  .pass{background:#e6f6ec;color:var(--ok)}
+  .fail{background:#fdeaea;color:var(--bad)}
+  .wait{background:#eef2ff;color:#3730a3}
+  .mono{font-family:ui-monospace,Consolas,monospace;font-size:11px}
+  #log{white-space:pre-wrap;font-size:11px;color:#374151;max-height:34vh;overflow:auto}
+  .big{font-size:15px;font-weight:700;margin:2px 0 8px}
+  img,video{max-width:100%;border-radius:8px;margin-top:6px}
+</style>
+</head>
+<body>
+<h1>真机联调自检</h1>
+<div class="sub">本页在<strong>设备浏览器</strong>里用真实 HMAC-SHA256 签名调用服务端，验证客户端契约</div>
+
+<div class="card">
+  <div class="big" id="verdict">正在执行…</div>
+  <div id="summary" class="mono"></div>
+</div>
+
+<div class="card" id="env"></div>
+<div class="card"><div class="sub" style="margin:0 0 6px">执行明细</div><div id="steps"></div></div>
+<div class="card"><div class="sub" style="margin:0 0 6px">服务端返回 / 控制台</div><div id="log"></div></div>
+<div class="card" id="preview" style="display:none">
+  <div class="sub" style="margin:0 0 6px">成品预览（设备实际下载到的文件）</div>
+  <video id="player" controls playsinline></video>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  var steps = [];
+  var lines = [];
+  var t0 = Date.now();
+
+  function log(msg) {
+    lines.push('[' + String(Date.now() - t0).padStart(5, ' ') + 'ms] ' + msg);
+    document.getElementById('log').textContent = lines.join('\n');
+  }
+  function step(name, ok, extra) {
+    steps.push({ name: name, ok: ok, extra: extra });
+    render();
+    log((ok ? '✓ ' : '✗ ') + name + (extra ? ' — ' + JSON.stringify(extra).slice(0, 300) : ''));
+  }
+  function render() {
+    var html = '';
+    for (var i = 0; i < steps.length; i++) {
+      var s = steps[i];
+      html += '<div class="row"><div class="k">' + esc(s.name) + '</div><div class="v">' +
+        '<span class="tag ' + (s.ok ? 'pass' : 'fail') + '">' + (s.ok ? '通过' : '失败') + '</span>' +
+        (s.extra ? ' <span class="mono">' + esc(JSON.stringify(s.extra).slice(0, 200)) + '</span>' : '') +
+        '</div></div>';
+    }
+    document.getElementById('steps').innerHTML = html;
+    var failed = steps.filter(function (s) { return !s.ok; });
+    var v = document.getElementById('verdict');
+    if (failed.length) {
+      v.innerHTML = '<span style="color:#c02626">✗ ' + failed.length + ' 项失败 / 共 ' + steps.length + ' 项</span>';
+    } else {
+      v.innerHTML = '<span style="color:#0a7d3f">✓ 全部通过（' + steps.length + ' 项）</span>';
+    }
+    document.getElementById('summary').textContent =
+      'page=' + location.origin + '  api=' + API_BASE + '  secureContext=' + window.isSecureContext + '  ua=' + navigator.userAgent.slice(0, 60);
+  }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function hex(buf) {
+    return Array.prototype.map.call(new Uint8Array(buf), function (b) { return b.toString(16).padStart(2, '0'); }).join('');
+  }
+  function b64ToBuf(b64) {
+    var bin = atob(b64);
+    var out = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+    return out.buffer;
+  }
+
+  var masterKey = null, token = null, signKey = null;
+  var deviceId = ('devtest-' + (navigator.userAgent.length) + '-' + Date.now().toString(36)).toLowerCase();
+  // 允许用 ?api=http://192.168.1.96:7199 指定另一台/另一个实例（真机走内网 IP 直连时用）
+  var API_BASE = (new URLSearchParams(location.search).get('api') || location.origin).replace(/\/+$/, '');
+
+  async function sha256hex(text) {
+    return hex(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text)));
+  }
+  async function hmacHex(key, text) {
+    var k = await crypto.subtle.importKey('raw', new TextEncoder().encode(key), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+    return hex(await crypto.subtle.sign('HMAC', k, new TextEncoder().encode(text)));
+  }
+
+  /** 与服务端完全一致的签名：sign = HMAC(key, ts \n nonce \n device_id \n path \n body_hash) */
+  async function call(method, pathName, body, useRoot) {
+    var ts = Math.floor(Date.now() / 1000);
+    var nonce = hex(crypto.getRandomValues(new Uint8Array(16)));
+    var raw = body ? JSON.stringify(body) : '';
+    var bodyHash = await sha256hex(raw);
+    var payload = [ts, nonce, deviceId, pathName, bodyHash].join('\n');
+    var sign = await hmacHex(useRoot ? masterKey : signKey, payload);
+    var headers = {
+      'Content-Type': 'application/json;charset=UTF-8',
+      'X-Device-Id': deviceId,
+      'X-Timestamp': String(ts),
+      'X-Nonce': nonce,
+      'X-Sign': sign,
+      'X-App-Version': '1.0.0',
+      'X-Version-Code': '1'
+    };
+    if (token) headers['X-Token'] = token;
+    var res = await fetch(API_BASE + pathName, { method: method, headers: headers, body: raw || undefined });
+    var text = await res.text();
+    var json = null;
+    try { json = JSON.parse(text); } catch (e) { json = { raw: text }; }
+    return { status: res.status, body: json };
+  }
+
+  async function main() {
+    render();
+
+    if (!window.isSecureContext || !crypto.subtle) {
+      step('安全上下文（SubtleCrypto 可用）', false, {
+        secureContext: window.isSecureContext,
+        hint: '请用 https 或 http://127.0.0.1 / http://localhost 打开本页（可用 adb reverse tcp:7101 tcp:7101 建立隧道）'
+      });
+      return;
+    }
+    step('安全上下文（SubtleCrypto 可用）', true, { origin: location.origin });
+
+    // ① bootstrap：拿 MASTER_KEY 与一个测试邀请码
+    var boot = await fetch(API_BASE + '/devtest/bootstrap').then(function (r) { return r.json(); });
+    if (boot.code !== 0) { step('bootstrap', false, boot); return; }
+    masterKey = boot.data.master_key;
+    step('bootstrap 取到 MASTER_KEY 与测试邀请码', true, { invite: boot.data.invite_display });
+
+    var env = [
+      ['设备', navigator.userAgent.slice(0, 90)],
+      ['页面来源', location.origin],
+      ['API 地址', API_BASE],
+      ['设备号（已归一化）', deviceId],
+      ['测试邀请码', boot.data.invite_display],
+      ['样本地址', boot.data.sample_url]
+    ].map(function (r) {
+      return '<div class="row"><div class="k">' + esc(r[0]) + '</div><div class="v mono">' + esc(r[1]) + '</div></div>';
+    }).join('');
+    document.getElementById('env').innerHTML = env;
+
+    // ② 健康检查（无需签名）
+    var health = await fetch(API_BASE + '/healthz').then(function (r) { return r.json(); });
+    step('健康检查 /healthz', health.code === 0 && health.data.db === 'up', health.data);
+
+    // ③ 固定手机号先试登录；不存在再用邀请码注册（方便反复联调同一个账号）
+    var phone = '13900000000';
+    var password = 'devtest2026';
+    var auth = await call('POST', '/api/v1/auth/login', { username: phone, password: password }, true);
+    var action = '登录';
+    if (auth.body.code !== 0) {
+      auth = await call('POST', '/api/v1/auth/register', {
+        invite_code: boot.data.invite_code,
+        phone: phone,
+        password: password,
+        password_confirm: password,
+        nickname: '真机联调'
+      }, true);
+      action = '邀请码注册';
+    }
+    var okAuth = auth.body && auth.body.code === 0;
+    step(action + '（' + phone + '）', okAuth, okAuth ? { user_id: auth.body.data.user.user_id } : auth.body);
+    if (!okAuth) return;
+    token = auth.body.data.token;
+    signKey = auth.body.data.sign_key;
+
+    // ④ 授权状态（会话密钥签名）
+    var status = await call('GET', '/api/v1/auth/status', null, false);
+    var activated = status.body.code === 0 && status.body.data.activated === true;
+    step('授权状态查询', status.body.code === 0, {
+      activated: activated,
+      status_text: status.body.data && status.body.data.status_text,
+      expire_at: status.body.data && status.body.data.expire_at
+    });
+
+    // ⑤ 未激活必须被业务接口拦下；后台激活后刷新本页即可继续
+    var probe = await call('POST', '/api/v1/dw/parse', { url: boot.data.sample_url, want_watermark: true }, false);
+    if (!activated) {
+      step('未激活 → 解析接口返回 2001', probe.body.code === 2001, probe.body);
+      log('在后台「账号管理 → 激活账号」开通该账号后，刷新本页即可继续验证解析与下载。');
+      return;
+    }
+    step('已激活 → 解析接口放行', probe.body.code === 0, probe.body.code);
+    if (probe.body.code !== 0) return;
+    var taskNo = probe.body.data.task_no;
+
+    // ⑥ 轮询任务（服务端 worker 会做 FFmpeg 水印合成）
+    var payload = null;
+    for (var i = 0; i < 40; i++) {
+      await new Promise(function (r) { setTimeout(r, 800); });
+      var q = await call('GET', '/api/v1/dw/task/' + taskNo, null, false);
+      if (q.body.code !== 0) { step('轮询任务', false, q.body); return; }
+      payload = q.body.data;
+      if (payload.status === 3 || payload.status === 4 || payload.status === 5) break;
+    }
+    step('轮询任务直到完成', payload && payload.status === 3, payload && {
+      status: payload.status, status_text: payload.status_text, duration: payload.duration, watermark: payload.watermark, err: payload.err_msg
+    });
+    if (!payload || payload.status !== 3 || !payload.out_url) return;
+
+    // ⑦ 下载成品（签名 URL，私有桶语义）
+    var fileRes = await fetch(payload.out_url);
+    var buf = await fileRes.arrayBuffer();
+    var head = new Uint8Array(buf.slice(4, 8));
+    var ftyp = String.fromCharCode.apply(null, head);
+    step('下载成品并校验 mp4', fileRes.ok && buf.byteLength > 1000 && ftyp === 'ftyp', {
+      http: fileRes.status, bytes: buf.byteLength, magic: ftyp
+    });
+
+    // ⑧ Range 请求（播放器拖动进度依赖）
+    var rangeRes = await fetch(payload.out_url, { headers: { Range: 'bytes=0-1023' } });
+    var rangeBuf = await rangeRes.arrayBuffer();
+    step('Range 请求返回 206', rangeRes.status === 206 && rangeBuf.byteLength === 1024, {
+      http: rangeRes.status, bytes: rangeBuf.byteLength
+    });
+
+    // ⑨ 篡改签名应被拒
+    var bad = await fetch(payload.out_url.replace(/sign=[0-9a-f]+/, 'sign=deadbeef')).then(function (r) { return r.json(); });
+    step('篡改下载签名被拒绝', bad.code === 1002, bad);
+
+    // ⑩ 设备上直接播放成品（证明成品确实下到了这台设备）
+    var blob = new Blob([buf], { type: 'video/mp4' });
+    document.getElementById('preview').style.display = '';
+    document.getElementById('player').src = URL.createObjectURL(blob);
+
+    log('总耗时 ' + (Date.now() - t0) + 'ms');
+  }
+
+  main().catch(function (err) {
+    step('执行异常', false, { message: String(err && err.message || err) });
+  });
+})();
+</script>
+</body>
+</html>

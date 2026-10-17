@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Doutu" parent="android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:fontFamily">sans</item>
+        <item name="android:colorAccent">#6750A4</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowFullscreen">false</item>
+        <item name="android:windowActionModeOverlay">true</item>
+        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
+        <item name="android:navigationBarColor">#FFFFFF</item>
+        <item name="android:statusBarColor">#FFFFFF</item>
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
+
+    <style name="Theme.Doutu.WeiHome" parent="Theme.Doutu">
+        <item name="android:windowBackground">#EDEDED</item>
+    </style>
+
+    <style name="Theme.Doutu.Scan" parent="Theme.Doutu">
+        <item name="android:windowBackground">#000000</item>
+    </style>
+
+    <style name="Theme.Doutu.PayCode" parent="Theme.Doutu">
+        <item name="android:windowBackground">#3F80F0</item>
+    </style>
+
+    <style name="Theme.Doutu.Collect" parent="Theme.Doutu">
+        <item name="android:windowBackground">#F2A64E</item>
+    </style>
+</resources>

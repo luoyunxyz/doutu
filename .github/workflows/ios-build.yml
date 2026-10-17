@@ -1,0 +1,89 @@
+# 在云端构建 iOS 包 —— **仓库根是 `doutu/` 时用这一份**
+#
+# 为什么需要两条路径：iOS 的 IPA 必须用 Xcode 工具链编译，Windows 上做不出来。
+# 这个工作流跑在 GitHub 的 macOS runner 上，产出**未签名 IPA**，下载后交给
+# 「万能签」之类的签名服务重签，就能装到 iPhone 上。
+#
+# 用法（仓库根 = `doutu/`，也就是本文件所在的那一层）：
+#   1. 把整个 `doutu/` 推到 GitHub
+#   2. Actions → build-ios-ipa → Run workflow
+#   3. 跑完在 Artifacts 里下载 `Doutu-unsigned-ipa`
+#
+# 如果你的仓库根就是 `ios/` 目录本身，请用 `ios/.github/workflows/ios-build.yml` 那一份
+# （它没有 `working-directory`，路径也不带 `ios/` 前缀）。
+#
+# 自动化核对：`node _ios/verify-ci.mjs` 会检查这两份文件的路径与目录是否自洽。
+
+name: build-ios-ipa
+
+on:
+  push:
+    paths:
+      - "ios/**"
+      - ".github/workflows/ios-build.yml"
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: 编译并打包未签名 IPA
+    runs-on: macos-14
+    timeout-minutes: 30
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 安装 XcodeGen
+        run: brew install xcodegen
+
+      - name: 生成 Xcode 工程
+        working-directory: ios
+        run: |
+          xcodegen generate
+          ls -la
+          xcodebuild -list -project Doutu.xcodeproj
+
+      - name: 编译（不签名）
+        working-directory: ios
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project Doutu.xcodeproj \
+            -scheme Doutu \
+            -sdk iphoneos \
+            -configuration Release \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build 2>&1 | tee build.log | tail -60
+
+      - name: 打包成 IPA（Payload 结构）
+        working-directory: ios
+        run: |
+          APP=$(find build/Build/Products/Release-iphoneos -maxdepth 1 -name "*.app" | head -1)
+          echo "找到 App：$APP"
+          test -n "$APP" || { echo "没找到 .app，编译可能失败"; exit 1; }
+          rm -rf Payload Doutu-unsigned.ipa
+          mkdir -p Payload
+          cp -R "$APP" Payload/
+          zip -qr Doutu-unsigned.ipa Payload
+          ls -lh Doutu-unsigned.ipa
+          /usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" Payload/*.app/Info.plist
+          /usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" Payload/*.app/Info.plist
+          /usr/libexec/PlistBuddy -c "Print :MinimumOSVersion" Payload/*.app/Info.plist
+
+      - name: 上传 IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: Doutu-unsigned-ipa
+          path: ios/Doutu-unsigned.ipa
+          if-no-files-found: error
+
+      - name: 失败时保留日志
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: ios/build.log
+          if-no-files-found: ignore

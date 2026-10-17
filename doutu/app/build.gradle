@@ -1,0 +1,261 @@
+plugins {
+    id 'com.android.application'
+}
+
+/**
+ * 服务端地址**编译期注入**，App 里不写死任何 IP、也不让用户改：
+ *
+ *   正式包：  ./gradlew assembleRelease -PdoutuApi=https://api.你的域名.com
+ *   调试包：  ./gradlew assembleDebug                     （默认走下面 DEBUG_API 里的内网地址）
+ *
+ * 为什么这么做：
+ *   1. 客户端只能连域名（HTTPS），不存 IP —— 换服务器、加 CDN、上证书都不用重装 App；
+ *   2. 地址是编译期常量，用户改不了，也不会被 SharedPreferences 里的旧值带偏；
+ *   3. 调试包保留内网地址与「长按改地址」，方便真机联调；正式包这两样都不存在。
+ */
+def releaseApi = (project.findProperty('doutuApi') ?: 'https://api.example.com').toString().trim()
+def debugApi = (project.findProperty('doutuDebugApi') ?: 'http://192.168.1.96:7199').toString().trim()
+
+/**
+ * DTW/1 私有协议（2026-10-17）：客户端只内置**服务端公钥**与慢哈希盐 —— 都是可公开的材料。
+ *
+ * 这里刻意**不再有 MASTER_KEY**：那把钥匙原来是编译进 APK 的，反编译即可伪造官方客户端、
+ * 铸造成品下载签名、推导会话密钥。现在服务端私钥永远不出服务器，客户端靠握手拿会话。
+ *
+ *   正式包：-PdtwPublicKey="$(cat 公钥.pem)" -PdtwSalt=<服务端 .env 的 DTW_SALT>
+ *   调试包：用下面这份开发用公钥/盐（公钥本来就公开，写死没有安全问题）
+ */
+def devDtwPublicKey = '-----BEGIN PUBLIC KEY-----\\n' +
+        'MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAhd9TKjhtxZ6bGsSel1nT\\n' +
+        'CmV4D1oqalbv6sTK3M/3VBbfj1OnXMe8A0RAh4o0z5xHpOy6HQh8lTx/5AjAKqWy\\n' +
+        'bB8iGtQlZRcJh+TsmvvmWDGftWzPPoOcudCZWlK1JEqGC0P/558JlO+34TPkZ0lp\\n' +
+        'i/lmVkkdQriY4zSpPFkvZz/4v3PMGbblJjMS7MyW1u1uC81q3AizA369sTlke76q\\n' +
+        'kpry36olorGzQiCnluJjmoH5hKRewi4T3JlpIvh6h+JlfAOL6Wyb9Ax+r7KL8uUL\\n' +
+        'SU4M/PN4Pggg72K3oIH/FHRoHvQTB0jvRr9aV57gSnnnepqwAkussQ/Z15005/x4\\n' +
+        'VwIDAQAB\\n-----END PUBLIC KEY-----'
+def devDtwSalt = 'dev-salt-please-generate-your-own'
+
+def releaseDtwPublicKey = (project.findProperty('dtwPublicKey') ?: '').toString().trim()
+// 多行 PEM 从命令行传很容易被 shell 打散（PowerShell 尤其），所以也支持从文件读
+def dtwPublicKeyFile = (project.findProperty('dtwPublicKeyFile') ?: '').toString().trim()
+if (!releaseDtwPublicKey && dtwPublicKeyFile) {
+    def f = new File(dtwPublicKeyFile)
+    if (!f.exists()) throw new GradleException("找不到 DTW 公钥文件：${dtwPublicKeyFile}")
+    releaseDtwPublicKey = f.getText('UTF-8').trim()
+}
+def releaseDtwSalt = (project.findProperty('dtwSalt') ?: '').toString().trim()
+def dtwProofIter = ((project.findProperty('dtwProofIter') ?: '20000').toString().trim())
+
+/**
+ * 正式签名证书的 SHA-256（大写十六进制、无冒号）—— 防二次打包用（见 TamperGuard）。
+ *
+ * 这是**证书公钥信息**，不是秘密：改包的人没有我们的私钥，换不了这张证书。
+ * 取法：keytool -list -v -keystore keystore/doutu-release.jks -alias doutu
+ * 换签名证书时必须同步更新这个值，否则正式包会自己拒绝启动。
+ */
+def releaseCertSha256 = (project.findProperty('certSha256') ?: '49594698B779B13E5656D73E6B5E63139291AF0211930C22A38759FBE0EA5D01')
+        .toString().trim().toUpperCase().replace(':', '')
+
+/**
+ * 版本号：后台、客户端、服务端三方都按 `1.2.3` 这种人话版本号走。
+ *
+ * versionCode 由 versionName 换算，**必须与服务端 `src/core/version.js` 的公式一致**：
+ *   major * 10000 + minor * 100 + patch   （1.0.0 → 10000，1.2.3 → 10203）
+ * 次版本号与修订号各留两位（0-99）。
+ */
+def doutuVersionName = (project.findProperty('doutuVersionName') ?: '1.0.0').toString().trim()
+def doutuVersionCode = { String name ->
+    def cleaned = name.replaceFirst(/^[vV]/, '')
+    def parts = cleaned.tokenize('.')
+    if (parts.size() < 1 || parts.size() > 3) {
+        throw new GradleException("版本号 ${name} 不合法，请填成 1.2.3 这样的格式")
+    }
+    def nums = parts.collect { p ->
+        if (!(p ==~ /\d+/)) throw new GradleException("版本号 ${name} 不合法，请填成 1.2.3 这样的格式")
+        p as int
+    }
+    while (nums.size() < 3) nums << 0
+    if (nums[0] > 210000 || nums[1] > 99 || nums[2] > 99) {
+        throw new GradleException("版本号 ${name} 超出范围：次版本号与修订号不能超过 99")
+    }
+    nums[0] * 10000 + nums[1] * 100 + nums[2]
+}
+
+// 正式包必须显式传入协议公钥与盐：打错了客户端会连不上，而且报错很难查
+if (gradle.startParameter.taskNames.any { it.toLowerCase().contains('release') }) {
+    if (!releaseDtwPublicKey.contains('BEGIN PUBLIC KEY')) {
+        throw new GradleException(
+                '打正式包必须传入 DTW 协议公钥：\n' +
+                '  ./gradlew assembleRelease -PdoutuApi=https://你的域名 ' +
+                '-PdtwPublicKey="$(cat server/keys/dtw-public.pem)" -PdtwSalt=<服务端 .env 的 DTW_SALT>\n' +
+                '（公钥来自服务端 node scripts/gen-dtw-keys.js，私钥永远不出服务器）')
+    }
+    if (releaseDtwSalt.length() < 8) {
+        throw new GradleException('打正式包必须传入 DTW_SALT（与服务端 .env 一致），否则握手必失败')
+    }
+    if (releaseApi.startsWith('http://')) {
+        throw new GradleException("正式包的接口地址必须是 HTTPS：当前为 ${releaseApi}")
+    }
+}
+
+// 换行要转义成 \\n 才能塞进 BuildConfig 的字符串常量
+def pemForBuild = { String pem -> pem.replace('\r', '').replace('\n', '\\n') }
+def releasePem = releaseDtwPublicKey ? pemForBuild(releaseDtwPublicKey) : ''
+
+android {
+    namespace 'com.luoyun.doutu'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId 'com.luoyun.doutu'
+        minSdk 24
+        targetSdk 34
+        // 版本号按人话写（1.2.3），versionCode 由它换算 —— **公式必须和服务端
+        // `server/src/core/version.js` 完全一致**：major*10000 + minor*100 + patch。
+        // 客户端只拿 versionCode 这个整数比大小，服务端下发之前也是用同一公式算的；
+        // 两边不一致就会出现「后台发了版本、用户收不到」。
+        // 换版本号只需改这一处（或用 -PdoutuVersionName=1.2.3 覆盖）。
+        versionName doutuVersionName
+        versionCode doutuVersionCode(doutuVersionName)
+        testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
+    }
+
+    buildFeatures {
+        // 生成 BuildConfig：API_BASE / IS_DEV_BUILD 都在里面
+        buildConfig true
+    }
+
+    // ⚠️ signingConfigs 必须写在 buildTypes **之前**：
+    //    Groovy DSL 是按顺序求值的，buildTypes 里引用 signingConfigs.release 时它必须已经存在，
+    //    否则报 "Could not get unknown property 'release' for SigningConfig container"。
+    signingConfigs {
+        release {
+            if (project.hasProperty('doutuStoreFile')) {
+                // 相对路径按**工程根目录**解析（否则会被当成 app/ 模块下的路径）
+                storeFile rootProject.file(project.property('doutuStoreFile'))
+                storePassword project.property('doutuStorePassword')
+                keyAlias project.property('doutuKeyAlias')
+                keyPassword project.property('doutuKeyPassword')
+            }
+        }
+    }
+
+    buildTypes {
+        debug {
+            // 联调包：允许内网 http，并且允许在登录页长按标题临时改地址
+            buildConfigField 'String', 'API_BASE', "\"${debugApi}\""
+            buildConfigField 'boolean', 'IS_DEV_BUILD', 'true'
+            buildConfigField 'String', 'DTW_PUBLIC_KEY', "\"${devDtwPublicKey}\""
+            buildConfigField 'String', 'DTW_SALT', "\"${devDtwSalt}\""
+            buildConfigField 'int', 'DTW_PROOF_ITER', "${dtwProofIter}"
+            buildConfigField 'int', 'DTW_VERSION', '1'
+            buildConfigField 'String', 'DTW_TUNNEL_PATH', '"/api/v1/dtw"'
+            buildConfigField 'String', 'DTW_HANDSHAKE_PATH', '"/api/v1/dtw/hs"'
+            // 调试包用调试签名，不校验（留空即跳过）
+            buildConfigField 'String', 'SIGNING_CERT_SHA256', '""'
+        }
+        release {
+            // 2026-10-17：开启 R8 混淆 + 资源压缩 —— 防逆向的最后一块（抄走也看不懂）。
+            // 规则见 proguard-rules.pro；最要紧的是保住 WebView 的 JS 桥方法名。
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            // 正式包：域名 + HTTPS，不允许改地址
+            buildConfigField 'String', 'API_BASE', "\"${releaseApi}\""
+            buildConfigField 'boolean', 'IS_DEV_BUILD', 'false'
+            buildConfigField 'String', 'DTW_PUBLIC_KEY', "\"${releasePem}\""
+            buildConfigField 'String', 'DTW_SALT', "\"${releaseDtwSalt}\""
+            buildConfigField 'int', 'DTW_PROOF_ITER', "${dtwProofIter}"
+            buildConfigField 'int', 'DTW_VERSION', '1'
+            buildConfigField 'String', 'DTW_TUNNEL_PATH', '"/api/v1/dtw"'
+            buildConfigField 'String', 'DTW_HANDSHAKE_PATH', '"/api/v1/dtw/hs"'
+            buildConfigField 'String', 'SIGNING_CERT_SHA256', "\"${releaseCertSha256}\""
+            // 有签名参数才签名；没给就产出 app-release-unsigned.apk（用 Android Studio 或 jarsigner 再签）
+            if (project.hasProperty('doutuStoreFile')) {
+                signingConfig signingConfigs.release
+            }
+        }
+    }
+
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    androidTestImplementation 'androidx.test.ext:junit:1.2.1'
+    androidTestImplementation 'androidx.test:runner:1.6.2'
+    androidTestImplementation 'androidx.test:rules:1.6.1'
+}
+
+/**
+ * 打包前的 UI 坐标自检（tools/check-ui-coords.py）。
+ *
+ * 为什么要有这一步：所有画布界面都在固定设计空间里画图，再整体缩放到真实屏幕；
+ * 触摸处理必须先把手势坐标换算到同一套设计空间再比较。**混用两套空间在分辨率恰好
+ * 等于设计稿的机器上完全不报错，换台机器才炸** —— 已经出过一次（1440x3168 上
+ * 「我」页底部标签栏整条失效）。人眼 review 抓不住，所以固化成构建期检查。
+ *
+ * 设计上的取舍：
+ *   · 找不到 Python 就**跳过并给出提示**，不阻塞构建（开发机/CI 可能没装）；
+ *   · 检查到问题就**构建失败**（这才是这道关卡的意义）；
+ *   · 实在要先出包可以用 -PdoutuSkipUiCheck=true 显式跳过（会在日志里留痕）。
+ */
+tasks.register('checkUiCoords') {
+    group = 'verification'
+    description = '扫描触摸处理里「屏幕像素 / 设计坐标」混用的写法'
+    doLast {
+        if ((project.findProperty('doutuSkipUiCheck') ?: 'false').toString().toLowerCase() == 'true') {
+            logger.lifecycle('[ui-coords] 已按 -PdoutuSkipUiCheck=true 跳过检查')
+            return
+        }
+        def script = rootProject.file('tools/check-ui-coords.py')
+        if (!script.exists()) {
+            logger.lifecycle('[ui-coords] 找不到 tools/check-ui-coords.py，跳过')
+            return
+        }
+        def candidates = []
+        if (System.getenv('PYTHON')) candidates << System.getenv('PYTHON')
+        candidates << 'python'
+        if (!System.getProperty('os.name').toLowerCase().contains('windows')) candidates << 'python3'
+
+        def python = candidates.find { exe ->
+            try {
+                def probe = new ByteArrayOutputStream()
+                exec { commandLine exe, '--version'; standardOutput = probe; errorOutput = probe; ignoreExitValue = true }
+                return true
+            } catch (Exception ignored) {
+                return false
+            }
+        }
+        if (python == null) {
+            logger.lifecycle('[ui-coords] 没找到可用的 python，跳过坐标自检（建议装上以免同类 bug 漏网）')
+            return
+        }
+
+        def output = new ByteArrayOutputStream()
+        def result = exec {
+            commandLine python, script.absolutePath
+            standardOutput = output
+            errorOutput = output
+            ignoreExitValue = true
+        }
+        def text = output.toString('UTF-8').trim()
+        if (text) text.split('\n').each { logger.lifecycle('[ui-coords] ' + it) }
+        if (result.exitValue != 0) {
+            throw new GradleException(
+                'UI 坐标自检未通过：触摸处理里出现了屏幕像素与设计坐标混用的写法。\n' +
+                '  请把手势坐标先换算到设计空间再比较，例如：\n' +
+                '    float rawX = e.getX() * W / getWidth();\n' +
+                '    float rawY = e.getY() * H / getHeight();\n' +
+                '  （确实需要先出包：加 -PdoutuSkipUiCheck=true）')
+        }
+    }
+}
+
+// 挂到 preBuild：assembleDebug / assembleRelease 都会先跑一遍
+tasks.matching { it.name == 'preBuild' }.configureEach {
+    dependsOn 'checkUiCoords'
+}

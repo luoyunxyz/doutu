@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 「模拟收款声音」页里用 View 的 tag 记「这一行对应哪个选项」，需要一个自己的 id 槽位。 -->
+    <item name="sound_holder" type="id" />
+</resources>

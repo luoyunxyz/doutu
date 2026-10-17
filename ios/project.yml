@@ -1,0 +1,66 @@
+# XcodeGen 工程定义（不提交 .xcodeproj，避免手工合并冲突）
+#
+# 用法（在 macOS 或 CI 上）：
+#   brew install xcodegen
+#   cd ios && xcodegen generate      # 生成 Doutu.xcodeproj
+#   open Doutu.xcodeproj
+#
+# 为什么用 XcodeGen 而不是直接给 .xcodeproj：这台开发机没有 macOS，
+# 手写 project.pbxproj 极易出错且无法验证；用一份可读的 yml 描述工程，
+# 由工具在有 Mac 的环境里生成，是最稳的做法。
+name: Doutu
+options:
+  bundleIdPrefix: com.luoyun
+  deploymentTarget:
+    # iOS 15 起：网络层用了 `URLSession.data(for:)` 这类 async API（14 上没有，会编译不过）
+    iOS: "15.0"
+  createIntermediateGroups: true
+  groupSortPosition: top
+
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    # 与 Android 端对齐的版本（内部编码 = major*10000+minor*100+patch）
+    MARKETING_VERSION: "1.0.0"
+    CURRENT_PROJECT_VERSION: "10000"
+    TARGETED_DEVICE_FAMILY: "1"          # 仅 iPhone
+    ENABLE_USER_SCRIPT_SANDBOXING: NO
+    SWIFT_STRICT_CONCURRENCY: minimal
+
+targets:
+  Doutu:
+    type: application
+    platform: iOS
+    sources:
+      - path: Sources
+      # 常规资源（Assets.xcassets 里是切图），但要把 web/ 排除掉，下面单独以文件夹引用加入，
+      # 否则同一批文件会被加两次。
+      - path: Resources
+        excludes:
+          - "web"
+      # 小微主页那份 React 页面：**必须作为「文件夹引用」整体打包**，
+      # 不能拆成一个个文件（它是 Vite 产物，靠相对路径 ./assets/xxx.js 加载）。
+      - path: Resources/web
+        type: folder
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.luoyun.doutu
+        PRODUCT_NAME: Doutu
+        # 竖屏、隐藏状态栏（与 Android 全屏绘制一致）
+        INFOPLIST_KEY_UIStatusBarHidden: YES
+        INFOPLIST_KEY_UIRequiresFullScreen: YES
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
+        INFOPLIST_KEY_CFBundleDisplayName: 斗图去水印
+        # 默认不出签名：CI 出未签名包给「万能签」重签；本机开发时自行覆盖
+        CODE_SIGN_STYLE: Manual
+        CODE_SIGNING_ALLOWED: NO
+        CODE_SIGNING_REQUIRED: NO
+        # 允许 http 明文只在调试期需要；正式环境服务端是 https
+        INFOPLIST_KEY_NSAppTransportSecurity_NSAllowsArbitraryLoads: NO
+        # 头像上传要选相册
+        INFOPLIST_KEY_NSPhotoLibraryUsageDescription: 需要访问相册以便更换头像
+        # 扫码页要实时预览（AVCaptureVideoPreviewLayer）+ 头像可以拍
+        INFOPLIST_KEY_NSCameraUsageDescription: 需要相机以便扫码时实时预览画面、以及拍摄头像
+        INFOPLIST_KEY_NSMicrophoneUsageDescription: 扫码只用画面，不录音（系统可能因相机会话而询问）
+    dependencies: []

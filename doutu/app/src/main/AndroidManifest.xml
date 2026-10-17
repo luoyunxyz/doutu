@@ -1,0 +1,320 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- 2026-10-11: the chat composer's 拍摄 tile drives a getUserMedia viewfinder. -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+    <!-- 模拟来电要能在用户挑的钟点准时响（甚至锁屏、应用在后台时）。
+         Android 12/12L 用 SCHEDULE_EXACT_ALARM，13 起改判 USE_EXACT_ALARM —— 后者是安装即授予、
+         不弹框的那种，因为这个功能本身就是「定个闹钟到点弹出来」，和闹钟应用是同一类用途。
+         两个都声明：老版本认前者，新版本认后者。没有它们的话系统会直接抛 SecurityException。 -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+    <!-- 到点那一刻要把来电界面顶上来：直接起界面在某些 ROM 上会被后台限制拦掉，全屏通知是
+         系统给闹钟/来电类应用留的正门（CallAlarmReceiver 里两条路一起走）。 -->
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- 到点要能在后台自己醒来：引导用户把豆图从电池优化里放出来（不弹系统框、也没法绕过，
+         只是为了给出正确的那个入口）。 -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+    <application
+        android:allowBackup="true"
+        android:name=".DoutuApp"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:networkSecurityConfig="@xml/network_security_config"
+        android:theme="@style/Theme.Doutu">
+        <!--
+            网络安全策略见 res/xml/network_security_config.xml：
+              · 正式包只允许 HTTPS（连域名），明文 HTTP 一律拒绝；
+              · 只有 debug 构建允许内网明文（联调用的 http://192.168.x.x）。
+            早先这里写死 android:usesCleartextTraffic="true" 是为了内网联调，
+            那会让正式包也能走明文、且**允许客户端连任意 IP** —— 上生产必须去掉。
+        -->
+        <!-- 主壳本身不再是启动入口：底下那四个 activity-alias 才是，一次只启用一个，
+             启动器显示的就是启用了的那一个的图标和名字。壳按名字启动，不对外暴露。 -->
+        <!-- 首次启动的《用户须知与免责声明》：四个启动器 alias 都指向它，
+             确认同意后才拉起 MainActivity。改一次正文就把 TermsActivity.TERMS_VERSION 加一，
+             老用户会被重新要求确认一次。 -->
+        <activity
+            android:name=".TermsActivity"
+            android:screenOrientation="portrait"
+            android:exported="false"
+            android:configChanges="orientation|screenSize|keyboardHidden" />
+
+        <activity
+            android:name=".MainActivity"
+            android:screenOrientation="portrait"
+            android:exported="false" />
+
+        <!-- 真实登录 / 注册页：邀请码 + 手机号 + 两次密码。未登录时由 MainActivity 拉起。 -->
+        <activity
+            android:name=".account.LoginActivity"
+            android:screenOrientation="portrait"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- 账号设置页：登录后点「我」页用户行进入（头像/用户名/手机号/会员状态 + 退出登录）。 -->
+        <activity
+            android:name=".account.SettingsActivity"
+            android:screenOrientation="portrait"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- 一键去水印：娱乐页那一格点进来（粘贴链接 → 解析 → 预览 → 下载）。仅会员可用。 -->
+        <activity
+            android:name=".account.ParseActivity"
+            android:screenOrientation="portrait"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- 意见反馈 / 求新功能：「我 → 求新功能」点进来（上传图片 + 写意见 + 提交）。 -->
+        <activity
+            android:name=".features.feedback.FeedbackActivity"
+            android:screenOrientation="portrait"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- 模拟来电设置：「微 → 模拟来电」与「娱乐 → 模拟朋友来电」都进这里，
+             选来电人 / 头像 / 铃声 / 什么时候响，到点了再由它把「小微主页」的来电界面拉起来。 -->
+        <activity
+            android:name=".features.call.CallSetupActivity"
+            android:screenOrientation="portrait"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- 模拟收款声音（原包 /account_sound，显示名「支付宝到账声音」）：
+             金额拆成音素 mp3 顺序播报，本地音频，不联网。 -->
+        <activity
+            android:name=".features.sound.AccountSoundActivity"
+            android:screenOrientation="portrait"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- 模拟没电关机（原包 /shutdown，显示名「模拟关机」）：纯黑全屏，隐藏系统栏 + 屏幕常亮，
+             点一下或返回退出。原包那个页面组件 Pcb 在反编译产物里没有代码，这边按已确证的
+             「零资源 ⇒ 纯代码绘制的全屏画面」实现，详见 ShutdownActivity 的说明。 -->
+        <activity
+            android:name=".features.shutdown.ShutdownActivity"
+            android:screenOrientation="portrait"
+            android:exported="false"
+            android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen" />
+
+        <!-- 到点了系统叫醒的就是它：先试着起界面，再挂一条全屏通知兜底。 -->
+        <receiver
+            android:name=".features.call.CallAlarmReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.luoyun.doutu.action.SIMULATED_CALL" />
+            </intent-filter>
+        </receiver>
+
+        <!--
+            四款应用图标。「微 → 修改应用图标」里挑一款，就把其余三个关掉、打开挑中的那个，
+            启动器当场换成它的图（alipay.png / hkalipay.png / wechat.png / logo.png）和它的
+            名字（支付宝 / 支付宝 / 微信 / 豆图）。图和名字绑在同一个 alias 上，所以不会出现
+            换了图没换名字的情况。豆图那个默认启用，装完先有入口。
+            @mipmap/ic_launcher_* 在 API 26 起是自适应图标（mipmap-anydpi-v26），
+            更早的机器回落到各密度里的方图，两份都由 tools/make_launcher_icons.py 生成。
+        -->
+        <activity-alias
+            android:name="com.luoyun.doutu.Icon.alipay"
+            android:targetActivity=".TermsActivity"
+            android:icon="@mipmap/ic_launcher_alipay"
+            android:label="@string/icon_name_alipay"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name="com.luoyun.doutu.Icon.hkalipay"
+            android:targetActivity=".TermsActivity"
+            android:icon="@mipmap/ic_launcher_alipay_hk"
+            android:label="@string/icon_name_alipay"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name="com.luoyun.doutu.Icon.wechat"
+            android:targetActivity=".TermsActivity"
+            android:icon="@mipmap/ic_launcher_wechat"
+            android:label="@string/icon_name_wechat"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name="com.luoyun.doutu.Icon.doutu"
+            android:targetActivity=".TermsActivity"
+            android:icon="@mipmap/ic_launcher_doutu"
+            android:label="@string/app_name"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity
+            android:name=".features.wei.WeiHomeActivity"
+            android:screenOrientation="portrait"
+            android:exported="false"
+            android:theme="@style/Theme.Doutu.WeiHome" />
+        <activity
+            android:name=".features.zhi.ZhiHomeActivity"
+            android:screenOrientation="portrait"
+            android:exported="false"
+            android:theme="@style/Theme.Doutu.WeiHome" />
+        <activity
+            android:name=".features.zhi.LicaiActivity"
+            android:screenOrientation="portrait"
+            android:exported="false"
+            android:theme="@style/Theme.Doutu.WeiHome" />
+        <activity
+            android:name=".features.zhi.MessageActivity"
+            android:screenOrientation="portrait"
+            android:exported="false"
+            android:theme="@style/Theme.Doutu.WeiHome" />
+        <activity
+            android:name=".features.zhi.PayMsgActivity"
+            android:screenOrientation="portrait"
+            android:exported="true"
+            android:theme="@style/Theme.Doutu.WeiHome" />
+        <activity
+            android:name=".features.zhi.SwitchAccountActivity"
+            android:screenOrientation="portrait"
+            android:exported="true"
+            android:theme="@style/Theme.Doutu.WeiHome" />
+        <activity
+            android:name=".features.zhi.PaySuccessActivity"
+            android:screenOrientation="portrait"
+            android:exported="true"
+            android:theme="@style/Theme.Doutu.WeiHome" />
+        <activity
+            android:name=".features.zhi.MeActivity"
+            android:screenOrientation="portrait"
+            android:exported="false"
+            android:theme="@style/Theme.Doutu.WeiHome" />
+        <activity
+            android:name=".features.zhi.ProfileActivity"
+            android:screenOrientation="portrait"
+            android:exported="false"
+            android:theme="@style/Theme.Doutu.WeiHome" />
+        <activity
+            android:name=".features.zhi.BillActivity"
+            android:screenOrientation="portrait"
+            android:exported="false"
+            android:theme="@style/Theme.Doutu.WeiHome" />
+        <activity
+            android:name=".features.zhi.ReceiptActivity"
+            android:screenOrientation="portrait"
+            android:exported="false"
+            android:theme="@style/Theme.Doutu.WeiHome" />
+        <activity
+            android:name=".features.zhi.ReceiptDetailActivity"
+            android:screenOrientation="portrait"
+            android:exported="false"
+            android:theme="@style/Theme.Doutu.WeiHome" />
+        <activity
+            android:name=".features.zhi.WithdrawActivity"
+            android:screenOrientation="portrait"
+            android:exported="false"
+            android:theme="@style/Theme.Doutu.WeiHome" />
+        <activity
+            android:name=".features.zhi.WithdrawDoneActivity"
+            android:screenOrientation="portrait"
+            android:exported="false"
+            android:theme="@style/Theme.Doutu.WeiHome" />
+        <activity
+            android:name=".features.zhi.XiaohebaoActivity"
+            android:screenOrientation="portrait"
+            android:exported="false"
+            android:theme="@style/Theme.Doutu.WeiHome" />
+        <activity
+            android:name=".features.zhi.BillAnalyticsActivity"
+            android:screenOrientation="portrait"
+            android:exported="false"
+            android:theme="@style/Theme.Doutu.WeiHome" />
+        <activity
+            android:name=".features.zhi.BillDetailActivity"
+            android:screenOrientation="portrait"
+            android:exported="false"
+            android:theme="@style/Theme.Doutu.WeiHome" />
+        <activity
+            android:name=".features.zhi.AssetActivity"
+            android:screenOrientation="portrait"
+            android:exported="true"
+            android:theme="@style/Theme.Doutu.WeiHome" />
+        <activity
+            android:name=".features.zhi.BalanceActivity"
+            android:screenOrientation="portrait"
+            android:exported="true"
+            android:theme="@style/Theme.Doutu.WeiHome" />
+        <activity
+            android:name=".features.zhi.YuebaoActivity"
+            android:screenOrientation="portrait"
+            android:exported="true"
+            android:theme="@style/Theme.Doutu.WeiHome" />
+        <activity
+            android:name=".features.zhi.HuabeiActivity"
+            android:screenOrientation="portrait"
+            android:exported="true"
+            android:theme="@style/Theme.Doutu.WeiHome" />
+        <activity
+            android:name=".features.zhima.ZhimaCreditActivity"
+            android:screenOrientation="portrait"
+            android:exported="false"
+            android:theme="@style/Theme.Doutu.WeiHome" />
+        <activity
+            android:name=".features.scan.ScanActivity"
+            android:screenOrientation="portrait"
+            android:exported="false"
+            android:theme="@style/Theme.Doutu.Scan" />
+        <activity
+            android:name=".features.pay.PayCodeActivity"
+            android:screenOrientation="portrait"
+            android:exported="false"
+            android:theme="@style/Theme.Doutu.PayCode" />
+        <activity
+            android:name=".features.travel.TravelActivity"
+            android:screenOrientation="portrait"
+            android:exported="false"
+            android:theme="@style/Theme.Doutu.PayCode" />
+        <activity
+            android:name=".features.pay.CollectMoneyActivity"
+            android:screenOrientation="portrait"
+            android:exported="false"
+            android:theme="@style/Theme.Doutu.Collect" />
+        <activity
+            android:name=".features.order.TaobaoOrderActivity"
+            android:screenOrientation="portrait"
+            android:exported="false"
+            android:theme="@style/Theme.Doutu.WeiHome" />
+        <activity
+            android:name=".features.service.CustomerServiceActivity"
+            android:screenOrientation="portrait"
+            android:exported="false"
+            android:theme="@style/Theme.Doutu.WeiHome" />
+        <activity
+            android:name=".account.ResetByInviteActivity"
+            android:screenOrientation="portrait"
+            android:exported="false"
+            android:theme="@style/Theme.Doutu.WeiHome" />
+    </application>
+</manifest>
+
+

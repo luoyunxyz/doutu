@@ -1,0 +1,50 @@
+*** Begin Patch
+*** Update File: app/src/main/java/com/example/doutu/features/zhi/ui/GrowthScreen.java
+@@
+-    public static final float CONTENT_H = 3850f;
++    public static final float CONTENT_H = 2816f;
+@@
+-        drawArt(c, "back", BACK_PLATE);
++        // The tier card assets already contain their own outer frame. Drawing the generic
++        // back plate below them creates a second brown outline and a visible offset shadow.
++        if (LicaiVersion.current() == 0) drawArt(c, "back", BACK_PLATE);
+@@
+     private void drawMarketContent(Canvas c) {
+         drawMarketRow(c);
+         drawArt(c, "funds", 0, FUNDS_TOP, W, FUNDS_TOP + 404);
+         drawArt(c, "discover", 0, FUNDS_TOP + 414, W, FUNDS_TOP + 688);
+         drawArt(c, "banner", 0, FUNDS_TOP + 698, W, FUNDS_TOP + 882);
++        // The supplied banner is the section header, not the end of the page. Keep the
++        // continuation populated so the fixed navigation bar never exposes a dead empty area.
++        round(c, 32, FUNDS_TOP + 900, 1248, FUNDS_TOP + 1175, 28, CARD_WHITE);
++        text(c, "稳健理财", 70, FUNDS_TOP + 982, 44, 0xff292a2d);
++        text(c, "精选低波动产品，收益稳步增长", 70, FUNDS_TOP + 1050, 32, 0xff858990);
++        text(c, "查看全部", 1060, FUNDS_TOP + 982, 30, 0xff9b7257);
++        line(c, 70, FUNDS_TOP + 1092, 1210, FUNDS_TOP + 1092, 0xffeff0f2, 2);
++        text(c, "月月享 | 长城短债", 70, FUNDS_TOP + 1140, 36, 0xff34363a);
++        text(c, "近一年净值增长", 760, FUNDS_TOP + 1140, 30, 0xff9b9da3);
+     }
+@@
+     public void drawNav(Canvas c, LicaiScreen page) {
+         Bitmap nav = art.get("nav");
+         if (nav == null) {
+             page.drawNav(c);
+             return;
+         }
+         paint.setShader(null);
+         paint.setColor(Color.WHITE);
+-        r.set(0, NAV_TOP, W, NAV_TOP + nav.getHeight() * W / nav.getWidth());
++        c.drawRect(0, NAV_TOP, W, H, paint);
++        r.set(0, NAV_TOP, W, H);
+         c.drawBitmap(nav, null, r, paint);
+     }
+*** Update File: app/src/main/java/com/example/doutu/features/zhi/ui/MessageScreen.java
+@@
+         if (LicaiVersion.blackCard(LicaiVersion.current())) {
+-            c.drawColor(0xff131313);
++            // Only the header artwork is dark; the conversation area remains a light page.
++            c.drawColor(PAGE_LOW);
+             drawArt(c, "blackBackground", 0, 0, W, 440);
+             return;
+         }
+*** End Patch

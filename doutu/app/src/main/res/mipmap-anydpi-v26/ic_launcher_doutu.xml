@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 豆图那一款（logo.png）。前景是原图等比铺在 108dp 画布中间的那张，
+     背景是原图自己的底色 #0074ff，所以任何形状的遮罩下都不会露白边。 -->
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@mipmap/ic_launcher_doutu_background" />
+    <foreground android:drawable="@mipmap/ic_launcher_doutu_foreground" />
+</adaptive-icon>

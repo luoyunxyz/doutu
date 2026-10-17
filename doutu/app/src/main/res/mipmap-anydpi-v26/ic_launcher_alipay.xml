@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 支付宝（alipay.png）。注意这张原图虽然叫 .png，实际是 72x72 的 JPEG，
+     所以没有透明通道，底色就是 #1778fd。 -->
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@mipmap/ic_launcher_alipay_background" />
+    <foreground android:drawable="@mipmap/ic_launcher_alipay_foreground" />
+</adaptive-icon>

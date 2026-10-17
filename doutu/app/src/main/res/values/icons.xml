@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 应用图标由四个 activity-alias 各自带一张，直接引 res/drawable-nodpi 里的方图：
+         alipay.png / hkalipay.png / wechat.png / logo.png（都取自
+         D:\AAA\pojia\export\02_flutter_assets\flutter_assets\assets\tupian）。
+         这里不再另起一层 drawable 别名，清单里直接写 @drawable/xxx 就好。 -->
+</resources>

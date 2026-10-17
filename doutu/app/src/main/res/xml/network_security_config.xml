@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    正式包（release）的网络安全策略：**只允许 HTTPS**。
+
+    · cleartextTrafficPermitted="false"：任何明文 HTTP 请求都会被系统直接拒绝，
+      所以客户端不可能连 http://IP 这种地址（配合 app/build.gradle 里编译期注入的域名，
+      就做到了「客户端不存 IP」）。
+    · trust-anchors 只信任系统根证书；正式环境用宝塔签发的 Let's Encrypt 证书即可。
+    · 调试包的放宽策略在 app/src/debug/res/xml/network_security_config.xml，
+      构建时会按 buildType 覆盖这个文件，不会混进正式包。
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>

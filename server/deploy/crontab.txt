@@ -1,0 +1,138 @@
+# =============================================================================
+# 短视频去水印平台 · 定时任务（crontab）
+# -----------------------------------------------------------------------------
+# 对应用户规划书 9.3 节。部署方式（Ubuntu 22.04 / 宝塔）：
+#   安装位置：/etc/cron.d/doutu        （注意：该目录下文件不能有 . 后缀、属主必须是 root）
+#   或：crontab -u www -e               （宝塔「计划任务」等价做法）
+#   推荐 /etc/cron.d/doutu，便于随代码库一起版本化，示例：
+#     cp /www/wwwroot/api.example.com/deploy/crontab.txt /etc/cron.d/doutu
+#     chown root:root /etc/cron.d/doutu && chmod 644 /etc/cron.d/doutu
+#   重载：systemctl restart cron
+#
+# ★ 部署前置条件：
+#   本文件调用的 6 个任务 CLI 全部位于 src/cron/ 下（expire-check / revenue-daily /
+#   reconcile / route-health / cleanup / system-health），备份 CLI 为 src/cron/backup.js，
+#   均已随代码库提供，package.json 里也有对应的 npm script 可手动执行验证：
+#     npm run cron:expire | cron:revenue | cron:reconcile | cron:route-health | cron:cleanup
+#   上线前请先用 runuser -u www -- <node> <脚本> 手动跑一遍，确认 .env 与 node 路径没问题。
+#
+# 时间基准（极其重要）：
+#   接口签名使用 SIGN_WINDOW_SEC=300 的时间窗，对账与收益聚合按自然日切天。
+#   服务器时间一旦漂移超过几分钟，客户端签名会全量校验失败（表现为大面积 401）。
+#   因此部署时必须 `timedatectl set-ntp true`（deploy.sh 已包含），并监控时钟偏移。
+#   本文件所有时间都是「服务器本地时间」，TZ 必须为 Asia/Shanghai。
+#
+# 命令约定：
+#   * 所有任务都是「跑完即退出」的 CLI，不使用常驻进程，因此不需要 Supervisor 守护。
+#   * 统一显式写入 PATH/TZ，因为 cron 默认环境极简，找不到 node 是最常见的翻车点。
+#   * node 路径必须与 supervisor.conf 中的 command 保持一致（Node.js >= 20；
+#     宝塔若安装的是 v20.18.0，则把下面的 v18 改成 v20.18.0，可用
+#     `ls /www/server/nodejs/` 确认真实目录名）。
+#   * 全部任务输出到 /www/logs，cron 自身的邮件输出丢弃（MAILTO=""），
+#     否则任务一报错就往 /var/mail 堆积。
+#   * 任务执行状态与耗时由应用自身通过 ALERT_WEBHOOK 推送到钉钉/企业微信。
+# =============================================================================
+
+SHELL=/bin/bash
+PATH=/www/server/nodejs/v18/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+TZ=Asia/Shanghai
+MAILTO=""
+# 下面 4 行是 cron 的环境变量定义，仅 /etc/cron.d/ 形式支持；（crontab -e 同样支持）
+
+# -----------------------------------------------------------------------------
+# 1) 到期扫描：每 10 分钟
+#    扫描已过期的会员/套餐/任务授权，写回过期状态。
+#    10 分钟是「用户体感」与「负载」的平衡点：写操作很轻（≤500 用户量级，单次几毫秒到几十毫秒），
+#    但授权到期必须及时生效，否则会出现「已过期仍能去水印」的资损。
+# -----------------------------------------------------------------------------
+*/10 * * * * www /www/server/nodejs/v18/bin/node /www/wwwroot/api.example.com/src/cron/expire-check.js >> /www/logs/cron-expire-check.log 2>&1
+
+# -----------------------------------------------------------------------------
+# 2) 收益日聚合：每日 01:10，补算最近 3 天
+#    01:10 而非 00:00 的原因：
+#      - 00:00 正是跨天峰值，订单/回调仍在写入，聚合会读到半截数据；
+#      - 留出 MySQL 备份（凌晨低峰）与 binlog 归档的 IO 余量。
+#    补算 3 天的原因：
+#      - 支付渠道 T+1 才把对账明细给全，昨天数据可能还不完整；
+#      - 跨天未结算订单、时区边界订单需要重算，保证日报可重复执行（幂等 upsert）。
+# -----------------------------------------------------------------------------
+10 1 * * * www /www/server/nodejs/v18/bin/node /www/wwwroot/api.example.com/src/cron/revenue-daily.js --days=3 >> /www/logs/cron-revenue-daily.log 2>&1
+
+# -----------------------------------------------------------------------------
+# 3) 支付对账：每日 02:00
+#    与易支付/渠道的账单逐笔比对，找出「已支付未开通」「已开通未支付」的差异。
+#    02:00 时渠道对账文件已就绪且业务低峰；差异项会在后台生成待处理工单。
+#    该任务失败必须立即告警（见 docs/DEPLOY.md 监控阈值表）。
+# -----------------------------------------------------------------------------
+0 2 * * * www /www/server/nodejs/v18/bin/node /www/wwwroot/api.example.com/src/cron/reconcile.js >> /www/logs/cron-reconcile.log 2>&1
+
+# -----------------------------------------------------------------------------
+# 4) 解析线路健康统计：每 5 分钟
+#    统计各解析线路（media-parser 及备用线路）的成功率/耗时/失败原因，
+#    用于自动降权坏线路，并向控制台提供近 5 分钟视图。
+#    5 分钟是告警实时性与样本量的平衡：太短样本不足易误判，太长发现故障太慢。
+# -----------------------------------------------------------------------------
+*/5 * * * * www /www/server/nodejs/v18/bin/node /www/wwwroot/api.example.com/src/cron/route-health.js >> /www/logs/cron-route-health.log 2>&1
+
+# -----------------------------------------------------------------------------
+# 5) 清理临时文件：每小时
+#    TMPDIR=/www/tmp 存放 ffmpeg 中间文件（源视频、音视频流、水印中间帧），
+#    单任务可达数百 MB，几小时就能把磁盘吃满；磁盘满会直接导致 MySQL 拒写。
+#    每小时清一次「修改时间超过 2 小时」的残留（应用内也会清，这里是兜底），
+#    与 TASK_TIMEOUT_SEC=120 相比留了足够宽的安全余量，不会误删正在处理的任务。
+# -----------------------------------------------------------------------------
+0 * * * * www /www/server/nodejs/v18/bin/node /www/wwwroot/api.example.com/src/cron/cleanup.js >> /www/logs/cron-cleanup.log 2>&1
+
+# -----------------------------------------------------------------------------
+# 6) 数据库备份与备份转存 OSS：每日 03:00 / 03:30
+#    - 03:00 全量备份：业务最低峰（01:10 聚合、02:00 对账都已结束），
+#      mysqldump 单线程读会占用 IO，避开这两个任务可防止对账超时。
+#      本地产物保留 7 天（--retain-days=7，由应用提供参数）。
+#    - 03:30 转存 OSS：30 分钟足够一次全量导出+压缩完成；
+#      上云保留 30 天，实现「本地 7 天 + OSS 30 天」双份。
+#      转存脚本复用应用内实现（加密 + 上传），避免再维护一份 shell。
+#
+#    加密说明（见 docs/DEPLOY.md「备份策略」）：
+#      备份文件在离开本机前必须加密，命令形如
+#        openssl enc -aes-256-cbc -pbkdf2 -iter 200000 -salt \
+#          -in doutu-$(date +%F).sql.gz -out doutu-$(date +%F).sql.gz.enc \
+#          -pass file:/www/backup/.backup_pass
+#      密钥文件 /www/backup/.backup_pass 必须 chmod 600 且不进版本库；
+#      该加密/上传逻辑由 `src/cron/backup.js` 内部完成（--encrypt --upload-oss）。
+#      注意：backup.js 属于本项目的备份 CLI，需与主程序一并提供；
+#      若首期尚未实现，请改用下面「宝塔替代做法」或纯 shell 的 mysqldump+openssl 方案。
+#
+#    宝塔替代做法：面板 -> 计划任务 -> 备份数据库 / 备份到 OSS，
+#      此时可注释掉下面两行，但请确保「保留份数」与本地 7 天一致。
+# -----------------------------------------------------------------------------
+0 3 * * * www /www/server/nodejs/v18/bin/node /www/wwwroot/api.example.com/src/cron/backup.js --retain-days=7 >> /www/logs/cron-backup.log 2>&1
+30 3 * * * www /www/server/nodejs/v18/bin/node /www/wwwroot/api.example.com/src/cron/backup.js --upload-oss --encrypt --retain-remote-days=30 >> /www/logs/cron-backup-oss.log 2>&1
+
+# -----------------------------------------------------------------------------
+# 7) 服务器与进程健康检查：每 5 分钟
+#    对应规划书 10.2 的监控项：CPU / 内存 / 磁盘 > 85%、媒体处理进程是否存活。
+#    5 分钟一次 + 告警侧 10 分钟静默窗口 = 「持续超过一个采样周期才告警一次」，
+#    既能发现真实故障，又不会把钉钉机器人刷爆。
+#    worker 存活判定依据是 sys_worker 表的心跳（worker 每轮消费都写一次）。
+# -----------------------------------------------------------------------------
+*/5 * * * * www /www/server/nodejs/v18/bin/node /www/wwwroot/api.example.com/src/cron/system-health.js >> /www/logs/cron-system-health.log 2>&1
+
+# -----------------------------------------------------------------------------
+# 8) 时间同步兜底：每日 04:10 强制校时
+#    chrony/systemd-timesyncd 平时会自己同步，这里再加一道保险。
+#    原因：签名时间窗 SIGN_WINDOW_SEC=300，时钟偏移 5 分钟以上会让所有客户端的
+#    签名校验失败，属于「一行配置改动导致全站不可用」的高危故障。
+#    只允许校时、不允许跳变影响业务，因此放在 04:10 低峰。
+#    （Ubuntu 22.04 默认 systemd-timesyncd；若装了 chrony 请把命令换成
+#      chronyc makestep，且不要两个 NTP 服务同时启用。）
+# -----------------------------------------------------------------------------
+10 4 * * * root /usr/bin/systemctl restart systemd-timesyncd >> /www/logs/cron-ntp.log 2>&1
+
+# =============================================================================
+# 运维检查命令
+#   systemctl status cron                    # cron 服务状态
+#   tail -f /www/logs/cron-reconcile.log     # 跟踪某个任务输出
+#   grep CRON /var/log/syslog | tail -50     # 确认 cron 是否真的触发了任务
+#   runuser -u www -- /www/server/nodejs/v18/bin/node /www/wwwroot/api.example.com/src/cron/expire-check.js
+#                                            # 手动跑一次，验证 node 路径与 .env 是否可用
+# =============================================================================

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 支付宝（香港版，hkalipay.png）。这一张是 48x48 的深色底方图，
+     底下的 支 是浅色的，所以背景就取它自己的 #000000。 -->
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@mipmap/ic_launcher_alipay_hk_background" />
+    <foreground android:drawable="@mipmap/ic_launcher_alipay_hk_foreground" />
+</adaptive-icon>

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>短视频去水印平台 · 管理后台</title>
+<!-- 内联 data URI 图标：避免浏览器请求 /favicon.ico（那条请求必然是 404，会在控制台留错误） -->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232f6fed'/%3E%3Ctext x='16' y='22' font-size='15' font-family='Arial' font-weight='bold' fill='%23fff' text-anchor='middle'%3EDW%3C/text%3E%3C/svg%3E">
+<!-- 只引本地资源，零 CDN / 零外部字体，内网与离线环境可直接打开 -->
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ============================ 登录层 ============================ -->
+<div id="login-layer" class="login-layer">
+  <div class="login-box">
+    <div class="login-brand">
+      <div class="login-logo">DW</div>
+      <div>
+        <h1>短视频去水印平台</h1>
+        <p>管理后台 · Admin Console</p>
+      </div>
+    </div>
+
+    <form id="login-form" class="login-form" autocomplete="off">
+      <label class="field">
+        <span class="field-label">管理员账号</span>
+        <input id="login-username" name="username" type="text" placeholder="请输入用户名" autocomplete="username" required>
+      </label>
+      <label class="field">
+        <span class="field-label">登录密码</span>
+        <input id="login-password" name="password" type="password" placeholder="请输入密码" autocomplete="current-password" required>
+      </label>
+      <label class="field" id="login-totp-field" hidden>
+        <span class="field-label">动态验证码 (TOTP)</span>
+        <input id="login-totp" name="totp" type="text" inputmode="numeric" maxlength="6" placeholder="6 位动态码" autocomplete="one-time-code">
+      </label>
+      <div id="login-error" class="login-error" hidden></div>
+      <button id="login-submit" class="btn btn-primary btn-block" type="submit">登 录</button>
+    </form>
+
+    <p class="login-foot">登录失败 5 次将锁定 15 分钟；请勿在公共设备保存密码。</p>
+  </div>
+</div>
+
+<!-- ============================ 主框架 ============================ -->
+<div id="app-layer" class="app-layer" hidden>
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-logo">DW</div>
+      <div class="brand-text">
+        <strong>去水印后台</strong>
+        <span>Admin Console</span>
+      </div>
+    </div>
+    <nav id="nav" class="nav"></nav>
+    <div class="sidebar-foot">仅限授权管理员使用</div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <div class="topbar-title">
+        <h2 id="page-title">数据概览</h2>
+        <span id="page-desc" class="page-desc"></span>
+      </div>
+      <div class="topbar-actions">
+        <span id="top-admin" class="top-admin">-</span>
+        <button id="btn-quickpw" class="btn btn-ghost btn-sm" type="button">修改密码</button>
+        <button id="btn-refresh" class="btn btn-ghost btn-sm" type="button">刷新</button>
+        <button id="btn-logout" class="btn btn-ghost btn-sm btn-danger-text" type="button">退出</button>
+      </div>
+    </header>
+
+    <section id="view" class="view">
+      <div class="loading-block">加载中…</div>
+    </section>
+  </div>
+</div>
+
+<!-- ============================ 挂载点 ============================ -->
+<div id="modal-root"></div>
+<div id="toast-root" class="toast-root"></div>
+
+<script src="app.js"></script>
+</body>
+</html>

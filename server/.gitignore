@@ -1,0 +1,26 @@
+# 运行时与本地环境（生产服务器上这些不进版本库）
+.env
+.env.local
+
+# 依赖
+node_modules/
+
+# 运行时产物
+data/
+logs/
+storage/
+backup/
+screenshots/
+tools/
+
+# 对外静态目录只保留目录说明，产物（APK/增量包）不进版本库
+public/upgrade/app/
+public/upgrade/patch/
+
+# 编辑器 / 系统
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+*.log
+*.tmp

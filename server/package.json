@@ -1,0 +1,36 @@
+{
+  "name": "doutu-server",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "短视频去水印平台服务端：业务 API + 管理后台 + 媒体合成 worker",
+  "engines": {
+    "node": ">=20.11.0"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "worker": "node src/worker.js",
+    "dev": "node --watch src/index.js",
+    "db:init": "node scripts/init-db.js",
+    "db:seed": "node scripts/seed.js",
+    "db:reset": "node scripts/init-db.js --drop --seed",
+    "db:sql": "node scripts/export-sql.js",
+    "admin:create": "node scripts/create-admin.js",
+    "invite:gen": "node scripts/gen-invites.js",
+    "smoke": "node scripts/smoke.js",
+    "e2e": "node scripts/e2e.js",
+    "test:feedback": "node scripts/feedback-test.js",
+    "ui:check": "node scripts/ui-check.js",
+    "cron:expire": "node src/cron/expire-check.js",
+    "cron:revenue": "node src/cron/revenue-daily.js",
+    "cron:reconcile": "node src/cron/reconcile.js",
+    "cron:route-health": "node src/cron/route-health.js",
+    "cron:cleanup": "node src/cron/cleanup.js",
+    "cron:health": "node src/cron/system-health.js",
+    "cron:backup": "node src/cron/backup.js",
+    "cron:backup:verify": "node src/cron/backup.js --verify"
+  },
+  "optionalDependencies": {
+    "mysql2": "^3.11.5"
+  }
+}

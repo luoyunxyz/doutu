@@ -1,0 +1,80 @@
+# 在云端构建 iOS 包 —— **仓库根就是 `ios/` 时用这一份**
+#
+# 这一份与仓库根的 `.github/workflows/ios-build.yml` 内容等价，
+# 唯一区别是：**没有 `working-directory: ios`，所有路径都不带 `ios/` 前缀**
+# （因为此时 `ios/` 本身就是仓库根）。
+#
+# 如果你把整个 `doutu/` 推上 GitHub，请用仓库根那份，别用这份。
+#
+# 自动化核对：`node _ios/verify-ci.mjs`
+
+name: build-ios-ipa
+
+on:
+  push:
+    paths:
+      - "**"
+      - "!build/**"
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: 编译并打包未签名 IPA
+    runs-on: macos-14
+    timeout-minutes: 30
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 安装 XcodeGen
+        run: brew install xcodegen
+
+      - name: 生成 Xcode 工程
+        run: |
+          xcodegen generate
+          ls -la
+          xcodebuild -list -project Doutu.xcodeproj
+
+      - name: 编译（不签名）
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project Doutu.xcodeproj \
+            -scheme Doutu \
+            -sdk iphoneos \
+            -configuration Release \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build 2>&1 | tee build.log | tail -60
+
+      - name: 打包成 IPA（Payload 结构）
+        run: |
+          APP=$(find build/Build/Products/Release-iphoneos -maxdepth 1 -name "*.app" | head -1)
+          echo "找到 App：$APP"
+          test -n "$APP" || { echo "没找到 .app，编译可能失败"; exit 1; }
+          rm -rf Payload Doutu-unsigned.ipa
+          mkdir -p Payload
+          cp -R "$APP" Payload/
+          zip -qr Doutu-unsigned.ipa Payload
+          ls -lh Doutu-unsigned.ipa
+          /usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" Payload/*.app/Info.plist
+          /usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" Payload/*.app/Info.plist
+          /usr/libexec/PlistBuddy -c "Print :MinimumOSVersion" Payload/*.app/Info.plist
+
+      - name: 上传 IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: Doutu-unsigned-ipa
+          path: Doutu-unsigned.ipa
+          if-no-files-found: error
+
+      - name: 失败时保留日志
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: build.log
+          if-no-files-found: ignore

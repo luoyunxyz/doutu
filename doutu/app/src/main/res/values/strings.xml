@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 应用自己的名字。启动器上真正显示的是启用了的那个 activity-alias 的 label，
+         也就是下面这几个：图标和名字是绑在一起的，换图标就是换这一对。 -->
+    <string name="app_name">豆图</string>
+    <string name="icon_name_alipay">支付宝</string>
+    <string name="icon_name_wechat">微信</string>
+</resources>
