@@ -190,7 +190,7 @@ final class CollectMoneyScreen: Screen {
     /// 二维码模块阵列（生成一次）
     private var qrField: [Bool]?
     /// 与 Android 同一个种子
-    private let qrSeed: Int64 = 0x5eed1234abcd
+    private let qrSeed: UInt64 = 0x5eed1234abcd
 
     init() {
         for (key, res) in Self.artNames {
@@ -363,7 +363,7 @@ final class CollectMoneyScreen: Screen {
         if let cached = qrField { return cached }
         let n = qrModules
         var m = [Bool](repeating: false, count: n * n)
-        var state = qrSeed ^ 0x9e3779b97f4a7c15
+        var state: UInt64 = qrSeed ^ 0x9e3779b97f4a7c15
         for i in 0..<m.count {
             state = state &* 6364136223846793005 &+ 1442695040888963407
             m[i] = ((state >> 41) & 1) == 1
