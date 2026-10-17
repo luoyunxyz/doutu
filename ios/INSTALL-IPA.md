@@ -56,12 +56,48 @@ Apple 的设备配对是走 USB 的，要在 iTunes 里勾上「通过 Wi-Fi 同
 每个构建 **90 天**有效，还能加最多 100 个外部测试者。
 需要你提供 **App Store Connect API Key**（.p8 + Key ID + Issuer ID）存进仓库 Secrets。
 
+### 方案 E：TrollStore（能装的话最爽：**永久有效、不用 Apple ID、不限 3 个**）
+
+TrollStore 利用 CoreTrust 漏洞做「永久签名」，把 **未签名/自签的 IPA 直接装成系统级 App**，
+不会 7 天过期。但**只支持特定系统版本**（[官方说明](https://github.com/opa334/TrollStore)）：
+
+| iOS 版本 | 能不能用 TrollStore |
+|---|---|
+| 14.0 beta 1 及更早 | ❌ 永远不行 |
+| 14.0 beta 2 – 15.6.1 | ✅ 部分机型可**直接 Safari 安装**（TrollHelperOTA，不用电脑）|
+| 15.5 – 16.6.1 | ✅ 可以（多数机型要先用 **TrollInstallerX** 装一次 TrollStore）|
+| 16.7 RC (20H18) / 17.0 | ✅ 可以（TrollRestore，**需要电脑 + 数据线**）|
+| 16.7 正式版 / 17.0.1 及更新 | ❌ 永远不会支持 |
+
+先看 **设置 → 通用 → 关于本机 → 版本**。落在上面 ✅ 的范围里才继续。
+
+装 TrollStore 的方法（按机型/版本查 <https://ios.cfw.guide/installing-trollstore>）：
+
+1. **TrollHelperOTA**：Safari 打开官方安装页 → 装 TrollStore（全程不用电脑，最理想）
+2. **TrollInstallerX / TrollMisaka**：要先签一次这个工具（Sideloadly 或手机端签名工具）→ 它再帮你装 TrollStore
+3. **TrollRestore**：电脑 + 数据线跑一个恢复工具（对「没线」的人不友好）
+
+装好 TrollStore 之后装我们的 App：
+
+1. 把 **`Doutu-adhoc.ipa`**（CI 产出的第二份 artifact，ad-hoc 签名版，TrollStore 最爱）
+   传到手机：iCloud 云盘网页上传 / 微信文件传输 / AirDrop 都行
+2. 文件 App 里点这个 ipa → 共享 → **TrollStore** → Install，或打开 TrollStore 点右上 **+** 选它
+3. 桌面上直接出现图标，**不闪退、不过期、不用信任证书**（也不需要开发者模式）
+
+> ⚠️ TrollStore 装的 App **只能在 TrollStore 里卸载**（Apps 页左滑删除），桌面上删不掉。
+> 首次装 TrollStore 时建议顺便在设置里装一个 **Persistence Helper**（选「提示」这类系统 App），
+> 否则 iOS 刷新图标缓存后 App 会打不开，需要用它重新注册一次。
+
+### 五条路对比
+
 | 方案 | 需要线 | 需要花钱 | 有效期 | 稳定性 |
 |---|---|---|---|---|
-| A 一次性插线 + Sideloadly 无线 | 一次 | 免费 | 7 天（重签即可）| 高 |
-| B 手机端自签工具 | 不用 | 免费（共享证书）| 7 天~随时吊销 | 中 |
-| C OTA 云签名 | 不用 | 多数收费 | 看证书 | 低 |
+| A 一次性插线 + Sideloadly（可无线）| 一次 | 免费 | 7 天（重签即可）| 高 |
+| B 手机端自签工具（轻松签/ESign）| 不用 | 免费（共享证书）| 7 天~随时吊销 | 中 |
+| C OTA 云签名（万能签/超级签）| 不用 | 多数收费 | 看证书 | 低 |
 | D TestFlight | 不用 | $99/年 | 90 天 | 最高 |
+| **E TrollStore** | 看系统版本 | 免费 | **永久** | 高（版本受限）|
+
 
 ---
 
@@ -70,8 +106,10 @@ Apple 的设备配对是走 USB 的，要在 iTunes 里勾上「通过 Wi-Fi 同
 1. 打开 <https://github.com/luoyunxyz/doutu/actions>（仓库是私有的，需要你自己的账号登录）
 2. 左侧点 **build-ios-ipa**
 3. 点最上面那次**带绿勾**的运行
-4. 页面拉到最底部 **Artifacts** → 点 **Doutu-unsigned-ipa**
-5. 下载得到 `Doutu-unsigned-ipa.zip`，解压出 **`Doutu-unsigned.ipa`**
+4. 页面拉到最底部 **Artifacts**，会看到两个：
+   - **Doutu-unsigned-ipa** → `Doutu-unsigned.ipa`（未签名，给 Sideloadly / 爱思助手用）
+   - **Doutu-adhoc-ipa** → `Doutu-adhoc.ipa`（ad-hoc 自签版，给 **TrollStore** / 轻松签 / ESign 用）
+5. 按你选的方案下载对应的那个
 
 > GitHub 的 artifact 保留 **90 天**，过期了就在 Actions 里点 **Run workflow** 重跑一次（约 7 分钟）。
 > 不想进网页也能核对构建结果：仓库里 `ci-logs/status.txt` 写着 `status: success` 就是成功，

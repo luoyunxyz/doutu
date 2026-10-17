@@ -112,6 +112,33 @@ jobs:
           /usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" Payload/*.app/Info.plist
           /usr/libexec/PlistBuddy -c "Print :MinimumOSVersion" Payload/*.app/Info.plist
 
+      # 再出一份 **ad-hoc 签名**（codesign -s -）的包：
+      #   * TrollStore 用它最稳（它会把签名换成自己的 fake 根证书，装完**永久有效**、免 Apple ID）
+      #   * 手机端签名工具（轻松签 / ESign / Feather）也更认「本来就有签名的 Mach-O」
+      # 不需要任何开发者证书，ad-hoc 就是「无证书自签」，只是让 Mach-O 里有一份签名结构。
+      - name: 另出 ad-hoc 签名包（给 TrollStore / 手机端签名工具）
+        working-directory: ios
+        run: |
+          set -o pipefail
+          APP=$(find build/Build/Products/Release-iphoneos -maxdepth 1 -name "*.app" | head -1)
+          test -n "$APP" || { echo "没找到 .app"; exit 1; }
+          rm -rf PayloadAdhoc Doutu-adhoc.ipa
+          mkdir -p PayloadAdhoc
+          cp -R "$APP" PayloadAdhoc/
+          codesign --force --sign - --timestamp=none PayloadAdhoc/*.app 2>&1 | tail -5
+          echo "--- codesign 校验 ---"
+          codesign -dv PayloadAdhoc/*.app 2>&1 | head -8 || true
+          codesign --verify --deep --strict PayloadAdhoc/*.app 2>&1 | tail -5 || echo "(verify 有警告，TrollStore 仍可用)"
+          zip -qr Doutu-adhoc.ipa PayloadAdhoc
+          ls -lh Doutu-adhoc.ipa
+
+      - name: 上传 ad-hoc 包
+        uses: actions/upload-artifact@v4
+        with:
+          name: Doutu-adhoc-ipa
+          path: ios/Doutu-adhoc.ipa
+          if-no-files-found: error
+
       # 「装到 iPhone 上」这件事真正依赖的键，这一屏就能看出来：
       #   CFBundleIcons        —— 有没有 App 图标（没有就是白图标）
       #   UIApplicationSceneManifest —— SwiftUI 生命周期必需（没有可能黑屏）
@@ -131,6 +158,8 @@ jobs:
             ls -la Payload/*.app/AppIcon*.png Payload/*.app/Assets.car 2>/dev/null || echo "(没有 AppIcon*.png / Assets.car)"
             echo "=== 字体 ==="
             ls -la Payload/*.app/*.ttf 2>/dev/null || echo "(没有 ttf)"
+            echo "=== 两个 IPA ==="
+            ls -lh Doutu-unsigned.ipa Doutu-adhoc.ipa 2>/dev/null || true
           } 2>&1 | tee info-plist.log
 
       - name: 上传 IPA
