@@ -14,7 +14,6 @@ final class ReceiptScreen: Screen {
     static let H: CGFloat = 2816
 
     final class State: ScreenState {
-        var scroll: CGFloat = 0
     }
 
     private let squeeze: CGFloat = 0.94

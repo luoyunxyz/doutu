@@ -18,7 +18,6 @@ final class CollectMoneyScreen: Screen {
     static let viewportBottom: CGFloat = 2752
 
     final class State: ScreenState {
-        var scroll: CGFloat = 0
         var name = "张三的小店"
     }
 

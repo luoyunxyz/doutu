@@ -48,7 +48,6 @@ final class ZhimaCreditScreen: Screen {
     }
 
     final class State: ScreenState {
-        var scroll: CGFloat = 0
         /// 轮播横向偏移
         var carousel: CGFloat = 0
         /// false = 企业卡收起（310 宽），true = 展开（858 宽）

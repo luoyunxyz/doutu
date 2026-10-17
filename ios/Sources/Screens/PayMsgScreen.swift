@@ -111,7 +111,8 @@ final class PayMsgScreen: Screen {
         return date.timeIntervalSince1970
     }
 
-    private static let sumNum = ["0", "4", "0", "0"]    private static let sumLabel = ["大额消费", "自动扣款", "花呗付款", "分期付款"]
+    private static let sumNum = ["0", "4", "0", "0"]
+    private static let sumLabel = ["大额消费", "自动扣款", "花呗付款", "分期付款"]
     private static let sumNumCx: [CGFloat] = [199, 492, 787, 1081]
     private static let sumLabCx: [CGFloat] = [198, 493, 786, 1080]
 

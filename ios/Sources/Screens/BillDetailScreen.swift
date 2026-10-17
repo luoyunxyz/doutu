@@ -17,7 +17,6 @@ final class BillDetailScreen: Screen {
     static let barH: CGFloat = 290
 
     final class State: ScreenState {
-        var scroll: CGFloat = 0
         /// 要显示的那条账单（由调用方塞进来）
         var bill: Bill?
     }

@@ -25,7 +25,6 @@ final class GrowthScreen: Screen {
 
     /// 与普通版共用状态
     final class State: ScreenState {
-        var scroll: CGFloat = 0
         var expand: CGFloat = 0
         var selectedTab = 0
     }

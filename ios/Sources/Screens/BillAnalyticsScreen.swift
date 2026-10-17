@@ -14,7 +14,6 @@ final class BillAnalyticsScreen: Screen {
     static let navHeight: CGFloat = 300
 
     final class State: ScreenState {
-        var scroll: CGFloat = 0
         var tab = 0
         var income = false
         var weekOffset = 0

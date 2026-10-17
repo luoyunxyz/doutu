@@ -19,7 +19,6 @@ final class AssetScreen: Screen {
     static let contentH: CGFloat = 8120
 
     final class State: ScreenState {
-        var scroll: CGFloat = 0
         /// 隐藏所有金额（点眼睛切换）
         var hideAll = false
         /// 用户改过的数字

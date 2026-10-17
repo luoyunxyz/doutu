@@ -18,7 +18,6 @@ final class BillScreen: Screen {
     static let rowH: CGFloat = 348
 
     final class State: ScreenState {
-        var scroll: CGFloat = 0
         /// 当前页签：全部 / 支出 / 转账 / 退款 / 订单
         var kind = "全部"
         var query = ""

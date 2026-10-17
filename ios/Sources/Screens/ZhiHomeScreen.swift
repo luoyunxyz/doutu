@@ -16,7 +16,6 @@ final class ZhiHomeScreen: Screen {
     static let contentH: CGFloat = 2990
 
     final class State: ScreenState {
-        var scroll: CGFloat = 0
         var address = "上海市浦东新区"
         var plusMenu = false
         var unread = true

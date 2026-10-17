@@ -15,7 +15,6 @@ final class LicaiScreen: Screen {
     static let panelH: CGFloat = 601
 
     final class State: ScreenState {
-        var scroll: CGFloat = 0
         var total = "0.00"
         var yesterday = "0.00"
         var family = "2"
