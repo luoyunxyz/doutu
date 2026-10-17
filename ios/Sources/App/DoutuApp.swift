@@ -806,7 +806,7 @@ final class Router {
     /// 早先这里用的是 `UIAlertController`（模态弹窗）✗ 会挡住操作 1.6 秒，
     /// 与 Toast 的语义相反。现在改成贴在 window 上的一个圆角标签：
     /// 淡入 → 停留 1.4 秒 → 淡出，期间触摸照常穿透。
-    func self.showToast(_ message: String, ok: Bool) {
+    func showToast(_ message: String, ok: Bool) {
         guard !message.isEmpty else { return }
         ToastView.show(message, ok: ok)
     }
