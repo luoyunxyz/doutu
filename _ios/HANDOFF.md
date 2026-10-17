@@ -45,6 +45,10 @@ git show origin/main:ci-logs/build.log | Select-String 'error:'
 
 每轮流程：`改代码 → git commit → git push → 等 7 分钟 → node _ios/ci-status.mjs`
 
+> ⚠️ 额度：私有仓库的 **macOS runner 按 10 倍计费**（每月 2000 分钟 ≈ 20 次构建）。
+> 只有改动 `ios/**` 或 `.github/workflows/ios-build.yml` 才会触发构建 ——
+> 改文档（`_ios/**`、根目录 `*.md`）不会，所以别为了改说明反复推 `ios/` 下的文件。
+
 ## 三、编译阶段修过的问题（别再改回去）
 
 | # | 问题 | 修法 |
