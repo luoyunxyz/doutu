@@ -94,14 +94,17 @@ jobs:
           set -o pipefail
           APP=$(find build/Build/Products/Release-iphoneos -maxdepth 1 -name "*.app" | head -1)
           test -n "$APP" || { echo "没找到 .app"; exit 1; }
-          rm -rf PayloadAdhoc Doutu-adhoc.ipa
-          mkdir -p PayloadAdhoc
-          cp -R "$APP" PayloadAdhoc/
-          codesign --force --sign - --timestamp=none PayloadAdhoc/*.app 2>&1 | tail -5
+          rm -rf stage Doutu-adhoc.ipa
+          # 顶层目录必须叫 Payload（IPA 规范），否则 TrollStore/installd 装不上
+          mkdir -p stage/Payload
+          cp -R "$APP" stage/Payload/
+          ( cd stage && codesign --force --sign - --timestamp=none Payload/*.app ) 2>&1 | tail -5
           echo "--- codesign 校验 ---"
-          codesign -dv PayloadAdhoc/*.app 2>&1 | head -8 || true
-          codesign --verify --deep --strict PayloadAdhoc/*.app 2>&1 | tail -5 || echo "(verify 有警告，TrollStore 仍可用)"
-          zip -qr Doutu-adhoc.ipa PayloadAdhoc
+          ( cd stage && codesign -dv Payload/*.app ) 2>&1 | head -8 || true
+          ( cd stage && codesign --verify --deep --strict Payload/*.app ) 2>&1 | tail -5 || echo "(verify 有警告，TrollStore 仍可用)"
+          ( cd stage && zip -qr ../Doutu-adhoc.ipa Payload )
+          echo "--- adhoc 包顶层结构（必须是 Payload/）---"
+          unzip -l Doutu-adhoc.ipa | head -6
           ls -lh Doutu-adhoc.ipa
       - name: 上传 ad-hoc 包
         uses: actions/upload-artifact@v4
@@ -122,6 +125,8 @@ jobs:
             ls -la Payload/*.app/AppIcon*.png Payload/*.app/Assets.car 2>/dev/null || echo "(没有 AppIcon*.png / Assets.car)"
             echo "=== 字体 ==="
             ls -la Payload/*.app/*.ttf 2>/dev/null || echo "(没有 ttf)"
+            echo "=== adhoc 包顶层结构（必须 Payload/）==="
+            unzip -l Doutu-adhoc.ipa 2>/dev/null | head -6 || true
             echo "=== 两个 IPA ==="
             ls -lh Doutu-unsigned.ipa Doutu-adhoc.ipa 2>/dev/null || true
           } 2>&1 | tee info-plist.log
