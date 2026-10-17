@@ -584,31 +584,31 @@ extension LicaiScreen.State: EditableState {
     func applyEdit(_ key: String, _ text: String) {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         switch key {
-        case "total": if !trimmed.isEmpty { state.total = trimmed }
-        case "yesterday": if !trimmed.isEmpty { state.yesterday = trimmed }
-        case "family": state.family = trimmed.isEmpty ? "2" : trimmed
-        case "idx0": if !trimmed.isEmpty { state.index[0] = trimmed }
-        case "idx1": if !trimmed.isEmpty { state.index[1] = trimmed }
-        case "idx2": if !trimmed.isEmpty { state.index[2] = trimmed }
-        case "idxp0": if !trimmed.isEmpty { state.indexPct[0] = trimmed }
-        case "idxp1": if !trimmed.isEmpty { state.indexPct[1] = trimmed }
-        case "idxp2": if !trimmed.isEmpty { state.indexPct[2] = trimmed }
-        case "fundName": if !trimmed.isEmpty { state.fundName = trimmed }
-        case "fundPct": if !trimmed.isEmpty { state.fundPct = trimmed }
-        case "stockName": if !trimmed.isEmpty { state.stockName = trimmed }
-        case "stockPct": if !trimmed.isEmpty { state.stockPct = trimmed }
-        case "etf0": if !trimmed.isEmpty { state.etfName[0] = trimmed }
-        case "etf1": if !trimmed.isEmpty { state.etfName[1] = trimmed }
-        case "etf2": if !trimmed.isEmpty { state.etfName[2] = trimmed }
-        case "etfp0": if !trimmed.isEmpty { state.etfPct[0] = trimmed }
-        case "etfp1": if !trimmed.isEmpty { state.etfPct[1] = trimmed }
-        case "etfp2": if !trimmed.isEmpty { state.etfPct[2] = trimmed }
-        case "windName": if !trimmed.isEmpty { state.windName = trimmed }
-        case "windPct": if !trimmed.isEmpty { state.windPct = trimmed }
-        case "windLine1": if !trimmed.isEmpty { state.windLine1 = trimmed }
-        case "windLine2": if !trimmed.isEmpty { state.windLine2 = trimmed }
-        case "prodName": if !trimmed.isEmpty { state.prodName = trimmed }
-        case "prodPct": if !trimmed.isEmpty { state.prodPct = trimmed }
+        case "total": if !trimmed.isEmpty { self.total = trimmed }
+        case "yesterday": if !trimmed.isEmpty { self.yesterday = trimmed }
+        case "family": self.family = trimmed.isEmpty ? "2" : trimmed
+        case "idx0": if !trimmed.isEmpty { self.index[0] = trimmed }
+        case "idx1": if !trimmed.isEmpty { self.index[1] = trimmed }
+        case "idx2": if !trimmed.isEmpty { self.index[2] = trimmed }
+        case "idxp0": if !trimmed.isEmpty { self.indexPct[0] = trimmed }
+        case "idxp1": if !trimmed.isEmpty { self.indexPct[1] = trimmed }
+        case "idxp2": if !trimmed.isEmpty { self.indexPct[2] = trimmed }
+        case "fundName": if !trimmed.isEmpty { self.fundName = trimmed }
+        case "fundPct": if !trimmed.isEmpty { self.fundPct = trimmed }
+        case "stockName": if !trimmed.isEmpty { self.stockName = trimmed }
+        case "stockPct": if !trimmed.isEmpty { self.stockPct = trimmed }
+        case "etf0": if !trimmed.isEmpty { self.etfName[0] = trimmed }
+        case "etf1": if !trimmed.isEmpty { self.etfName[1] = trimmed }
+        case "etf2": if !trimmed.isEmpty { self.etfName[2] = trimmed }
+        case "etfp0": if !trimmed.isEmpty { self.etfPct[0] = trimmed }
+        case "etfp1": if !trimmed.isEmpty { self.etfPct[1] = trimmed }
+        case "etfp2": if !trimmed.isEmpty { self.etfPct[2] = trimmed }
+        case "windName": if !trimmed.isEmpty { self.windName = trimmed }
+        case "windPct": if !trimmed.isEmpty { self.windPct = trimmed }
+        case "windLine1": if !trimmed.isEmpty { self.windLine1 = trimmed }
+        case "windLine2": if !trimmed.isEmpty { self.windLine2 = trimmed }
+        case "prodName": if !trimmed.isEmpty { self.prodName = trimmed }
+        case "prodPct": if !trimmed.isEmpty { self.prodPct = trimmed }
         default: break
         }
     }

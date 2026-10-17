@@ -1,0 +1,44 @@
+﻿Sources/App/DoutuApp.swift:387:17: error: reference to property 'host' in closure requires explicit use of 'self' to make capture semantics explicit
+Sources/App/DoutuApp.swift:454:56: error: extraneous argument label 'safe:' in subscript
+Sources/App/DoutuApp.swift:523:21: error: reference to property 'host' in closure requires explicit use of 'self' to make capture semantics explicit
+Sources/App/DoutuApp.swift:531:21: error: reference to property 'host' in closure requires explicit use of 'self' to make capture semantics explicit
+Sources/App/DoutuApp.swift:545:25: error: reference to property 'host' in closure requires explicit use of 'self' to make capture semantics explicit
+Sources/App/DoutuApp.swift:551:17: error: reference to property 'host' in closure requires explicit use of 'self' to make capture semantics explicit
+Sources/App/DoutuApp.swift:595:25: error: implicit use of 'self' in closure; use 'self.' to make capture semantics explicit
+Sources/App/DoutuApp.swift:596:25: error: reference to property 'host' in closure requires explicit use of 'self' to make capture semantics explicit
+Sources/App/DoutuApp.swift:599:21: error: reference to property 'host' in closure requires explicit use of 'self' to make capture semantics explicit
+Sources/App/DoutuApp.swift:600:21: error: implicit use of 'self' in closure; use 'self.' to make capture semantics explicit
+Sources/App/DoutuApp.swift:656:25: error: reference to property 'host' in closure requires explicit use of 'self' to make capture semantics explicit
+Sources/App/DoutuApp.swift:668:21: error: reference to property 'host' in closure requires explicit use of 'self' to make capture semantics explicit
+Sources/App/DoutuApp.swift:677:21: error: reference to property 'host' in closure requires explicit use of 'self' to make capture semantics explicit
+Sources/App/DoutuApp.swift:686:21: error: reference to property 'host' in closure requires explicit use of 'self' to make capture semantics explicit
+Sources/App/DoutuApp.swift:743:17: error: reference to property 'host' in closure requires explicit use of 'self' to make capture semantics explicit
+Sources/App/DoutuApp.swift:750:17: error: reference to property 'host' in closure requires explicit use of 'self' to make capture semantics explicit
+Sources/App/DoutuApp.swift:785:17: error: reference to property 'host' in closure requires explicit use of 'self' to make capture semantics explicit
+Sources/App/DoutuApp.swift:792:17: error: reference to property 'host' in closure requires explicit use of 'self' to make capture semantics explicit
+Sources/Screens/HomeShellScreen+Entertainment.swift:94:45: error: cannot call value of non-function type 'Bool'
+Sources/Screens/LicaiScreen.swift:587:45: error: cannot find 'state' in scope
+Sources/Screens/LicaiScreen.swift:588:49: error: cannot find 'state' in scope
+Sources/Screens/LicaiScreen.swift:589:24: error: cannot find 'state' in scope
+Sources/Screens/LicaiScreen.swift:590:44: error: cannot find 'state' in scope
+Sources/Screens/LicaiScreen.swift:591:44: error: cannot find 'state' in scope
+Sources/Screens/LicaiScreen.swift:592:44: error: cannot find 'state' in scope
+Sources/Screens/LicaiScreen.swift:593:45: error: cannot find 'state' in scope
+Sources/Screens/LicaiScreen.swift:594:45: error: cannot find 'state' in scope
+Sources/Screens/LicaiScreen.swift:595:45: error: cannot find 'state' in scope
+Sources/Screens/LicaiScreen.swift:596:48: error: cannot find 'state' in scope
+Sources/Screens/LicaiScreen.swift:597:47: error: cannot find 'state' in scope
+Sources/Screens/LicaiScreen.swift:598:49: error: cannot find 'state' in scope
+Sources/Screens/LicaiScreen.swift:599:48: error: cannot find 'state' in scope
+Sources/Screens/LicaiScreen.swift:600:44: error: cannot find 'state' in scope
+Sources/Screens/LicaiScreen.swift:601:44: error: cannot find 'state' in scope
+Sources/Screens/LicaiScreen.swift:602:44: error: cannot find 'state' in scope
+Sources/Screens/LicaiScreen.swift:603:45: error: cannot find 'state' in scope
+Sources/Screens/LicaiScreen.swift:604:45: error: cannot find 'state' in scope
+Sources/Screens/LicaiScreen.swift:605:45: error: cannot find 'state' in scope
+Sources/Screens/LicaiScreen.swift:606:48: error: cannot find 'state' in scope
+Sources/Screens/LicaiScreen.swift:607:47: error: cannot find 'state' in scope
+Sources/Screens/LicaiScreen.swift:608:49: error: cannot find 'state' in scope
+Sources/Screens/LicaiScreen.swift:609:49: error: cannot find 'state' in scope
+Sources/Screens/LicaiScreen.swift:610:48: error: cannot find 'state' in scope
+Sources/Screens/LicaiScreen.swift:611:47: error: cannot find 'state' in scope

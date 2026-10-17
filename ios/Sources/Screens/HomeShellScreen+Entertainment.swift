@@ -91,7 +91,7 @@ extension HomeShellScreen {
         let top = box.top
         let middle = top + Playbook.rowH / 2
         let titleBaseline = middle - 8
-        let hasSubtitle = !box.row.subtitle.isEmpty()
+        let hasSubtitle = !box.row.subtitle.isEmpty
 
         if !box.firstInSection {
             d.hairline(top, from: 76, to: Playbook.cardRight - 44, Playbook.cardHairline, width: 1.6)

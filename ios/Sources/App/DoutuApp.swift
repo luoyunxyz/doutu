@@ -60,14 +60,14 @@ final class Router {
     /// 进入新页面（保留当前页面的状态，返回时恢复）
     private func push(_ screen: Screen, state: ScreenState = ScreenState()) {
         guard let host else { return }
-        stack.append((host.screen, host.state))
-        host.setScreen(screen, state: state)
+        stack.append((self.host.screen, self.host.state))
+        self.host.setScreen(screen, state: state)
     }
 
     /// 返回上一页；栈空时什么也不做
     private func pop() {
         guard let host, let previous = stack.popLast() else { return }
-        host.setScreen(previous.screen, state: previous.state)
+        self.host.setScreen(previous.screen, state: previous.state)
     }
 
     /// 微模块（小微主页）4×4 宫格（`MainActivity:1736-1799`）。
@@ -117,7 +117,7 @@ final class Router {
         alert.addAction(UIAlertAction(title: "再复制一次", style: .default) { _ in
             UIPasteboard.general.string = store.shareLink
         })
-        host.present(alert, animated: true)
+        self.host.present(alert, animated: true)
     }
 
     /// 全屏弹出小微主页并把路由交过去
@@ -125,7 +125,7 @@ final class Router {
         guard let host = UpdatePrompt.topViewController() else { return }
         let web = WebHostController(route: route)
         web.modalPresentationStyle = .fullScreen
-        host.present(web, animated: true)
+        self.host.present(web, animated: true)
     }
 
     /// 支模块 4×4 宫格（`MainActivity:501-520` 的 `zhiGridIntent`）。
@@ -179,14 +179,14 @@ final class Router {
 
         // 首页外壳：底部三栏 + 平台页签（Android MainActivity）
         case "tab:0", "tab:1", "tab:2":
-            guard let state = host?.state as? HomeShellScreen.State else { return }
+            guard let state = self.host?.state as? HomeShellScreen.State else { return }
             state.tab = HomeShellScreen.Tab(rawValue: Int(token.suffix(1)) ?? 0) ?? .home
             state.scroll = 0
-            host?.setNeedsDisplay()
+            self.host?.setNeedsDisplay()
         case let t where t.hasPrefix("page:"):
-            guard let state = host?.state as? HomeShellScreen.State else { return }
+            guard let state = self.host?.state as? HomeShellScreen.State else { return }
             state.servicePage = max(0, min(3, Int(t.suffix(1)) ?? 0))
-            host?.setNeedsDisplay()
+            self.host?.setNeedsDisplay()
 
         // 首页外壳的宫格：微模块（4×4）与支模块（4×4）
         // 微模块的格子大多进 WebView 里的小微主页（React 页面），这里先接上原生侧已移植的几格；
@@ -220,7 +220,7 @@ final class Router {
                 }
             } else {
                 LoginPresenter.present { [weak self] in
-                    self?.host?.setNeedsDisplay()
+                    self?.self.host?.setNeedsDisplay()
                 }
             }
         case "user":
@@ -229,7 +229,7 @@ final class Router {
                 push(ProfileScreen(), state: ProfileScreen.State())
             } else {
                 LoginPresenter.present { [weak self] in
-                    self?.host?.setNeedsDisplay()
+                    self?.self.host?.setNeedsDisplay()
                 }
             }
         case "member":
@@ -241,9 +241,9 @@ final class Router {
 
         // 「我」页（支模块）
         case "bannerClose":
-            if let state = host?.state as? MeScreen.State {
+            if let state = self.host?.state as? MeScreen.State {
                 state.banner = false
-                host?.setNeedsDisplay()
+                self.host?.setNeedsDisplay()
             }
         case "profile":
             // 身份行 → 个人信息页（Java: 点「我的」页的身份行进 ProfileScreen）
@@ -263,19 +263,19 @@ final class Router {
         // 支模块首页（ZhiHomeScreen）的交互
         case "plus":
             // 右上「+」浮层
-            if let state = host?.state as? ZhiHomeScreen.State {
+            if let state = self.host?.state as? ZhiHomeScreen.State {
                 state.plusMenu = true
-                host?.setNeedsDisplay()
+                self.host?.setNeedsDisplay()
             }
         case "plusClose":
-            if let state = host?.state as? ZhiHomeScreen.State {
+            if let state = self.host?.state as? ZhiHomeScreen.State {
                 state.plusMenu = false
-                host?.setNeedsDisplay()
+                self.host?.setNeedsDisplay()
             }
         case let t where t.hasPrefix("plus:"):
             // 「+」菜单四项：扫一扫 / 收款 / 添加朋友 / 历史记录
             let name = String(t.dropFirst("plus:".count))
-            if let state = host?.state as? ZhiHomeScreen.State {
+            if let state = self.host?.state as? ZhiHomeScreen.State {
                 state.plusMenu = false
             }
             switch name {
@@ -317,10 +317,10 @@ final class Router {
         // 账单页：页签筛选 / 筛选 / 收支分析
         case let t where t.hasPrefix("chip:"):
             let kind = String(t.dropFirst("chip:".count))
-            if let state = host?.state as? BillScreen.State {
+            if let state = self.host?.state as? BillScreen.State {
                 state.kind = kind
                 state.scroll = 0
-                host?.setNeedsDisplay()
+                self.host?.setNeedsDisplay()
             }
         case "analytics":
             // 账单页右上「收支分析」→ 收支分析页
@@ -334,7 +334,7 @@ final class Router {
             if parts.count == 2, let monthIndex = Int(parts[0]), let row = Int(parts[1]) {
                 let screen = BillScreen()
                 if let bill = screen.bill(at: monthIndex, row: row,
-                                          state: host?.state ?? BillScreen.State()) {
+                                          state: self.host?.state ?? BillScreen.State()) {
                     let state = BillDetailScreen.State()
                     state.bill = bill
                     push(BillDetailScreen(), state: state)
@@ -360,7 +360,7 @@ final class Router {
             //   · ReceiptScreen → 单条收款详情（这里的 id 就是 Receipt.id）
             //   · TravelScreen → 出行页的入口
             // 所以这里按「当前是哪一屏」分流，不能只看令牌。
-            if t.hasPrefix("entry:"), host?.screen is ReceiptScreen,
+            if t.hasPrefix("entry:"), self.host?.screen is ReceiptScreen,
                let id = Int64(t.dropFirst("entry:".count)),
                let receipt = ReceiptStore.shared.byId(id) {
                 let state = ReceiptDetailScreen.State()
@@ -371,20 +371,20 @@ final class Router {
 
         // 理财页：展开保障面板 / 隐藏金额 / 主题选择
         case "toggleExpand":
-            if let state = host?.state as? LicaiScreen.State {
+            if let state = self.host?.state as? LicaiScreen.State {
                 state.expand = state.expand > 0.5 ? 0 : 1
-                host?.setNeedsDisplay()
+                self.host?.setNeedsDisplay()
             }
         case "toggleHide":
-            if let state = host?.state as? LicaiScreen.State {
+            if let state = self.host?.state as? LicaiScreen.State {
                 state.hidden.toggle()
-                host?.setNeedsDisplay()
+                self.host?.setNeedsDisplay()
             }
         case "version":
             // 理财主题选择（五档）。选完立刻重绘：黑卡主题会换掉「我的」页、消息页、
             // 支首页的配色与图标，所以不只当前页要重画。
             VersionPicker.present { _ in
-                host?.setNeedsDisplay()
+                self.host?.setNeedsDisplay()
                 NotificationCenter.default.post(name: .doutuThemeChanged, object: nil)
             }
         case "licai":
@@ -392,71 +392,72 @@ final class Router {
 
         // 提现页：金额输入 / 键盘 / 支付密码
         case "amount":
-            if let state = host?.state as? WithdrawScreen.State {
+            if let state = self.host?.state as? WithdrawScreen.State {
                 state.keypad = true
-                host?.setNeedsDisplay()
+                self.host?.setNeedsDisplay()
             }
         case "clear":
-            if let state = host?.state as? WithdrawScreen.State {
+            if let state = self.host?.state as? WithdrawScreen.State {
                 state.amount = ""
-                host?.setNeedsDisplay()
+                self.host?.setNeedsDisplay()
             }
         case "submit", "key:submit":
             // 进支付密码那一层（要求金额合法）
-            if let state = host?.state as? WithdrawScreen.State,
+            if let state = self.host?.state as? WithdrawScreen.State,
                WithdrawScreen.canWithdraw(state, avail: WithdrawStore.shared.avail) {
                 state.password = true
                 state.keypad = false
-                host?.setNeedsDisplay()
+                self.host?.setNeedsDisplay()
             }
         case "key:hide":
-            if let state = host?.state as? WithdrawScreen.State {
+            if let state = self.host?.state as? WithdrawScreen.State {
                 state.keypad = false
-                host?.setNeedsDisplay()
+                self.host?.setNeedsDisplay()
             }
         case "key:del":
-            if let state = host?.state as? WithdrawScreen.State, !state.amount.isEmpty {
+            if let state = self.host?.state as? WithdrawScreen.State, !state.amount.isEmpty {
                 state.amount = String(state.amount.dropLast())
-                host?.setNeedsDisplay()
+                self.host?.setNeedsDisplay()
             }
         case "key:dot":
-            if let state = host?.state as? WithdrawScreen.State, !state.amount.contains(".") {
+            if let state = self.host?.state as? WithdrawScreen.State, !state.amount.contains(".") {
                 state.amount = state.amount.isEmpty ? "0." : state.amount + "."
-                host?.setNeedsDisplay()
+                self.host?.setNeedsDisplay()
             }
         case "pin:close":
-            if let state = host?.state as? WithdrawScreen.State {
+            if let state = self.host?.state as? WithdrawScreen.State {
                 state.password = false
                 state.pin = ""
-                host?.setNeedsDisplay()
+                self.host?.setNeedsDisplay()
             }
         case "pin:del":
-            if let state = host?.state as? WithdrawScreen.State, !state.pin.isEmpty {
+            if let state = self.host?.state as? WithdrawScreen.State, !state.pin.isEmpty {
                 state.pin = String(state.pin.dropLast())
-                host?.setNeedsDisplay()
+                self.host?.setNeedsDisplay()
             }
         case "pin:forgot":
-            showToast("支付密码找回暂未接入", ok: false)
+            self.showToast("支付密码找回暂未接入", ok: false)
         case "bank":
             // 弹出银行卡选择层（对应 Android 的 BankSheet）
-            if let state = host?.state as? WithdrawScreen.State {
+            if let state = self.host?.state as? WithdrawScreen.State {
                 state.bankSheet = true
-                host?.setNeedsDisplay()
+                self.host?.setNeedsDisplay()
             }
         case "close":
-            if let state = host?.state as? WithdrawScreen.State {
+            if let state = self.host?.state as? WithdrawScreen.State {
                 state.bankSheet = false
-                host?.setNeedsDisplay()
+                self.host?.setNeedsDisplay()
             }
         case let t where t.hasPrefix("pick:") && t.count > 5:
             // pick:<行号>：选中那张卡（不可用的卡选不上，由 WithdrawStore.select 保证）
             if let index = Int(t.dropFirst(5)),
-               let card = WithdrawStore.shared.allCards[safe: index] {
+               WithdrawStore.shared.allCards.indices.contains(index) {
+                let card = WithdrawStore.shared.allCards[index]
                 WithdrawStore.shared.select(card.id)
-                if let state = host?.state as? WithdrawScreen.State {
+                if let state = self.host?.state as? WithdrawScreen.State {
                     state.bankSheet = false
                 }
-                host?.setNeedsDisplay()
+                self.host?.setNeedsDisplay()
             }
         case "add":
             // 「添加储蓄卡提现」：先给一张新卡，落位规则照 Java（插在第一张不可用卡之前）
@@ -465,14 +466,14 @@ final class Router {
             store.add(bank: bank.key,
                       name: WithdrawStore.bankCardName(bank.key) ?? "储蓄卡",
                       tail: store.newTail())
-            if let state = host?.state as? WithdrawScreen.State {
+            if let state = self.host?.state as? WithdrawScreen.State {
                 state.bankSheet = false
             }
-            host?.setNeedsDisplay()
-            showToast("已添加一张储蓄卡", ok: true)
+            self.host?.setNeedsDisplay()
+            self.showToast("已添加一张储蓄卡", ok: true)
         case let t where t.hasPrefix("pin:") && t.count == 5:
             // pin:0 … pin:9
-            if let state = host?.state as? WithdrawScreen.State,
+            if let state = self.host?.state as? WithdrawScreen.State,
                state.pin.count < 6, let digit = t.last, digit.isNumber {
                 state.pin.append(digit)
                 // 六位齐了 → 进「提现成功」页（Android `WithdrawActivity` 262-271）
@@ -490,14 +491,14 @@ final class Router {
                     push(WithdrawDoneScreen(), state: done)
                     return
                 }
-                host?.setNeedsDisplay()
+                self.host?.setNeedsDisplay()
             }
         case let t where t.hasPrefix("key:") && t.count == 5:
             // key:0 … key:9
-            if let state = host?.state as? WithdrawScreen.State, let digit = t.last,
+            if let state = self.host?.state as? WithdrawScreen.State, let digit = t.last,
                digit.isNumber {
                 state.amount += String(digit)
-                host?.setNeedsDisplay()
+                self.host?.setNeedsDisplay()
             }
         case "yuebao":
             // 「我的」页资产卡第 3 行 → 余额宝页
@@ -514,13 +515,13 @@ final class Router {
             || t.hasPrefix("edit:") || t.hasPrefix("gedit:"):
             let key = t.hasPrefix("gedit:") ? String(t.dropFirst("gedit:".count))
                                             : EditPrompt.key(from: t)
-            if let key, let editable = host?.state as? EditableState,
+            if let key, let editable = self.host?.state as? EditableState,
                !t.hasPrefix("gedit:") {
                 EditPrompt.present(title: editable.editTitle(key),
                                    current: editable.editValue(key),
                                    numeric: EditPrompt.isNumeric(key)) { text in
                     editable.applyEdit(key, text)
-                    host?.setNeedsDisplay()
+                    self.host?.setNeedsDisplay()
                 }
             } else if let key {
                 // 成长版的数据在 GrowthStore 里（走 `gedit:`），不走页面的 State
@@ -528,27 +529,27 @@ final class Router {
                 EditPrompt.present(title: GrowthStore.titleOf(key), current: current,
                                    numeric: EditPrompt.isNumeric(key)) { text in
                     GrowthStore.shared.setValue(key, text)
-                    host?.setNeedsDisplay()
+                    self.host?.setNeedsDisplay()
                 }
             }
 
         // 成长版：页签切换、理财师头像与名字
         case "redraw", "noop":
-            if let growth = host?.screen as? GrowthScreen, let state = host?.state as? GrowthScreen.State {
+            if let growth = self.host?.screen as? GrowthScreen, let state = self.host?.state as? GrowthScreen.State {
                 _ = growth
                 state.selectedTab = state.selectedTab == 0 ? 1 : 0
-                host?.setNeedsDisplay()
+                self.host?.setNeedsDisplay()
             }
         case "advisorAvatar":
             // 换理财师头像：走系统相册（与账号头像是同一套选择器）
             AvatarPicker.present { ok, _ in
-                if ok { host?.setNeedsDisplay() }
+                if ok { self.host?.setNeedsDisplay() }
             }
         case "advisorName":
             EditPrompt.present(title: "编辑理财师名字",
                                current: AdvisorStore.shared.name, numeric: false) { text in
                 AdvisorStore.shared.setName(text)
-                host?.setNeedsDisplay()
+                self.host?.setNeedsDisplay()
             }
         case let t where t.hasPrefix("detail:"):
             // 账单消息页点某张卡 → 账单详情。卡片文字表在 `PayMsgScreen.bill(at:)` 里
@@ -585,19 +586,19 @@ final class Router {
             // 「⋯」在不同屏上含义不同：只有**账单列表页**的它对应 Android 的
             // `BillActivity.showMoreMenu()`（「账单管理」→ 清空 / 秒变富豪）。
             // 收款码、付款码、收款详情、收支分析上的「⋯」在 Android 上没有处理，保持空转。
-            if host?.screen is BillScreen {
+            if self.host?.screen is BillScreen {
                 BillMenu.present { choice in
                     switch choice {
                     case .clear:
                         BillStore.shared.clear()
                     case .becomeRich:
                         BillStore.shared.becomeRich()
-                        showToast("已生成大额账单", ok: true)
-                        host?.setNeedsDisplay()
+                        self.showToast("已生成大额账单", ok: true)
+                        self.host?.setNeedsDisplay()
                         return
                     }
-                    host?.setNeedsDisplay()
-                    showToast("已清空", ok: true)
+                    self.host?.setNeedsDisplay()
+                    self.showToast("已清空", ok: true)
                 }
             }
         case "numbers":
@@ -630,9 +631,9 @@ final class Router {
             break
         case "expandEnt":
             // 展开企业信用卡
-            if let state = host?.state as? ZhimaCreditScreen.State {
+            if let state = self.host?.state as? ZhimaCreditScreen.State {
                 state.enterpriseOpen = true
-                host?.setNeedsDisplay()
+                self.host?.setNeedsDisplay()
             }
         case "ai":
             break
@@ -643,54 +644,54 @@ final class Router {
             // 真正的替换/添加走**长按**（已在 `longPress` 里接好，弹 8 个模块的选择器）。
             // 之前这里对 empty: 直接弹选择器，与 Android 不一致，现改回提示。
             if t.hasPrefix("feed:") {
-                showToast("长按可替换或删除该模块", ok: false)
+                self.showToast("长按可替换或删除该模块", ok: false)
             } else {
-                showToast("长按此处可添加模块", ok: false)
+                self.showToast("长按此处可添加模块", ok: false)
             }
         case let t where t.hasPrefix("add:"):
             // add:<列> 往该列末尾加一个模块（Java:458 → pickModule）
-            if let col = Int(t.dropFirst(4)), let state = host?.state as? ZhimaCreditScreen.State {
+            if let col = Int(t.dropFirst(4)), let state = self.host?.state as? ZhimaCreditScreen.State {
                 ModulePicker.present(title: "添加到" + (col == 0 ? "左列" : "右列")) { key in
                     if let module = ZhimaCreditScreen.library.first(where: { $0.key == key }) {
                         state.append(col, key: module.key, height: module.height)
-                        host?.setNeedsDisplay()
+                        self.host?.setNeedsDisplay()
                     }
                 }
             }
 
         // 出行页：地址 / 出发城市 / 到达城市 三处可编辑；里程、舱位、搜索在 Android 上也是空操作
         case "address":
-            if let state = host?.state as? TravelScreen.State {
+            if let state = self.host?.state as? TravelScreen.State {
                 EditPrompt.present(title: "编辑出发地", current: state.address,
                                    numeric: false) { text in
                     let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
                     if !trimmed.isEmpty { state.address = trimmed }
-                    host?.setNeedsDisplay()
+                    self.host?.setNeedsDisplay()
                 }
             }
         case "city:0":
-            if let state = host?.state as? TravelScreen.State {
+            if let state = self.host?.state as? TravelScreen.State {
                 EditPrompt.present(title: "编辑出发城市", current: state.from,
                                    numeric: false) { text in
                     let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
                     if !trimmed.isEmpty { state.from = trimmed }
-                    host?.setNeedsDisplay()
+                    self.host?.setNeedsDisplay()
                 }
             }
         case "city:1":
-            if let state = host?.state as? TravelScreen.State {
+            if let state = self.host?.state as? TravelScreen.State {
                 EditPrompt.present(title: "编辑到达城市", current: state.to,
                                    numeric: false) { text in
                     let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
                     if !trimmed.isEmpty { state.to = trimmed }
-                    host?.setNeedsDisplay()
+                    self.host?.setNeedsDisplay()
                 }
             }
         case "swap":
             // Android 这里弹的是「北京 ⇄ 杭州 · 已对调」，但城市是可编辑的，写死就对不上 ——
             // 所以用当前值拼同一句式（有意的偏离，Android 那句是硬编码）
-            if let state = host?.state as? TravelScreen.State {
-                showToast("\(state.from) ⇄ \(state.to) · 已对调", ok: true)
+            if let state = self.host?.state as? TravelScreen.State {
+                self.showToast("\(state.from) ⇄ \(state.to) · 已对调", ok: true)
             }
         // 里程 / 舱位 / 搜索：Android 的 `act()` 里同样是 break
         case "mileage", "search", "cabin":
@@ -715,13 +716,13 @@ final class Router {
         // 模块内切换，这里保持 noop 并如实记录在 PORT-STATUS 里。
         case let t where t.hasPrefix("nav:"):
             let index = Int(t.dropFirst("nav:".count)) ?? -1
-            if host?.screen is LicaiScreen || host?.screen is GrowthScreen {
+            if self.host?.screen is LicaiScreen || self.host?.screen is GrowthScreen {
                 switch index {
                 case 0:
                     pop()                       // 回支首页
                 case 1:
-                    host?.state.scroll = 0      // 已在本页 → 回顶
-                    host?.setNeedsDisplay()
+                    self.host?.state.scroll = 0      // 已在本页 → 回顶
+                    self.host?.setNeedsDisplay()
                 case 3:
                     push(MessageScreen(), state: MessageScreen.State())
                 case 4:
@@ -740,14 +741,14 @@ final class Router {
                                numeric: false) { text in
                 let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
                 if !trimmed.isEmpty { ProfileStore.shared.name = trimmed }
-                host?.setNeedsDisplay()
+                self.host?.setNeedsDisplay()
             }
         case "editPhone":
             EditPrompt.present(title: "换绑手机号", current: ProfileStore.shared.phone,
                                numeric: true) { text in
                 let digits = text.filter { $0.isNumber }
                 if digits.count >= 6 { ProfileStore.shared.phone = digits }
-                host?.setNeedsDisplay()
+                self.host?.setNeedsDisplay()
             }
 
         // 切换账号页
@@ -762,19 +763,19 @@ final class Router {
             if let account = Accounts.shared.all.first(where: { $0.id == id }) {
                 Accounts.shared.switchTo(id)
                 pop()
-                host?.setNeedsDisplay()
+                self.host?.setNeedsDisplay()
                 let label = account.name.isEmpty ? "该账号" : "「\(account.name)」"
-                showToast("已切换到\(label)", ok: true)
+                self.showToast("已切换到\(label)", ok: true)
             }
         case let t where t.hasPrefix("toast:"):
-            showToast(String(t.dropFirst("toast:".count)), ok: true)
+            self.showToast(String(t.dropFirst("toast:".count)), ok: true)
 
         // ---- 这些令牌在 Android 里各有归属，逐个对照处理 ----
         // 资产页的眼睛：隐藏 / 显示所有金额（`AssetActivity` 的 eye 分支 + `State.hideAll`）
         case "eye":
-            if let state = host?.state as? AssetScreen.State {
+            if let state = self.host?.state as? AssetScreen.State {
                 state.hideAll.toggle()
-                host?.setNeedsDisplay()
+                self.host?.setNeedsDisplay()
             }
         // 小荷包：「钱包名」与「总金额」两处都可编辑，写的是 `PurseStore`（不是页面 State）
         case "purse":
@@ -782,14 +783,14 @@ final class Router {
                                numeric: false) { text in
                 let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
                 if !trimmed.isEmpty { PurseStore.shared.name = trimmed }
-                host?.setNeedsDisplay()
+                self.host?.setNeedsDisplay()
             }
         case "total":
             EditPrompt.present(title: "改一下总金额", current: PurseStore.shared.total,
                                numeric: true) { text in
                 let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
                 if !trimmed.isEmpty { PurseStore.shared.total = trimmed }
-                host?.setNeedsDisplay()
+                self.host?.setNeedsDisplay()
             }
         // 以下在 Android 的对应 Activity 里就是空分支（`break;` 或 `{ }`），保持空转
         case "bell", "invite", "rights", "func", "plugin", "publish", "dots", "info":
@@ -805,7 +806,7 @@ final class Router {
     /// 早先这里用的是 `UIAlertController`（模态弹窗）✗ 会挡住操作 1.6 秒，
     /// 与 Toast 的语义相反。现在改成贴在 window 上的一个圆角标签：
     /// 淡入 → 停留 1.4 秒 → 淡出，期间触摸照常穿透。
-    func showToast(_ message: String, ok: Bool) {
+    func self.showToast(_ message: String, ok: Bool) {
         guard !message.isEmpty else { return }
         ToastView.show(message, ok: ok)
     }
