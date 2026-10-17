@@ -27,7 +27,9 @@ struct LoginView: View {
     @State private var message = ""
     @State private var messageIsError = false
 
-    @Environment(\.dismiss) private var dismiss
+    /// ⚠️ Environment(\.dismiss) 是 iOS 15 起的 API，本项目要支持 iOS 14.3，
+    /// 所以用 14 上就有的 presentationMode（LoginView 是以 modal sheet 呈现的，语义一致）。
+    @Environment(\.presentationMode) private var presentationMode
 
     var body: some View {
         NavigationView {
@@ -92,7 +94,7 @@ struct LoginView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("关闭") { dismiss() }
+                    Button("关闭") { presentationMode.wrappedValue.dismiss() }
                 }
             }
         }
@@ -152,7 +154,7 @@ struct LoginView: View {
                 // 登录/注册成功：直接关闭并用新会话刷新界面
                 if outcome.ok && mode != .reset {
                     onDone?()
-                    dismiss()
+                    presentationMode.wrappedValue.dismiss()
                 }
                 if outcome.ok && mode == .reset && !resetTicket.isEmpty {
                     // 第一步通过：留在本页继续填新密码

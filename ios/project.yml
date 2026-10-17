@@ -12,8 +12,13 @@ name: Doutu
 options:
   bundleIdPrefix: com.luoyun
   deploymentTarget:
-    # iOS 15 起：网络层用了 `URLSession.data(for:)` 这类 async API（14 上没有，会编译不过）
-    iOS: "15.0"
+    # ⚠️ 降到 14.0：目标机型那台 iPhone 12 停在 **iOS 14.3**（停在 14.3 才能用 TrollStore
+    # 永久签名安装，见 ios/INSTALL-IPA.md §0 方案 E）。
+    # 于是两条硬约束：
+    #   1. 不能直接用 iOS 15 才有的 API —— 尤其 `URLSession.data(for:)`，
+    #      已在 Net/DtwTransport.swift 里换成 `withCheckedThrowingContinuation` 包 `dataTask`
+    #   2. `async/await` 本身没问题：Swift 5.5+ 的并发运行时会由 Xcode 回带到 iOS 13+
+    iOS: "14.0"
   createIntermediateGroups: true
   groupSortPosition: top
 

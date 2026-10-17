@@ -42,10 +42,31 @@ enum DtwHttp {
     }
 
     /// 异步请求
+    ///
+    /// ⚠️ 不要用 `URLSession.shared.data(for:)` —— 那是 **iOS 15 起**才有的 API，
+    /// 而这个 App 要支持到 iOS 14.3（用户那台 iPhone 12 停在 14.3，那样才能用 TrollStore 永久装）。
+    /// `async/await` 本身从 iOS 13 起可用（Xcode 13.2+ 会把并发运行时回带到 App 里），
+    /// 所以这里用 `withCheckedThrowingContinuation` 把老的 `dataTask` 包成 async 即可。
     static func async(_ request: URLRequest) async throws -> (Data, Int) {
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await data(for: request)
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0
         return (data, status)
+    }
+
+    /// `data(for:)` 的 iOS 13+ 版本（语义与 `URLSession.data(for:)` 对齐：
+    /// 非 2xx 也照常返回数据，由调用方看 statusCode）
+    private static func data(for request: URLRequest) async throws -> (Data, URLResponse) {
+        try await withCheckedThrowingContinuation { continuation in
+            URLSession.shared.dataTask(with: request) { data, response, error in
+                if let error {
+                    continuation.resume(throwing: error)
+                } else if let data, let response {
+                    continuation.resume(returning: (data, response))
+                } else {
+                    continuation.resume(throwing: DtwError.transport("响应为空"))
+                }
+            }.resume()
+        }
     }
 }
 
