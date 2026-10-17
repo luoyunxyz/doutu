@@ -50,6 +50,13 @@ targets:
         # Info.plist 时才生效。没有它、又没有 Info.plist 文件，编译会直接报
         # "Info.plist not found"（这是第一次 CI 失败的原因之一）。
         GENERATE_INFOPLIST_FILE: YES
+        # 图标资源集名称（Assets.xcassets/AppIcon.appiconset）。不写的话 XcodeGen
+        # 生成的工程不带 ASSETCATALOG_COMPILER_APPICON_NAME，装到手机上就是白图标。
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        # SwiftUI 的 App 生命周期在 iOS 14+ 需要 Scene Manifest，否则真机启动可能黑屏。
+        # 这一项让 Xcode **生成**（而不是有现成的）UIApplicationSceneManifest，
+        # 与 Xcode 新建 SwiftUI 工程的默认值一致。
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
         # 竖屏、隐藏状态栏（与 Android 全屏绘制一致）
         INFOPLIST_KEY_UIStatusBarHidden: YES
         INFOPLIST_KEY_UIRequiresFullScreen: YES

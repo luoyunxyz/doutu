@@ -119,6 +119,23 @@ jobs:
           path: ios/Doutu-unsigned.ipa
           if-no-files-found: error
 
+      # 成功时也写一个状态标记：开发侧 `git fetch` 后读 ci-logs/status.txt 就能确认成功，
+      # 不需要登录 Actions 页面看结论（仓库私有，无 token 时 API 读不到）。
+      - name: 成功时写入状态标记
+        if: success()
+        run: |
+          mkdir -p ci-logs
+          {
+            echo "status: success"
+            echo "run: $GITHUB_RUN_ID  commit: $GITHUB_SHA  at: $(date -u +%FT%TZ)"
+            ls -lh ios/Doutu-unsigned.ipa
+          } > ci-logs/status.txt
+          git config user.name  "ci-log-bot"
+          git config user.email "ci-log-bot@users.noreply.github.com"
+          git add -f ci-logs/status.txt || true
+          git commit -m "ci: 构建成功（run $GITHUB_RUN_ID）" || echo "没有可提交的状态"
+          git push origin HEAD:${GITHUB_REF_NAME} || echo "推送状态失败"
+
       - name: 失败时保留日志
         if: failure()
         uses: actions/upload-artifact@v4
@@ -143,6 +160,8 @@ jobs:
           cp -f ios/xcodegen.log ci-logs/xcodegen.log 2>/dev/null || true
           cp -f ci-logs/env.log ci-logs/env.log 2>/dev/null || true
           echo "run: $GITHUB_RUN_ID  commit: $GITHUB_SHA  at: $(date -u +%FT%TZ)" > ci-logs/meta.txt
+          echo "status: failure" > ci-logs/status.txt
+          echo "run: $GITHUB_RUN_ID  commit: $GITHUB_SHA  at: $(date -u +%FT%TZ)" >> ci-logs/status.txt
           ls -la ci-logs || true
           git config user.name  "ci-log-bot"
           git config user.email "ci-log-bot@users.noreply.github.com"
