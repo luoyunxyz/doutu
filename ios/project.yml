@@ -46,6 +46,10 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.luoyun.doutu
         PRODUCT_NAME: Doutu
+        # ⚠️ 必须打开：下面那一堆 `INFOPLIST_KEY_*` 只有在 Xcode **自动生成**
+        # Info.plist 时才生效。没有它、又没有 Info.plist 文件，编译会直接报
+        # "Info.plist not found"（这是第一次 CI 失败的原因之一）。
+        GENERATE_INFOPLIST_FILE: YES
         # 竖屏、隐藏状态栏（与 Android 全屏绘制一致）
         INFOPLIST_KEY_UIStatusBarHidden: YES
         INFOPLIST_KEY_UIRequiresFullScreen: YES
@@ -64,3 +68,21 @@ targets:
         INFOPLIST_KEY_NSCameraUsageDescription: 需要相机以便扫码时实时预览画面、以及拍摄头像
         INFOPLIST_KEY_NSMicrophoneUsageDescription: 扫码只用画面，不录音（系统可能因相机会话而询问）
     dependencies: []
+
+# ⚠️ XcodeGen **不会**自动给 target 生成 scheme。没有这一段，
+# CI 里的 `xcodebuild -scheme Doutu` 会报
+# "The project named 'Doutu' does not contain a scheme named 'Doutu'"，
+# 几十秒就失败（第一次 CI 失败正是这个）。
+schemes:
+  Doutu:
+    build:
+      targets:
+        Doutu: all
+    run:
+      config: Debug
+    archive:
+      config: Release
+    profile:
+      config: Release
+    analyze:
+      config: Debug

@@ -43,7 +43,8 @@ const iosWf = stripComments(fs.readFileSync(IOS_WF, 'utf8'));
 // ① 仓库根那份：必须进 ios/ 目录工作，产物路径带 ios/
 ok('仓库根那份用 working-directory: ios', /working-directory:\s*ios/.test(rootWf));
 ok('仓库根那份的产物路径带 ios/ 前缀', /path:\s*ios\/Doutu-unsigned\.ipa/.test(rootWf));
-ok('仓库根那份的日志路径带 ios/ 前缀', /path:\s*ios\/build\.log/.test(rootWf));
+ok('仓库根那份的日志路径带 ios/ 前缀', /ios\/build\.log/.test(rootWf) && /ios\/xcodegen\.log/.test(rootWf));
+ok('仓库根那份在工程生成阶段也留日志（早期失败时才有东西可查）', /tee xcodegen\.log/.test(rootWf));
 
 // ② ios/ 那份：不能有 working-directory: ios（那时 ios 就是根）
 ok('ios/ 那份不带 working-directory: ios', !/working-directory:\s*ios/.test(iosWf));
@@ -64,6 +65,11 @@ ok('project.yml 声明了 Sources', /path:\s*Sources/.test(projectYml));
 ok('project.yml 把 web 当文件夹引用打包', /path:\s*Resources\/web\s*\n\s*type:\s*folder/.test(projectYml));
 ok('project.yml 排除了 Resources 下的 web（避免重复）', /excludes:\s*\n\s*-\s*"?web"?/.test(projectYml));
 ok('project.yml 允许不签名', /CODE_SIGNING_ALLOWED:\s*NO/.test(projectYml));
+// ⑤ 这两条是第一次 CI 失败的真正原因（都靠 1 分钟内快速失败暴露）
+ok('project.yml 打开了 GENERATE_INFOPLIST_FILE（否则 INFOPLIST_KEY_* 不生效、会报 Info.plist 缺失）',
+  /GENERATE_INFOPLIST_FILE:\s*YES/.test(projectYml));
+ok('project.yml 声明了 scheme（否则 xcodebuild -scheme Doutu 找不到方案）',
+  /^schemes:/m.test(projectYml) && /^\s{2}Doutu:/m.test(projectYml));
 
 // ⑤ 工程内引用的入口文件都在
 for (const rel of ['ios/Sources/App/DoutuApp.swift', 'ios/Sources/Screens/Screen.swift',
