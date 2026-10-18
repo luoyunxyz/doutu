@@ -72,8 +72,6 @@ final class WebHostController: UIViewController, WKScriptMessageHandler, UIGestu
         // 给两个入口：左上角浮层按钮（看得见） + 左边缘右滑（符合直觉）。
         installBackAffordance()
         installBackButton()
-        installHeaderHitTargets()
-        installBlankTap()
 
         // 把 `DoutuApp` 桥按 Android 的方法清单补齐（缺一个页面里调用就会抛异常）
         let bridge = WKUserScript(source: Self.bridgeShim, injectionTime: .atDocumentStart,
@@ -660,6 +658,36 @@ final class WebHostController: UIViewController, WKScriptMessageHandler, UIGestu
             '.wechat-topbar__icon--large{transform:scale(1.20);transform-origin:center;overflow:visible;}'
           ].join('');
           (document.head || document.documentElement).appendChild(style);
+        }
+        var bar = document.querySelector('.wechat-topbar');
+        if (bar && !bar.__doutuHit) {
+          bar.__doutuHit = 1;
+          bar.style.position = 'relative';
+          var hit = document.createElement('div');
+          hit.style.cssText = 'position:absolute;top:0;right:0;bottom:0;left:0;z-index:40;background:transparent;touch-action:manipulation;';
+          hit.addEventListener('click', function(e){
+            e.preventDefault(); e.stopPropagation();
+            var rect = bar.getBoundingClientRect();
+            var x = e.clientX - rect.left;
+            if (x > rect.width - 35) {
+              if (window.__fwOpenPlusMenu) window.__fwOpenPlusMenu();
+            } else if (window.__fwOpenToolsSheet) {
+              window.__fwOpenToolsSheet();
+            }
+          }, true);
+          bar.appendChild(hit);
+        }
+        var deviceRow = document.querySelector('.wechat-device-row');
+        if (deviceRow && !deviceRow.__doutuHit) {
+          deviceRow.__doutuHit = 1;
+          deviceRow.style.position = 'relative';
+          var rowHit = document.createElement('div');
+          rowHit.style.cssText = 'position:absolute;top:0;right:0;bottom:0;left:0;z-index:40;background:transparent;touch-action:manipulation;';
+          rowHit.addEventListener('click', function(e){
+            e.preventDefault(); e.stopPropagation();
+            if (window.__fwOpenToolsSheet) window.__fwOpenToolsSheet();
+          }, true);
+          deviceRow.appendChild(rowHit);
         }
       }
       apply();

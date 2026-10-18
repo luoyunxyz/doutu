@@ -9210,4 +9210,20 @@
       if (feed) { feed.remove(); return true; }
       return typeof previousBack === 'function' ? previousBack() : false;
     };
+
+    // 原生侧（iOS WebHost）直接调这两个入口，避免 Safari/WKWebView 对 SVG 的
+    // click 派发不可靠时，加号 / 顶部工具菜单仍然打不开。
+    window.__fwOpenPlusMenu = function () {
+      const actions = document.querySelector('.wechat-topbar__actions');
+      if (!actions) return false;
+      const icons = [...actions.querySelectorAll('svg')];
+      const anchor = icons[icons.length - 1];
+      if (!anchor) return false;
+      openPlusMenu(anchor);
+      return true;
+    };
+    window.__fwOpenToolsSheet = function () {
+      openToolsSheet();
+      return true;
+    };
   })();
