@@ -170,9 +170,10 @@ extension HomeShellScreen {
             d.round(CGRect(x: -25, y: -18, width: 49, height: 35), radius: 5, color)
             d.path(points: [(1, -17), (-9, 1), (1, 1), (-4, 17), (12, -4), (3, -4)], fill: UIColor.white)
         case 5:   // 外弧 + 内圆（声音）
-            d.ctx.setFillColor(color.cgColor)
+            // Java 那边 p 仍是 STROKE 样式，drawArc 的 useCenter=true 在 STROKE 下
+            // 不会填充（只画弧线）；这里如果传 fill:true 会变成「吃豆人」实心饼。
             d.arc(rect: CGRect(x: -25, y: -23, width: 50, height: 48),
-                  startDegrees: 205, sweepDegrees: 300, color: color, width: stroke, fill: true)
+                  startDegrees: 205, sweepDegrees: 300, color: color, width: stroke, fill: false)
             d.arc(rect: CGRect(x: -12, y: -12, width: 24, height: 24),
                   startDegrees: 0, sweepDegrees: 360, color: color, width: stroke)
         case 6:   // 实心圆 + ¥（余额）

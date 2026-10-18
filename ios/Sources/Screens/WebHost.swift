@@ -210,6 +210,9 @@ final class WebHostController: UIViewController, WKScriptMessageHandler {
             appRoute: typeof window.__fwOpenRoute,
             appFeature: typeof window.__fwOpenFeature,
             doutuApp: typeof window.DoutuApp,
+            moduleOK: window.__doutuModuleOK || 0,
+            moduleERR: window.__doutuModuleERR || '',
+            viewport: (document.querySelector('meta[name="viewport"]') || {}).content || '',
             width: document.documentElement.clientWidth,
             height: document.documentElement.clientHeight,
             scripts: scripts, resources: res.slice(0,40)
@@ -235,8 +238,17 @@ final class WebHostController: UIViewController, WKScriptMessageHandler {
 
     func userContentController(_ controller: WKUserContentController,
                                didReceive message: WKScriptMessage) {
-        guard let body = message.body as? [String: Any],
-              let method = body["method"] as? String else { return }
+        guard let body = message.body as? [String: Any] else { return }
+        // 网页里的 JS 错误钩子（见 errorHook）走的是 {type:'jserror'}，不是 {method:...}。
+        // 之前这里直接按 method 取，导致所有网页错误被静默丢掉，白屏完全没有线索。
+        if let type = body["type"] as? String, type == "jserror" {
+            let kind = body["kind"] as? String ?? "?"
+            let msg = body["message"] as? String ?? ""
+            let extra = body["extra"] as? String ?? ""
+            CrashLog.append("JSERROR kind=\(kind) message=\(msg) extra=\(extra)")
+            return
+        }
+        guard let method = body["method"] as? String else { return }
         let args = body["args"] as? [Any] ?? []
         let callbackId = body["callbackId"] as? String
 
@@ -301,7 +313,10 @@ final class WebHostController: UIViewController, WKScriptMessageHandler {
         try { window.webkit.messageHandlers.DoutuApp.postMessage({type:'jserror', kind:kind, message:String(msg||''), extra:String(extra||'')}); } catch(e){}
       }
       window.addEventListener('error', function(e){
-        send('error', (e && e.message) || 'error', (e && (e.filename||'') + ':' + (e.lineno||'')));
+        var t = e && e.target;
+        var src = t && (t.src || t.href) || '';
+        send('error', (e && e.message) || (src ? 'resource failed' : 'error'),
+             (e && (e.filename||'') + ':' + (e.lineno||'')) + ' target=' + src);
       }, true);
       window.addEventListener('unhandledrejection', function(e){
         var r = e && e.reason; send('reject', (r && (r.message||r)) || 'reject', '');

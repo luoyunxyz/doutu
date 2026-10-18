@@ -172,7 +172,9 @@ extension HomeShellScreen {
             (cx - w, cy - h * 0.55),
         ]
         d.path(points: shield, fill: Self.vipGold)
-        d.clipped(to: CGRect(x: cx - w, y: cy - h, width: w * 2, height: h * 2), radius: 0) {
+        // Java:1409-1410 是「再用同一个盾牌 Path 叠一层渐变」。只按包围盒裁会把盾牌
+        // 画成金色方块（真机截图就是这么暴露的），所以这里必须按盾牌多边形裁。
+        d.clipped(points: shield) {
             d.gradient(CGRect(x: cx - w, y: cy - h, width: w * 2, height: h * 2),
                        from: Self.vipGold, to: Self.vipGold2, vertical: true)
         }

@@ -117,6 +117,23 @@ struct Draw {
         ctx.restoreGState()
     }
 
+    /// 裁剪到任意多边形后执行（对应 Android 的 `clipPath(path)`）。
+    /// 注意：只按包围盒裁会把这个多边形外的区域也画上颜色（盾牌被画成方块就是这么来的）。
+    func clipped(points: [(CGFloat, CGFloat)], _ body: () -> Void) {
+        guard let first = points.first else { body(); return }
+        let path = UIBezierPath()
+        path.move(to: CGPoint(x: first.0, y: first.1))
+        for point in points.dropFirst() {
+            path.addLine(to: CGPoint(x: point.0, y: point.1))
+        }
+        path.close()
+        ctx.saveGState()
+        ctx.addPath(path.cgPath)
+        ctx.clip()
+        body()
+        ctx.restoreGState()
+    }
+
     // MARK: - 文字
 
     /// 字体构造（对应 Android 的 `Typeface.DEFAULT / DEFAULT_BOLD`）
