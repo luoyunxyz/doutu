@@ -55,7 +55,8 @@ if (-not (Test-NetConnection -ComputerName ([uri]$SignerBase).Host -Port ([uri]$
 }
 
 Write-Host '→ 上传到全能签' -ForegroundColor Cyan
-$initBody = @{ fileName = 'Doutu-unsigned.ipa'; totalSize = $f.Length; fresh = $true } | ConvertTo-Json
+$ipaName = "Doutu-" + (Get-Date -Format "yyyyMMdd-HHmmss") + ".ipa"   # 必须唯一：重名会被全能签存成 (1).ipa，导致签名接口仍取旧包
+$initBody = @{ fileName = $ipaName; totalSize = $f.Length; fresh = $true } | ConvertTo-Json
 $tmp = Join-Path $env:TEMP 'dpl_init.json'
 [IO.File]::WriteAllText($tmp, $initBody, (New-Object System.Text.UTF8Encoding($false)))
 $init = (& curl.exe -s --max-time 25 -X POST "$SignerBase/api/upload/init" -H 'Content-Type: application/json' --data-binary "@$tmp") | ConvertFrom-Json
@@ -79,7 +80,7 @@ $cp = Join-Path $env:TEMP 'dpl_complete.json'
 $null = & curl.exe -s --max-time 90 -X POST "$SignerBase/api/upload/complete" -H 'Content-Type: application/json' --data-binary "@$cp"
 
 $imp = Join-Path $env:TEMP 'dpl_import.json'
-[IO.File]::WriteAllText($imp, '{"path":"UserDownloads/Doutu-unsigned.ipa"}', (New-Object System.Text.UTF8Encoding($false)))
+[IO.File]::WriteAllText($imp, (@{ path = "UserDownloads/$ipaName" } | ConvertTo-Json), (New-Object System.Text.UTF8Encoding($false)))
 $impRes = (& curl.exe -s --max-time 180 -X POST "$SignerBase/api/import-from-download" -H 'Content-Type: application/json' --data-binary "@$imp") | ConvertFrom-Json
 if (-not $impRes.ok) { Fail "import-from-download 失败：$($impRes | ConvertTo-Json -Compress)" }
 Start-Sleep -Seconds 4
@@ -95,7 +96,7 @@ $cfg['appName']  = '斗图去水印'
 $cfg['bundleId'] = $BundleId
 $cfg['version']  = '1.0.0'
 $cfg['certificate'] = @{ certId = $CertId; mobileProvisionId = $ProvId; displayName = $CertName }
-$startBody = @{ path = 'Resources/IPA/Doutu-unsigned.ipa'; config = $cfg } | ConvertTo-Json -Depth 6
+$startBody = @{ path = "Resources/IPA/$ipaName"; config = $cfg } | ConvertTo-Json -Depth 6
 $sb = Join-Path $env:TEMP 'dpl_sign.json'
 [IO.File]::WriteAllText($sb, $startBody, (New-Object System.Text.UTF8Encoding($false)))
 $start = (& curl.exe -s --max-time 300 -X POST "$SignerBase/api/sign/start" -H 'Content-Type: application/json' --data-binary "@$sb") | ConvertFrom-Json
