@@ -558,7 +558,7 @@ final class Router {
         case 6:   // 支付成功 ✓（Android `zhiGridIntent` case 6 → PaySuccessActivity）
             push(PaySuccessScreen(), state: PaySuccessScreen.State())
         case 7:   // 自定义账单 ✓
-            push(BillScreen(), state: BillScreen.State())
+            push(BillV2Screen(), state: BillV2Screen.State())
         case 8:   // 个人信息 ✓
             push(ProfileScreen(), state: ProfileScreen.State())
         case 9:   // 切换账号 ✓
@@ -717,7 +717,7 @@ final class Router {
             push(AssetScreen(), state: AssetScreen.State())
         case "bills":
             // 账单列表（数据由 BillStore 本地生成，与 Android 同一套规则）
-            push(BillScreen(), state: BillScreen.State())
+            push(BillV2Screen(), state: BillV2Screen.State())
 
         // 支模块首页（ZhiHomeScreen）的交互
         case "plus":
@@ -788,7 +788,7 @@ final class Router {
         // 账单页：页签筛选 / 筛选 / 收支分析
         case let t where t.hasPrefix("chip:"):
             let kind = String(t.dropFirst("chip:".count))
-            if let state = self.host?.state as? BillScreen.State {
+            if let state = self.host?.state as? BillV2Screen.State {
                 state.kind = kind
                 state.scroll = 0
                 self.host?.setNeedsDisplay()
@@ -803,9 +803,9 @@ final class Router {
             // 账单详情：`bill:<月序号>:<行号>` —— 让 BillScreen 按它自己的布局取出那一条
             let parts = t.dropFirst("bill:".count).split(separator: ":")
             if parts.count == 2, let monthIndex = Int(parts[0]), let row = Int(parts[1]) {
-                let screen = BillScreen()
+                let screen = BillV2Screen()
                 if let bill = screen.bill(at: monthIndex, row: row,
-                                          state: self.host?.state ?? BillScreen.State()) {
+                                          state: self.host?.state ?? BillV2Screen.State()) {
                     let state = BillDetailScreen.State()
                     state.bill = bill
                     push(BillDetailScreen(), state: state)
@@ -1069,7 +1069,7 @@ final class Router {
             // 「⋯」在不同屏上含义不同：只有**账单列表页**的它对应 Android 的
             // `BillActivity.showMoreMenu()`（「账单管理」→ 清空 / 秒变富豪）。
             // 收款码、付款码、收款详情、收支分析上的「⋯」在 Android 上没有处理，保持空转。
-            if self.host?.screen is BillScreen {
+            if self.host?.screen is BillV2Screen {
                 BillMenu.present { choice in
                     switch choice {
                     case .clear:
