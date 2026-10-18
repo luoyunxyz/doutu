@@ -573,7 +573,7 @@
     if (!group || document.querySelector('.fw-text-edit-layer')) return;
     const layer = document.createElement('div');
     layer.className = 'fw-text-edit-layer';
-    layer.style.cssText = 'position:fixed;inset:0;z-index:20250;display:flex;align-items:flex-start;justify-content:center;background:rgba(0,0,0,.35);font-family:inherit';
+    layer.style.cssText = 'position:fixed;top:0;right:0;bottom:0;left:0;z-index:20250;display:flex;align-items:flex-start;justify-content:center;background:rgba(0,0,0,.35);font-family:inherit';
     layer.innerHTML = '<div style="margin-top:120px;width:calc(100% - 64px);max-width:420px;background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 6px 24px rgba(0,0,0,.2)">'
       + '<div style="padding:14px 16px 4px;text-align:center;font-size:16px;font-weight:500;color:#111">修改群聊名称</div>'
       + '<input maxlength="40" placeholder="请输入群聊名称" style="display:block;width:100%;box-sizing:border-box;padding:4px 18px 16px;border:0;outline:0;font-family:inherit;font-size:16px;color:#111;text-align:center">'

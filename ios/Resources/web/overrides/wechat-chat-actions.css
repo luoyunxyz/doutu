@@ -1,7 +1,7 @@
 /* Locally-rendered WeChat menus, sized against the 360 CSS-pixel reference viewport. */
 .fw-overlay {
   position: fixed;
-  inset: 0;
+  top:0;right:0;bottom:0;left:0;
   z-index: 2147483000;
   pointer-events: auto;
   -webkit-tap-highlight-color: transparent;
@@ -166,7 +166,7 @@
 }
 .fw-dialog-backdrop {
   position: absolute;
-  inset: 0;
+  top:0;right:0;bottom:0;left:0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -225,7 +225,7 @@
   clip-path: polygon(0 0,34% 0,34% 34%,0 34%,0 0,66% 0,100% 0,100% 34%,66% 34%,66% 0,0 66%,34% 66%,34% 100%,0 100%);
   opacity: .8;
 }
-.fw-demo-scan__frame { position: absolute; inset: 25px; border: 3px solid #07c160; }
+.fw-demo-scan__frame { position: absolute; top:25px;right:25px;bottom:25px;left:25px; border: 3px solid #07c160; }
 .fw-pay-tabs { display: flex; gap: 8px; margin-bottom: 15px; }
 .fw-pay-tab { flex: 1; padding: 9px 4px; border: 1px solid #ddd; border-radius: 5px; background: white; color: #333; font: inherit; }
 .fw-pay-tab.is-active { border-color: #07c160; color: #079b4c; }
@@ -252,7 +252,7 @@ body.fw-conversation-route-enter .wechat-page {
 .fw-overlay--tools { background: transparent; }
 .fw-tools-backdrop {
   position: absolute;
-  inset: 0;
+  top:0;right:0;bottom:0;left:0;
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -360,7 +360,7 @@ body.fw-user-scale-enabled .wechat-dialogue-list { overflow-x: hidden; }
 
 /* Full-screen font-size preview, modeled on the supplied live-adjustment video. */
 .fw-overlay--font-size { background: #eee; }
-.fw-font-page { position:absolute; inset:0; display:flex; flex-direction:column; overflow:hidden; background:#eee; color:#111; font-family:inherit; }
+.fw-font-page { position:absolute; top:0;right:0;bottom:0;left:0; display:flex; flex-direction:column; overflow:hidden; background:#eee; color:#111; font-family:inherit; }
 .fw-font-header { flex:0 0 56px; display:grid; grid-template-columns:1fr 2fr 1fr; align-items:center; padding:0 10px; font-size:16px; text-align:center; }
 .fw-font-header button { border:0; background:transparent; color:#111; font:inherit; white-space:nowrap; }
 .fw-font-header .fw-font-back { justify-self:start; font-size:32px; line-height:1; }
@@ -393,7 +393,7 @@ body.fw-conversation-scale-active { --fw-conversation-scale:1; }
 
 /* 360 CSS-pixel recreation of the supplied WeChat contact picker. */
 .fw-overlay--group-select { background:#ededed; color:#111; }
-.fw-group-select-page { position:absolute; inset:0; display:flex; flex-direction:column; overflow:hidden; background:#ededed; font-family:inherit; color:#111; }
+.fw-group-select-page { position:absolute; top:0;right:0;bottom:0;left:0; display:flex; flex-direction:column; overflow:hidden; background:#ededed; font-family:inherit; color:#111; }
 .fw-group-select-header { flex:0 0 70px; display:grid; grid-template-columns:64px 1fr 64px; align-items:end; padding:0 10px 11px; box-sizing:border-box; background:#ededed; }
 .fw-group-select-header h1 { margin:0; text-align:center; font-size:22px; line-height:30px; font-weight:600; }
 .fw-group-select-header button { border:0; background:transparent; font:inherit; cursor:pointer; }
@@ -472,7 +472,7 @@ body.fw-conversation-scale-active { --fw-conversation-scale:1; }
 
 /* 新的朋友 (friend requests): same 360 CSS-pixel scale as the group picker. */
 .fw-overlay--new-friends { background:#ededed; color:#111; }
-.fw-new-friends-page { position:absolute; inset:0; display:flex; flex-direction:column; overflow:hidden; background:#ededed; font-family:inherit; color:#111; }
+.fw-new-friends-page { position:absolute; top:0;right:0;bottom:0;left:0; display:flex; flex-direction:column; overflow:hidden; background:#ededed; font-family:inherit; color:#111; }
 .fw-new-friends-header { flex:0 0 70px; display:grid; grid-template-columns:64px 1fr 64px; align-items:end; padding:0 10px 11px; box-sizing:border-box; background:#ededed; }
 .fw-new-friends-header h1 { margin:0; text-align:center; font-size:22px; line-height:30px; font-weight:600; }
 .fw-new-friends-header-spacer { width:42px; }
@@ -491,7 +491,7 @@ body.fw-conversation-scale-active { --fw-conversation-scale:1; }
 
 /* Add-friend screen: dimensions tuned to the supplied 1440x3168 reference, scaled to the device viewport. */
 .fw-overlay--add-friend { background:#fff; }
-.fw-add-friend-page { position:absolute; inset:0; padding-top:18px; box-sizing:border-box; display:flex; flex-direction:column; overflow:hidden; background:#fff; color:#171717; font-family:inherit; --fw-local-font-scale:var(--fw-user-scale,1); }
+.fw-add-friend-page { position:absolute; top:0;right:0;bottom:0;left:0; padding-top:18px; box-sizing:border-box; display:flex; flex-direction:column; overflow:hidden; background:#fff; color:#171717; font-family:inherit; --fw-local-font-scale:var(--fw-user-scale,1); }
 .fw-add-friend-header { flex:0 0 38px; display:grid; grid-template-columns:54px 1fr 88px; align-items:center; box-sizing:border-box; padding:0 9px; background:#fff; }
 .fw-add-friend-header button { padding:0; border:0; background:transparent; color:#111; font-family:inherit; font-size:calc(11px * var(--fw-local-font-scale)); line-height:1; white-space:nowrap; }
 .fw-add-friend-header h1 { margin:0; text-align:center; font-size:calc(12px * var(--fw-local-font-scale)); font-weight:500; }
@@ -532,7 +532,7 @@ body.fw-conversation-scale-active { --fw-conversation-scale:1; }
 .fw-local-contact-row { width:100%; min-height:62px; display:flex; align-items:center; gap:14px; padding:8px 0; border:0; border-bottom:1px solid #eee; background:#fff; text-align:left; color:#222; font:inherit; }
 .fw-local-contact-row img { width:42px; height:42px; flex:0 0 42px; object-fit:cover; border-radius:5px; background:#eee; }
 .fw-local-contact-row span { font-size:16px; }
-.fw-avatar-picker { position:absolute; inset:0; z-index:5; display:flex; align-items:center; justify-content:center; padding:22px; background:rgba(0,0,0,.48); box-sizing:border-box; }
+.fw-avatar-picker { position:absolute; top:0;right:0;bottom:0;left:0; z-index:5; display:flex; align-items:center; justify-content:center; padding:22px; background:rgba(0,0,0,.48); box-sizing:border-box; }
 .fw-avatar-picker-panel { width:100%; max-width:440px; max-height:80%; overflow:auto; padding:18px; box-sizing:border-box; border-radius:12px; background:#fff; }
 .fw-avatar-picker-panel h2 { margin:0 0 14px; font-size:18px; }
 .fw-avatar-picker-grid { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:10px; }
@@ -554,7 +554,7 @@ body.fw-conversation-scale-active { --fw-conversation-scale:1; }
 
 
 /* Local batch-added friends open a real persisted in-app conversation. */
-.fw-local-conversation { position:fixed; z-index:20000; inset:0; display:flex; flex-direction:column; background:#ededed; color:#111; font-family:inherit; }
+.fw-local-conversation { position:fixed; z-index:20000; top:0;right:0;bottom:0;left:0; display:flex; flex-direction:column; background:#ededed; color:#111; font-family:inherit; }
 .fw-local-conversation__header { height:54px; flex:0 0 54px; display:flex; align-items:center; gap:10px; padding:0 14px; padding-top:env(safe-area-inset-top,0px); box-sizing:content-box; background:#f7f7f7; border-bottom:1px solid rgba(0,0,0,.06); }
 .fw-local-conversation__header button { width:34px; height:42px; border:0; background:none; color:#222; font-size:34px; line-height:1; text-align:left; padding:0; }
 .fw-local-conversation__header strong { flex:1; text-align:center; font-size:17px; font-weight:500; }
@@ -569,7 +569,7 @@ body.fw-conversation-scale-active { --fw-conversation-scale:1; }
 
 /* Reference-matched local friend conversation (reference viewport 393 x 852 CSS px). */
 .fw-local-conversation {
-  position: fixed; z-index: 20000; inset: 0; display: flex; flex-direction: column;
+  position: fixed; z-index: 20000; top:0;right:0;bottom:0;left:0; display: flex; flex-direction: column;
   overflow: hidden; background: #ededed; color: #111; font-family: inherit;
   -webkit-tap-highlight-color: transparent;
 }
@@ -780,13 +780,13 @@ button:active {
   color: inherit !important;
 }
 
-.fw-my-avatar-picker{position:fixed;inset:0;z-index:10050;display:flex;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.42);touch-action:manipulation}.fw-my-avatar-picker__panel{box-sizing:border-box;width:100%;max-height:82vh;padding:16px 18px calc(18px + env(safe-area-inset-bottom));overflow:auto;border-radius:16px 16px 0 0;background:#f7f7f7;color:#111;font-family:inherit}.fw-my-avatar-picker__panel header{display:flex;align-items:center;justify-content:space-between;height:42px}.fw-my-avatar-picker__panel header button{border:0;background:transparent;color:#576b95;font-size:15px}.fw-my-avatar-picker__panel header strong{font-size:17px;font-weight:600}.fw-my-avatar-picker__hint{padding:8px 0 14px;color:#888;font-size:13px}.fw-my-avatar-picker__grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.fw-my-avatar-picker__grid img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;background:#e6e6e6}.fw-my-avatar-picker__grid img.is-unavailable{visibility:hidden}.fw-my-avatar-picker__upload{display:block;width:100%;height:46px;margin-top:16px;border:0;border-radius:8px;background:#07c160;color:#fff;font-size:16px}
+.fw-my-avatar-picker{position:fixed;top:0;right:0;bottom:0;left:0;z-index:10050;display:flex;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.42);touch-action:manipulation}.fw-my-avatar-picker__panel{box-sizing:border-box;width:100%;max-height:82vh;padding:16px 18px calc(18px + env(safe-area-inset-bottom));overflow:auto;border-radius:16px 16px 0 0;background:#f7f7f7;color:#111;font-family:inherit}.fw-my-avatar-picker__panel header{display:flex;align-items:center;justify-content:space-between;height:42px}.fw-my-avatar-picker__panel header button{border:0;background:transparent;color:#576b95;font-size:15px}.fw-my-avatar-picker__panel header strong{font-size:17px;font-weight:600}.fw-my-avatar-picker__hint{padding:8px 0 14px;color:#888;font-size:13px}.fw-my-avatar-picker__grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.fw-my-avatar-picker__grid img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;background:#e6e6e6}.fw-my-avatar-picker__grid img.is-unavailable{visibility:hidden}.fw-my-avatar-picker__upload{display:block;width:100%;height:46px;margin-top:16px;border:0;border-radius:8px;background:#07c160;color:#fff;font-size:16px}
 
-.fw-my-profile-editor{position:fixed;inset:0;z-index:10060;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(0,0,0,.42);box-sizing:border-box}.fw-my-profile-editor__panel{box-sizing:border-box;width:min(100%,420px);padding:0 18px 18px;border-radius:12px;background:#f7f7f7;color:#111;font-family:inherit;box-shadow:0 8px 32px rgba(0,0,0,.18)}.fw-my-profile-editor__panel header{height:54px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #e8e8e8}.fw-my-profile-editor__panel header button{border:0;background:transparent;color:#07c160;font-size:16px;padding:8px}.fw-my-profile-editor__panel header strong{font-size:17px;font-weight:600}.fw-my-profile-editor__panel label{display:block;margin-top:18px;color:#777;font-size:13px}.fw-my-profile-editor__panel input{display:block;box-sizing:border-box;width:100%;height:48px;margin-top:8px;padding:0 12px;border:0;border-radius:6px;outline:none;background:#fff;color:#111;font-size:16px;font-family:inherit}.fw-my-profile-editor__panel p{margin:12px 0 0;color:#999;font-size:12px}
+.fw-my-profile-editor{position:fixed;top:0;right:0;bottom:0;left:0;z-index:10060;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(0,0,0,.42);box-sizing:border-box}.fw-my-profile-editor__panel{box-sizing:border-box;width:min(100%,420px);padding:0 18px 18px;border-radius:12px;background:#f7f7f7;color:#111;font-family:inherit;box-shadow:0 8px 32px rgba(0,0,0,.18)}.fw-my-profile-editor__panel header{height:54px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #e8e8e8}.fw-my-profile-editor__panel header button{border:0;background:transparent;color:#07c160;font-size:16px;padding:8px}.fw-my-profile-editor__panel header strong{font-size:17px;font-weight:600}.fw-my-profile-editor__panel label{display:block;margin-top:18px;color:#777;font-size:13px}.fw-my-profile-editor__panel input{display:block;box-sizing:border-box;width:100%;height:48px;margin-top:8px;padding:0 12px;border:0;border-radius:6px;outline:none;background:#fff;color:#111;font-size:16px;font-family:inherit}.fw-my-profile-editor__panel p{margin:12px 0 0;color:#999;font-size:12px}
 
 /* FW_FRIEND_PROFILE_PATCH_V1 */
-.fw-friend-profile-page{position:fixed;inset:0;z-index:20000;background:#f7f7f7;color:#111;display:flex;flex-direction:column;overflow:hidden}
-.fw-friend-profile__header{height:52px;flex:0 0 52px;display:flex;align-items:center;justify-content:space-between;padding:0 12px;background:#f7f7f7;border-bottom:1px solid #e7e7e7}.fw-friend-profile__header strong{font-size:17px;font-weight:500}.fw-friend-profile__header button{width:42px;height:42px;border:0;background:transparent;color:#222;font-size:29px}.fw-friend-profile__body{flex:1;overflow-y:auto;padding-bottom:24px;background:#f2f2f2}.fw-friend-profile__hero{display:flex;align-items:center;gap:16px;padding:22px 20px;background:#fff}.fw-friend-profile__avatar-button{width:76px;height:76px;padding:0;border:0;border-radius:8px;overflow:hidden;background:#ddd}.fw-friend-profile__avatar{display:block;width:100%;height:100%;object-fit:cover}.fw-friend-profile__hero h1{margin:0 0 7px;font-size:22px;font-weight:500}.fw-friend-profile__hero p{margin:0;color:#777;font-size:14px}.fw-friend-profile__group{margin-top:10px;background:#fff}.fw-friend-profile__row{width:100%;min-height:54px;padding:0 20px;border:0;border-bottom:1px solid #ededed;background:#fff;display:flex;align-items:center;text-align:left;color:#111;font:inherit}.fw-friend-profile__row>span{flex:0 0 94px;font-size:16px}.fw-friend-profile__row>b{flex:1;text-align:right;color:#777;font-size:15px;font-weight:400;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.fw-friend-profile__row>i{width:20px;text-align:right;color:#aaa;font-size:24px;font-style:normal}.fw-friend-profile__actions{display:flex;gap:10px;padding:24px 20px}.fw-friend-profile__actions button{flex:1;height:46px;border:0;border-radius:5px;background:#07c160;color:#fff;font-size:16px}.fw-friend-profile__actions button+button{background:#fff;color:#07c160}.fw-friend-avatar-picker,.fw-friend-edit-layer{position:fixed;inset:0;z-index:20100;background:rgba(0,0,0,.42);display:flex;align-items:flex-end;justify-content:center}.fw-friend-avatar-picker__panel{width:100%;max-height:84vh;box-sizing:border-box;padding:12px 16px 18px;border-radius:16px 16px 0 0;background:#f7f7f7}.fw-friend-avatar-picker__panel header,.fw-friend-edit-dialog header{height:44px;display:flex;align-items:center;justify-content:space-between}.fw-friend-avatar-picker__panel button,.fw-friend-edit-dialog button{border:0;background:transparent;color:#07c160;font-size:15px}.fw-friend-avatar-picker__panel p{margin:4px 0 12px;color:#888;font-size:13px}.fw-friend-avatar-picker__grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;max-height:52vh;overflow:auto}.fw-friend-avatar-choice{padding:0;border:0;border-radius:8px;overflow:hidden;background:#e5e5e5;aspect-ratio:1}.fw-friend-avatar-choice img{width:100%;height:100%;display:block;object-fit:cover}.fw-friend-edit-layer{align-items:center;padding:24px;box-sizing:border-box}.fw-friend-edit-dialog{width:min(100%,410px);border-radius:12px;background:#f7f7f7;overflow:hidden}.fw-friend-edit-dialog header{padding:0 10px;border-bottom:1px solid #e5e5e5}.fw-friend-edit-dialog input{box-sizing:border-box;width:calc(100% - 36px);height:46px;margin:18px;padding:0 12px;border:0;border-radius:6px;background:#fff;outline:none;font:inherit;font-size:16px}.fw-friend-profile-page button:active,.fw-friend-avatar-picker button:active,.fw-friend-edit-layer button:active{background:#ededed!important;color:inherit}
+.fw-friend-profile-page{position:fixed;top:0;right:0;bottom:0;left:0;z-index:20000;background:#f7f7f7;color:#111;display:flex;flex-direction:column;overflow:hidden}
+.fw-friend-profile__header{height:52px;flex:0 0 52px;display:flex;align-items:center;justify-content:space-between;padding:0 12px;background:#f7f7f7;border-bottom:1px solid #e7e7e7}.fw-friend-profile__header strong{font-size:17px;font-weight:500}.fw-friend-profile__header button{width:42px;height:42px;border:0;background:transparent;color:#222;font-size:29px}.fw-friend-profile__body{flex:1;overflow-y:auto;padding-bottom:24px;background:#f2f2f2}.fw-friend-profile__hero{display:flex;align-items:center;gap:16px;padding:22px 20px;background:#fff}.fw-friend-profile__avatar-button{width:76px;height:76px;padding:0;border:0;border-radius:8px;overflow:hidden;background:#ddd}.fw-friend-profile__avatar{display:block;width:100%;height:100%;object-fit:cover}.fw-friend-profile__hero h1{margin:0 0 7px;font-size:22px;font-weight:500}.fw-friend-profile__hero p{margin:0;color:#777;font-size:14px}.fw-friend-profile__group{margin-top:10px;background:#fff}.fw-friend-profile__row{width:100%;min-height:54px;padding:0 20px;border:0;border-bottom:1px solid #ededed;background:#fff;display:flex;align-items:center;text-align:left;color:#111;font:inherit}.fw-friend-profile__row>span{flex:0 0 94px;font-size:16px}.fw-friend-profile__row>b{flex:1;text-align:right;color:#777;font-size:15px;font-weight:400;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.fw-friend-profile__row>i{width:20px;text-align:right;color:#aaa;font-size:24px;font-style:normal}.fw-friend-profile__actions{display:flex;gap:10px;padding:24px 20px}.fw-friend-profile__actions button{flex:1;height:46px;border:0;border-radius:5px;background:#07c160;color:#fff;font-size:16px}.fw-friend-profile__actions button+button{background:#fff;color:#07c160}.fw-friend-avatar-picker,.fw-friend-edit-layer{position:fixed;top:0;right:0;bottom:0;left:0;z-index:20100;background:rgba(0,0,0,.42);display:flex;align-items:flex-end;justify-content:center}.fw-friend-avatar-picker__panel{width:100%;max-height:84vh;box-sizing:border-box;padding:12px 16px 18px;border-radius:16px 16px 0 0;background:#f7f7f7}.fw-friend-avatar-picker__panel header,.fw-friend-edit-dialog header{height:44px;display:flex;align-items:center;justify-content:space-between}.fw-friend-avatar-picker__panel button,.fw-friend-edit-dialog button{border:0;background:transparent;color:#07c160;font-size:15px}.fw-friend-avatar-picker__panel p{margin:4px 0 12px;color:#888;font-size:13px}.fw-friend-avatar-picker__grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;max-height:52vh;overflow:auto}.fw-friend-avatar-choice{padding:0;border:0;border-radius:8px;overflow:hidden;background:#e5e5e5;aspect-ratio:1}.fw-friend-avatar-choice img{width:100%;height:100%;display:block;object-fit:cover}.fw-friend-edit-layer{align-items:center;padding:24px;box-sizing:border-box}.fw-friend-edit-dialog{width:min(100%,410px);border-radius:12px;background:#f7f7f7;overflow:hidden}.fw-friend-edit-dialog header{padding:0 10px;border-bottom:1px solid #e5e5e5}.fw-friend-edit-dialog input{box-sizing:border-box;width:calc(100% - 36px);height:46px;margin:18px;padding:0 12px;border:0;border-radius:6px;background:#fff;outline:none;font:inherit;font-size:16px}.fw-friend-profile-page button:active,.fw-friend-avatar-picker button:active,.fw-friend-edit-layer button:active{background:#ededed!important;color:inherit}
 
 .fw-friend-avatar-picker__upload{display:block;margin:0 0 12px;padding:11px 12px;border-radius:7px;background:#07c160;color:#fff;text-align:center;font-size:15px}.fw-friend-avatar-picker__upload input{display:none}.fw-friend-profile__region{margin-top:5px!important}
 /* FW_FRIEND_PROFILE_REFERENCE_LAYOUT_V2 */
@@ -994,7 +994,7 @@ body.fw-static-my-tab {
   --wechat-profile-top-inset: 86px !important;
 }
 /* In-app photo picker modeled on the supplied WeChat gallery reference. */
-.fw-gallery{position:fixed;z-index:2147483000;inset:0;background:#333;color:#f5f5f5;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);font-family:inherit;animation:fw-gallery-in .16s ease-out}
+.fw-gallery{position:fixed;z-index:2147483000;top:0;right:0;bottom:0;left:0;background:#333;color:#f5f5f5;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);font-family:inherit;animation:fw-gallery-in .16s ease-out}
 .fw-gallery--closing{transform:translateY(15px);opacity:0;transition:all .18s ease}
 .fw-gallery__header{height:54px;flex:0 0 54px;display:grid;grid-template-columns:1fr 2fr 1fr;align-items:center;padding:0 24px;box-sizing:border-box}
 .fw-gallery__header button{border:0;background:transparent;color:#fff;font-size:31px;font-weight:300;line-height:1;padding:0}
@@ -1002,7 +1002,7 @@ body.fw-static-my-tab {
 .fw-gallery__grid{flex:1;min-height:0;overflow:auto;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-auto-rows:min-content;gap:3px;align-content:start;background:#414141;overscroll-behavior:contain}
 .fw-gallery__tile{position:relative;border:0;padding:0;background:#252525;aspect-ratio:1.03;overflow:hidden}.fw-gallery__tile img{width:100%;height:100%;display:block;object-fit:cover}.fw-gallery__select{position:absolute;right:10px;top:8px;width:22px;height:22px;border:2px solid rgba(255,255,255,.92);border-radius:50%;background:rgba(0,0,0,.08);box-shadow:0 0 1px #555;color:white;display:grid;place-items:center;font-size:15px;font-style:normal;font-weight:500}.fw-gallery__tile.is-selected .fw-gallery__select,.fw-gallery__viewer header button.is-selected{background:#07c160;border-color:#07c160}
 .fw-gallery__footer{height:78px;flex:0 0 78px;background:#333;display:flex;align-items:center;justify-content:space-between;padding:0 24px;box-sizing:border-box}.fw-gallery__footer button{border:0;background:none;color:#eee;font-size:19px;padding:10px}.fw-gallery__footer button:disabled{color:#777}.fw-gallery__original{display:flex;align-items:center;gap:6px}.fw-gallery__original i{width:19px;height:19px;border:2px solid #eee;border-radius:50%}.fw-gallery__original.is-on i{background:#07c160;border-color:#07c160}.fw-gallery__send{border-radius:9px!important;background:#4b4b4b!important;padding:8px 20px!important;font-size:19px!important;color:#777!important}.fw-gallery__send:not(:disabled){background:#07c160!important;color:#fff!important}.fw-gallery__empty{grid-column:1/-1;text-align:center;color:#aaa;padding:35vh 20px;font-size:16px}
-.fw-gallery__viewer{position:absolute;inset:0;background:#000;z-index:2;display:flex;flex-direction:column}.fw-gallery__viewer[hidden]{display:none}.fw-gallery__viewer header{height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 18px}.fw-gallery__viewer header button,.fw-gallery__viewer footer button{border:0;background:none;color:white;font-size:28px}.fw-gallery__viewer header button:last-child{width:26px;height:26px;border:2px solid white;border-radius:50%;font-size:14px}.fw-gallery__viewer img{flex:1;min-height:0;width:100%;height:100%;object-fit:contain}.fw-gallery__viewer footer{height:55px;display:flex;justify-content:space-around}.fw-gallery-message{display:flex;justify-content:flex-end;margin:9px 12px}.fw-gallery-message img,.fw-chat-message__photo{max-width:220px;max-height:280px;object-fit:cover;border-radius:5px}.fw-chat-message__bubble--photo{padding:0!important;background:transparent!important}.fw-gallery-image-preview{position:fixed;z-index:2147483001;inset:0;background:#000;display:flex;align-items:center;justify-content:center}.fw-gallery-image-preview img{width:100%;height:100%;object-fit:contain}.fw-gallery-image-preview button{position:absolute;top:30px;left:20px;color:white;background:none;border:0;font-size:40px}
+.fw-gallery__viewer{position:absolute;top:0;right:0;bottom:0;left:0;background:#000;z-index:2;display:flex;flex-direction:column}.fw-gallery__viewer[hidden]{display:none}.fw-gallery__viewer header{height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 18px}.fw-gallery__viewer header button,.fw-gallery__viewer footer button{border:0;background:none;color:white;font-size:28px}.fw-gallery__viewer header button:last-child{width:26px;height:26px;border:2px solid white;border-radius:50%;font-size:14px}.fw-gallery__viewer img{flex:1;min-height:0;width:100%;height:100%;object-fit:contain}.fw-gallery__viewer footer{height:55px;display:flex;justify-content:space-around}.fw-gallery-message{display:flex;justify-content:flex-end;margin:9px 12px}.fw-gallery-message img,.fw-chat-message__photo{max-width:220px;max-height:280px;object-fit:cover;border-radius:5px}.fw-chat-message__bubble--photo{padding:0!important;background:transparent!important}.fw-gallery-image-preview{position:fixed;z-index:2147483001;top:0;right:0;bottom:0;left:0;background:#000;display:flex;align-items:center;justify-content:center}.fw-gallery-image-preview img{width:100%;height:100%;object-fit:contain}.fw-gallery-image-preview button{position:absolute;top:30px;left:20px;color:white;background:none;border:0;font-size:40px}
 @keyframes fw-gallery-in{from{transform:translateY(18px);opacity:.8}to{transform:translateY(0);opacity:1}}
 
 /* Keyboard/IME avoidance. The hidden-keyboard state keeps the original geometry.
@@ -1030,7 +1030,7 @@ body.fw-keyboard-open .fw-native-composer-root > .fw-native-chat-feature-panel {
 
 /* Chat red-packet and transfer pages: full-screen bottom-up transition. */
 .fw-chat-pay-open { overflow: hidden !important; }
-.fw-chat-pay-screen { position: fixed; z-index: 100000; inset: 0; display: flex; flex-direction: column; box-sizing: border-box; overflow: hidden; background: #f1f1f1; color: #171717; font-family: -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif; transform: translateY(100%); }
+.fw-chat-pay-screen { position: fixed; z-index: 100000; top:0;right:0;bottom:0;left:0; display: flex; flex-direction: column; box-sizing: border-box; overflow: hidden; background: #f1f1f1; color: #171717; font-family: -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif; transform: translateY(100%); }
 .fw-chat-pay-screen--enter { animation: fw-chat-pay-up .18s cubic-bezier(.2,.8,.2,1) forwards; }
 .fw-chat-pay-screen--exit { animation: fw-chat-pay-down .18s ease-in forwards; }
 @keyframes fw-chat-pay-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
@@ -1207,7 +1207,7 @@ body.fw-keyboard-open .fw-native-composer-root > .fw-native-chat-feature-panel {
 }
 
 /* In-WebView editor for red packet and transfer fields. */
-.fw-chat-pay-input-overlay { position:absolute; inset:0; z-index:4; display:flex; align-items:center; justify-content:center; padding:24px; box-sizing:border-box; background:rgba(0,0,0,.35); }
+.fw-chat-pay-input-overlay { position:absolute; top:0;right:0;bottom:0;left:0; z-index:4; display:flex; align-items:center; justify-content:center; padding:24px; box-sizing:border-box; background:rgba(0,0,0,.35); }
 .fw-chat-pay-input-dialog { width:min(300px,100%); padding:20px; border-radius:12px; box-sizing:border-box; background:#fff; box-shadow:0 8px 32px rgba(0,0,0,.18); }
 .fw-chat-pay-input-dialog strong { display:block; margin-bottom:16px; color:#222; font-size:17px; font-weight:500; }
 .fw-chat-pay-input-dialog input { width:100%; height:44px; padding:0 10px; box-sizing:border-box; border:1px solid #ddd; border-radius:6px; color:#222; background:#fff; font-size:17px; outline:none; }
@@ -1224,10 +1224,10 @@ body.fw-keyboard-open .fw-native-composer-root > .fw-native-chat-feature-panel {
 .fw-chat-pay-submit--transfer { background:#d8d8d8; color:#fff; transition:background-color .12s ease; }
 .fw-chat-pay-submit--transfer:disabled { background:#d8d8d8 !important; color:#fff !important; }
 .fw-chat-pay-submit--transfer:not(:disabled) { background:#07c160 !important; color:#fff !important; }
-.fw-transfer-confirm { position:absolute; z-index:5; inset:0; display:flex; align-items:flex-end; justify-content:center; background:rgba(0,0,0,.48); opacity:0; transition:opacity .18s ease; font-family:Roboto,"Helvetica Neue",Arial,sans-serif; }
+.fw-transfer-confirm { position:absolute; z-index:5; top:0;right:0;bottom:0;left:0; display:flex; align-items:flex-end; justify-content:center; background:rgba(0,0,0,.48); opacity:0; transition:opacity .18s ease; font-family:Roboto,"Helvetica Neue",Arial,sans-serif; }
 .fw-transfer-confirm.is-visible { opacity:1; }
 .fw-transfer-confirm.is-closing { opacity:0; }
-.fw-transfer-confirm__sheet { position:absolute; inset:auto 0 0; height:min(69vh,660px); min-height:520px; padding-bottom:env(safe-area-inset-bottom,0px); box-sizing:border-box; border-radius:14px 14px 0 0; background:#f7f7f7; color:#202020; transform:translateY(100%); transition:transform .22s cubic-bezier(.2,.75,.25,1); overflow:hidden; display:flex; flex-direction:column; }
+.fw-transfer-confirm__sheet { position:absolute; top:auto;right:0;bottom:0;left:0; height:min(69vh,660px); min-height:520px; padding-bottom:env(safe-area-inset-bottom,0px); box-sizing:border-box; border-radius:14px 14px 0 0; background:#f7f7f7; color:#202020; transform:translateY(100%); transition:transform .22s cubic-bezier(.2,.75,.25,1); overflow:hidden; display:flex; flex-direction:column; }
 .fw-transfer-confirm.is-visible .fw-transfer-confirm__sheet { transform:translateY(0); }
 .fw-transfer-confirm.is-closing .fw-transfer-confirm__sheet { transform:translateY(100%); }
 .fw-transfer-confirm__sheet header { height:54px; flex:0 0 54px; display:flex; align-items:center; justify-content:space-between; padding:0 22px; }
@@ -1302,7 +1302,7 @@ body.fw-keyboard-open .fw-native-composer-root > .fw-native-chat-feature-panel {
 .fw-chat-pay-submit--transfer.is-ready:not(:disabled),
 .fw-chat-pay-submit--transfer:not(:disabled)[aria-disabled="false"] { background-color:#07c160!important; }
 .fw-transfer-confirm--success { background:#fff!important; }
-.fw-transfer-success { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; background:#fff; color:#151515; padding:calc(env(safe-area-inset-top,0px) + 18px) 22px calc(env(safe-area-inset-bottom,0px) + 22px); box-sizing:border-box; font-family:-apple-system,BlinkMacSystemFont,"PingFang SC",Roboto,"Noto Sans CJK SC",sans-serif; }
+.fw-transfer-success { position:absolute; top:0;right:0;bottom:0;left:0; display:flex; flex-direction:column; align-items:center; background:#fff; color:#151515; padding:calc(env(safe-area-inset-top,0px) + 18px) 22px calc(env(safe-area-inset-bottom,0px) + 22px); box-sizing:border-box; font-family:-apple-system,BlinkMacSystemFont,"PingFang SC",Roboto,"Noto Sans CJK SC",sans-serif; }
 .fw-transfer-success__heading { display:flex; align-items:center; gap:6px; color:#16b66a; font-size:18px; line-height:25px; font-weight:500; }
 .fw-transfer-success__heading b { font-weight:500; }
 .fw-transfer-success__heading small { display:inline-block; margin-left:2px; padding:1px 4px; border:1px solid #a2ddbf; border-radius:3px; color:#46986a; font-size:10px; line-height:14px; vertical-align:2px; }
@@ -1319,7 +1319,7 @@ body.fw-keyboard-open .fw-native-composer-root > .fw-native-chat-feature-panel {
 .fw-transfer-chat-card { position:relative; display:flex; flex:0 1 auto; width:min(61.6vw,295px); min-height:21.4vw; flex-wrap:wrap; align-items:flex-start; box-sizing:border-box; padding:2.5vw 2.5vw 0; border-radius:5px; background:#ff9f35; color:#fff; }
 .fw-transfer-chat-card:after { content:""; position:absolute; top:3.1vw; right:-6px; border-top:7px solid transparent; border-bottom:7px solid transparent; border-left:7px solid #ff9f35; }
 .fw-transfer-chat-card__icon { position:relative; display:block; flex:0 0 10.7vw; width:10.7vw; height:10.7vw; margin:.4vw 1.7vw 0 0; border:2px solid #fff; border-radius:50%; box-sizing:border-box; }
-.fw-transfer-chat-card__icon:before { content:""; position:absolute; inset:1.25vw; border-radius:50%; background:#fff; }
+.fw-transfer-chat-card__icon:before { content:""; position:absolute; top:1.25vw;right:1.25vw;bottom:1.25vw;left:1.25vw; border-radius:50%; background:#fff; }
 .fw-transfer-chat-card__icon i,.fw-transfer-chat-card__icon b { position:absolute; z-index:1; left:2.6vw; width:4.7vw; height:.72vw; border-radius:2px; background:#ff9f35; }
 .fw-transfer-chat-card__icon i { top:3.3vw; transform:rotate(-1deg); }
 .fw-transfer-chat-card__icon b { top:5.55vw; transform:rotate(-1deg); }
@@ -2176,7 +2176,7 @@ body.fw-keyboard-open .fw-native-composer-root > .fw-native-chat-feature-panel {
   overflow: visible !important;
 }
 .fw-transfer-chat-card__artwork {
-  position:absolute !important; inset:0 !important; width:100% !important; height:100% !important;
+  position:absolute !important; top:0 !important;right:0 !important;bottom:0 !important;left:0 !important; width:100% !important; height:100% !important;
   object-fit:fill !important; display:block !important; pointer-events:none !important;
 }
 .fw-chat-message--transfer .fw-transfer-chat-card__content {
@@ -2415,7 +2415,7 @@ body.fw-keyboard-open .fw-native-composer-root > .fw-native-chat-feature-panel {
    composer input; a sent quote renders as the grey block captured on device). */
 .fw-msg-menu-backdrop {
   position: absolute;
-  inset: 0;
+  top:0;right:0;bottom:0;left:0;
   z-index: 59;
 }
 .fw-msg-menu {
@@ -2587,7 +2587,7 @@ body.fw-keyboard-open .fw-native-composer-root > .fw-native-chat-feature-panel {
   position: fixed;
   /* Must sit above the conversation page, which is pinned at z-index 20000. */
   z-index: 20100;
-  inset: 0;
+  top:0;right:0;bottom:0;left:0;
   display: flex;
   align-items: flex-end;
   background: rgba(0,0,0,.4);
@@ -2660,7 +2660,7 @@ body.fw-keyboard-open .fw-native-composer-root > .fw-native-chat-feature-panel {
 /* 2026-10-09: tapping the WeChat home device row picks which device it reports. */
 .fw-device-sheet {
   position: fixed;
-  inset: 0;
+  top:0;right:0;bottom:0;left:0;
   z-index: 20100;
   display: flex;
   align-items: flex-end;
@@ -2768,7 +2768,7 @@ body.fw-keyboard-open .fw-native-composer-root > .fw-native-chat-feature-panel {
    Reference: the mini-program style ledger reached from 个人收款. The amount and
    the 笔数 are editable; both switch from grey (zero) to black once they are set. */
 .fw-pay-ledger {
-  position: fixed; z-index: 20100; inset: 0; display: flex; flex-direction: column;
+  position: fixed; z-index: 20100; top:0;right:0;bottom:0;left:0; display: flex; flex-direction: column;
   overflow: hidden; background: #f4f4f4; color: #111; font-family: inherit;
   -webkit-tap-highlight-color: transparent;
   animation: fw-screen-slide-in-right 120ms cubic-bezier(.2,.75,.25,1) both;
@@ -3102,8 +3102,8 @@ body.fw-keyboard-open .fw-native-composer-root > .fw-native-chat-feature-panel {
 .fw-group-select-empty { padding: 44px 16px; color: #9b9da0; font-size: 15px; text-align: center; }
 
 /* 选择一个已有的群 - bottom sheet listing locally created groups. */
-.fw-group-select-groups { position: absolute; inset: 0; z-index: 6; display: flex; align-items: flex-end; }
-.fw-group-select-groups__backdrop { position: absolute; inset: 0; background: rgba(0,0,0,.35); }
+.fw-group-select-groups { position: absolute; top:0;right:0;bottom:0;left:0; z-index: 6; display: flex; align-items: flex-end; }
+.fw-group-select-groups__backdrop { position: absolute; top:0;right:0;bottom:0;left:0; background: rgba(0,0,0,.35); }
 .fw-group-select-groups__panel {
   position: relative; width: 100%; max-height: 70%; display: flex; flex-direction: column;
   background: #ededed; border-radius: 12px 12px 0 0; overflow: hidden;
@@ -3173,7 +3173,7 @@ body.fw-keyboard-open .fw-native-composer-root > .fw-native-chat-feature-panel {
 .fw-local-conversation__header .fw-chat-more svg { width: 15.3px; height: 3px; display: block; fill: #161616; overflow: visible; }
 
 .fw-chat-info {
-  position: fixed; z-index: 20100; inset: 0; display: flex; flex-direction: column;
+  position: fixed; z-index: 20100; top:0;right:0;bottom:0;left:0; display: flex; flex-direction: column;
   overflow: hidden; background: #ededed; color: #111; font-family: inherit;
   -webkit-tap-highlight-color: transparent;
   animation: fw-screen-slide-in-right 130ms cubic-bezier(.2,.75,.25,1) both;
@@ -3307,7 +3307,7 @@ body.fw-keyboard-open .fw-native-composer-root > .fw-native-chat-feature-panel {
 
 /* Tapping the friend info block opens this chooser (备注 / 昵称 / 微信号 / 地区). */
 .fw-friend-info-editor {
-  position: fixed; inset: 0; z-index: 20600; background: rgba(0, 0, 0, .42);
+  position: fixed; top:0;right:0;bottom:0;left:0; z-index: 20600; background: rgba(0, 0, 0, .42);
   display: flex; align-items: flex-end; justify-content: center;
 }
 .fw-friend-info-editor__panel {
@@ -3351,7 +3351,7 @@ body.fw-keyboard-open .fw-native-composer-root > .fw-native-chat-feature-panel {
 .fw-chat-sender { margin: 0 0 4px 2px; color: #9a9a9a; font-size: 12px; line-height: 16px; }
 
 .fw-group-sender-picker {
-  position: fixed; inset: 0; z-index: 20700; background: rgba(0, 0, 0, .42);
+  position: fixed; top:0;right:0;bottom:0;left:0; z-index: 20700; background: rgba(0, 0, 0, .42);
   display: flex; align-items: flex-end; justify-content: center;
 }
 .fw-group-sender-picker__panel {
@@ -3384,7 +3384,7 @@ body.fw-keyboard-open .fw-native-composer-root > .fw-native-chat-feature-panel {
 
 /* ==================== 朋友圈 / Moments (2026-10-10) ==================== */
 .fw-moments-feed {
-  position: fixed; inset: 0; z-index: 20300; background: #fff; color: #111;
+  position: fixed; top:0;right:0;bottom:0;left:0; z-index: 20300; background: #fff; color: #111;
   overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
 }
 .fw-moments-feed__body { padding-top: 8px; }
@@ -3532,7 +3532,7 @@ body.fw-keyboard-open .fw-native-composer-root > .fw-native-chat-feature-panel {
 .fw-cal__cell.is-today { color: #07c160; }
 .fw-cal__cell.is-sel { background: #07c160; color: #fff; }
 .fw-tl-picker {
-  position: fixed; inset: 0; z-index: 20700; background: rgba(0, 0, 0, .42);
+  position: fixed; top:0;right:0;bottom:0;left:0; z-index: 20700; background: rgba(0, 0, 0, .42);
   display: flex; align-items: flex-end; justify-content: center;
 }
 .fw-tl-picker__panel {
@@ -3598,7 +3598,7 @@ body.fw-keyboard-open .fw-native-composer-root > .fw-native-chat-feature-panel {
 .fw-tl-item__comment-img { display: block; width: 84px; height: 84px; margin-top: 4px; border-radius: 4px; object-fit: cover; background: #f0f0f0; }
 
 .fw-cover-viewer {
-  position: fixed; inset: 0; z-index: 21000; background: #000;
+  position: fixed; top:0;right:0;bottom:0;left:0; z-index: 21000; background: #000;
   display: flex; align-items: center; justify-content: center;
 }
 .fw-cover-viewer__image { max-width: 100%; max-height: 100%; object-fit: contain; }
@@ -3619,7 +3619,7 @@ body.fw-keyboard-open .fw-native-composer-root > .fw-native-chat-feature-panel {
 .fw-tl-emoji { height: 44px; border: 0; border-radius: 8px; background: #fff; font-size: 22px; }
 .fw-tl-emoji:active { background: #ededed; }
 .fw-moments-page {
-  position: fixed; inset: 0; z-index: 20300; background: #fff; color: #111;
+  position: fixed; top:0;right:0;bottom:0;left:0; z-index: 20300; background: #fff; color: #111;
   overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
 }
 .fw-moments__hero { position: relative; height: 40vh; min-height: 300px; background: #4a4a4a; }
@@ -3627,7 +3627,7 @@ body.fw-keyboard-open .fw-native-composer-root > .fw-native-chat-feature-panel {
    sky-above-clouds gradient. The old fallback blurred a 640px avatar across the whole hero,
    which is what made 朋友圈 look permanently out of focus. */
 .fw-moments__cover { overflow: hidden; }
-.fw-moments__cover-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.fw-moments__cover-img { position: absolute; top:0;right:0;bottom:0;left:0; width: 100%; height: 100%; object-fit: cover; }
 .fw-moments__cover.is-default {
   background-color: #cfe0ee;
   background-image:
@@ -3647,7 +3647,7 @@ body.fw-keyboard-open .fw-native-composer-root > .fw-native-chat-feature-panel {
 }
 .fw-moments__cover.is-default .fw-moments__cover-img { display: none; }
 .fw-moments__cover {
-  position: absolute; inset: 0; background-color: #d7dbe0;
+  position: absolute; top:0;right:0;bottom:0;left:0; background-color: #d7dbe0;
   background-size: cover; background-position: center;
 }
 .fw-moments__cover::after {
@@ -3735,7 +3735,7 @@ body.fw-keyboard-open .fw-native-composer-root > .fw-native-chat-feature-panel {
 .fw-moment__meta { display: flex; gap: 12px; color: #8a8a8a; font-size: 13px; }
 
 .fw-moment-preview {
-  position: fixed; inset: 0; z-index: 20800; background: #000;
+  position: fixed; top:0;right:0;bottom:0;left:0; z-index: 20800; background: #000;
   display: flex; align-items: center; justify-content: center;
 }
 /* WeChat's photo view: ‹ + "n/total" floating over a black page. The photo is always scaled to
@@ -3770,7 +3770,7 @@ body.fw-keyboard-open .fw-native-composer-root > .fw-native-chat-feature-panel {
 .fw-moment-preview__actions button img { display: block; width: 100%; height: 100%; }
 .fw-moment-preview__actions button:active { opacity: .72; }
 .fw-moment-preview__grid {
-  position: absolute; inset: 0; z-index: 3; background: rgba(0, 0, 0, .92);
+  position: absolute; top:0;right:0;bottom:0;left:0; z-index: 3; background: rgba(0, 0, 0, .92);
   display: flex; align-items: center; justify-content: center;
 }
 .fw-moment-preview__grid-body {
@@ -3784,7 +3784,7 @@ body.fw-keyboard-open .fw-native-composer-root > .fw-native-chat-feature-panel {
 .fw-moment-preview__grid-body button.is-current { border-color: #07c160; }
 .fw-moment-preview__grid-body img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .fw-moment-preview__sheet {
-  position: absolute; inset: 0; z-index: 4; background: rgba(0, 0, 0, .45);
+  position: absolute; top:0;right:0;bottom:0;left:0; z-index: 4; background: rgba(0, 0, 0, .45);
   display: flex; align-items: flex-end;
 }
 .fw-moment-preview__sheet-body {
@@ -3801,7 +3801,7 @@ body.fw-keyboard-open .fw-native-composer-root > .fw-native-chat-feature-panel {
 
 /* 发表朋友圈 / composer */
 .fw-moments-composer {
-  position: fixed; inset: 0; z-index: 20700; background: #fff; color: #111;
+  position: fixed; top:0;right:0;bottom:0;left:0; z-index: 20700; background: #fff; color: #111;
   display: flex; flex-direction: column; overflow: hidden;
 }
 .fw-moments-composer__header {
@@ -3936,7 +3936,7 @@ body.fw-keyboard-open .fw-native-composer-root > .fw-native-chat-feature-panel {
    位置按参考图 1440x3168 ÷4 摆：标题顶 48（墨迹 51.5）、头像 43.25 顶 142.25、
    名字顶 199.5（墨迹 203.5）、金额顶 249（墨迹 256.5）、完成 165.5x43.25 距底 104.5。 */
 .fw-scanpay-success {
-  position: absolute; inset: 0; display: block; box-sizing: border-box;
+  position: absolute; top:0;right:0;bottom:0;left:0; display: block; box-sizing: border-box;
   background: #fff; color: #111;
 }
 .fw-scanpay-success__heading {
@@ -3975,7 +3975,7 @@ body.fw-keyboard-open .fw-native-composer-root > .fw-native-chat-feature-panel {
 .fw-scanpay-success__done:active { background: #e6e6e6; }
 
 /* 独立整屏打开时的外壳（小微主页 → 支付成功）。 */
-.fw-pay-success { position: fixed; inset: 0; z-index: 100300; background: #fff; }
+.fw-pay-success { position: fixed; top:0;right:0;bottom:0;left:0; z-index: 100300; background: #fff; }
 .fw-pay-success--enter { animation: fw-chat-pay-up .18s cubic-bezier(.2, .8, .2, 1) forwards; }
 .fw-pay-success--exit { animation: fw-chat-pay-down .18s ease-in forwards; }
 @media (max-width: 700px) {
@@ -3985,7 +3985,7 @@ body.fw-keyboard-open .fw-native-composer-root > .fw-native-chat-feature-panel {
 /* ============ 拍摄取景器 + 照片预览 (2026-10-11) ============
    The composer's 拍摄 tile runs a live getUserMedia preview; the round button shoots on a
    tap and records on a hold, and the capture opens the edit page whose 完成 sends it. */
-.fw-camera { position: fixed; inset: 0; z-index: 100000; overflow: hidden; background: #000; }
+.fw-camera { position: fixed; top:0;right:0;bottom:0;left:0; z-index: 100000; overflow: hidden; background: #000; }
 .fw-camera--enter { animation: fw-chat-pay-up .16s cubic-bezier(.2, .8, .2, 1) forwards; }
 /* The viewfinder shows exactly the framing that gets captured, i.e. the area above the
    control bar - so the photo and the preview agree. */
@@ -4013,14 +4013,14 @@ body.fw-keyboard-open .fw-native-composer-root > .fw-native-chat-feature-panel {
 .fw-camera__shutter.is-recording .fw-camera__shutter-img { display: none; }
 .fw-camera__shutter.is-recording .fw-camera__rec { display: block; }
 
-.fw-camera-preview { position: fixed; inset: 0; z-index: 100001; background: #000; overflow: hidden; }
+.fw-camera-preview { position: fixed; top:0;right:0;bottom:0;left:0; z-index: 100001; background: #000; overflow: hidden; }
 .fw-camera-preview__stage { position: absolute; left: 0; right: 0; top: 0; bottom: 126px; overflow: hidden; background: #000; }
 /* 2026-10-11: the photo is never stretched or cropped - it keeps its own proportions,
    sticks to the top edge, and any leftover space simply extends the black bottom bar. */
-.fw-camera-preview__frame { position: absolute; inset: 0; display: flex; align-items: flex-start; justify-content: center; line-height: 0; }
-.fw-camera-preview__box { position: absolute; inset: 0; line-height: 0; }
+.fw-camera-preview__frame { position: absolute; top:0;right:0;bottom:0;left:0; display: flex; align-items: flex-start; justify-content: center; line-height: 0; }
+.fw-camera-preview__box { position: absolute; top:0;right:0;bottom:0;left:0; line-height: 0; }
 .fw-camera-preview__image { display: block; width: 100%; height: 100%; object-fit: cover; }
-.fw-camera-preview__ink { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; }
+.fw-camera-preview__ink { position: absolute; top:0;right:0;bottom:0;left:0; width: 100%; height: 100%; touch-action: none; }
 .fw-camera-preview__ink[hidden] { display: none; }
 .fw-camera-preview__play {
   position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
@@ -4071,7 +4071,7 @@ body.fw-keyboard-open .fw-native-composer-root > .fw-native-chat-feature-panel {
   position: absolute; right: 6px; bottom: 6px; padding: 0 4px; border-radius: 3px;
   background: rgba(0, 0, 0, .45); color: #fff; font-size: 11px; line-height: 16px;
 }
-.fw-media-viewer { position: fixed; inset: 0; z-index: 2147483001; background: #000; display: flex; align-items: center; justify-content: center; }
+.fw-media-viewer { position: fixed; top:0;right:0;bottom:0;left:0; z-index: 2147483001; background: #000; display: flex; align-items: center; justify-content: center; }
 .fw-media-viewer img, .fw-media-viewer video { max-width: 100%; max-height: 100%; object-fit: contain; }
 .fw-media-viewer button {
   position: absolute; top: calc(env(safe-area-inset-top, 0px) + 10px); left: 14px;
@@ -4114,7 +4114,7 @@ body.fw-keyboard-open .fw-native-composer-root > .fw-native-chat-feature-panel {
    at y 129.25, title 15px, amount ¥30px + 44px, hairline divider at y 350 / 318.9,
    转账时间 13px + 15.5px, 收款 button 165.5 x 43.25, footer links #576b95. */
 .fw-tf-detail {
-  position: fixed; inset: 0; z-index: 100000; display: flex; flex-direction: column;
+  position: fixed; top:0;right:0;bottom:0;left:0; z-index: 100000; display: flex; flex-direction: column;
   overflow: hidden; background: #fff; color: #1b1b1b; font-family: inherit;
   -webkit-tap-highlight-color: transparent; transform: translate3d(100%, 0, 0);
 }
@@ -4176,7 +4176,7 @@ body.fw-keyboard-open .fw-native-composer-root > .fw-native-chat-feature-panel {
 /* 红包行的头像要和转账行一致（9.7vw），否则行首多占 5px，气泡会整体偏移。 */
 .fw-chat-message--redpacket .fw-chat-message__avatar { width: 9.7vw; height: 9.7vw; flex: 0 0 9.7vw; }
 .fw-hb-card { position: relative; flex: 0 0 auto; width: min(63.194vw, 303px); height: min(22.5vw, 108px); }
-.fw-hb-card__artwork { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: fill; }
+.fw-hb-card__artwork { position: absolute; top:0;right:0;bottom:0;left:0; display: block; width: 100%; height: 100%; object-fit: fill; }
 .fw-hb-card__icon { position: absolute; left: 3.472vw; top: 2.5vw; display: block; width: 11.11vw; height: 12.64vw; }
 .fw-hb-card__wish {
   position: absolute; left: 16.192vw; top: 6.667vw; max-width: 42vw;
@@ -4191,13 +4191,13 @@ body.fw-keyboard-open .fw-native-composer-root > .fw-native-chat-feature-panel {
 
 /* 开红包封面 / 领取结果 / 红包详情：整屏页，滑动入场，安卓返回键先关它。 */
 .fw-hb-screen {
-  position: fixed; inset: 0; z-index: 100200; overflow: hidden; font-family: inherit;
+  position: fixed; top:0;right:0;bottom:0;left:0; z-index: 100200; overflow: hidden; font-family: inherit;
   color: #1b1b1b; -webkit-tap-highlight-color: transparent; transform: translate3d(100%, 0, 0);
 }
 .fw-hb-screen--enter { animation: fw-screen-slide-in-right 150ms cubic-bezier(.2,.75,.25,1) forwards; }
 .fw-hb-screen--exit { animation: fw-local-chat-slide-out-right 150ms cubic-bezier(.2,.75,.25,1) forwards !important; pointer-events: none; }
 .fw-hb-screen--open { background: rgba(255, 255, 255, .44); -webkit-backdrop-filter: blur(22px); backdrop-filter: blur(22px); }
-.fw-hb-open { position: absolute; inset: 0; }
+.fw-hb-open { position: absolute; top:0;right:0;bottom:0;left:0; }
 .fw-hb-open__card {
   position: absolute; left: 52.2px; top: 178.2px; width: 256.3px; height: 424.2px;
   border-radius: 3px; background: #e1604b; overflow: hidden;
@@ -4276,7 +4276,7 @@ body.fw-keyboard-open .fw-native-composer-root > .fw-native-chat-feature-panel {
    Background is WeChat green #07C160 = rgb(7, 193, 96); the barcode/QR images are
    generated per open, so their size just needs to stay proportional. */
 .fw-receive-pay {
-  position: fixed; inset: 0; z-index: 100000; display: flex; flex-direction: column;
+  position: fixed; top:0;right:0;bottom:0;left:0; z-index: 100000; display: flex; flex-direction: column;
   box-sizing: border-box; overflow: hidden; background: #07c160; color: #fff;
   font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
   transform: translateY(100%);
@@ -4344,7 +4344,7 @@ body.fw-keyboard-open .fw-native-composer-root > .fw-native-chat-feature-panel {
    版式照参考图：底层是对方头像放大满屏 + 重度虚化；中间是头像 + 昵称；
    状态文字（未接通「邀请你语音通话...」/ 接通后计时）压在按钮上方；底部一排圆钮。 */
 .fw-call {
-  position: fixed; inset: 0; z-index: 100400; display: flex; flex-direction: column;
+  position: fixed; top:0;right:0;bottom:0;left:0; z-index: 100400; display: flex; flex-direction: column;
   box-sizing: border-box; overflow: hidden; color: #fff;
   background: #0d0d0d; font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
   -webkit-tap-highlight-color: transparent;
@@ -4354,7 +4354,7 @@ body.fw-keyboard-open .fw-native-composer-root > .fw-native-chat-feature-panel {
 @keyframes fw-call-in { from { opacity: 0; transform: scale(1.04); } to { opacity: 1; transform: scale(1); } }
 @keyframes fw-call-out { from { opacity: 1; } to { opacity: 0; } }
 /* 底层：对方头像放大到满屏 + 重度虚化。 */
-.fw-call__blur { position: absolute; inset: 0; overflow: hidden; background: #0d0d0d; }
+.fw-call__blur { position: absolute; top:0;right:0;bottom:0;left:0; overflow: hidden; background: #0d0d0d; }
 .fw-call__blur img {
   position: absolute; left: 50%; top: 50%; width: 140%; height: 140%;
   transform: translate(-50%, -50%); object-fit: cover;
@@ -4575,7 +4575,7 @@ body.fw-keyboard-open .fw-native-composer-root > .fw-native-chat-feature-panel {
    --------------------------------------------------------------------------- */
 .fw-my-qr {
   position: fixed;
-  inset: 0;
+  top:0;right:0;bottom:0;left:0;
   z-index: 2147483646;
   display: flex;
   flex-direction: column;
@@ -4701,7 +4701,7 @@ body.fw-keyboard-open .fw-native-composer-root > .fw-native-chat-feature-panel {
    =========================================================================== */
 .fw-accounts {
   position: fixed;
-  inset: 0;
+  top:0;right:0;bottom:0;left:0;
   z-index: 2147483646;
   overflow: hidden;
   background: #ededed;
@@ -4759,7 +4759,7 @@ body.fw-keyboard-open .fw-native-composer-root > .fw-native-chat-feature-panel {
 }
 .fw-accounts__scroll {
   position: absolute;
-  inset: 0;
+  top:0;right:0;bottom:0;left:0;
   overflow-y: auto;
   overflow-x: hidden;
   overscroll-behavior: contain;
