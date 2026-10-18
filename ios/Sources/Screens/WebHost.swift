@@ -68,8 +68,7 @@ final class WebHostController: UIViewController, WKScriptMessageHandler, UIGestu
         // 返回入口。
         //
         // 这个控制器是 `.fullScreen` 模态弹出来的（`presentWeb` 里设的），既没有导航栏，
-        // 页面本身也没有返回按钮 —— 不补这个就「进去出不来」。
-        // 给两个入口：左上角浮层按钮（看得见） + 左边缘右滑（符合直觉）。
+        // 首页没有网页返回箭头，保留左上角返回作为可见出口；子页多一个箭头但不会迷路。
         installBackAffordance()
         installBackButton()
         installHeaderHitTargets()
