@@ -103,7 +103,9 @@ final class WatermarkOverlay: UIView {
         let w = bounds.width, h = bounds.height
         guard w > 0, h > 0, !text.isEmpty else { return }
 
-        let size = max(28, w * 0.055)
+        // Android: size = max(28f, w * 0.055f)，其中 w 与 28 都是**像素**（density 3）。
+        // 换算到 pt 就是 max(28/3, w*0.055)，否则水印会大 ~30%。
+        let size = max(28.0 / 3.0, w * 0.055)
         let font = UIFont.boldSystemFont(ofSize: size)
         // 负的 strokeWidth = 既填充又描边，正好对应 Android 的「填充 + 描边」两次绘制
         let attrs: [NSAttributedString.Key: Any] = [

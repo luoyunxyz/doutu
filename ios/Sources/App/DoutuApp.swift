@@ -1207,6 +1207,8 @@ final class ScreenHostController: UIViewController {
         super.viewDidAppear(animated)
         // 每次页面可见都按当前会员状态重挂水印（与 Android 的 attachIfNeeded 时机一致）
         WatermarkOverlay.attachIfNeeded(preferredWindow: view.window)
+        // 真机免点按验证：Documents/demo.txt 里放一个命令令牌，启动即跳到那一页
+        DebugBridge.shared.runLaunchTokenIfNeeded()
     }
 
     override func viewDidLayoutSubviews() {

@@ -31,6 +31,20 @@ final class DebugBridge {
     /// 已执行的指令序号，避免同一条指令重复执行
     private var lastSeq = -1
 
+    /// 启动即跳转：从 Documents/demo.txt 读一个命令令牌并执行一次。
+    /// 用途是**不经点按**就能在真机上逐屏截图验证（配合 `pymobiledevice3 apps push` + `dvt launch`）。
+    @MainActor
+    func runLaunchTokenIfNeeded() {
+        let url = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("demo.txt")
+        guard let raw = try? String(contentsOf: url, encoding: .utf8) else { return }
+        let token = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !token.isEmpty else { return }
+        CrashLog.append("launch token: \(token)")
+        Router.shared?.handle(token, at: .zero)
+        Router.shared?.hostView?.setNeedsDisplay()
+    }
+
     func start() {
         guard Self.enabled, timer == nil else { return }
         // 先记一条日志，方便在文件 App 里确认调试端起来了
