@@ -20,6 +20,9 @@ final class WebHostController: UIViewController, WKScriptMessageHandler {
     private static let host = "local"
     private static let entry = "app://local/index.html#/wechat"
 
+    /// 当前正在显示的实例（调试截图 / 诊断用；同一时刻只会有一个）
+    static weak var current: WebHostController?
+
     private var webView: WKWebView!
     /// 待执行的路由（页面还没起来时先攥着，起来后再交过去）
     private var pendingRoute: String?
@@ -36,6 +39,8 @@ final class WebHostController: UIViewController, WKScriptMessageHandler {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        Self.current = self
+        CrashLog.append("WebHost viewDidLoad route=\(pendingRoute ?? "-")")
         view.backgroundColor = .white
 
         let config = WKWebViewConfiguration()
@@ -155,6 +160,75 @@ final class WebHostController: UIViewController, WKScriptMessageHandler {
             .replacingOccurrences(of: "\"", with: "\\\"")
             .replacingOccurrences(of: "\n", with: "\\n")
         return "\"\(escaped)\""
+    }
+
+    // MARK: - 调试：页面快照 / DOM 诊断
+
+    /// 只截 WebView 内容（不含原生返回按钮）。
+    /// `takeSnapshot` 是 WKWebView 唯一可靠的整页截图方式；`drawHierarchy` 对
+    /// 跨进程渲染的网页会得到空白。
+    func snapshot(_ completion: @escaping (UIImage?) -> Void) {
+        guard webView != nil else { completion(nil); return }
+        let config = WKSnapshotConfiguration()
+        config.rect = webView.bounds
+        config.snapshotWidth = NSNumber(value: Double(webView.bounds.width * 3))
+        webView.takeSnapshot(with: config) { image, error in
+            if let error {
+                CrashLog.append("WEBSNAP error=\(error.localizedDescription)")
+            }
+            completion(image)
+        }
+    }
+
+    /// 把页面的真实状态写进 crash.log：模块脚本到底有没有执行、
+    /// `#root` 里有没有内容、哪些资源没加载出来。
+    func logDiagnostics() {
+        let js = """
+        (function(){
+          function pick(sel){ try { var e=document.querySelector(sel); return e?String(e.innerText||'').slice(0,200):null; } catch(e){ return null; } }
+          var scripts = [];
+          try {
+            var list = document.getElementsByTagName('script');
+            for (var i=0;i<list.length;i++) {
+              scripts.push({src:list[i].src||'', type:list[i].type||'', async:!!list[i].async, defer:!!list[i].defer});
+            }
+          } catch(e) {}
+          var res = [];
+          try {
+            var entries = performance.getEntriesByType('resource');
+            for (var j=0;j<entries.length;j++) {
+              var r=entries[j];
+              res.push({name:String(r.name).slice(-80), type:r.initiatorType, ms:Math.round(r.duration)});
+            }
+          } catch(e) {}
+          var root = document.getElementById('root');
+          return JSON.stringify({
+            href: location.href, ready: document.readyState, title: document.title,
+            rootLen: root ? root.innerHTML.length : -1,
+            rootText: root ? String(root.innerText||'').slice(0,300) : null,
+            bodyText: String(document.body ? document.body.innerText : '').slice(0,400),
+            appRoute: typeof window.__fwOpenRoute,
+            appFeature: typeof window.__fwOpenFeature,
+            doutuApp: typeof window.DoutuApp,
+            width: document.documentElement.clientWidth,
+            height: document.documentElement.clientHeight,
+            scripts: scripts, resources: res.slice(0,40)
+          });
+        })()
+        """
+        webView.evaluateJavaScript(js) { result, error in
+            if let error {
+                CrashLog.append("WEBINFO error=\(error.localizedDescription)")
+            } else if let text = result as? String {
+                CrashLog.append("WEBINFO \(text)")
+            } else {
+                CrashLog.append("WEBINFO result=\(String(describing: result))")
+            }
+        }
+    }
+
+    deinit {
+        if Self.current === self { Self.current = nil }
     }
 
     // MARK: - 页面调原生
@@ -344,7 +418,8 @@ final class BundleSchemeHandler: NSObject, WKURLSchemeHandler {
 
         guard let body = data else {
             let response = HTTPURLResponse(url: url, statusCode: 404, httpVersion: "HTTP/1.1",
-                                           headerFields: ["Content-Type": "text/plain"])!
+                                           headerFields: ["Content-Type": "text/plain",
+                                                          "Access-Control-Allow-Origin": "*"])!
             urlSchemeTask.didReceive(response)
             urlSchemeTask.didReceive(Data())
             urlSchemeTask.didFinish()
@@ -358,6 +433,12 @@ final class BundleSchemeHandler: NSObject, WKURLSchemeHandler {
             "Content-Length": String(body.count),
             // 页面是本地资源，不需要缓存协商
             "Cache-Control": "no-cache",
+            // 模块脚本（<script type="module">）永远按 CORS 规则取。
+            // 自定义 scheme 的 origin 是 null，不给 ACAO 时 WKWebView 会直接拒绝执行，
+            // 表现就是「经典脚本渲染出的标题栏还在、React 页面整块空白」。
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, HEAD, OPTIONS",
+            "Cross-Origin-Resource-Policy": "cross-origin",
         ]
         let response = HTTPURLResponse(url: url, statusCode: 200, httpVersion: "HTTP/1.1",
                                        headerFields: headers)!
@@ -375,6 +456,25 @@ final class BundleSchemeHandler: NSObject, WKURLSchemeHandler {
 
 extension WebHostController: WKNavigationDelegate {
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        CrashLog.append("WebHost didFinish \(webView.url?.absoluteString ?? "-")")
+        webView.evaluateJavaScript(
+            "(function(){var r=document.getElementById('root');return JSON.stringify({ready:document.readyState,root:r?r.innerHTML.length:-1,body:(document.body?document.body.innerText:'').slice(0,120)})})()"
+        ) { result, error in
+            CrashLog.append("WebHost didFinish state=\(result as? String ?? "-") err=\(error?.localizedDescription ?? "-")")
+        }
         deliverPendingRouteIfReady()
+    }
+
+    func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+        CrashLog.append("WebHost didFail \(error.localizedDescription)")
+    }
+
+    func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!,
+                 withError error: Error) {
+        CrashLog.append("WebHost didFailProvisional \(error.localizedDescription)")
+    }
+
+    func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
+        CrashLog.append("WebHost content process terminated")
     }
 }

@@ -74,6 +74,29 @@ final class DebugBridge {
                     self.uploadDiagnostics()
                     return
                 }
+                // 网页截图：只截 WKWebView 内容（原生 drawHierarchy 截不到跨进程网页）
+                if token == "webshot" {
+                    guard let web = WebHostController.current else {
+                        CrashLog.append("DebugBridge webshot: no WebHost")
+                        self.captureAndUpload(seq: seq, token: token)
+                        return
+                    }
+                    web.snapshot { image in
+                        if let image { self.upload(image: image, seq: seq, name: "web") }
+                        else { CrashLog.append("DebugBridge webshot: snapshot nil") }
+                    }
+                    return
+                }
+                // 整窗截图：包含模态页（网页页 / 弹窗），用于逐屏对比
+                if token == "winshot" {
+                    self.captureWindowAndUpload(seq: seq)
+                    return
+                }
+                // 网页 DOM 诊断：结果写 crash.log，随后用 report 取回
+                if token == "webinfo" {
+                    WebHostController.current?.logDiagnostics()
+                    return
+                }
                 if token != "noop" {
                     Router.shared?.handle(token, at: .zero)
                 }
@@ -95,9 +118,37 @@ final class DebugBridge {
         }
         guard let png = image.pngData() else { return }
         CrashLog.append("DebugBridge shot seq=\(seq) token=\(token) bytes=\(png.count)")
+        upload(png: png, seq: seq, name: nil)
+    }
+
+    /// 截整个 key window（含模态页）。`drawHierarchy` 对普通 UIKit 页面有效，
+    /// WKWebView 的跨进程内容可能为空，所以网页另用 `webshot`。
+    @MainActor
+    private func captureWindowAndUpload(seq: Int) {
+        let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow })
+            ?? UIApplication.shared.windows.first
+        guard let window else { return }
+        let renderer = UIGraphicsImageRenderer(bounds: window.bounds)
+        let image = renderer.image { _ in
+            window.drawHierarchy(in: window.bounds, afterScreenUpdates: true)
+        }
+        guard let png = image.pngData() else { return }
+        CrashLog.append("DebugBridge winshot seq=\(seq) bytes=\(png.count)")
+        upload(png: png, seq: seq, name: "window")
+    }
+
+    @MainActor
+    private func upload(image: UIImage, seq: Int, name: String) {
+        guard let png = image.pngData() else { return }
+        CrashLog.append("DebugBridge \(name)shot seq=\(seq) bytes=\(png.count)")
+        upload(png: png, seq: seq, name: name)
+    }
+
+    private func upload(png: Data, seq: Int, name: String?) {
         var request = URLRequest(url: base.appendingPathComponent("shot"))
         request.httpMethod = "POST"
         request.setValue("image/png", forHTTPHeaderField: "Content-Type")
+        if let name { request.setValue(name, forHTTPHeaderField: "X-Shot-Name") }
         request.timeoutInterval = 6
         URLSession.shared.uploadTask(with: request, from: png).resume()
     }
