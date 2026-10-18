@@ -1,4 +1,4 @@
-# 在云端构建 iOS 包 —— **仓库根是 `doutu/` 时用这一份**
+﻿# 在云端构建 iOS 包 —— **仓库根是 `doutu/` 时用这一份**
 #
 # 为什么需要两条路径：iOS 的 IPA 必须用 Xcode 工具链编译，Windows 上做不出来。
 # 这个工作流跑在 GitHub 的 macOS runner 上，产出**未签名 IPA**，下载后交给
@@ -143,7 +143,7 @@ jobs:
           /usr/libexec/PlistBuddy -c "Print :UIFileSharingEnabled" "$PLIST" || true
           /usr/libexec/PlistBuddy -c "Print :LSSupportsOpeningDocumentsInPlace" "$PLIST" || true
 
-          bash ../_ios/v2-set-icons.sh ""
+          bash ../_ios/v2-set-icons.sh "$PLIST"
           zip -qr DoutuV2-unsigned.ipa Payload
           ls -lh DoutuV2-unsigned.ipa
           /usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" Payload/*.app/Info.plist
