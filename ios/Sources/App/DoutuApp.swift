@@ -567,6 +567,19 @@ final class Router {
                 CrashLog.append("ICON switch name=\(name) err=\(error?.localizedDescription ?? "ok")")
             }
 
+        // 真机验收用：给收款记录播种/清空（不参与 UI，只走 DebugBridge 令牌）
+        case "receiptseed":
+            let made = ReceiptStore.shared.add(
+                [ReceiptStore.Spec(name: "小额", min: 0.1, max: 30, count: 3)],
+                year: 2026, month: 10)
+            CrashLog.append("receiptseed made=\(made) total=\(ReceiptStore.shared.records.count)")
+            if let state = self.host?.state as? ReceiptScreen.State { state.scroll = 0 }
+            self.host?.setNeedsDisplay()
+        case "receiptclear":
+            ReceiptStore.shared.reset()
+            if let state = self.host?.state as? ReceiptScreen.State { state.scroll = 0 }
+            self.host?.setNeedsDisplay()
+
         // 首页外壳：底部三栏 + 平台页签（Android MainActivity）
         case "tab:0", "tab:1", "tab:2":
             guard let state = self.host?.state as? HomeShellScreen.State else { return }

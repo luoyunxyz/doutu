@@ -152,6 +152,8 @@ CASES = {
     "receipt": (["zhiCell:11"], False),
     "receipt_detail": (["zhiCell:11", "entry:1792296000000"], False),
     "settings2": (["user"], False),
+    "memberdialog": (["tab:2", "member"], False, True),
+    "batch": (["zhiCell:11", "batch"], False, True),
     "parsegrid": (["tab:0", "page:0", "weiCell:3:2"], False),
     "feedback": (["entry:1"], False),
     "settings": (["entry:3"], False),
@@ -174,8 +176,10 @@ def main():
             if name not in CASES:
                 print("skip unknown", name)
                 continue
-            tokens, web = CASES[name]
-            cap.capture(name, tokens, web=web)
+            spec = CASES[name]
+            tokens, web = spec[0], spec[1]
+            window = spec[2] if len(spec) > 2 else False
+            cap.capture(name, tokens, web=web, window=window)
     finally:
         cap.close()
 
