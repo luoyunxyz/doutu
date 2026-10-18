@@ -72,6 +72,8 @@ final class WebHostController: UIViewController, WKScriptMessageHandler, UIGestu
         // 给两个入口：左上角浮层按钮（看得见） + 左边缘右滑（符合直觉）。
         installBackAffordance()
         installBackButton()
+        installHeaderHitTargets()
+        installBlankTap()
 
         // 把 `DoutuApp` 桥按 Android 的方法清单补齐（缺一个页面里调用就会抛异常）
         let bridge = WKUserScript(source: Self.bridgeShim, injectionTime: .atDocumentStart,
@@ -216,13 +218,8 @@ final class WebHostController: UIViewController, WKScriptMessageHandler, UIGestu
     }
 
     @objc private func headerPlusTapped() {
-        // 不在原生里重画菜单：给网页的加号派发一次真实 click，
-        // 让 wechat-chat-actions.js 走它自带的完整「发起群聊/添加朋友/扫一扫/收付款」。
         webView.evaluateJavaScript(
-            "(function(){var a=document.querySelector('.wechat-topbar__actions');" +
-            "if(!a)return 0;var s=a.querySelectorAll('svg');if(!s.length)return 0;" +
-            "var p=s[s.length-1];p.dispatchEvent(new MouseEvent('click'," +
-            "{bubbles:true,cancelable:true,view:window}));return 1})()",
+            "window.__fwOpenPlusMenu ? window.__fwOpenPlusMenu() : 0",
             completionHandler: nil)
     }
 
@@ -247,10 +244,8 @@ final class WebHostController: UIViewController, WKScriptMessageHandler, UIGestu
         let point = gesture.location(in: webView)
         // 只接管标题栏 + Windows 登录条这一带；下面聊天区/底栏保持网页自己的点击。
         guard point.y >= 0, point.y <= 140 else { return }
-        // 网页自带的工具菜单就在 wechat-topbar 的 click 处理里。
         webView.evaluateJavaScript(
-            "(function(){var t=document.querySelector('.wechat-topbar');if(!t)return 0;" +
-            "t.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,view:window}));return 1})()",
+            "window.__fwOpenToolsSheet ? window.__fwOpenToolsSheet() : 0",
             completionHandler: nil)
     }
 
@@ -664,7 +659,7 @@ final class WebHostController: UIViewController, WKScriptMessageHandler, UIGestu
           bar.__doutuHit = 1;
           bar.style.position = 'relative';
           var hit = document.createElement('div');
-          hit.style.cssText = 'position:absolute;top:0;right:0;bottom:0;left:0;z-index:40;background:transparent;touch-action:manipulation;';
+          hit.style.cssText = 'position:absolute;top:0;right:0;bottom:0;left:0;z-index:40;background:transparent;pointer-events:auto;touch-action:manipulation;';
           hit.addEventListener('click', function(e){
             e.preventDefault(); e.stopPropagation();
             var rect = bar.getBoundingClientRect();
@@ -682,7 +677,7 @@ final class WebHostController: UIViewController, WKScriptMessageHandler, UIGestu
           deviceRow.__doutuHit = 1;
           deviceRow.style.position = 'relative';
           var rowHit = document.createElement('div');
-          rowHit.style.cssText = 'position:absolute;top:0;right:0;bottom:0;left:0;z-index:40;background:transparent;touch-action:manipulation;';
+          rowHit.style.cssText = 'position:absolute;top:0;right:0;bottom:0;left:0;z-index:40;background:transparent;pointer-events:auto;touch-action:manipulation;';
           rowHit.addEventListener('click', function(e){
             e.preventDefault(); e.stopPropagation();
             if (window.__fwOpenToolsSheet) window.__fwOpenToolsSheet();
