@@ -131,6 +131,9 @@ final class ReceiptScreen: Screen {
         avatar = UIImage(named: "rec_avatar")
         coin = UIImage(named: "rec_coin")
         askAvatarImage = UIImage(named: "rec_ask_avatar")
+        // 列表直接读 `ReceiptStore.shared.records`；不在进页时 load 的话，
+        // 重启 App 后记录虽然还在 UserDefaults 里，页面却永远是空的（真机踩过）。
+        ReceiptStore.shared.load()
     }
 
     // MARK: - 布局（Java:186-231）
