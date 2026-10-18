@@ -24,6 +24,8 @@ final class WebHostController: UIViewController, WKScriptMessageHandler {
     static weak var current: WebHostController?
 
     private var webView: WKWebView!
+    /// 包内网页的本地 HTTP 服务（真正的 origin，ES module 才能加载）
+    private var server: LocalWebServer?
     /// 待执行的路由（页面还没起来时先攥着，起来后再交过去）
     private var pendingRoute: String?
     /// 左上角返回按钮（这个模态没有导航栏，必须自己补）
@@ -84,8 +86,32 @@ final class WebHostController: UIViewController, WKScriptMessageHandler {
         let jsErrorHook = WKUserScript(source: WebHostController.errorHook, injectionTime: .atDocumentStart, forMainFrameOnly: false)
         config.userContentController.addUserScript(jsErrorHook)
 
-        if let url = URL(string: Self.entry) {
-            webView.load(URLRequest(url: url))
+        // 真正的 origin：Android 用 `https://fake-world.local` + shouldInterceptRequest，
+        // iOS 这边用 127.0.0.1 回环 HTTP。自定义 scheme 下 ES module 会被 CORS 拒绝，
+        // 页面只剩经典脚本渲染的外壳（微信标题栏 + “Windows 微信已登录”，下面全白）。
+        let local = LocalWebServer()
+        guard let local else {
+            CrashLog.append("WebHost local server init failed, fallback app://")
+            if let url = URL(string: Self.entry) {
+                webView.load(URLRequest(url: url))
+            }
+            return
+        }
+        self.server = local
+        local.start { [weak self] port in
+            guard let self else { return }
+            guard let port else {
+                CrashLog.append("WebHost local server unavailable, fallback app://")
+                if let url = URL(string: Self.entry) {
+                    self.webView.load(URLRequest(url: url))
+                }
+                return
+            }
+            let raw = "http://localhost:\(port)/index.html#/wechat"
+            CrashLog.append("WebHost loading \(raw)")
+            if let url = URL(string: raw) {
+                self.webView.load(URLRequest(url: url))
+            }
         }
     }
 
@@ -231,6 +257,7 @@ final class WebHostController: UIViewController, WKScriptMessageHandler {
     }
 
     deinit {
+        server?.stop()
         if Self.current === self { Self.current = nil }
     }
 
@@ -259,7 +286,12 @@ final class WebHostController: UIViewController, WKScriptMessageHandler {
                 nativeHttpGet(urlString, callbackId: callbackId)
             }
         case "returnToAppHome":
-            navigationController?.popToRootViewController(animated: true)
+            // 这个页面是 present 出来的，没有导航栈；Android 那边是 finish()。
+            if presentingViewController != nil {
+                dismiss(animated: true)
+            } else {
+                navigationController?.popToRootViewController(animated: true)
+            }
         case "hasGalleryPermission":
             reply(callbackId, true)
         case "getGalleryItems":
