@@ -79,5 +79,5 @@ workflows:
           /usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "$PLIST"
 
     artifacts:
-      - ios_v2/Doutu-final-unsigned.ipa
-      - ios_v2/build.log
+      - Doutu-final-unsigned.ipa
+      - build.log
