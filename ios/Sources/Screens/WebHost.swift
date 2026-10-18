@@ -196,7 +196,10 @@ final class WebHostController: UIViewController, WKScriptMessageHandler {
         guard webView != nil else { completion(nil); return }
         let config = WKSnapshotConfiguration()
         config.rect = webView.bounds
-        config.snapshotWidth = NSNumber(value: Double(webView.bounds.width * 3))
+        // 注意：snapshotWidth 是 **点**，不是像素。之前按 3 倍写成 1170，WKWebView 会把
+        // 页面按 1170 CSS px 重新排版 —— 触发桌面断点，手机底栏被 max-lg:hidden 藏掉，
+        // 截图里看起来「底栏消失」。这里必须用真实的 390pt。
+        config.snapshotWidth = NSNumber(value: Double(webView.bounds.width))
         webView.takeSnapshot(with: config) { image, error in
             if let error {
                 CrashLog.append("WEBSNAP error=\(error.localizedDescription)")
