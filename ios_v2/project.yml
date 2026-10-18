@@ -25,6 +25,8 @@ targets:
       - path: Resources
         excludes:
           - "web"
+      # 兜底：资产目录优化后 Release 包里偶发取不到 home_top，显式再拷一份到包根。
+      - path: Resources/home_top.png
       - path: Resources/web
         type: folder
     settings:
