@@ -6,7 +6,7 @@ import UIKit
 /// 再补一条选中态高亮；文字只有横幅那两处，其余都是位图。因此移植非常直接：
 /// 三个图层按参考画布坐标贴回去，再把横幅文字与底栏画上。
 ///
-/// 尚未移植：`drawEntertainment`（娱乐页）、`drawProfile`（我页）、`drawDetail`（详情态）。
+/// 娱乐页、我页、详情态均已实现（见 `drawEntertainment` / `drawProfile` / `drawDetail`）。
 /// 它们在 `onDraw` 里是同一层分派，下一轮按 `tab` 分支补上即可。
 final class HomeShellScreen: Screen {
     let canvasSize = CGSize(width: 1080, height: 2388)

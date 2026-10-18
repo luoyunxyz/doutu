@@ -630,7 +630,9 @@ final class Router {
                 self.host?.setNeedsDisplay()
             }
         case "pin:forgot":
-            self.showToast("支付密码找回暂未接入", ok: false)
+            // Android 侧这个热区没有绑定任何行为（WithdrawScreen.java 里没有对应 listener），
+            // 为了保持 1:1 这里也不做动作，只重绘，避免出现「暂未接入」这类我方自造提示。
+            self.host?.setNeedsDisplay()
         case "bank":
             // 弹出银行卡选择层（对应 Android 的 BankSheet）
             if let state = self.host?.state as? WithdrawScreen.State {
@@ -949,7 +951,8 @@ final class Router {
         // 注意：`back` 在本 switch 的**前面**已有分支（`pop()`），这里不再重复 ——
         // 重复的 case 只会得到一条 "already handled" 警告，且第二个分支永远不执行。
         case "manage", "new", "footer":
-            // TODO: 账号管理 / 新增账号 / 底部蓝字说明
+            // 账号管理 / 新增账号 / 底部说明：Android 的 SwitchAccountScreen 里这三处是
+            // 位图与文字（`sw_foot` 等），**没有点击监听**，所以这里保持无动作即为一致。
             break
         case let t where t.hasPrefix("switch:"):
             // 切到指定账号（id 是字符串，由 `Accounts` 生成）

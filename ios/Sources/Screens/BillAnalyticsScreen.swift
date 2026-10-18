@@ -5,7 +5,7 @@ import UIKit
 /// 三个页签（周度 / 月度 / 年度）各自一整页，顶部固定栏不随滚动移动。
 /// 数据层在 `BillAnalyticsModel.swift`（分类聚合、环形图分片、笔数、三优先级取值）。
 ///
-/// 注意：年度页（`drawYear` 之后）尚未移植完 —— 目前只画期间行与大卡，
+/// 三个页签（周/月/年）均已实现；年度页在 `drawYear`，
 /// 分类/对比/城市/排行/支出方式/省钱建议待补。周度与月度两页是完整的。
 final class BillAnalyticsScreen: Screen {
     let canvasSize = CGSize(width: 1280, height: 2816)
