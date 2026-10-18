@@ -143,6 +143,7 @@ jobs:
           /usr/libexec/PlistBuddy -c "Print :UIFileSharingEnabled" "$PLIST" || true
           /usr/libexec/PlistBuddy -c "Print :LSSupportsOpeningDocumentsInPlace" "$PLIST" || true
 
+          bash ../_ios/v2-set-icons.sh ""
           zip -qr DoutuV2-unsigned.ipa Payload
           ls -lh DoutuV2-unsigned.ipa
           /usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" Payload/*.app/Info.plist
