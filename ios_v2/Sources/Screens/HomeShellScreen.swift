@@ -85,6 +85,10 @@ final class HomeShellScreen: Screen {
             "zhi_reference": "zhi_reference_loose",
             "dou_reference": "dou_reference_loose",
             "q_reference": "q_reference_loose",
+            "seg_wei": "seg_wei_loose",
+            "seg_zhi": "seg_zhi_loose",
+            "seg_dou": "seg_dou_loose",
+            "seg_q": "seg_q_loose",
         ]
         guard let looseName = loose[name],
               let path = Bundle.main.path(forResource: looseName, ofType: "png") else {

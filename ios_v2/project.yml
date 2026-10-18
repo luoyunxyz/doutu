@@ -23,6 +23,10 @@ targets:
     sources:
       - path: Sources
       - path: Assets/home_top_loose.png
+      - path: Assets/seg_q_loose.png
+      - path: Assets/seg_dou_loose.png
+      - path: Assets/seg_zhi_loose.png
+      - path: Assets/seg_wei_loose.png
       - path: Assets/q_reference_loose.png
       - path: Assets/dou_reference_loose.png
       - path: Assets/zhi_reference_loose.png
