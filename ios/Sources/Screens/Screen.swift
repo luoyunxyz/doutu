@@ -113,6 +113,8 @@ final class ScreenHostView: UIView {
     private var edgeBackFired = false
     /// 扫码页底下那层相机预览
     private var cameraView: CameraPreviewView?
+    /// 《用户须知》专用拖动：宿主 touchesMoved 在部分系统上收不到拖动时兜底
+    private var termsPanStart: CGFloat = 0
 
     init(screen: Screen) {
         self.screen = screen
@@ -125,6 +127,24 @@ final class ScreenHostView: UIView {
         NotificationCenter.default.addObserver(
             self, selector: #selector(themeChanged),
             name: .doutuThemeChanged, object: nil)
+        let pan = UIPanGestureRecognizer(target: self, action: #selector(handleTermsPan(_:)))
+        pan.cancelsTouchesInView = false
+        addGestureRecognizer(pan)
+    }
+
+    @objc private func handleTermsPan(_ gesture: UIPanGestureRecognizer) {
+        guard screen is TermsScreen else { return }
+        let canvas = Canvas(size: screen.canvasSize, bounds: bounds)
+        switch gesture.state {
+        case .began:
+            termsPanStart = max(0, min(state.scroll, maxScroll))
+        case .changed:
+            let dy = gesture.translation(in: self).y
+            state.scroll = min(max(0, termsPanStart - dy / canvas.sy), maxScroll)
+            setNeedsDisplay()
+        default:
+            break
+        }
     }
 
     @objc private func themeChanged() {
@@ -234,6 +254,11 @@ final class ScreenHostView: UIView {
             dragging = false
             draggingCarousel = false
             onAction?("back", CGPoint(x: 0, y: 0))
+            return
+        }
+        // 《用户须知》由上面的 UIPanGestureRecognizer 负责滚动，避免两套位移叠加。
+        if screen is TermsScreen {
+            lastPoint = p
             return
         }
 
