@@ -96,7 +96,7 @@ final class Router {
         case "balance":
             push(BalanceScreen(), state: BalanceScreen.State())
         case "order":
-            push(ReceiptScreen(), state: ReceiptScreen.State())
+            push(TaobaoOrderScreen(), state: TaobaoOrderScreen.State())   // 淘宝订单详情（原为 ReceiptScreen，点进去像支付宝主页）
         case "parse":
             let screen = ParseScreen()
             parseScreen = screen
