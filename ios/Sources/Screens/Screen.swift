@@ -96,6 +96,8 @@ final class ScreenHostView: UIView {
     private var moved = false
     /// 按下时刻（长按判定用）
     private var downAt: Date?
+    /// 左边缘右滑返回：本次手势是否已经触发过（防止一次拖动连发多次）
+    private var edgeBackFired = false
     /// 扫码页底下那层相机预览
     private var cameraView: CameraPreviewView?
 
@@ -195,6 +197,7 @@ final class ScreenHostView: UIView {
         dragging = false
         draggingCarousel = false
         moved = false
+        edgeBackFired = false
         downAt = Date()
     }
 
@@ -202,6 +205,23 @@ final class ScreenHostView: UIView {
         guard let t = touches.first else { return }
         let p = t.location(in: self)
         let canvas = Canvas(size: screen.canvasSize, bounds: bounds)
+
+        // 左边缘右滑 → 返回。
+        //
+        // 为什么需要：iOS 侧页面是**同一个 View 里换 Screen**（不是 UINavigationController），
+        // 所以没有系统自带的交互式返回手势；而 WebView 页、小支主页这类页面本身又不带返回热区，
+        // 结果就是「进去出不来」。这里给所有页面补一个统一的边缘手势。
+        if !edgeBackFired,
+           touchStart.x <= 30,
+           p.x - touchStart.x > 70,
+           abs(p.y - touchStart.y) < 90 {
+            edgeBackFired = true
+            dragging = false
+            draggingCarousel = false
+            onAction?("back", CGPoint(x: 0, y: 0))
+            return
+        }
+
         let dxDesign = (p.x - lastPoint.x) / canvas.sx
         let totalDx = p.x - touchStart.x
         let totalDy = p.y - touchStart.y

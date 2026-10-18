@@ -23,6 +23,8 @@ final class WebHostController: UIViewController, WKScriptMessageHandler {
     private var webView: WKWebView!
     /// 待执行的路由（页面还没起来时先攥着，起来后再交过去）
     private var pendingRoute: String?
+    /// 左上角返回按钮（这个模态没有导航栏，必须自己补）
+    private var backButton: UIButton?
 
     /// 初始路由：`#/wechat` 或 `#/wechat/...` 或 `feature:xxx`
     init(route: String = "#/wechat") {
@@ -51,6 +53,13 @@ final class WebHostController: UIViewController, WKScriptMessageHandler {
         webView.backgroundColor = .white
         view.addSubview(webView)
 
+        // 返回入口。
+        //
+        // 这个控制器是 `.fullScreen` 模态弹出来的（`presentWeb` 里设的），既没有导航栏，
+        // 页面本身也没有返回按钮 —— 不补这个就「进去出不来」。
+        // 给两个入口：左上角浮层按钮（看得见） + 左边缘右滑（符合直觉）。
+        installBackAffordance()
+
         // 把 `DoutuApp` 桥按 Android 的方法清单补齐（缺一个页面里调用就会抛异常）
         let bridge = WKUserScript(source: Self.bridgeShim, injectionTime: .atDocumentStart,
                                   forMainFrameOnly: true)
@@ -65,6 +74,47 @@ final class WebHostController: UIViewController, WKScriptMessageHandler {
     func open(route: String) {
         pendingRoute = route
         deliverPendingRouteIfReady()
+    }
+
+    // MARK: - 返回
+
+    /// 左上角半透明返回按钮 + 左边缘右滑
+    private func installBackAffordance() {
+        let button = UIButton(type: .system)
+        button.setTitle("‹ 返回", for: .normal)
+        button.titleLabel?.font = .systemFont(ofSize: 13, weight: .semibold)
+        button.setTitleColor(.white, for: .normal)
+        button.backgroundColor = UIColor.black.withAlphaComponent(0.38)
+        button.layer.cornerRadius = 15
+        button.frame = CGRect(x: 8, y: 0, width: 62, height: 30)
+        button.autoresizingMask = [.flexibleRightMargin]
+        button.addTarget(self, action: #selector(goBack), for: .touchUpInside)
+        backButton = button
+        view.addSubview(button)
+
+        let edge = UIScreenEdgePanGestureRecognizer(target: self, action: #selector(handleEdgePan(_:)))
+        edge.edges = .left
+        view.addGestureRecognizer(edge)
+    }
+
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        // 贴在安全区下方，避免被刘海/状态栏压住
+        let top = view.safeAreaInsets.top + 6
+        backButton?.frame = CGRect(x: 8, y: top, width: 62, height: 30)
+        view.bringSubviewToFront(backButton ?? UIView())
+    }
+
+    @objc private func goBack() {
+        dismiss(animated: true)
+    }
+
+    @objc private func handleEdgePan(_ gesture: UIScreenEdgePanGestureRecognizer) {
+        guard gesture.state == .ended else { return }
+        let translation = gesture.translation(in: view)
+        if translation.x > 60, abs(translation.y) < 120 {
+            dismiss(animated: true)
+        }
     }
 
     private func deliverPendingRouteIfReady() {

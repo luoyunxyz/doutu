@@ -70,6 +70,78 @@ final class Router {
         host.setScreen(previous.screen, state: previous.state)
     }
 
+    // MARK: - 娱乐页玩法行（`play:<key>`）
+
+    /// 对应 Android `MainActivity` 娱乐页各行的跳转。
+    ///
+    /// 之前这些分支是空实现（`_ = t`），所以「娱乐页点哪都没反应」。
+    /// 已移植的页面直接进；未移植的给一条明确提示，至少让用户知道点到了。
+    private func handlePlay(_ key: String) {
+        switch key {
+        case "avatar":
+            push(ProfileScreen(), state: ProfileScreen.State())
+        case "balance":
+            push(BalanceScreen(), state: BalanceScreen.State())
+        case "order":
+            push(ReceiptScreen(), state: ReceiptScreen.State())
+        case "parse":
+            showToast("短视频去水印：需要联网解析，暂未接入", ok: false)
+        case "call":
+            showToast("模拟来电：该页面尚未移植", ok: false)
+        case "shutdown":
+            showToast("模拟关机：该页面尚未移植", ok: false)
+        case "sound":
+            showToast("声音设置：该页面尚未移植", ok: false)
+        case "tease":
+            showToast("撩妹话术：该页面尚未移植", ok: false)
+        default:
+            showToast("该玩法尚未移植", ok: false)
+        }
+    }
+
+    // MARK: - 「我」页下方常用服务四行（`entry:<index>`）
+
+    private func handleProfileEntry(_ index: Int) {
+        switch index {
+        case 0:
+            showToast("人工客服 7×12 小时在线", ok: true)
+        case 1:
+            showToast("已记下你的建议，谢谢反馈！", ok: true)
+        case 2:
+            shareToFriend()
+        case 3:
+            showToast("更多设置：该页面尚未移植", ok: false)
+        default:
+            break
+        }
+    }
+
+    // MARK: - 「我」页右上角 ··· 账号菜单
+
+    private func handleAccountMenu() {
+        guard let host = UpdatePrompt.topViewController() else { return }
+        let sheet = UIAlertController(title: "账号", message: nil, preferredStyle: .actionSheet)
+        if Session.shared.isLoggedIn {
+            sheet.addAction(UIAlertAction(title: "退出登录", style: .destructive) { [weak self] _ in
+                Session.shared.clear()
+                self?.host?.setNeedsDisplay()
+                self?.showToast("已退出登录", ok: true)
+            })
+        } else {
+            sheet.addAction(UIAlertAction(title: "登录 / 注册", style: .default) { [weak self] _ in
+                LoginPresenter.present { [weak self] in self?.host?.setNeedsDisplay() }
+            })
+        }
+        sheet.addAction(UIAlertAction(title: "取消", style: .cancel))
+        // iPad/弹出式必须有锚点，否则会崩
+        if let pop = sheet.popoverPresentationController {
+            pop.sourceView = host.view
+            pop.sourceRect = CGRect(x: host.view.bounds.midX, y: 40, width: 1, height: 1)
+            pop.permittedArrowDirections = []
+        }
+        host.present(sheet, animated: true)
+    }
+
     /// 微模块（小微主页）4×4 宫格（`MainActivity:1736-1799`）。
     ///
     /// 真机验证过：这些格子**全部进同一个 `WeiHomeActivity`**，区别只是路由参数
@@ -203,14 +275,11 @@ final class Router {
 
         // 娱乐页的玩法行：`play:<key>`
         case let t where t.hasPrefix("play:"):
-            // TODO: 按 key 分发到对应页面（parse=解析页、order=订单、call=来电、shutdown=关机、
-            //       sound=声音、tease=撩妹、avatar=个人信息、balance=余额）
-            _ = t
+            handlePlay(String(t.dropFirst("play:".count)))
 
         // 「我」页的热区
         case "menu":
-            // TODO: 账号菜单（改名 / 刷新 / 退出登录）
-            break
+            handleAccountMenu()
         case "avatar":
             // 换头像：未登录先去登录，已登录直接从相册选
             if Session.shared.isLoggedIn {
@@ -233,11 +302,11 @@ final class Router {
                 }
             }
         case "member":
-            // TODO: 会员面板（开通状态、到期时间、如何开通）
-            break
+            // 会员卡：Android 侧弹出开通面板；这里先给明确反馈（不再是无响应的死区）
+            showToast("会员中心：开通后解锁全部玩法", ok: true)
         case let t where t.hasPrefix("entry:"):
             // 0 人工客服 / 1 求新功能（意见反馈）/ 2 邀请好友 / 3 更多设置
-            _ = Int(t.suffix(1))
+            handleProfileEntry(Int(t.suffix(1)) ?? 0)
 
         // 「我」页（支模块）
         case "bannerClose":
