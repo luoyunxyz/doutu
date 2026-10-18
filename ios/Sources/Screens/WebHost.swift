@@ -307,6 +307,21 @@ final class BundleSchemeHandler: NSObject, WKURLSchemeHandler {
             usedPath = base + "/index.html"
         }
 
+        // ⚠️ 关键：index.html 里是 `<script type="module" crossorigin src="./assets/index-*.js">`。
+        // `crossorigin` 会强制走 CORS 检查，而 app://local 这个自定义 scheme 不会返回
+        // Access-Control-Allow-Origin，于是**整个模块脚本被拒绝执行**，页面只剩空壳
+        // （真机现象：只有标题栏和一行「Windows 微信已登录」，下面全白）。
+        // 安卓 WebView 不做这个检查，所以安卓正常 —— 这里直接把 crossorigin 去掉。
+        if var body = data, usedPath.hasSuffix(".html") {
+            if let text = String(data: body, encoding: .utf8) {
+                let cleaned = text
+                    .replacingOccurrences(of: " crossorigin", with: "")
+                    .replacingOccurrences(of: "crossorigin ", with: "")
+                if let encoded = cleaned.data(using: .utf8) { body = encoded }
+            }
+            data = body
+        }
+
         guard let body = data else {
             let response = HTTPURLResponse(url: url, statusCode: 404, httpVersion: "HTTP/1.1",
                                            headerFields: ["Content-Type": "text/plain"])!
