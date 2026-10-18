@@ -319,7 +319,9 @@ final class Router {
     private func handleTermsToken(_ token: String) {
         guard token == "terms:agree" else { return }
         UserDefaults.standard.set(true, forKey: "terms.accepted")
-        pop()
+        // 根页面直接就是 TermsScreen，没有可 pop 的栈；必须显式切到首页。
+        // 之前只 pop()，真机上就是“点了同意还停在免责声明”。
+        host?.setScreen(HomeShellScreen(), state: HomeShellScreen.State())
         host?.setNeedsDisplay()
     }
     // MARK: - 「我」页右上角 ··· 账号菜单
@@ -1439,6 +1441,10 @@ final class ScreenHostController: UIViewController {
         if let home = screen as? HomeShellScreen {
             homeState = HomeShellScreen.State()
             hostView.state = homeState!
+        } else if screen is TermsScreen {
+            // 之前这里没给 TermsScreen 配 State，draw/hit 每次都拿新 State：
+            // 滚动量不保存、reachedBottom 永远 false，表现就是“滑不动、同意永远灰着”。
+            hostView.state = TermsScreen.State()
         }
         super.init(nibName: nil, bundle: nil)
     }
