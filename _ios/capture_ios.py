@@ -127,6 +127,7 @@ CASES = {
     "collect": (["row:收钱"], False),
     "travel": (["出行"], False),
     "service": (["entry:0"], False),
+    "analytics": (["zhiCell:7", "analytics"], False),
     "feedback": (["entry:1"], False),
     "settings": (["entry:3"], False),
     "wei0": (["tab:0", "page:0", "weiCell:0:0"], True),
