@@ -748,7 +748,7 @@ final class Router {
             let name = String(t.dropFirst("action:".count))
             switch name {
             case "扫一扫": push(ScanOverlayScreen(), state: ScanOverlayScreen.State())
-            case "收付款": push(PayCodeScreen(), state: PayCodeScreen.State())
+            case "收付款": push(PayCodeV2Screen(), state: PayCodeV2Screen.State())
             case "出行": push(TravelScreen(), state: TravelScreen.State())
             default: break
             }
@@ -1055,13 +1055,13 @@ final class Router {
         // 收付款码页
         case "收付款":
             // 由支模块首页（ZhiHomeScreen 的「收付款」格）触发，与 Android 同一入口
-            push(PayCodeScreen(), state: PayCodeScreen.State())
+            push(PayCodeV2Screen(), state: PayCodeV2Screen.State())
         case "出行":
             // 支模块首页的「出行」格 → 出行页（ZhiHomeActivity:303）
             push(TravelScreen(), state: TravelScreen.State())
         case "pay":
             // 扫码页左下的「付款码」→ 收付款码页
-            push(PayCodeScreen(), state: PayCodeScreen.State())
+            push(PayCodeV2Screen(), state: PayCodeV2Screen.State())
         case "album":
             // 扫码页右下的「相册」：从相册选图识别（相机/相册链路未移植）
             break
