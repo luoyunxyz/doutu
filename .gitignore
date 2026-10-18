@@ -51,3 +51,6 @@ server/.env.*
 *.keystore
 *.jks
 !_ios/**/*.png
+
+# 批量真机截图（比对用，不入库）
+_ios/shots/

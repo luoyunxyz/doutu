@@ -209,8 +209,14 @@ final class AppIconChooser: UIViewController {
             DispatchQueue.main.async {
                 guard let self else { return }
                 if let error {
+                    // 真机（ad-hoc / ldid 重签）上 IconServices 会返回 OSStatus -54；
+                    // 正常签名的安装包才会成功，这里把原因说清楚，别只甩一串错误码。
+                    let ns = error as NSError
+                    let message = ns.code == -54
+                        ? "当前安装方式不允许切换图标（需要正常签名的安装包）。\n\n图标资源已经打进包里，用正式签名重装后即可切换。"
+                        : error.localizedDescription
                     let alert = UIAlertController(title: "切换失败",
-                                                  message: error.localizedDescription,
+                                                  message: message,
                                                   preferredStyle: .alert)
                     alert.addAction(UIAlertAction(title: "知道了", style: .cancel))
                     self.present(alert, animated: true)

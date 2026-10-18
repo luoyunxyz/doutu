@@ -221,7 +221,7 @@ final class ReceiptBatchSheet: UIViewController {
         super.viewDidLayoutSubviews()
         dim.frame = view.bounds
         let bottom = view.safeAreaInsets.bottom
-        let sheetH = 610 + bottom
+        let sheetH = 560 + bottom
         let width = view.bounds.width - 24
         sheet.frame = CGRect(x: 12, y: view.bounds.height - sheetH, width: width, height: sheetH)
 
@@ -246,7 +246,7 @@ final class ReceiptBatchSheet: UIViewController {
             customMin.frame = CGRect(x: 122, y: 12, width: fieldW, height: 30)
             row.viewWithTag(3)?.frame = CGRect(x: 184, y: 12, width: 12, height: 30)
             customMax.frame = CGRect(x: 198, y: 12, width: fieldW, height: 30)
-            customCount.frame = CGRect(x: contentW - 70, y: 12, width: 70, height: 30)
+            customCount.frame = CGRect(x: contentW - 64, y: 12, width: 64, height: 30)
         }
 
         let monthY = 96 + CGFloat(tierSwitches.count) * 46 + 60
