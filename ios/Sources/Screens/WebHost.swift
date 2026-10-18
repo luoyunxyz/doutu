@@ -65,6 +65,16 @@ final class WebHostController: UIViewController, WKScriptMessageHandler {
                                   forMainFrameOnly: true)
         config.userContentController.addUserScript(bridge)
 
+        // 排版宽度对齐 Android。
+        //
+        // Android 的 `WeiHomeActivity` 调了 `setUseWideViewPort(false)`：页面按 **360dp** 排版
+        // （1080px ÷ density 3 = 360）。而 iOS 的 WKWebView 认 `width=device-width`，
+        // 在 iPhone 12 上是 **390pt** —— 页面比 Android 宽 8%，观感就是「比例不对」。
+        // 这里把 viewport 固定成 360，页面就按 Android 的排版宽度渲染，再整体放大到屏幕宽。
+        let viewport = WKUserScript(source: Self.viewportShim, injectionTime: .atDocumentStart,
+                                    forMainFrameOnly: true)
+        config.userContentController.addUserScript(viewport)
+
         if let url = URL(string: Self.entry) {
             webView.load(URLRequest(url: url))
         }
@@ -205,6 +215,19 @@ final class WebHostController: UIViewController, WKScriptMessageHandler {
     // Android 的 `addJavascriptInterface` 让页面能直接 `DoutuApp.xxx()` 同步取返回值。
     // WKWebView 只有异步 postMessage，所以这里垫一层：同步方法返回即刻可用的占位值，
     // 需要结果的走 callbackId（页面侧的 __doutuAppCallback）。
+    /// 把排版宽度固定成 Android 那边的 360dp（原因见 viewDidLoad 里的注释）。
+    private static let viewportShim = """
+    (function () {
+      var m = document.querySelector('meta[name="viewport"]');
+      if (!m) {
+        m = document.createElement('meta');
+        m.setAttribute('name', 'viewport');
+        (document.head || document.documentElement).appendChild(m);
+      }
+      m.setAttribute('content', 'width=360, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
+    })();
+    """
+
     private static let bridgeShim = """
     (function(){
       if (window.DoutuApp) return;
