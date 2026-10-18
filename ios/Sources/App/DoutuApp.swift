@@ -626,8 +626,10 @@ final class Router {
         case "member":
             // 会员卡 / 设置页会员行：Android 弹出账号与会员信息（含改用户名、刷新状态）
             showMemberInfo()
-        case let t where t.hasPrefix("entry:"):
-            // 0 人工客服 / 1 求新功能（意见反馈）/ 2 邀请好友 / 3 更多设置
+        case let t where t.hasPrefix("entry:") && !(self.host?.screen is ReceiptScreen):
+            // 「我」页的 0 人工客服 / 1 求新功能 / 2 邀请好友 / 3 更多设置。
+            // 注意：收款记录页的 `entry:<收款id>` 也是这个前缀，必须让下面那个
+            // ReceiptScreen 分支处理；否则点任意一条收款都会错跳客服页。
             handleProfileEntry(Int(t.suffix(1)) ?? 0)
 
         // 「我」页（支模块）
