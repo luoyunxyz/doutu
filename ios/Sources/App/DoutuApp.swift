@@ -635,7 +635,7 @@ final class Router {
             }
         case "pin:forgot":
             // Android 侧这个热区没有绑定任何行为（WithdrawScreen.java 里没有对应 listener），
-            // 为了保持 1:1 这里也不做动作，只重绘，避免出现「暂未接入」这类我方自造提示。
+            // 为了保持 1:1 这里也不做动作，只重绘；不要在这里加自造的「功能未完成」类提示。
             self.host?.setNeedsDisplay()
         case "bank":
             // 弹出银行卡选择层（对应 Android 的 BankSheet）
