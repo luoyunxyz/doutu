@@ -47,6 +47,10 @@ class Capturer:
         self.started = time.time()
 
     def reset(self):
+        # 先写一条 noop：App 启动时 DebugBridge 的 lastSeq 会重置，如果 cmd.json
+        # 还留着上一条业务指令，冷启动后会先把那条指令执行掉（例如又跳进客服页），
+        # 后面的步骤就全乱了。
+        self.send("noop")
         run(self.c, "killall -9 Doutu 2>/dev/null; sleep 0.8; uiopen doutu://; sleep 2.8")
         ps = run(self.c, "ps aux | grep -i Doutu | grep -v grep")
         if "Doutu.app" not in ps:
@@ -131,6 +135,7 @@ CASES = {
     "travel": (["出行"], False),
     "service": (["entry:0"], False),
     "analytics": (["zhiCell:7", "analytics"], False),
+    "receipt_loaded": (["zhiCell:11", "entry:1792296000000", "back"], False),
     "parsegrid": (["tab:0", "page:0", "weiCell:3:2"], False),
     "feedback": (["entry:1"], False),
     "settings": (["entry:3"], False),
