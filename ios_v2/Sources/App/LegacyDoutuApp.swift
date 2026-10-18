@@ -544,7 +544,7 @@ final class Router {
     private func handleZhiCell(_ index: Int) {
         switch index {
         case 0:   // 小支主页 ✓
-            push(ZhiHomeScreen(), state: ZhiHomeScreen.State())
+            push(ZhiHomeV2Screen(), state: ZhiHomeV2Screen.State())
         case 1:   // 总资产 ✓
             push(AssetScreen(), state: AssetScreen.State())
         case 2:   // 余额 ✓
@@ -719,22 +719,22 @@ final class Router {
             // 账单列表（数据由 BillStore 本地生成，与 Android 同一套规则）
             push(BillV2Screen(), state: BillV2Screen.State())
 
-        // 支模块首页（ZhiHomeScreen）的交互
+        // 支模块首页（ZhiHomeV2Screen）的交互
         case "plus":
             // 右上「+」浮层
-            if let state = self.host?.state as? ZhiHomeScreen.State {
+            if let state = self.host?.state as? ZhiHomeV2Screen.State {
                 state.plusMenu = true
                 self.host?.setNeedsDisplay()
             }
         case "plusClose":
-            if let state = self.host?.state as? ZhiHomeScreen.State {
+            if let state = self.host?.state as? ZhiHomeV2Screen.State {
                 state.plusMenu = false
                 self.host?.setNeedsDisplay()
             }
         case let t where t.hasPrefix("plus:"):
             // 「+」菜单四项：扫一扫 / 收款 / 添加朋友 / 历史记录
             let name = String(t.dropFirst("plus:".count))
-            if let state = self.host?.state as? ZhiHomeScreen.State {
+            if let state = self.host?.state as? ZhiHomeV2Screen.State {
                 state.plusMenu = false
             }
             switch name {
@@ -1054,7 +1054,7 @@ final class Router {
 
         // 收付款码页
         case "收付款":
-            // 由支模块首页（ZhiHomeScreen 的「收付款」格）触发，与 Android 同一入口
+            // 由支模块首页（ZhiHomeV2Screen 的「收付款」格）触发，与 Android 同一入口
             push(PayCodeV2Screen(), state: PayCodeV2Screen.State())
         case "出行":
             // 支模块首页的「出行」格 → 出行页（ZhiHomeActivity:303）
