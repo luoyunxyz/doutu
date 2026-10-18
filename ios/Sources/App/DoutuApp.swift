@@ -152,6 +152,73 @@ final class Router {
         }
     }
 
+    /// 收款详情页的编辑（Java `ReceiptDetailActivity.act()`）
+    private func handleReceiptDetail(_ token: String) {
+        guard let state = host?.state as? ReceiptDetailScreen.State,
+              let item = state.receipt else { return }
+        let stats = ReceiptStore.shared.stats(item.payer)
+        let numeric = ["amountLabel", "amount", "actual", "quota", "month", "total", "avg"]
+            .contains(token)
+
+        let title: String
+        let current: String
+        switch token {
+        case "amountLabel", "amount":
+            title = "修改收款金额"; current = ReceiptStore.money(item.amount)
+        case "actual":
+            title = "修改实际到账"; current = ReceiptStore.money(item.actual)
+        case "quota":
+            title = "修改提现免费额度"; current = ReceiptStore.money(item.quota)
+        case "prize":
+            title = "修改收钱有奖"; current = item.prize
+        case "note":
+            title = "修改交易说明"; current = item.note
+        case "payer":
+            title = "修改支付人"; current = item.payer
+        case "month":
+            title = "修改本月消费"
+            current = ReceiptStore.money(item.monthSpend ?? stats.monthSpend)
+        case "total":
+            title = "修改累计消费"
+            current = ReceiptStore.money(item.totalSpend ?? stats.totalSpend)
+        case "avg":
+            title = "修改平均单价"
+            current = ReceiptStore.money(item.avgPrice
+                ?? (stats.totalCount == 0 ? 0 : stats.totalSpend / Double(stats.totalCount)))
+        default:
+            return
+        }
+
+        EditPrompt.present(title: title, current: current, numeric: numeric) { [weak self] text in
+            let value = text.trimmingCharacters(in: .whitespacesAndNewlines)
+            switch token {
+            case "amountLabel", "amount":
+                if let number = Double(value) { item.amount = number }
+            case "actual":
+                if let number = Double(value) { item.actual = number }
+            case "quota":
+                if let number = Double(value) { item.quota = number }
+            case "prize":
+                item.prize = value
+            case "note":
+                item.note = value
+            case "payer":
+                guard !value.isEmpty else { return }
+                item.payer = value
+            case "month":
+                if let number = Double(value) { item.monthSpend = number }
+            case "total":
+                if let number = Double(value) { item.totalSpend = number }
+            case "avg":
+                if let number = Double(value) { item.avgPrice = number }
+            default:
+                return
+            }
+            ReceiptStore.shared.save()
+            self?.host?.setNeedsDisplay()
+        }
+    }
+
     // MARK: - 去水印解析页（Parse）
 
     private func handleParseToken(_ token: String) {
@@ -451,6 +518,9 @@ final class Router {
         case "menu":
             handleAccountMenu()
         case "avatar":
+            // 收款详情页也有一个 avatar 热区（Android 换收款人头像）。iOS 还没做
+            // 收款头像存储，不能落到「换我的头像」这条分支上。
+            if self.host?.screen is ReceiptDetailScreen { return }
             // 换头像：未登录先去登录，已登录直接从相册选
             if Session.shared.isLoggedIn {
                 AvatarPicker.present { ok, message in
@@ -583,10 +653,13 @@ final class Router {
         case "icon", "toggle:counted":
             break
 
-        // 收款详情页：金额各行、顾客画像各列、两个按钮、页脚
-        case "amountLabel", "actual", "prize", "quota", "note", "consumer", "payer",
-             "contact", "refund", "claim", "help":
-            // 编辑金额/奖励、顾客消费记录、联系顾客、退款、理赔、在线帮助均未移植
+        // 收款详情页：点金额/奖励/说明/付款人/画像列，弹原生编辑框（对应
+        // Android ReceiptDetailActivity 的 askNumber/askText/editColumn）。
+        // consumer / contact / refund / claim / help 在 Android 里也是直接 return，保持空转。
+        case "amountLabel", "amount", "actual", "prize", "quota", "note",
+             "payer", "month", "total", "avg":
+            handleReceiptDetail(token)
+        case "consumer", "contact", "refund", "claim", "help":
             break
 
         // 收款记录页：整页「批量添加」（Android ReceiptActivity.showBatchSheet）

@@ -89,6 +89,12 @@ final class ReceiptStore {
             receipt.payer = dict["payer"] as? String ?? "**峻"
             receipt.prize = dict["prize"] as? String ?? ""
             receipt.note = dict["note"] as? String ?? "收钱码收款"
+            // 详情页「修改本月消费 / 累计消费 / 平均单价」会写这三项覆盖值
+            receipt.monthSpend = dict["monthSpend"] as? Double
+            receipt.monthCount = dict["monthCount"] as? Int
+            receipt.totalSpend = dict["totalSpend"] as? Double
+            receipt.totalCount = dict["totalCount"] as? Int
+            receipt.avgPrice = dict["avgPrice"] as? Double
             return receipt
         }
         sort()
@@ -129,6 +135,12 @@ final class ReceiptStore {
         persist()
     }
 
+    /// 收款详情页改完金额/奖励/付款人后落盘（对应 Android `commit()`）
+    func save() {
+        sort()
+        persist()
+    }
+
     /// 某个时间点：落在指定年月的**任意一天任意时刻**（Java:200-210）
     private static func timeIn(_ year: Int, _ month: Int) -> TimeInterval {
         var comps = DateComponents()
@@ -150,11 +162,17 @@ final class ReceiptStore {
 
     private func persist() {
         let payload: [[String: Any]] = records.map { receipt in
-            [
+            var dict: [String: Any] = [
                 "id": receipt.id, "time": receipt.time, "amount": receipt.amount,
                 "actual": receipt.actual, "quota": receipt.quota,
                 "payer": receipt.payer, "prize": receipt.prize, "note": receipt.note,
             ]
+            if let value = receipt.monthSpend { dict["monthSpend"] = value }
+            if let value = receipt.monthCount { dict["monthCount"] = value }
+            if let value = receipt.totalSpend { dict["totalSpend"] = value }
+            if let value = receipt.totalCount { dict["totalCount"] = value }
+            if let value = receipt.avgPrice { dict["avgPrice"] = value }
+            return dict
         }
         UserDefaults.standard.set(payload, forKey: storageKey)
     }
