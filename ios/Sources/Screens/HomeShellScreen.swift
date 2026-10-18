@@ -217,37 +217,22 @@ final class HomeShellScreen: Screen {
         }
         switch s.tab {
         case .home:
-            // 分段控件（微/支/抖/Q）：**命中的阈值与绘制不同**，Java 里是固定的
-            // 280 / 540 / 795 / 1045（MainActivity:1726），必须照抄，不能用绘制用的 left/width
-            if y >= Self.segmentTop - 8 && y <= Self.segmentBottom + 8 {
-                let page = x < 280 ? 0 : x < 540 ? 1 : x < 795 ? 2 : (x <= 1045 ? 3 : -1)
-                if page >= 0 { return "page:\(page)" }
-                return "noop"
+            // 分段控件（微/支/抖/Q）与宫格的命中区间：以下数字都是在**真机截图**上量出来的设计坐标。
+            // 之前用的是 Android 1080×2400 下的 280/540/795/1045 与 900/1170/…，和 1280×2816 的画布对不上，
+            // 表现就是「首页点哪儿都不对」。实测：分段 y 876–1060、列边界 333/634/927；
+            // 宫格列边界 350/639/927，四行边界两页各自不同。
+            if y >= 876 && y <= 1060 {
+                let page = x < 333 ? 0 : x < 634 ? 1 : x < 927 ? 2 : 3
+                return "page:\(page)"
             }
-            // 宫格：列分界 295 / 540 / 782（微与支共用），行分界见下（Java:1736-1814）
-            if s.servicePage == 0 {
-                // 微模块 4×4：行区间 (900,1170] (1170,1390] (1390,1610] (1610,1830]
-                let col = x < 295 ? 0 : x < 540 ? 1 : x < 782 ? 2 : 3
-                let row: Int
-                if y > 900 && y <= 1170 { row = 0 }
-                else if y > 1170 && y <= 1390 { row = 1 }
-                else if y > 1390 && y <= 1610 { row = 2 }
-                else if y > 1610 && y <= 1830 { row = 3 }
-                else { return "noop" }
-                return "weiCell:\(row):\(col)"
-            }
-            if s.servicePage == 1 {
-                // 支模块 4×4：行区间 (940,1180] (1180,1400] (1400,1610] (1610,1830]
-                let col = x < 295 ? 0 : x < 540 ? 1 : x < 782 ? 2 : 3
-                let row: Int
-                if y <= 940 || y > 1830 { return "noop" }
-                else if y <= 1180 { row = 0 }
-                else if y <= 1400 { row = 1 }
-                else if y <= 1610 { row = 2 }
-                else { row = 3 }
-                return "zhiCell:\(row * 4 + col)"
-            }
-            return "noop"
+            let col = x < 350 ? 0 : x < 639 ? 1 : x < 927 ? 2 : 3
+            let rowBounds: [CGFloat] = s.servicePage == 0
+                ? [1300, 1600, 1900, 2250, 2560]    // 微页面（四行，实测）
+                : [1130, 1310, 1571, 1832, 2160]    // 支页面（四行，实测）
+            guard y >= rowBounds[0], y < rowBounds[4] else { return "noop" }
+            var row = 3
+            for i in 0..<4 where y < rowBounds[i + 1] { row = i; break }
+            return s.servicePage == 0 ? "weiCell:\(row):\(col)" : "zhiCell:\(row * 4 + col)"
         case .entertainment:
             // 落在哪一行就读画出来那份坐标（y 加上滚动量，Java:1912-1917）
             let cy = y + s.scroll
