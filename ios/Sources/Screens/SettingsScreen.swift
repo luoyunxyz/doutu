@@ -496,7 +496,7 @@ final class SettingsScreen: Screen {
     static var statusText: String {
         let saved = UserDefaults.standard.string(forKey: "profile.status_text") ?? ""
         if !saved.isEmpty { return saved }
-        return Session.shared.isActivated ? "已开通会员" : "未开通会员"
+        return Session.shared.isActivated ? "正常" : "未开通会员"
     }
 
     /// 会员状态弹窗正文（Java:465-474 的 `StringBuilder`）
