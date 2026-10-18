@@ -4075,6 +4075,12 @@
 
   // 原生 WebHost 的顶栏命中层直接调这两个入口；它们和 openPlusMenu /
   // openToolsSheet 在同一个作用域里，不能写文件末尾（那里已经是另一个 IIFE）。
+  // 原生「+」菜单如果走到加号 action sheet，直接复用网页的 openFeature，
+  // 扫一扫/收付款也留在网页里，避免跳原生页后底部/收款人/头像交互丢失。
+  window.__fwPlusAction = function (label) {
+    try { openFeature(String(label || "")); return true; } catch (_) { return false; }
+  };
+
   window.__fwOpenPlusMenu = function () {
     const actions = document.querySelector('.wechat-topbar__actions');
     if (!actions) return false;

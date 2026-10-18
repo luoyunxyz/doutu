@@ -532,20 +532,19 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler, UIGestureRec
     }
 
     private func runWeChatPlus(_ name: String) {
-        switch name {
-        case "扫一扫", "收付款":
-            // WebHost 是模态盖在首页上的；先关掉，再让首页 Router push 原生页。
-            let router = Router.shared
-            dismiss(animated: true) {
-                router?.handle("action:\(name)", at: .zero)
-            }
-        default:
-            let alert = UIAlertController(title: name,
-                                          message: "这个入口对应的原生页面还没移植完。",
-                                          preferredStyle: .alert)
-            alert.addAction(UIAlertAction(title: "知道了", style: .cancel))
-            present(alert, animated: true)
-        }
+        // 四个入口都走网页版 openFeature：群聊/添加朋友是网页页，扫一扫/收付款
+        // 也必须是网页页（原生页没有收款人头像/底部操作，真机会错位）。
+        let js = "(function(){try{return window.__fwPlusAction ? "
+            + "(window.__fwPlusAction(\(Self.jsString(name)))?1:0):0}catch(e){return 0}})()"
+        webView.evaluateJavaScript(js)
+    }
+
+    /// 网页版加号菜单里的入口（群聊/添加朋友）直接走 override 的页面，
+    /// 不再弹“未移植”对话框，也不再错误地退回加号页。
+    private func openWebFeature(_ feature: String) {
+        let js = "(function(){try{return window.__fwOpenFeature ? " +
+            "(window.__fwOpenFeature(\(Self.jsString(feature)))?1:0):0}catch(e){return 0}})()"
+        webView.evaluateJavaScript(js)
     }
 
     /// 放大镜：iOS 上先给一个可输入的搜索框（页面的搜索页还没移植）。
