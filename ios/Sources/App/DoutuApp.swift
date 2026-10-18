@@ -359,7 +359,11 @@ final class Router {
         case 11:  // 收款记录 ✓
             push(ReceiptScreen(), state: ReceiptScreen.State())
         case 12, 13:  // 余额提现 / 转账银行卡 ✓（同一个提现页）
-            push(WithdrawScreen(), state: WithdrawScreen.State())
+            // Android 进页面就聚焦金额输入框，键盘立刻弹出（参考图上键盘是可见的），
+            // 所以这里把 keypad 默认置 true，否则首屏会少一整块键盘、观感差很多。
+            let withdrawState = WithdrawScreen.State()
+            withdrawState.keypad = true
+            push(WithdrawScreen(), state: withdrawState)
         case 14:  // 小荷包 ✓
             push(XiaohebaoScreen(), state: XiaohebaoScreen.State())
         case 15:  // 芝麻信用 ✓
@@ -816,7 +820,11 @@ final class Router {
         // 余额页 / 小荷包：提现与转账（提现页 WithdrawScreen 未移植）
         case "withdraw":
             // 余额页的「提现」→ 提现页（数据层与页面都已移植）
-            push(WithdrawScreen(), state: WithdrawScreen.State())
+            // Android 进页面就聚焦金额输入框，键盘立刻弹出（参考图上键盘是可见的），
+            // 所以这里把 keypad 默认置 true，否则首屏会少一整块键盘、观感差很多。
+            let withdrawState = WithdrawScreen.State()
+            withdrawState.keypad = true
+            push(WithdrawScreen(), state: withdrawState)
         // 小荷包：设置、转出、转入、攒钱目标、承诺券（对应页面均未移植）
         case "settings", "out", "in", "goal", "promise":
             break
