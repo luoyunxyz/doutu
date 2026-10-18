@@ -4811,3 +4811,6 @@ body.fw-keyboard-open .fw-native-composer-root > .fw-native-chat-feature-panel {
 .fw-accounts__card--add .fw-accounts__copy { top: 29.6px; }
 .fw-accounts__card--add .fw-accounts__name { color: #737373; }
 
+
+/* 扫一扫/收付款/添加朋友等子页：隐藏微信底栏，避免键盘和底栏重叠 */
+body.fw-subpage-open .wechat-bottom-navbar { display:none !important; }

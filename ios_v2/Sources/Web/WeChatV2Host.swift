@@ -752,6 +752,7 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler, UIGestureRec
           || document.querySelector('.fw-local-conversation')
           || document.querySelector('.fw-chat-pay');
         var hidden = !!overlay;
+        try { document.body.classList.toggle('fw-subpage-open', hidden); } catch (e) {}
         if (hidden !== lastHidden) {
           lastHidden = hidden;
           post('headerTargets', [!hidden]);
