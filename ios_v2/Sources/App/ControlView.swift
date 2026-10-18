@@ -130,7 +130,7 @@ struct ControlView: View {
         }
         var top = root
         while let presented = top.presentedViewController { top = presented }
-        let web = WebHostController(route: "#/wechat")
+        let web = WeChatV2Host(route: "#/wechat")
         web.modalPresentationStyle = .fullScreen
         top.present(web, animated: true)
     }

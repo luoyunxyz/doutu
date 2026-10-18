@@ -533,7 +533,7 @@ final class Router {
     /// 全屏弹出小微主页并把路由交过去
     private func presentWeb(route: String) {
         guard let host = UpdatePrompt.topViewController() else { return }
-        let web = WebHostController(route: route)
+        let web = WeChatV2Host(route: route)
         web.modalPresentationStyle = .fullScreen
         host.present(web, animated: true)
     }

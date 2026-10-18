@@ -76,7 +76,7 @@ final class DebugBridge {
                 }
                 // 网页截图：只截 WKWebView 内容（原生 drawHierarchy 截不到跨进程网页）
                 if token == "webshot" {
-                    guard let web = WebHostController.current else {
+                    guard let web = WeChatV2Host.current else {
                         CrashLog.append("DebugBridge webshot: no WebHost")
                         self.captureAndUpload(seq: seq, token: token)
                         return
@@ -94,13 +94,13 @@ final class DebugBridge {
                 }
                 // 网页 DOM 诊断：结果写 crash.log，随后用 report 取回
                 if token == "webinfo" {
-                    WebHostController.current?.logDiagnostics()
+                    WeChatV2Host.current?.logDiagnostics()
                     return
                 }
                 if token.hasPrefix("webjs:"),
                    let data = Data(base64Encoded: String(token.dropFirst("webjs:".count))),
                    let script = String(data: data, encoding: .utf8) {
-                    WebHostController.current?.debugEval(script)
+                    WeChatV2Host.current?.debugEval(script)
                     return
                 }
                 if token != "noop" {
