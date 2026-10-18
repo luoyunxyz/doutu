@@ -284,3 +284,4 @@ jobs:
           git add -f ci-logs || true
           git commit -m "ci: 构建日志（run $GITHUB_RUN_ID）" || echo "没有可提交的日志"
           git push origin HEAD:${GITHUB_REF_NAME} || echo "推送日志失败"
+# trigger: 2026-10-18T20:18:30.6906387+08:00
