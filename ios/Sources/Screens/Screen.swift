@@ -115,6 +115,7 @@ final class ScreenHostView: UIView {
     private var cameraView: CameraPreviewView?
     /// 《用户须知》专用拖动：宿主 touchesMoved 在部分系统上收不到拖动时兜底
     private var termsPanStart: CGFloat = 0
+    private weak var termsWindowPan: UIPanGestureRecognizer?
 
     init(screen: Screen) {
         self.screen = screen
@@ -127,9 +128,6 @@ final class ScreenHostView: UIView {
         NotificationCenter.default.addObserver(
             self, selector: #selector(themeChanged),
             name: .doutuThemeChanged, object: nil)
-        let pan = UIPanGestureRecognizer(target: self, action: #selector(handleTermsPan(_:)))
-        pan.cancelsTouchesInView = false
-        addGestureRecognizer(pan)
     }
 
     @objc private func handleTermsPan(_ gesture: UIPanGestureRecognizer) {
@@ -145,6 +143,28 @@ final class ScreenHostView: UIView {
         default:
             break
         }
+    }
+
+    override func didMoveToWindow() {
+        super.didMoveToWindow()
+        updateTermsWindowPan()
+    }
+
+    /// 免责声明页如果挂在 Window 上，再补一个 Window 级拖动；某些系统版本
+    /// ScreenHostView 的 touchesMoved 会被别的窗口层级吃掉，但 Window 手势仍能收到。
+    private func updateTermsWindowPan() {
+        guard screen is TermsScreen, let window else {
+            if let pan = termsWindowPan {
+                pan.view?.removeGestureRecognizer(pan)
+                termsWindowPan = nil
+            }
+            return
+        }
+        guard termsWindowPan == nil else { return }
+        let pan = UIPanGestureRecognizer(target: self, action: #selector(handleTermsPan(_:)))
+        pan.cancelsTouchesInView = false
+        window.addGestureRecognizer(pan)
+        termsWindowPan = pan
     }
 
     @objc private func themeChanged() {
@@ -163,6 +183,7 @@ final class ScreenHostView: UIView {
         screen = next
         self.state = state
         syncCameraBackground()
+        updateTermsWindowPan()
         setNeedsDisplay()
         // 状态栏图标明暗跟随当前页
         window?.rootViewController?.setNeedsStatusBarAppearanceUpdate()
