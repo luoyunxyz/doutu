@@ -578,9 +578,9 @@ final class Router {
             withdrawState.keypad = true
             push(WithdrawV2Screen(), state: withdrawState)
         case 14:  // 小荷包 ✓
-            push(XiaohebaoScreen(), state: XiaohebaoScreen.State())
+            push(XiaohebaoV2Screen(), state: XiaohebaoV2Screen.State())
         case 15:  // 芝麻信用 ✓
-            push(ZhimaCreditScreen(), state: ZhimaCreditScreen.State())
+            push(ZhimaCreditV2Screen(), state: ZhimaCreditV2Screen.State())
         default:
             break
         }
@@ -765,7 +765,7 @@ final class Router {
         case "collect":
             break
         case "zhima":
-            push(ZhimaCreditScreen(), state: ZhimaCreditScreen.State())
+            push(ZhimaCreditV2Screen(), state: ZhimaCreditV2Screen.State())
 
         // 收款码页：二维码 / 名字 / 三个动作 / 收款记录 / 助手 / 经营 / 商家服务 / 升级
         case "name" where host?.state is CollectMoneyV2Screen.State:
@@ -1118,7 +1118,7 @@ final class Router {
             break
         case "expandEnt":
             // 展开企业信用卡
-            if let state = self.host?.state as? ZhimaCreditScreen.State {
+            if let state = self.host?.state as? ZhimaCreditV2Screen.State {
                 state.enterpriseOpen = true
                 self.host?.setNeedsDisplay()
             }
@@ -1137,9 +1137,9 @@ final class Router {
             }
         case let t where t.hasPrefix("add:"):
             // add:<列> 往该列末尾加一个模块（Java:458 → pickModule）
-            if let col = Int(t.dropFirst(4)), let state = self.host?.state as? ZhimaCreditScreen.State {
+            if let col = Int(t.dropFirst(4)), let state = self.host?.state as? ZhimaCreditV2Screen.State {
                 ModulePicker.present(title: "添加到" + (col == 0 ? "左列" : "右列")) { key in
-                    if let module = ZhimaCreditScreen.library.first(where: { $0.key == key }) {
+                    if let module = ZhimaCreditV2Screen.library.first(where: { $0.key == key }) {
                         state.append(col, key: module.key, height: module.height)
                         self.host?.setNeedsDisplay()
                     }
