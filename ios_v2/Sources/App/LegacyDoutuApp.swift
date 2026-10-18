@@ -749,7 +749,7 @@ final class Router {
             switch name {
             case "扫一扫": push(ScanOverlayScreen(), state: ScanOverlayScreen.State())
             case "收付款": push(PayCodeV2Screen(), state: PayCodeV2Screen.State())
-            case "出行": push(TravelScreen(), state: TravelScreen.State())
+            case "出行": push(TravelV2Screen(), state: TravelV2Screen.State())
             default: break
             }
         case let t where t.hasPrefix("icon:"):
@@ -839,7 +839,7 @@ final class Router {
             // `entry:` 被三个屏复用，含义不同：
             //   · HomeShellScreen 的「我」页服务格 → 上面 L238 已处理（先命中）
             //   · ReceiptScreen → 单条收款详情（这里的 id 就是 Receipt.id）
-            //   · TravelScreen → 出行页的入口
+            //   · TravelV2Screen → 出行页的入口
             // 所以这里按「当前是哪一屏」分流，不能只看令牌。
             if t.hasPrefix("entry:"), self.host?.screen is ReceiptScreen,
                let id = Int64(t.dropFirst("entry:".count)),
@@ -1058,7 +1058,7 @@ final class Router {
             push(PayCodeV2Screen(), state: PayCodeV2Screen.State())
         case "出行":
             // 支模块首页的「出行」格 → 出行页（ZhiHomeActivity:303）
-            push(TravelScreen(), state: TravelScreen.State())
+            push(TravelV2Screen(), state: TravelV2Screen.State())
         case "pay":
             // 扫码页左下的「付款码」→ 收付款码页
             push(PayCodeV2Screen(), state: PayCodeV2Screen.State())
@@ -1148,7 +1148,7 @@ final class Router {
 
         // 出行页：地址 / 出发城市 / 到达城市 三处可编辑；里程、舱位、搜索在 Android 上也是空操作
         case "address":
-            if let state = self.host?.state as? TravelScreen.State {
+            if let state = self.host?.state as? TravelV2Screen.State {
                 EditPrompt.present(title: "编辑出发地", current: state.address,
                                    numeric: false) { text in
                     let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -1157,7 +1157,7 @@ final class Router {
                 }
             }
         case "city:0":
-            if let state = self.host?.state as? TravelScreen.State {
+            if let state = self.host?.state as? TravelV2Screen.State {
                 EditPrompt.present(title: "编辑出发城市", current: state.from,
                                    numeric: false) { text in
                     let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -1166,7 +1166,7 @@ final class Router {
                 }
             }
         case "city:1":
-            if let state = self.host?.state as? TravelScreen.State {
+            if let state = self.host?.state as? TravelV2Screen.State {
                 EditPrompt.present(title: "编辑到达城市", current: state.to,
                                    numeric: false) { text in
                     let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -1177,7 +1177,7 @@ final class Router {
         case "swap":
             // Android 这里弹的是「北京 ⇄ 杭州 · 已对调」，但城市是可编辑的，写死就对不上 ——
             // 所以用当前值拼同一句式（有意的偏离，Android 那句是硬编码）
-            if let state = self.host?.state as? TravelScreen.State {
+            if let state = self.host?.state as? TravelV2Screen.State {
                 self.showToast("\(state.from) ⇄ \(state.to) · 已对调", ok: true)
             }
         // 里程 / 舱位 / 搜索：Android 的 `act()` 里同样是 break
