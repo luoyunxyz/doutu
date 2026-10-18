@@ -1010,18 +1010,81 @@ final class Router {
                 showToast(t == "call:start" ? "已设置，稍后自动来电" : "已取消", ok: true)
             }
             host?.setNeedsDisplay()
+        case "orderDetail":
+            push(TaobaoOrderScreen(), state: TaobaoOrderScreen.State())
+        case let t where t.hasPrefix("order:"):
+            guard let state = host?.state as? TaobaoOrderScreen.State else { return }
+            switch t {
+            case "order:toggle":
+                state.orderExpanded.toggle()
+            case "order:copy":
+                UIPasteboard.general.string = state.orderNo
+                showToast("订单号已复制", ok: true)
+            case "order:addCart":
+                showToast("已加入购物车", ok: true)
+            default:
+                break
+            }
+            host?.setNeedsDisplay()
         case "conv":
             push(ConversationScreen(), state: ConversationScreen.State())
         case let t where t.hasPrefix("conv:"):
-            // 聊天页的输入 / 表情 / 更多 / 语音：由页面自身状态承载，这里只刷新
+            guard let screen = host?.screen as? ConversationScreen, let state = host?.state else { return }
+            switch t {
+            case "conv:send":
+                screen.sendDraft(state)
+            case "conv:voice":
+                screen.toggleVoice(state)
+            case "conv:emoji":
+                screen.insertEmoji(state)
+            case "conv:input":
+                let current = (state as? ConversationScreen.State)?.draft ?? ""
+                EditPrompt.present(title: "输入消息", current: current, numeric: false) { [weak self] text in
+                    (state as? ConversationScreen.State)?.draft = text
+                    self?.host?.setNeedsDisplay()
+                }
+            default:
+                break
+            }
             host?.setNeedsDisplay()
-            _ = t        case "resetInvite":
+        case "resetInvite":
             push(ResetByInviteScreen(), state: ResetByInviteScreen.State())
         case let t where t.hasPrefix("reset:"):
-            // 邀请码重置页的内部动作（提交/重来）；表单清空由页面自身在状态里完成
-            if t == "reset:restart" {
-                host?.setNeedsDisplay()
+            guard let screen = host?.screen as? ResetByInviteScreen,
+                  let state = host?.state as? ResetByInviteScreen.State else { return }
+            switch t {
+            case "reset:restart":
+                screen.showStep(1, state)
+            case "reset:phone", "reset:invite", "reset:password", "reset:confirm":
+                let titles = ["reset:phone": "手机号", "reset:invite": "邀请码",
+                              "reset:password": "新密码", "reset:confirm": "确认新密码"]
+                EditPrompt.present(title: titles[t] ?? "输入", current: "", numeric: t == "reset:phone") { [weak self] text in
+                    screen.setText(t, text, in: state)
+                    self?.host?.setNeedsDisplay()
+                }
+            case "reset:submit":
+                if state.step == 1 {
+                    guard let pair = screen.beginVerify(state) else { break }
+                    Task { @MainActor in
+                        let result = await AuthService.verifyInviteForReset(phone: pair.phone, inviteCode: pair.code)
+                        screen.finishVerify(state, ok: result.0.ok, message: result.0.message, ticket: result.1)
+                        self.host?.setNeedsDisplay()
+                    }
+                } else {
+                    guard let trio = screen.beginSubmit(state) else { break }
+                    Task { @MainActor in
+                        let outcome = await AuthService.resetPassword(ticket: trio.ticket,
+                                                                      password: trio.password,
+                                                                      confirm: trio.confirm)
+                        screen.finishReset(state, ok: outcome.ok, message: outcome.message)
+                        self.host?.setNeedsDisplay()
+                        if state.finished { self.pop() }
+                    }
+                }
+            default:
+                break
             }
+            host?.setNeedsDisplay()
         case "soundPlay", "soundStop":
             host?.setNeedsDisplay()
         case "avatarRestore":

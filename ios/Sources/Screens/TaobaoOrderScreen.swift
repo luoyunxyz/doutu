@@ -193,7 +193,7 @@ final class TaobaoOrderScreen: Screen {
     /// 之后是 `setIncludeFontPadding(false)` 的首行 → 基线 = `valueTop + 0.88×字号`。
     private func valueBaseline(top: CGFloat, size: CGFloat) -> CGFloat { top + size * 0.88 }
 
-    /// 折行后的行距：Android 单倍行距 ≈ 1.2×字号（同 `FeedbackScreen.lineHeight`）
+    /// 折行后的行距：Android 单倍行距 ≈ 1.2×字号（同反馈页的行距系数）
     private func lineAdvance(_ size: CGFloat) -> CGFloat { size * 1.2 }
 
     // MARK: - 状态
