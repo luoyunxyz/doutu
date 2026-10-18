@@ -18,3 +18,4 @@ struct DoutuV2App: App {
         }
     }
 }
+// build trigger
