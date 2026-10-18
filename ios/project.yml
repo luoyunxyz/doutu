@@ -84,6 +84,11 @@ targets:
         CODE_SIGNING_REQUIRED: NO
         # 允许 http 明文只在调试期需要；正式环境服务端是 https
         INFOPLIST_KEY_NSAppTransportSecurity_NSAllowsArbitraryLoads: NO
+        # 调试遥控要走局域网 http（http://192.168.1.96:8000），ATS 默认会拦明文请求；
+        # 这一项只放开**本地网络**，不影响对外 https 的收紧。
+        INFOPLIST_KEY_NSAppTransportSecurity_NSAllowsLocalNetworking: YES
+        # 局域网访问在 iOS 14+ 会弹「本地网络」权限，这句说明为什么需要它
+        INFOPLIST_KEY_NSLocalNetworkUsageDescription: 用于与电脑上的调试服务通信（仅调试期）
         # 头像上传要选相册
         INFOPLIST_KEY_NSPhotoLibraryUsageDescription: 需要访问相册以便更换头像
         # 扫码页要实时预览（AVCaptureVideoPreviewLayer）+ 头像可以拍

@@ -49,12 +49,18 @@ final class ProfileStore {
 /// `manage`、`new`、`footer`、`bannerClose`、`toast:<文案>`、`noop`）。
 @MainActor
 final class Router {
+    /// 调试遥控用（DebugBridge 需要拿到当前 Router 与承载 View）
+    static weak var shared: Router?
+    /// 承载视图（供调试截图用）
+    var hostView: ScreenHostView? { host }
+
     private weak var host: ScreenHostView?
     /// 页面栈：进去一页压一栈，返回时恢复原页面与它的状态（与 Android 的 Activity 栈同义）
     private var stack: [(screen: Screen, state: ScreenState)] = []
 
     init(host: ScreenHostView) {
         self.host = host
+        Router.shared = self
     }
 
     /// 进入新页面（保留当前页面的状态，返回时恢复）
@@ -963,6 +969,8 @@ final class ScreenHostController: UIViewController {
         }
         // 横幅轮播心跳（Android 是 250ms 静止 / 33ms 滚动，这里统一 250ms）
         hostView.startRedrawTimer()
+        // 真机调试遥控：从电脑的局域网服务拉指令 + 回传截图（正式发布前关掉）
+        DebugBridge.shared.start()
         // 启动就拉一次公开配置：娱乐页玩法与首页横幅文案都由它决定
         Task { @MainActor [weak self] in
             guard let self, let state = self.homeState else { return }
