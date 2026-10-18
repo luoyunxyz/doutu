@@ -71,8 +71,6 @@ final class WebHostController: UIViewController, WKScriptMessageHandler, UIGestu
         // 给两个入口：左上角浮层按钮（看得见） + 左边缘右滑（符合直觉）。
         installBackAffordance()
         installBackButton()
-        installHeaderHitTargets()
-        installBlankTap()
 
         // 把 `DoutuApp` 桥按 Android 的方法清单补齐（缺一个页面里调用就会抛异常）
         let bridge = WKUserScript(source: Self.bridgeShim, injectionTime: .atDocumentStart,
@@ -624,28 +622,7 @@ final class WebHostController: UIViewController, WKScriptMessageHandler, UIGestu
 
     private static let topbarFix = """
     (function(){
-      function post(method){
-        try { window.webkit.messageHandlers.DoutuApp.postMessage({method: method, args: []}); } catch (e) {}
-      }
       function apply(){
-        var actions = document.querySelector('.wechat-topbar__actions');
-        if (!actions) return;
-        var search = actions.querySelector('.wechat-topbar__icon:not(.wechat-topbar__icon--large)');
-        var plus = actions.querySelector('.wechat-topbar__icon--large');
-        if (search && !search.__doutuSearchBound) {
-          search.__doutuSearchBound = 1;
-          search.style.cursor = 'pointer';
-          search.addEventListener('click', function(e){
-            e.preventDefault(); e.stopPropagation(); post('wechatSearch');
-          }, true);
-        }
-        if (plus && !plus.__doutuPlusBound) {
-          plus.__doutuPlusBound = 1;
-          plus.style.cursor = 'pointer';
-          plus.addEventListener('click', function(e){
-            e.preventDefault(); e.stopPropagation(); post('wechatPlus');
-          }, true);
-        }
         if (!document.getElementById('doutu-topbar-size')) {
           var style = document.createElement('style');
           style.id = 'doutu-topbar-size';
