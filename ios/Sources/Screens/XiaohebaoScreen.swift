@@ -19,8 +19,8 @@ final class XiaohebaoScreen: Screen {
     final class State: ScreenState {
         /// 金额是否隐藏（眼睛按钮）
         var hidden = false
-        /// 0 动态 / 1 账单 / 2 成员记账
-        var tab = 0
+        /// 0 动态 / 1 账单 / 2 成员记账（Android 默认 1 账单）
+        var tab = 1
     }
 
     /// 文字横向压缩系数（Java:39）

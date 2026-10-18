@@ -143,7 +143,7 @@ final class BillDetailScreen: Screen {
         let icon: UIImage?
         if bill.mark == "云猫" { icon = catArt }
         else if bill.mark == "闲鱼" { icon = fishArt }
-        else if let logo = Self.logo(bill.mark) { icon = logo }
+        else if let logo = BillLogos.image(for: bill.merchant, mark: bill.mark) { icon = logo }
         else { icon = nil }
 
         if let icon {

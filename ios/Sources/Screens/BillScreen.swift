@@ -56,13 +56,7 @@ final class BillScreen: Screen {
     private var contentH: CGFloat = 0
 
     init() {
-        let logoMap: [(String, String)] = [
-            ("云猫", "bill_logo_cat"), ("花呗", "bill_logo_huabei"), ("闲鱼", "bill_logo_xianyu"),
-            ("移动", "bill_logo_mobile"), ("公交", "bill_logo_bus"),
-            ("交管", "bill_logo_traffic"), ("T", "bill_logo_token"),
-            ("抖音", "bill_logo_douyin"),
-        ]
-        for (name, res) in logoMap {
+        for (name, res) in BillLogos.assets {
             if let image = UIImage(named: res) { logos[name] = image }
         }
         savingArt = UIImage(named: "bill_art_saving")
@@ -184,7 +178,7 @@ final class BillScreen: Screen {
 
     /// 一行账单（Java:161-177）
     private func drawRow(_ d: Draw, _ bill: Bill, _ top: CGFloat, _ last: Bool) {
-        if let logo = logos[bill.mark] {
+        if let logo = logos[bill.merchant] ?? logos[bill.mark] {
             drawLogo(d, logo, top)
         } else if let mark = Self.markImage(bill) {
             d.art(mark, CGRect(x: markCx - markR, y: top + 48, width: markR * 2, height: markR * 2))
