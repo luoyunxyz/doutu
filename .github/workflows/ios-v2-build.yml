@@ -20,7 +20,8 @@ on:
   push:
     paths:
       - "ios_v2/**"
-      - ".github/workflows/ios-build.yml"
+      - "_ios/**"
+      - ".github/workflows/ios-v2-build.yml"
   workflow_dispatch:
 
 jobs:
