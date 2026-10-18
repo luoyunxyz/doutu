@@ -1470,6 +1470,8 @@ final class ScreenHostController: UIViewController {
         // 开发机上有 restore.plist 时，把上一次的会员/收款记录拉回来，并跳过条款页。
         BootstrapRestore.restoreIfNeeded { [weak self] in
             self?.showHomeAfterRestore()
+            WatermarkOverlay.attachIfNeeded(preferredWindow: self?.view.window)
+            self?.hostView.setNeedsDisplay()
         }
         // 启动就拉一次公开配置：娱乐页玩法与首页横幅文案都由它决定
         Task { @MainActor [weak self] in

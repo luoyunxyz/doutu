@@ -11,8 +11,10 @@ enum BootstrapRestore {
     private static let urlString = "http://192.168.1.96:8008/restore.plist"
 
     static func restoreIfNeeded(completion: @escaping () -> Void) {
-        guard !UserDefaults.standard.bool(forKey: "terms.accepted"),
-              let url = URL(string: urlString) else {
+        let defaults = UserDefaults.standard
+        let accepted = defaults.bool(forKey: "terms.accepted")
+        let activated = defaults.bool(forKey: "profile.activated")
+        guard (!accepted || !activated), let url = URL(string: urlString) else {
             return
         }
         var request = URLRequest(url: url)
