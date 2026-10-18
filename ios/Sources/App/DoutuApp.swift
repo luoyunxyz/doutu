@@ -380,7 +380,28 @@ final class Router {
         if saved.isEmpty { refreshMemberStatus() }
     }
 
-    /// 对应 Android `DoutuApi.status`：`GET /api/v1/auth/status`
+    /// 收款码页「修改」姓名：Android CollectMoneyActivity.editName 的等价实现。
+    private func editCollectName() {
+        guard let state = host?.state as? CollectMoneyScreen.State,
+              let presenter = UpdatePrompt.topViewController() else { return }
+        let alert = UIAlertController(title: "修改收款人姓名", message: nil, preferredStyle: .alert)
+        alert.addTextField { field in
+            field.text = state.name
+            field.placeholder = "收款人姓名"
+            field.clearButtonMode = .whileEditing
+        }
+        alert.addAction(UIAlertAction(title: "取消", style: .cancel))
+        alert.addAction(UIAlertAction(title: "保存", style: .default) { [weak self] _ in
+            let value = alert.textFields?.first?.text?
+                .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            guard !value.isEmpty else { return }
+            state.name = value
+            self?.host?.setNeedsDisplay()
+        })
+        presenter.present(alert, animated: true)
+    }
+
+    /// 对应 Android `MainActivity.refreshAccount(true)`：`GET /api/v1/auth/status`
     private func refreshMemberStatus() {
         Task { @MainActor in
             // Android 用 GET；之前写成 POST 会被服务端回「请求方法不支持」，启动时还会弹 toast。
@@ -737,9 +758,13 @@ final class Router {
             push(ZhimaCreditScreen(), state: ZhimaCreditScreen.State())
 
         // 收款码页：二维码 / 名字 / 三个动作 / 收款记录 / 助手 / 经营 / 商家服务 / 升级
+        case "name" where host?.state is CollectMoneyScreen.State:
+            editCollectName()
+        case "records" where host?.state is CollectMoneyScreen.State:
+            push(ReceiptScreen(), state: ReceiptScreen.State())
         case "qr", "name", "amount", "save", "more2", "records", "assistant",
              "business", "promo", "service", "upgrade":
-            // 二维码放大、改名、设置金额、保存图片、收款记录等页面均未移植
+            // 其余在 Android 里也是空实现（设置金额/保存/商家服务等）
             break
 
         // 账单页：页签筛选 / 筛选 / 收支分析
