@@ -124,52 +124,52 @@ Dict {
 Archive:  DoutuV2-unsigned.ipa
   Length      Date    Time    Name
 ---------  ---------- -----   ----
-        0  10-18-2026 13:09   Payload/
-        0  10-18-2026 13:09   Payload/Doutu.app/
-     3861  10-18-2026 13:09   Payload/Doutu.app/seg_q_loose.png
-    14916  10-18-2026 13:09   Payload/Doutu.app/AppIcon60x60@2x.png
-        0  10-18-2026 13:09   Payload/Doutu.app/web/
-        0  10-18-2026 13:09   Payload/Doutu.app/web/overrides/
-     2782  10-18-2026 13:09   Payload/Doutu.app/web/overrides/wechat-balance-yen.png
-    30196  10-18-2026 13:09   Payload/Doutu.app/web/overrides/name-pools.js
-    63831  10-18-2026 13:09   Payload/Doutu.app/web/overrides/wechat-pay-pages.css
-    14219  10-18-2026 13:09   Payload/Doutu.app/web/overrides/name-rules.js
-    10183  10-18-2026 13:09   Payload/Doutu.app/web/overrides/wechat-balance-medal.png
-    22272  10-18-2026 13:09   Payload/Doutu.app/web/overrides/stats-header-art.png
-   543444  10-18-2026 13:09   Payload/Doutu.app/web/overrides/wechat-chat-actions.js
-     1327  10-18-2026 13:09   Payload/Doutu.app/web/overrides/wechat-balance-back.png
-   145030  10-18-2026 13:09   Payload/Doutu.app/web/overrides/wechat-pay-pages.js
-    14002  10-18-2026 13:09   Payload/Doutu.app/web/overrides/wechat-balance-yuan.png
-   266188  10-18-2026 13:09   Payload/Doutu.app/web/overrides/wechat-chat-actions.css
-     1111  10-18-2026 13:09   Payload/Doutu.app/web/overrides/wechat-balance-chevron.png
-     1818  10-18-2026 13:09   Payload/Doutu.app/web/index.html
-        0  10-18-2026 13:09   Payload/Doutu.app/web/locales/
-        0  10-18-2026 13:09   Payload/Doutu.app/web/locales/zh-CN/
-     6529  10-18-2026 13:09   Payload/Doutu.app/web/locales/zh-CN/translation.json
-        0  10-18-2026 13:09   Payload/Doutu.app/web/locales/zh-TW/
-     6615  10-18-2026 13:09   Payload/Doutu.app/web/locales/zh-TW/translation.json
-        0  10-18-2026 13:09   Payload/Doutu.app/web/locales/en-US/
-     6801  10-18-2026 13:09   Payload/Doutu.app/web/locales/en-US/translation.json
-        0  10-18-2026 13:09   Payload/Doutu.app/web/assets/
+        0  10-18-2026 13:12   Payload/
+        0  10-18-2026 13:12   Payload/Doutu.app/
+     3861  10-18-2026 13:12   Payload/Doutu.app/seg_q_loose.png
+    14916  10-18-2026 13:12   Payload/Doutu.app/AppIcon60x60@2x.png
+        0  10-18-2026 13:12   Payload/Doutu.app/web/
+        0  10-18-2026 13:12   Payload/Doutu.app/web/overrides/
+     2782  10-18-2026 13:12   Payload/Doutu.app/web/overrides/wechat-balance-yen.png
+    30196  10-18-2026 13:12   Payload/Doutu.app/web/overrides/name-pools.js
+    63831  10-18-2026 13:12   Payload/Doutu.app/web/overrides/wechat-pay-pages.css
+    14219  10-18-2026 13:12   Payload/Doutu.app/web/overrides/name-rules.js
+    10183  10-18-2026 13:12   Payload/Doutu.app/web/overrides/wechat-balance-medal.png
+    22272  10-18-2026 13:12   Payload/Doutu.app/web/overrides/stats-header-art.png
+   543444  10-18-2026 13:12   Payload/Doutu.app/web/overrides/wechat-chat-actions.js
+     1327  10-18-2026 13:12   Payload/Doutu.app/web/overrides/wechat-balance-back.png
+   145030  10-18-2026 13:12   Payload/Doutu.app/web/overrides/wechat-pay-pages.js
+    14002  10-18-2026 13:12   Payload/Doutu.app/web/overrides/wechat-balance-yuan.png
+   266188  10-18-2026 13:12   Payload/Doutu.app/web/overrides/wechat-chat-actions.css
+     1111  10-18-2026 13:12   Payload/Doutu.app/web/overrides/wechat-balance-chevron.png
+     1818  10-18-2026 13:12   Payload/Doutu.app/web/index.html
+        0  10-18-2026 13:12   Payload/Doutu.app/web/locales/
+        0  10-18-2026 13:12   Payload/Doutu.app/web/locales/zh-CN/
+     6529  10-18-2026 13:12   Payload/Doutu.app/web/locales/zh-CN/translation.json
+        0  10-18-2026 13:12   Payload/Doutu.app/web/locales/zh-TW/
+     6615  10-18-2026 13:12   Payload/Doutu.app/web/locales/zh-TW/translation.json
+        0  10-18-2026 13:12   Payload/Doutu.app/web/locales/en-US/
+     6801  10-18-2026 13:12   Payload/Doutu.app/web/locales/en-US/translation.json
+        0  10-18-2026 13:12   Payload/Doutu.app/web/assets/
 === 图标文件 ===
--rw-r--r--  1 runner  staff     14916 Oct 18 13:09 Payload/Doutu.app/AppIcon60x60@2x.png
--rw-r--r--  1 runner  staff     22342 Oct 18 13:09 Payload/Doutu.app/AppIcon76x76@2x~ipad.png
--rw-r--r--  1 runner  staff     15248 Oct 18 13:09 Payload/Doutu.app/AppIconAlipay60x60@2x.png
--rw-r--r--  1 runner  staff     22777 Oct 18 13:09 Payload/Doutu.app/AppIconAlipay76x76@2x~ipad.png
--rw-r--r--  1 runner  staff     20828 Oct 18 13:09 Payload/Doutu.app/AppIconAlipayHK60x60@2x.png
--rw-r--r--  1 runner  staff     31544 Oct 18 13:09 Payload/Doutu.app/AppIconAlipayHK76x76@2x~ipad.png
--rw-r--r--  1 runner  staff     11365 Oct 18 13:09 Payload/Doutu.app/AppIconWechat60x60@2x.png
--rw-r--r--  1 runner  staff     16879 Oct 18 13:09 Payload/Doutu.app/AppIconWechat76x76@2x~ipad.png
--rw-r--r--  1 runner  staff  30397144 Oct 18 13:09 Payload/Doutu.app/Assets.car
+-rw-r--r--  1 runner  staff     14916 Oct 18 13:12 Payload/Doutu.app/AppIcon60x60@2x.png
+-rw-r--r--  1 runner  staff     22342 Oct 18 13:12 Payload/Doutu.app/AppIcon76x76@2x~ipad.png
+-rw-r--r--  1 runner  staff     15248 Oct 18 13:12 Payload/Doutu.app/AppIconAlipay60x60@2x.png
+-rw-r--r--  1 runner  staff     22777 Oct 18 13:12 Payload/Doutu.app/AppIconAlipay76x76@2x~ipad.png
+-rw-r--r--  1 runner  staff     20828 Oct 18 13:12 Payload/Doutu.app/AppIconAlipayHK60x60@2x.png
+-rw-r--r--  1 runner  staff     31544 Oct 18 13:12 Payload/Doutu.app/AppIconAlipayHK76x76@2x~ipad.png
+-rw-r--r--  1 runner  staff     11365 Oct 18 13:12 Payload/Doutu.app/AppIconWechat60x60@2x.png
+-rw-r--r--  1 runner  staff     16879 Oct 18 13:12 Payload/Doutu.app/AppIconWechat76x76@2x~ipad.png
+-rw-r--r--  1 runner  staff  30397144 Oct 18 13:12 Payload/Doutu.app/Assets.car
 === 字体 ===
--rw-r--r--  1 runner  staff  14484 Oct 18 13:09 Payload/Doutu.app/ArchivoSemiCondensed-Semibold.ttf
+-rw-r--r--  1 runner  staff  14484 Oct 18 13:12 Payload/Doutu.app/ArchivoSemiCondensed-Semibold.ttf
 === adhoc 包顶层结构（必须 Payload/）===
 Archive:  DoutuV2-adhoc.ipa
   Length      Date    Time    Name
 ---------  ---------- -----   ----
-        0  10-18-2026 13:09   Payload/
-        0  10-18-2026 13:09   Payload/Doutu.app/
-        0  10-18-2026 13:09   Payload/Doutu.app/_CodeSignature/
+        0  10-18-2026 13:12   Payload/
+        0  10-18-2026 13:12   Payload/Doutu.app/
+        0  10-18-2026 13:12   Payload/Doutu.app/_CodeSignature/
 === 两个 IPA ===
--rw-r--r--  1 runner  staff    40M Oct 18 13:09 DoutuV2-adhoc.ipa
--rw-r--r--  1 runner  staff    40M Oct 18 13:09 DoutuV2-unsigned.ipa
+-rw-r--r--  1 runner  staff    40M Oct 18 13:12 DoutuV2-adhoc.ipa
+-rw-r--r--  1 runner  staff    40M Oct 18 13:12 DoutuV2-unsigned.ipa
