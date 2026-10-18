@@ -98,6 +98,8 @@ class Capturer:
             seq = self.send("webshot")
             path = self.wait_shot(seq, "web")
         elif window:
+            # 原生弹窗/底部 sheet 是异步呈现的，等一拍再整窗截图
+            time.sleep(1.2)
             seq = self.send("winshot")
             path = self.wait_shot(seq, "window")
         else:
@@ -150,7 +152,10 @@ CASES = {
     "analytics": (["zhiCell:7", "analytics"], False),
     "receipt_loaded": (["zhiCell:11", "entry:1792296000000", "back"], False),
     "receipt": (["zhiCell:11"], False),
+    "receipt_seed": (["receiptseed", "zhiCell:11"], False),
     "receipt_detail": (["zhiCell:11", "entry:1792296000000"], False),
+    "receipt_detail2": (["zhiCell:11", "entry:1792773373002"], False),
+    "receipt_edit": (["zhiCell:11", "entry:1792773373002", "amount"], False, True),
     "settings2": (["user"], False),
     "memberdialog": (["tab:2", "member"], False, True),
     "batch": (["zhiCell:11", "batch"], False, True),

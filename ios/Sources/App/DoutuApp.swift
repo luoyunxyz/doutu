@@ -337,7 +337,7 @@ final class Router {
         var lines = ["用户名：\(username.isEmpty ? "-" : username)"]
         let phone = ProfileStore.shared.phone
         if !phone.isEmpty { lines.append("手机号：\(phone)") }
-        lines.append("状态：\(member ? "已开通会员" : "未开通会员")")
+        lines.append("状态：\(SettingsScreen.statusText)")
         if member {
             lines.append("到期：\(Session.shared.expireAt.isEmpty ? "-" : Session.shared.expireAt)")
         } else {
@@ -552,6 +552,14 @@ final class Router {
     }
 
     func handle(_ token: ActionToken, at point: CGPoint) {
+        // 收款详情页的字段名和下面好几个页面重名（amount 也属于收款码/提现页）。
+        // 先按当前页面把详情页的编辑令牌截走，避免被前面的通用 case 吞掉。
+        if host?.screen is ReceiptDetailScreen,
+           ["amountLabel", "amount", "actual", "prize", "quota", "note",
+            "payer", "month", "total", "avg"].contains(token) {
+            handleReceiptDetail(token)
+            return
+        }
         switch token {
         case "noop":
             return
