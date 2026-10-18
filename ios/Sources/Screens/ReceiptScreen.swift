@@ -310,6 +310,8 @@ final class ReceiptScreen: Screen {
                      Draw.color(0xFF8C8C8C))
     }
     private func drawNotice(_ d: Draw) {
+        // BUILD-CHECK：确认这次改动确实进了编译产物（验证后会删掉）
+        d.text("MARK963", x: 40, baseline: 90, size: 40, Draw.color(0xFFFF0000))
         let base = noticeBase
         let notice1 = "由于功能更新"
         let notice2 = "当前只展示5月4日以后的账单"
