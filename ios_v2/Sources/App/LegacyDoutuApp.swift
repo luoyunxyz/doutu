@@ -156,7 +156,7 @@ final class Router {
 
     /// 收款详情页的编辑（Java `ReceiptDetailActivity.act()`）
     private func handleReceiptDetail(_ token: String) {
-        guard let state = host?.state as? ReceiptDetailScreen.State,
+        guard let state = host?.state as? ReceiptDetailV2Screen.State,
               let item = state.receipt else { return }
         let stats = ReceiptStore.shared.stats(item.payer)
         let numeric = ["amountLabel", "amount", "actual", "quota", "month", "total", "avg"]
@@ -589,7 +589,7 @@ final class Router {
     func handle(_ token: ActionToken, at point: CGPoint) {
         // 收款详情页的字段名和下面好几个页面重名（amount 也属于收款码/提现页）。
         // 先按当前页面把详情页的编辑令牌截走，避免被前面的通用 case 吞掉。
-        if host?.screen is ReceiptDetailScreen,
+        if host?.screen is ReceiptDetailV2Screen,
            ["amountLabel", "amount", "actual", "prize", "quota", "note",
             "payer", "month", "total", "avg"].contains(token) {
             handleReceiptDetail(token)
@@ -667,7 +667,7 @@ final class Router {
         case "avatar":
             // 收款详情页也有一个 avatar 热区（Android 换收款人头像）。iOS 还没做
             // 收款头像存储，不能落到「换我的头像」这条分支上。
-            if self.host?.screen is ReceiptDetailScreen { return }
+            if self.host?.screen is ReceiptDetailV2Screen { return }
             // 换头像：未登录先去登录，已登录直接从相册选
             if Session.shared.isLoggedIn {
                 AvatarPicker.present { ok, message in
@@ -795,7 +795,7 @@ final class Router {
             }
         case "analytics":
             // 账单页右上「收支分析」→ 收支分析页
-            push(BillAnalyticsScreen(), state: BillAnalyticsScreen.State())
+            push(BillAnalyticsV2Screen(), state: BillAnalyticsV2Screen.State())
         case "filter":
             // 账单筛选面板未移植
             break
@@ -806,9 +806,9 @@ final class Router {
                 let screen = BillV2Screen()
                 if let bill = screen.bill(at: monthIndex, row: row,
                                           state: self.host?.state ?? BillV2Screen.State()) {
-                    let state = BillDetailScreen.State()
+                    let state = BillDetailV2Screen.State()
                     state.bill = bill
-                    push(BillDetailScreen(), state: state)
+                    push(BillDetailV2Screen(), state: state)
                 }
             }
         // 账单详情页里的图标 / 开关
@@ -844,9 +844,9 @@ final class Router {
             if t.hasPrefix("entry:"), self.host?.screen is ReceiptV2Screen,
                let id = Int64(t.dropFirst("entry:".count)),
                let receipt = ReceiptStore.shared.byId(id) {
-                let state = ReceiptDetailScreen.State()
+                let state = ReceiptDetailV2Screen.State()
                 state.receipt = receipt
-                push(ReceiptDetailScreen(), state: state)
+                push(ReceiptDetailV2Screen(), state: state)
             }
             // 头像大图（ReceiptV2Screen 的 avatar:<id>）与出行页入口：均未做
 
@@ -1039,9 +1039,9 @@ final class Router {
             // 组装成 `Bill`，两页共用一份模型（Android 也是这么接的）。
             if let index = Int(t.dropFirst("detail:".count)),
                let bill = PayMsgV2Screen.bill(at: index) {
-                let state = BillDetailScreen.State()
+                let state = BillDetailV2Screen.State()
                 state.bill = bill
-                push(BillDetailScreen(), state: state)
+                push(BillDetailV2Screen(), state: state)
             }
 
         // 消息列表页：「消息盒子」那一行进支付消息页
