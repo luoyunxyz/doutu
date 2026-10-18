@@ -42,6 +42,13 @@ struct LoginView: View {
                 }
 
                 Section {
+                    // 用邀请码重置密码（对应 Android 的 ResetByInviteActivity）
+                    Button("用邀请码重置密码") {
+                        Router.shared?.handle("resetInvite", at: .zero)
+                    }
+                }
+
+                Section {
                     if mode == .login {
                         TextField("手机号或用户名", text: $username)
                             .textContentType(.username)

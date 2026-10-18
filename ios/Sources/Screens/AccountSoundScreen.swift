@@ -55,14 +55,15 @@ import UIKit
 ///
 /// ## 交互令牌
 ///
-/// `hitTest` 只返回三种：`"back"`（返回）、`"edit:amount"`（金额输入框 → 宿主弹 `EditPrompt`，
-/// 写回走本文件的 `EditableState`）、`"noop"`（其余全部 —— 状态修改与播放起停已经在
-/// `hitTest` 里就地把活干完了，宿主不需要再做任何事）。
+/// `hitTest` 返回：`"back"`（返回）、`"edit:amount"`（金额输入框 → 宿主弹 `EditPrompt`，
+/// 写回走本文件的 `EditableState`）、`"soundPlay"` / `"soundStop"`（播报按钮与「取消循环播放」，
+/// Router 里这两个分支只做 `setNeedsDisplay`，正好用来立即重绘），其余一律 `"noop"`。
 ///
-/// 之所以不给设置项单独发明令牌：Java 里那些点击只是改 `SoundStore` + `bindState()`，没有跳转；
-/// 而 Router 没有本屏的分支，未登记的令牌会落到 `default: break`，还会让
-/// `_ios/lint-swift.mjs` 的「令牌必须在 Router 里有分支」判红。所以本屏**不改其它文件即可用**，
-/// 将来若要把这些动作接进 Router，记得**不要**重复执行（尤其不要重复起播，会响两遍）。
+/// **状态修改与音频起停都在 `hitTest` 里就地完成**，令牌只表达「宿主还需要做什么」。
+/// 设置项之所以返回 `"noop"`：Java 里那些点击只是改 `SoundStore` + `bindState()`，没有跳转；
+/// 而 Router 没有它们的通用分支，未登记令牌会落到 `default: break`，还会让
+/// `_ios/lint-swift.mjs` 的「令牌必须在 Router 里有分支」判红。将来若要把这些动作接进 Router，
+/// 记得**不要**重复执行（尤其不要重复起播，会响两遍）。
 final class AccountSoundScreen: Screen {
     // MARK: - 画布（Java 无 W/H，约定见文件头）
 
@@ -389,8 +390,6 @@ final class AccountSoundScreen: Screen {
 
         let rangeTitles = ["不定额（自己输）", "随机￥10-￥100之间",
                            "随机￥100-￥1000之间", "随机￥1000-￥10000之间"]
-        let rangeSubs = ["请输入金额", "随机播报金额区间10-100元",
-                         "随机播报金额区间100-1000元", "随机播报金额区间1000-10000元"]
         for index in rangeTitles.indices {
             if index > 0 {
                 // Java:162-170 divider()：topMargin dp(10) + 高 dp(0.7)
@@ -500,8 +499,10 @@ final class AccountSoundScreen: Screen {
         let s = (state as? State) ?? State()
         let m = metrics
 
-        // Java:199 根容器底色
-        d.rect(CGRect(x: 0, y: 0, width: Self.W, height: Self.H), pageBg)
+        // Java:199 根容器底色。
+        // 高度取「画布高」与「内容高」的较大者：滚动到底时视口下沿会超过 H（2816），
+        // 只铺 0…H 的话那一段会露出宿主的白底。
+        d.rect(CGRect(x: 0, y: 0, width: Self.W, height: max(Self.H, m.contentHeight)), pageBg)
 
         // Android 每个页面的 draw 开头都是 `c.save(); c.translate(0, -s.scroll);`
         d.ctx.saveGState()
@@ -796,13 +797,17 @@ final class AccountSoundScreen: Screen {
     /// 命中顺序与 Java 的点击监听一一对应；**命中即执行**（见文件头「交互令牌」）。
     /// 入参已是**内容坐标**（宿主把 `state.scroll` 加回来了），所以不再二次加滚动量。
     ///
-    /// 令牌词表只有三个（其余一律 `"noop"`）：
+    /// 令牌词表（其余一律 `"noop"`）：
     ///   · `"back"`        —— 返回（宿主 pop）
     ///   · `"edit:amount"` —— 金额输入框（宿主弹 `EditPrompt`，写回走 `EditableState`）
-    ///   · `"noop"`        —— 这一下已经在 `hitTest` 里改完状态 / 起停播放，宿主不需要做任何事
+    ///   · `"soundPlay"` / `"soundStop"` —— 「开始播报 / 取消循环」与「取消循环播放」。
+    ///     Router 里已有这两个分支（只做 `host?.setNeedsDisplay()`，不重复执行动作），
+    ///     借用它把「立刻重绘」拿到手：播放状态是用户最需要马上看到反馈的一处。
+    ///   · `"noop"`        —— 其余设置项：已经在 `hitTest` 里改完状态，靠宿主 250ms 的
+    ///     重绘心跳刷出来（Java 是 `bindState()` 直接改 View，没有这一帧延迟）。
     ///
     /// 为什么设置项不返回 `"sstyle:0"` 这类语义令牌：Java 那边它们只是 `setOnClickListener`
-    /// 里改 `SoundStore` + `bindState()`，没有任何跳转；而 Router 里也没有本屏的分支，
+    /// 里改 `SoundStore` + `bindState()`，没有任何跳转；而 Router 里没有它们的分支，
     /// 返回未登记的令牌只会落到 `default: break`，还会被 `_ios/lint-swift.mjs` 的
     /// 「令牌必须在 Router 里有分支」判红。语义记在注释里就够了。
     func hitTest(_ state: ScreenState, x: CGFloat, y: CGFloat) -> ActionToken {
@@ -831,9 +836,12 @@ final class AccountSoundScreen: Screen {
         }
 
         // Java:322 `playButton.setOnClickListener(v -> onMainButton())`
+        // 同一个按钮两副面孔：不忙时「开始播报」、忙时「取消循环」（Java:613-614）
         if m.playRect.contains(p) {
+            let wasBusy = s.busy
             onMainButton(s)
-            return "noop"
+            if wasBusy { return "soundStop" }
+            return "soundPlay"
         }
 
         // Java:512-517 模式卡：正在循环时先停循环再换档
@@ -847,7 +855,7 @@ final class AccountSoundScreen: Screen {
         // Java:365 `stopLoop.setOnClickListener(v -> stopLooping(true))`
         if s.busy && m.stopRect.contains(p) {
             stopLooping(s, tell: true)
-            return "noop"
+            return "soundStop"
         }
 
         // Java:531-534 随机金额四行

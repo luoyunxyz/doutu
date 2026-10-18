@@ -1010,6 +1010,18 @@ final class Router {
                 showToast(t == "call:start" ? "已设置，稍后自动来电" : "已取消", ok: true)
             }
             host?.setNeedsDisplay()
+        case "conv":
+            push(ConversationScreen(), state: ConversationScreen.State())
+        case let t where t.hasPrefix("conv:"):
+            // 聊天页的输入 / 表情 / 更多 / 语音：由页面自身状态承载，这里只刷新
+            host?.setNeedsDisplay()
+            _ = t        case "resetInvite":
+            push(ResetByInviteScreen(), state: ResetByInviteScreen.State())
+        case let t where t.hasPrefix("reset:"):
+            // 邀请码重置页的内部动作（提交/重来）；表单清空由页面自身在状态里完成
+            if t == "reset:restart" {
+                host?.setNeedsDisplay()
+            }
         case "soundPlay", "soundStop":
             host?.setNeedsDisplay()
         case "avatarRestore":
@@ -1164,8 +1176,11 @@ struct DoutuApp: App {
 
     var body: some Scene {
         WindowGroup {
-            // 启动落地页：首页外壳（三栏 + 四平台页签），与 Android 一致
-            ScreenHostContainer(screen: HomeShellScreen())
+            // 启动落地页：未同意《用户须知》时先给条款页（对应 Android 的 TermsActivity），
+            // 同意后写入 terms.accepted，下次直接进首页外壳（三栏 + 四平台页签）。
+            ScreenHostContainer(screen: UserDefaults.standard.bool(forKey: "terms.accepted")
+                                ? HomeShellScreen()
+                                : TermsScreen())
                 .ignoresSafeArea()
                 .statusBarHidden(true)
                 .onAppear { UpdatePrompt.shared.maybeCheck() }

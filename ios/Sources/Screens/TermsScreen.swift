@@ -58,7 +58,7 @@ final class TermsScreen: Screen {
     let canvasSize = CGSize(width: 1280, height: 2816)
 
     /// 本屏自己滚卡片的正文（Java:132 的 `ScrollView`），宿主不要再整页 translate。
-    let selfScrolls = true
+    let selfScrolls = false
 
     /// dp/sp → 参考单位的系数：1280 / 360dp ≈ 3.5556（见文件头）
     static let dpScale: CGFloat = 1280.0 / 360.0
