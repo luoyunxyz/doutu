@@ -172,6 +172,13 @@ enum LoginPresenter {
         guard let host = UpdatePrompt.topViewController() else { return }
         let controller = UIHostingController(rootView: LoginView(onDone: onDone))
         controller.modalPresentationStyle = .pageSheet
-        host.present(controller, animated: true)
+        // 登录/注册页不铺水印（会盖住输入框；Android 侧同样跳过登录页）
+        WatermarkOverlay.beginSuppress()
+        host.present(controller, animated: true) {
+            // 关闭后恢复：这段时间会员状态可能已经变了，重新评估一次
+            WatermarkOverlay.endSuppress()
+            WatermarkOverlay.attachIfNeeded()
+            onDone?()
+        }
     }
 }

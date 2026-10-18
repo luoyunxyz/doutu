@@ -976,7 +976,15 @@ final class ScreenHostController: UIViewController {
             guard let self, let state = self.homeState else { return }
             await ConfigLoader.load(into: state)
             self.hostView.setNeedsDisplay()
+            // 配置里带水印文案（sys_config.watermark_overlay_text），拉到后刷新覆盖层
+            WatermarkOverlay.attachIfNeeded()
         }
+    }
+
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        // 每次页面可见都按当前会员状态重挂水印（与 Android 的 attachIfNeeded 时机一致）
+        WatermarkOverlay.attachIfNeeded()
     }
 
     deinit {
