@@ -74,6 +74,10 @@ final class WebHostController: UIViewController, WKScriptMessageHandler {
         let viewport = WKUserScript(source: Self.viewportShim, injectionTime: .atDocumentStart,
                                     forMainFrameOnly: true)
         config.userContentController.addUserScript(viewport)
+        // 诊断：把网页里的 JS 错误回传原生侧，写进 crash.log。
+        // 白屏时这就是唯一能拿到真实原因的手段（WKWebView 的 console 在 Mac 上才看得到）。
+        let jsErrorHook = WKUserScript(source: WebHostController.errorHook, injectionTime: .atDocumentStart, forMainFrameOnly: false)
+        config.userContentController.addUserScript(jsErrorHook)
 
         if let url = URL(string: Self.entry) {
             webView.load(URLRequest(url: url))
@@ -216,6 +220,22 @@ final class WebHostController: UIViewController, WKScriptMessageHandler {
     // WKWebView 只有异步 postMessage，所以这里垫一层：同步方法返回即刻可用的占位值，
     // 需要结果的走 callbackId（页面侧的 __doutuAppCallback）。
     /// 把排版宽度固定成 Android 那边的 360dp（原因见 viewDidLoad 里的注释）。
+    /// 网页错误 → 原生 crash.log（白屏诊断用）
+    static let errorHook = """
+    (function(){
+      function send(kind, msg, extra){
+        try { window.webkit.messageHandlers.DoutuApp.postMessage({type:'jserror', kind:kind, message:String(msg||''), extra:String(extra||'')}); } catch(e){}
+      }
+      window.addEventListener('error', function(e){
+        send('error', (e && e.message) || 'error', (e && (e.filename||'') + ':' + (e.lineno||'')));
+      }, true);
+      window.addEventListener('unhandledrejection', function(e){
+        var r = e && e.reason; send('reject', (r && (r.message||r)) || 'reject', '');
+      });
+      var ce = console.error;
+      console.error = function(){ send('console', Array.prototype.join.call(arguments, ' '), ''); ce && ce.apply(console, arguments); };
+    })();
+    """
     private static let viewportShim = """
     (function () {
       var m = document.querySelector('meta[name="viewport"]');
