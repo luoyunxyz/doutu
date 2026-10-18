@@ -17,9 +17,10 @@ final class TravelScreen: Screen {
     static let H: CGFloat = 2816
 
     final class State: ScreenState {
-        var address = "上海市"
-        var from = "上海"
-        var to = "北京"
+        // 与 Android `TravelScreen.State`（Java:592-594）逐字一致
+        var address = "恩施土家族苗族自治州"
+        var from = "北京"
+        var to = "杭州"
         /// 0 单程 / 1 往返 / 2 值机选座 / 3 快速安检
         var tab = 0
         var checkChild = false

@@ -320,10 +320,14 @@ final class LicaiScreen: Screen {
     private func drawCarousel(_ d: Draw, _ s: State) {
         d.round(CGRect(x: -550, y: carouselTop, width: 30 - (-550), height: carouselBottom - carouselTop),
                 radius: 27, cardColor)
-        d.art(art["cardFund"], CGRect(x: 57, y: carouselY, width: 57 + carouselCardW,
-                                      height: carouselY + 461))
-        d.art(art["cardStock"], CGRect(x: 669, y: carouselY, width: 669 + carouselCardW,
-                                       height: carouselY + 461))
+        // Java 的 drawArt 参数是 (left, top, right, bottom)；这里对应 CGRect 的
+        // width/height 必须传「宽、高」，不能再传 right/bottom。
+        // 之前传成 57+585 / 1742+461，图片被放大到 642×2203 并且只露出左上角，
+        // 真机表现就是「基金自选」跑到卡片中间、走势图和加自选按钮全不见。
+        d.art(art["cardFund"], CGRect(x: 57, y: carouselY, width: carouselCardW,
+                                      height: 461))
+        d.art(art["cardStock"], CGRect(x: 669, y: carouselY, width: carouselCardW,
+                                       height: 461))
 
         d.text(s.fundName, x: 100, baseline: 1851, size: 50, ink, bold: true)
         d.text(s.fundPct, x: 99, baseline: 1934, size: 56, red, bold: true)

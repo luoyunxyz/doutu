@@ -18,7 +18,7 @@ final class CollectMoneyScreen: Screen {
     static let viewportBottom: CGFloat = 2752
 
     final class State: ScreenState {
-        var name = "张三的小店"
+        var name = "落陨(**玮)"
     }
 
     // MARK: - 调色板（Java:39-60）

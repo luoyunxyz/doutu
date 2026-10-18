@@ -128,7 +128,7 @@ final class WithdrawScreen: Screen {
     private let rowRuleL: CGFloat = 255.7
     private let rowRuleR: CGFloat = 1198
     private let rowTitle = ["余利宝收益率可达1.8%", "去查看你的卡账单", "去会员中心领积分"]
-    private let rowSub = ["随存随取，收益天天到账", "本月账单已出，点击查看明细", "积分可兑换好礼"]
+    private let rowSub = ["免费转出到银行卡，闲钱享收益", "点击查看详情", "领取支付宝积分可兑红包、生活用品"]
 
     private let button = CGRect(x: 52.9, y: 2515, width: 1226.2 - 52.9, height: 2683.8 - 2515)
     private let buttonRadius: CGFloat = 84.4
@@ -429,7 +429,7 @@ final class WithdrawScreen: Screen {
 
         let quotaBaseY = quotaBase + (warn == nil ? 0 : warnQuotaShift)
         d.text("剩余免费额度 ¥" + ReceiptStore.money(quota), x: quotaX, baseline: quotaBaseY,
-               size: quotaSize, faint)
+               size: quotaSize, faint, sx: 0.96)
         if let info = art["info"] {
             d.art(info, CGRect(x: infoRect.minX, y: infoRect.minY + (warn == nil ? 0 : warnQuotaShift),
                                width: infoRect.width, height: infoRect.height))

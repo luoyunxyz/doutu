@@ -16,18 +16,20 @@ final class ZhiHomeScreen: Screen {
     static let contentH: CGFloat = 2990
 
     final class State: ScreenState {
-        var address = "上海市浦东新区"
+        // 默认值必须与 Android `ZhiHomeScreen.State` 逐字一致（Java:42-55）。
+        // 之前 iOS 用了上海市/3条/支付宝安全中心/736，真机首屏就和 Android 对不上。
+        var address = "恩施土…"
         var plusMenu = false
         var unread = true
-        var newMessage = "3条新消息"
+        var newMessage = "7条新消息"
         /// 两行消息：{标题, 摘要, 时间}
         var messages: [[String]] = [
-            ["支付宝安全中心", "你的账户安全提醒已更新", "刚刚"],
-            ["余额宝", "昨日收益已到账", "09:12"],
+            ["支付宝会员", "你有33积分待领取，解锁酷洛米瓶中精灵主⋯", "刚刚"],
+            ["花呗", "查看你的账单进度", "2小时前"],
         ]
         var creditLabel = "信用良好"
-        var score = "736"
-        var hideScoreTail = false
+        var score = "638"
+        var hideScoreTail = true
     }
 
     // MARK: - 调色板（Java:58-63）
