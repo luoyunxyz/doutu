@@ -71,6 +71,7 @@ final class WebHostController: UIViewController, WKScriptMessageHandler {
         // 给两个入口：左上角浮层按钮（看得见） + 左边缘右滑（符合直觉）。
         installBackAffordance()
         installBackButton()
+        installHeaderHitTargets()
 
         // 把 `DoutuApp` 桥按 Android 的方法清单补齐（缺一个页面里调用就会抛异常）
         let bridge = WKUserScript(source: Self.bridgeShim, injectionTime: .atDocumentStart,
@@ -148,6 +149,9 @@ final class WebHostController: UIViewController, WKScriptMessageHandler {
         }
         let top = view.safeAreaInsets.top
         backButton?.frame = CGRect(x: 10, y: top + 8, width: 34, height: 34)
+        let right = view.bounds.width
+        headerPlusButton?.frame = CGRect(x: right - 42, y: 8, width: 40, height: 50)
+        headerSearchButton?.frame = CGRect(x: right - 68, y: 8, width: 26, height: 50)
     }
 
     /// 与 Android `WeiHomeActivity` 的沉浸式一致：本页不显示状态栏。
@@ -170,6 +174,8 @@ final class WebHostController: UIViewController, WKScriptMessageHandler {
     /// iOS 没有 Android 的系统返回键；只留边缘滑动的话很多用户会卡在微主页里。
     /// 这里加一个很小的左上角返回按钮，位置在微信标题栏左侧空白处，不挡标题。
     private var backButton: UIButton?
+    private var headerSearchButton: UIButton?
+    private var headerPlusButton: UIButton?
 
     private func installBackButton() {
         let button = UIButton(type: .system)
@@ -188,6 +194,32 @@ final class WebHostController: UIViewController, WKScriptMessageHandler {
 
     @objc private func closeTapped() {
         dismiss(animated: true)
+    }
+
+    /// 页面顶栏的加号/放大镜在 React 侧没有点击处理；再叠两个透明命中区，
+    /// 位置按真机 1170×2532 截图上量出来的 33pt 头部中心放。视觉仍用网页图标（已放大）。
+    private func installHeaderHitTargets() {
+        let plus = UIButton(type: .custom)
+        plus.backgroundColor = .clear
+        plus.accessibilityLabel = "微信加号"
+        plus.addTarget(self, action: #selector(headerPlusTapped), for: .touchUpInside)
+        view.addSubview(plus)
+        headerPlusButton = plus
+
+        let search = UIButton(type: .custom)
+        search.backgroundColor = .clear
+        search.accessibilityLabel = "微信搜索"
+        search.addTarget(self, action: #selector(headerSearchTapped), for: .touchUpInside)
+        view.addSubview(search)
+        headerSearchButton = search
+    }
+
+    @objc private func headerPlusTapped() {
+        showWeChatPlusMenu()
+    }
+
+    @objc private func headerSearchTapped() {
+        showWeChatSearch()
     }
 
     @objc private func handleEdgePan(_ gesture: UIScreenEdgePanGestureRecognizer) {
@@ -543,8 +575,9 @@ final class WebHostController: UIViewController, WKScriptMessageHandler {
           var style = document.createElement('style');
           style.id = 'doutu-topbar-size';
           style.textContent = [
-            '.wechat-topbar__icon{transform:scale(1.18);transform-origin:center;overflow:visible;}',
-            '.wechat-topbar__icon--large{transform:scale(1.28);transform-origin:center;overflow:visible;}'
+            '.wechat-topbar__actions{column-gap:6px;align-items:center;padding-right:2px;}',
+            '.wechat-topbar__icon{transform:scale(1.10);transform-origin:center;overflow:visible;margin-right:4px;}',
+            '.wechat-topbar__icon--large{transform:scale(1.16);transform-origin:center;overflow:visible;}'
           ].join('');
           (document.head || document.documentElement).appendChild(style);
         }
