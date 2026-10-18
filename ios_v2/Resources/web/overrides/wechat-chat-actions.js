@@ -3161,7 +3161,7 @@
       + '<span class="fw-batch-links"><button type="button" data-all>全选</button><button type="button" data-none>清空</button></span></div>'
       + '<div class="fw-batch-list">' + rowsHtml + '</div>'
       + '<div class="fw-batch-random">'
-      + '<label class="fw-batch-field"><span>每个会话</span><input class="fw-batch-per" type="number" min="1" max="100" step="1" inputmode="numeric" value="' + html(draft.per) + '"><em>条</em></label>'
+      + '<label class="fw-batch-field"><span>每个会话</span><input class="fw-batch-per" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" value="' + html(draft.per) + '"><em>条</em></label>'
       + '<label class="fw-batch-field"><span>金额范围</span><input class="fw-batch-amount" type="text" inputmode="decimal" placeholder="留空随机 · 如 200-1000" value="' + html(draft.amount) + '"></label>'
       + '<div class="fw-batch-field"><span>时间范围</span><button type="button" class="fw-batch-date" data-date="start"></button><i>至</i><button type="button" class="fw-batch-date" data-date="end"></button></div>'
       + '<p class="fw-batch-hint">每个选中的会话生成相同条数，合计上限 100 条；时间留空默认最近 7 天。单聊/群聊与消息类型按所选会话自动判断。</p>'
@@ -4188,7 +4188,7 @@
 
   function openBatchAddFriends() {
     const host=addOverlay('batch-friend','fw-overlay--batch-friend');
-    const box=document.createElement('section');box.className='fw-batch-friend-dialog';box.innerHTML='<h2>批量添加好友</h2><p>输入随机生成的数量（1-200），好友资料及头像均随机生成。</p><input class="fw-batch-friend-count" type="number" min="1" max="200" step="1" inputmode="numeric" placeholder="请输入数量（最多200）"><div><button type="button" class="cancel">取消</button><button type="button" class="confirm">生成并添加</button></div>';host.appendChild(box);
+    const box=document.createElement('section');box.className='fw-batch-friend-dialog';box.innerHTML='<h2>批量添加好友</h2><p>输入随机生成的数量（1-200），好友资料及头像均随机生成。</p><input class="fw-batch-friend-count" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" placeholder="请输入数量（最多200）"><div><button type="button" class="cancel">取消</button><button type="button" class="confirm">生成并添加</button></div>';host.appendChild(box);
     box.querySelector('.cancel').onclick=openAddFriendDialog;
     box.querySelector('.confirm').onclick=async()=>{
       const input=box.querySelector('.fw-batch-friend-count'),count=Number(input.value);
