@@ -4073,6 +4073,22 @@
     return false;
   };
 
+  // 原生 WebHost 的顶栏命中层直接调这两个入口；它们和 openPlusMenu /
+  // openToolsSheet 在同一个作用域里，不能写文件末尾（那里已经是另一个 IIFE）。
+  window.__fwOpenPlusMenu = function () {
+    const actions = document.querySelector('.wechat-topbar__actions');
+    if (!actions) return false;
+    const icons = [...actions.querySelectorAll('svg')];
+    const anchor = icons[icons.length - 1];
+    if (!anchor) return false;
+    openPlusMenu(anchor);
+    return true;
+  };
+  window.__fwOpenToolsSheet = function () {
+    openToolsSheet();
+    return true;
+  };
+
   /**
    * 2026-10-16：「模拟来电」设置页指定的来电人 / 头像 / 铃声从这里进来。
    *
@@ -9213,17 +9229,4 @@
 
     // 原生侧（iOS WebHost）直接调这两个入口，避免 Safari/WKWebView 对 SVG 的
     // click 派发不可靠时，加号 / 顶部工具菜单仍然打不开。
-    window.__fwOpenPlusMenu = function () {
-      const actions = document.querySelector('.wechat-topbar__actions');
-      if (!actions) return false;
-      const icons = [...actions.querySelectorAll('svg')];
-      const anchor = icons[icons.length - 1];
-      if (!anchor) return false;
-      openPlusMenu(anchor);
-      return true;
-    };
-    window.__fwOpenToolsSheet = function () {
-      openToolsSheet();
-      return true;
-    };
   })();
