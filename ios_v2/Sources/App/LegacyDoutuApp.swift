@@ -94,7 +94,7 @@ final class Router {
         case "avatar":
             push(ProfileScreen(), state: ProfileScreen.State())
         case "balance":
-            push(BalanceScreen(), state: BalanceScreen.State())
+            push(BalanceV2Screen(), state: BalanceV2Screen.State())
         case "order":
             push(TaobaoOrderScreen(), state: TaobaoOrderScreen.State())   // 淘宝订单详情（原为 ReceiptV2Screen，点进去像支付宝主页）
         case "parse":
@@ -546,9 +546,9 @@ final class Router {
         case 0:   // 小支主页 ✓
             push(ZhiHomeV2Screen(), state: ZhiHomeV2Screen.State())
         case 1:   // 总资产 ✓
-            push(AssetScreen(), state: AssetScreen.State())
+            push(AssetV2Screen(), state: AssetV2Screen.State())
         case 2:   // 余额 ✓
-            push(BalanceScreen(), state: BalanceScreen.State())
+            push(BalanceV2Screen(), state: BalanceV2Screen.State())
         case 3:   // 余额宝 ✓
             push(YuebaoScreen(), state: YuebaoScreen.State())
         case 4:   // 花呗 ✓
@@ -711,10 +711,10 @@ final class Router {
             pop()
         case "balance":
             // 「我的」页资产卡「余额」→ 余额页
-            push(BalanceScreen(), state: BalanceScreen.State())
+            push(BalanceV2Screen(), state: BalanceV2Screen.State())
         case "assets":
             // 「我的」页资产卡「总资产」→ 总资产页
-            push(AssetScreen(), state: AssetScreen.State())
+            push(AssetV2Screen(), state: AssetV2Screen.State())
         case "bills":
             // 账单列表（数据由 BillStore 本地生成，与 Android 同一套规则）
             push(BillV2Screen(), state: BillV2Screen.State())
@@ -1267,7 +1267,7 @@ final class Router {
         // ---- 这些令牌在 Android 里各有归属，逐个对照处理 ----
         // 资产页的眼睛：隐藏 / 显示所有金额（`AssetActivity` 的 eye 分支 + `State.hideAll`）
         case "eye":
-            if let state = self.host?.state as? AssetScreen.State {
+            if let state = self.host?.state as? AssetV2Screen.State {
                 state.hideAll.toggle()
                 self.host?.setNeedsDisplay()
             }
