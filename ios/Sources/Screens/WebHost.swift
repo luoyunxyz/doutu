@@ -380,6 +380,13 @@ final class WebHostController: UIViewController, WKScriptMessageHandler, UIGestu
         }
     }
 
+    /// 调试遥控：执行任意 JS 并把返回值写进 crash.log。
+    func debugEval(_ script: String) {
+        webView.evaluateJavaScript(script) { result, error in
+            CrashLog.append("WEBJS result=\(String(describing: result)) err=\(error?.localizedDescription ?? "-")")
+        }
+    }
+
     /// 把页面的真实状态写进 crash.log：模块脚本到底有没有执行、
     /// `#root` 里有没有内容、哪些资源没加载出来。
     func logDiagnostics() {

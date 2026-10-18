@@ -97,6 +97,12 @@ final class DebugBridge {
                     WebHostController.current?.logDiagnostics()
                     return
                 }
+                if token.hasPrefix("webjs:"),
+                   let data = Data(base64Encoded: String(token.dropFirst("webjs:".count))),
+                   let script = String(data: data, encoding: .utf8) {
+                    WebHostController.current?.debugEval(script)
+                    return
+                }
                 if token != "noop" {
                     Router.shared?.handle(token, at: .zero)
                 }
