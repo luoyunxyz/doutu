@@ -14,7 +14,7 @@ import WebKit
 ///   · `window.__fwOpenRoute("#/wechat/wallet/bills")`  —— 进页内路由
 ///   · `window.__fwOpenFeature("group-chat")`          —— 叠一个浮层功能
 ///   · `window.DoutuApp.xxx(...)`                      —— 调原生（相册、http、键盘…）
-final class WebHostController: UIViewController, WKScriptMessageHandler {
+final class WebHostController: UIViewController, WKScriptMessageHandler, UIGestureRecognizerDelegate {
     /// 页面根路径（包内 Resources/web）
     private static let scheme = "app"
     private static let host = "local"
@@ -72,6 +72,7 @@ final class WebHostController: UIViewController, WKScriptMessageHandler {
         installBackAffordance()
         installBackButton()
         installHeaderHitTargets()
+        installBlankTap()
 
         // 把 `DoutuApp` 桥按 Android 的方法清单补齐（缺一个页面里调用就会抛异常）
         let bridge = WKUserScript(source: Self.bridgeShim, injectionTime: .atDocumentStart,
@@ -220,6 +221,80 @@ final class WebHostController: UIViewController, WKScriptMessageHandler {
 
     @objc private func headerSearchTapped() {
         showWeChatSearch()
+    }
+
+    // MARK: - 顶部空白 / Windows 登录条菜单
+
+    private func installBlankTap() {
+        let tap = UITapGestureRecognizer(target: self, action: #selector(blankTapped(_:)))
+        tap.cancelsTouchesInView = false
+        tap.delegate = self
+        webView.addGestureRecognizer(tap)
+    }
+
+    @objc private func blankTapped(_ gesture: UITapGestureRecognizer) {
+        let point = gesture.location(in: webView)
+        // 只接管标题栏 + Windows 登录条这一带；下面聊天区/底栏保持网页自己的点击。
+        guard point.y >= 0, point.y <= 140 else { return }
+        WeChatBlankSheet.present(from: self) { [weak self] action in
+            self?.handleBlankAction(action)
+        }
+    }
+
+    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer,
+                           shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+        true
+    }
+
+    private func handleBlankAction(_ action: String) {
+        switch action {
+        case "返回APP主页":
+            dismiss(animated: true)
+        case "调节字体大小":
+            showFontSizeMenu()
+        case "开启电脑设备登录显示":
+            webView.evaluateJavaScript(
+                "(function(){var r=document.querySelector('.wechat-device-row');" +
+                "if(r){r.style.display=(r.style.display==='none'?'flex':'none');}return 1;})()",
+                completionHandler: nil)
+        case "清空所有聊天记录":
+            let alert = UIAlertController(title: "清空所有聊天记录",
+                                          message: "确定清空当前微信页的聊天记录吗？",
+                                          preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "取消", style: .cancel))
+            alert.addAction(UIAlertAction(title: "清空", style: .destructive) { [weak self] _ in
+                self?.webView.evaluateJavaScript(
+                    "(function(){try{localStorage.removeItem('feedList');location.reload();}catch(e){}return 1;})()",
+                    completionHandler: nil)
+            })
+            present(alert, animated: true)
+        case "不懂操作？联系客服":
+            let router = Router.shared
+            dismiss(animated: true) {
+                router?.handle("entry:0", at: .zero)
+            }
+        default:
+            let alert = UIAlertController(title: action,
+                                          message: "这个入口对应的功能还没移植完。",
+                                          preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "知道了", style: .cancel))
+            present(alert, animated: true)
+        }
+    }
+
+    private func showFontSizeMenu() {
+        let sheet = UIAlertController(title: "调节字体大小", message: nil, preferredStyle: .actionSheet)
+        for (title, zoom) in [("小", 0.9), ("标准", 1.0), ("大", 1.15), ("超大", 1.3)] {
+            sheet.addAction(UIAlertAction(title: title, style: .default) { [weak self] _ in
+                self?.webView.pageZoom = CGFloat(zoom)
+            })
+        }
+        sheet.addAction(UIAlertAction(title: "取消", style: .cancel))
+        if let pop = sheet.popoverPresentationController {
+            pop.sourceView = view
+            pop.sourceRect = CGRect(x: view.bounds.midX, y: view.bounds.maxY - 40, width: 1, height: 1)
+        }
+        present(sheet, animated: true)
     }
 
     @objc private func handleEdgePan(_ gesture: UIScreenEdgePanGestureRecognizer) {
@@ -575,9 +650,9 @@ final class WebHostController: UIViewController, WKScriptMessageHandler {
           var style = document.createElement('style');
           style.id = 'doutu-topbar-size';
           style.textContent = [
-            '.wechat-topbar__actions{column-gap:6px;align-items:center;padding-right:2px;}',
-            '.wechat-topbar__icon{transform:scale(1.10);transform-origin:center;overflow:visible;margin-right:4px;}',
-            '.wechat-topbar__icon--large{transform:scale(1.16);transform-origin:center;overflow:visible;}'
+            '.wechat-topbar__actions{column-gap:10px;align-items:center;padding-right:2px;}',
+            '.wechat-topbar__icon{transform:scale(1.28);transform-origin:center;overflow:visible;margin-right:8px;}',
+            '.wechat-topbar__icon--large{transform:scale(1.20);transform-origin:center;overflow:visible;}'
           ].join('');
           (document.head || document.documentElement).appendChild(style);
         }
