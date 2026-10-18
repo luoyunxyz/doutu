@@ -43,8 +43,8 @@ final class ReceiptBatchSheet: UIViewController {
         dim.addTarget(self, action: #selector(close), for: .touchUpInside)
         view.addSubview(dim)
 
-        sheet.backgroundColor = UIColor(red: 0xf7 / 255, green: 0xf7 / 255, blue: 0xf9 / 255, alpha: 1)
-        sheet.layer.cornerRadius = 20
+        sheet.backgroundColor = .white
+        sheet.layer.cornerRadius = 14
         sheet.layer.masksToBounds = true
         view.addSubview(sheet)
 
@@ -58,6 +58,7 @@ final class ReceiptBatchSheet: UIViewController {
         title.tag = 101
         title.text = "批量添加收款记录"
         title.font = .systemFont(ofSize: 17, weight: .bold)
+        title.textAlignment = .center
         title.textColor = UIColor(red: 0x23 / 255, green: 0x25 / 255, blue: 0x2b / 255, alpha: 1)
         sheet.addSubview(title)
 
@@ -107,7 +108,7 @@ final class ReceiptBatchSheet: UIViewController {
         cancel.tag = 130
         cancel.setTitle("取消", for: .normal)
         cancel.titleLabel?.font = .systemFont(ofSize: 16)
-        cancel.setTitleColor(UIColor(red: 0x57 / 255, green: 0x6b / 255, blue: 0x95 / 255, alpha: 1), for: .normal)
+        cancel.setTitleColor(UIColor(red: 0x23 / 255, green: 0x25 / 255, blue: 0x2b / 255, alpha: 1), for: .normal)
         cancel.addTarget(self, action: #selector(close), for: .touchUpInside)
         sheet.addSubview(cancel)
 
@@ -115,9 +116,7 @@ final class ReceiptBatchSheet: UIViewController {
         add.tag = 131
         add.setTitle("添加", for: .normal)
         add.titleLabel?.font = .systemFont(ofSize: 16, weight: .semibold)
-        add.setTitleColor(.white, for: .normal)
-        add.backgroundColor = UIColor(red: 0x14 / 255, green: 0x78 / 255, blue: 0xfc / 255, alpha: 1)
-        add.layer.cornerRadius = 10
+        add.setTitleColor(UIColor(red: 0x14 / 255, green: 0x78 / 255, blue: 0xfc / 255, alpha: 1), for: .normal)
         add.addTarget(self, action: #selector(submit), for: .touchUpInside)
         sheet.addSubview(add)
 
@@ -220,26 +219,28 @@ final class ReceiptBatchSheet: UIViewController {
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         dim.frame = view.bounds
-        let bottom = view.safeAreaInsets.bottom
-        let sheetH = 560 + bottom
-        let width = view.bounds.width - 24
-        sheet.frame = CGRect(x: 12, y: view.bounds.height - sheetH, width: width, height: sheetH)
+        let sheetH = min(560, view.bounds.height - 80)
+        let width = min(350, view.bounds.width - 40)
+        sheet.frame = CGRect(x: (view.bounds.width - width) / 2,
+                             y: (view.bounds.height - sheetH) / 2,
+                             width: width, height: sheetH)
 
-        sheet.viewWithTag(100)?.frame = CGRect(x: (width - 38) / 2, y: 10, width: 38, height: 5)
-        sheet.viewWithTag(101)?.frame = CGRect(x: 20, y: 28, width: width - 40, height: 24)
-        sheet.viewWithTag(102)?.frame = CGRect(x: 20, y: 56, width: width - 40, height: 34)
+        sheet.viewWithTag(100)?.isHidden = true
+        sheet.viewWithTag(101)?.frame = CGRect(x: 16, y: 18, width: width - 32, height: 24)
+        sheet.viewWithTag(102)?.frame = CGRect(x: 16, y: 46, width: width - 32, height: 34)
 
-        let contentW = width - 40
+        let contentW = width - 32
         for i in 0..<tierSwitches.count {
             guard let row = sheet.viewWithTag(110 + i) else { continue }
-            row.frame = CGRect(x: 20, y: 96 + CGFloat(i) * 46, width: contentW, height: 46)
+            row.frame = CGRect(x: 16, y: 88 + CGFloat(i) * 46, width: contentW, height: 46)
             row.viewWithTag(1)?.frame = CGRect(x: 0, y: 8, width: 51, height: 31)
             row.viewWithTag(2)?.frame = CGRect(x: 60, y: 11, width: contentW - 150, height: 22)
             row.viewWithTag(3)?.frame = CGRect(x: contentW - 80, y: 8, width: 80, height: 30)
         }
 
         if let row = sheet.viewWithTag(120) {
-            row.frame = CGRect(x: 20, y: 96 + CGFloat(tierSwitches.count) * 46, width: contentW, height: 56)
+            row.frame = CGRect(x: 16, y: 88 + CGFloat(tierSwitches.count) * 46,
+                               width: contentW, height: 56)
             customSwitch.frame = CGRect(x: 0, y: 12, width: 51, height: 31)
             row.viewWithTag(2)?.frame = CGRect(x: 60, y: 16, width: 60, height: 22)
             let fieldW: CGFloat = 60
@@ -249,13 +250,13 @@ final class ReceiptBatchSheet: UIViewController {
             customCount.frame = CGRect(x: contentW - 64, y: 12, width: 64, height: 30)
         }
 
-        let monthY = 96 + CGFloat(tierSwitches.count) * 46 + 60
-        sheet.viewWithTag(121)?.frame = CGRect(x: 20, y: monthY, width: 80, height: 30)
-        monthButton.frame = CGRect(x: 100, y: monthY, width: contentW - 80, height: 30)
+        let monthY = 88 + CGFloat(tierSwitches.count) * 46 + 60
+        sheet.viewWithTag(121)?.frame = CGRect(x: 16, y: monthY, width: 80, height: 30)
+        monthButton.frame = CGRect(x: 96, y: monthY, width: contentW - 80, height: 30)
 
-        let buttonsY = sheetH - bottom - 62
-        sheet.viewWithTag(130)?.frame = CGRect(x: 20, y: buttonsY, width: 90, height: 40)
-        sheet.viewWithTag(131)?.frame = CGRect(x: width - 120, y: buttonsY, width: 100, height: 40)
+        let buttonsY = sheetH - 50
+        sheet.viewWithTag(130)?.frame = CGRect(x: 16, y: buttonsY, width: 80, height: 40)
+        sheet.viewWithTag(131)?.frame = CGRect(x: width - 96, y: buttonsY, width: 80, height: 40)
     }
 
     @objc private func close() {
