@@ -574,9 +574,9 @@ final class Router {
         case 12, 13:  // 余额提现 / 转账银行卡 ✓（同一个提现页）
             // Android 进页面就聚焦金额输入框，键盘立刻弹出（参考图上键盘是可见的），
             // 所以这里把 keypad 默认置 true，否则首屏会少一整块键盘、观感差很多。
-            let withdrawState = WithdrawScreen.State()
+            let withdrawState = WithdrawV2Screen.State()
             withdrawState.keypad = true
-            push(WithdrawScreen(), state: withdrawState)
+            push(WithdrawV2Screen(), state: withdrawState)
         case 14:  // 小荷包 ✓
             push(XiaohebaoScreen(), state: XiaohebaoScreen.State())
         case 15:  // 芝麻信用 ✓
@@ -873,61 +873,61 @@ final class Router {
 
         // 提现页：金额输入 / 键盘 / 支付密码
         case "amount":
-            if let state = self.host?.state as? WithdrawScreen.State {
+            if let state = self.host?.state as? WithdrawV2Screen.State {
                 state.keypad = true
                 self.host?.setNeedsDisplay()
             }
         case "clear":
-            if let state = self.host?.state as? WithdrawScreen.State {
+            if let state = self.host?.state as? WithdrawV2Screen.State {
                 state.amount = ""
                 self.host?.setNeedsDisplay()
             }
         case "submit", "key:submit":
             // 进支付密码那一层（要求金额合法）
-            if let state = self.host?.state as? WithdrawScreen.State,
-               WithdrawScreen.canWithdraw(state, avail: WithdrawStore.shared.avail) {
+            if let state = self.host?.state as? WithdrawV2Screen.State,
+               WithdrawV2Screen.canWithdraw(state, avail: WithdrawStore.shared.avail) {
                 state.password = true
                 state.keypad = false
                 self.host?.setNeedsDisplay()
             }
         case "key:hide":
-            if let state = self.host?.state as? WithdrawScreen.State {
+            if let state = self.host?.state as? WithdrawV2Screen.State {
                 state.keypad = false
                 self.host?.setNeedsDisplay()
             }
         case "key:del":
-            if let state = self.host?.state as? WithdrawScreen.State, !state.amount.isEmpty {
+            if let state = self.host?.state as? WithdrawV2Screen.State, !state.amount.isEmpty {
                 state.amount = String(state.amount.dropLast())
                 self.host?.setNeedsDisplay()
             }
         case "key:dot":
-            if let state = self.host?.state as? WithdrawScreen.State, !state.amount.contains(".") {
+            if let state = self.host?.state as? WithdrawV2Screen.State, !state.amount.contains(".") {
                 state.amount = state.amount.isEmpty ? "0." : state.amount + "."
                 self.host?.setNeedsDisplay()
             }
         case "pin:close":
-            if let state = self.host?.state as? WithdrawScreen.State {
+            if let state = self.host?.state as? WithdrawV2Screen.State {
                 state.password = false
                 state.pin = ""
                 self.host?.setNeedsDisplay()
             }
         case "pin:del":
-            if let state = self.host?.state as? WithdrawScreen.State, !state.pin.isEmpty {
+            if let state = self.host?.state as? WithdrawV2Screen.State, !state.pin.isEmpty {
                 state.pin = String(state.pin.dropLast())
                 self.host?.setNeedsDisplay()
             }
         case "pin:forgot":
-            // Android 侧这个热区没有绑定任何行为（WithdrawScreen.java 里没有对应 listener），
+            // Android 侧这个热区没有绑定任何行为（WithdrawV2Screen.java 里没有对应 listener），
             // 为了保持 1:1 这里也不做动作，只重绘；不要在这里加自造的「功能未完成」类提示。
             self.host?.setNeedsDisplay()
         case "bank":
             // 弹出银行卡选择层（对应 Android 的 BankSheet）
-            if let state = self.host?.state as? WithdrawScreen.State {
+            if let state = self.host?.state as? WithdrawV2Screen.State {
                 state.bankSheet = true
                 self.host?.setNeedsDisplay()
             }
         case "close":
-            if let state = self.host?.state as? WithdrawScreen.State {
+            if let state = self.host?.state as? WithdrawV2Screen.State {
                 state.bankSheet = false
                 self.host?.setNeedsDisplay()
             }
@@ -937,7 +937,7 @@ final class Router {
                WithdrawStore.shared.allCards.indices.contains(index) {
                 let card = WithdrawStore.shared.allCards[index]
                 WithdrawStore.shared.select(card.id)
-                if let state = self.host?.state as? WithdrawScreen.State {
+                if let state = self.host?.state as? WithdrawV2Screen.State {
                     state.bankSheet = false
                 }
                 self.host?.setNeedsDisplay()
@@ -949,19 +949,19 @@ final class Router {
             store.add(bank: bank.key,
                       name: WithdrawStore.bankCardName(bank.key) ?? "储蓄卡",
                       tail: store.newTail())
-            if let state = self.host?.state as? WithdrawScreen.State {
+            if let state = self.host?.state as? WithdrawV2Screen.State {
                 state.bankSheet = false
             }
             self.host?.setNeedsDisplay()
             self.showToast("已添加一张储蓄卡", ok: true)
         case let t where t.hasPrefix("pin:") && t.count == 5:
             // pin:0 … pin:9
-            if let state = self.host?.state as? WithdrawScreen.State,
+            if let state = self.host?.state as? WithdrawV2Screen.State,
                state.pin.count < 6, let digit = t.last, digit.isNumber {
                 state.pin.append(digit)
                 // 六位齐了 → 进「提现成功」页（Android `WithdrawActivity` 262-271）
                 if state.pin.count == 6 {
-                    let amount = WithdrawScreen.value(state)
+                    let amount = WithdrawV2Screen.value(state)
                     let card = WithdrawStore.shared.selected()
                     let bank = card.map { "\($0.name)(\($0.tail))" } ?? "银行卡"
                     state.password = false
@@ -978,7 +978,7 @@ final class Router {
             }
         case let t where t.hasPrefix("key:") && t.count == 5:
             // key:0 … key:9
-            if let state = self.host?.state as? WithdrawScreen.State, let digit = t.last,
+            if let state = self.host?.state as? WithdrawV2Screen.State, let digit = t.last,
                digit.isNumber {
                 state.amount += String(digit)
                 self.host?.setNeedsDisplay()
@@ -1100,14 +1100,14 @@ final class Router {
                 push(CollectMoneyV2Screen(), state: CollectMoneyV2Screen.State())
             }
 
-        // 余额页 / 小荷包：提现与转账（提现页 WithdrawScreen 未移植）
+        // 余额页 / 小荷包：提现与转账（提现页 WithdrawV2Screen 未移植）
         case "withdraw":
             // 余额页的「提现」→ 提现页（数据层与页面都已移植）
             // Android 进页面就聚焦金额输入框，键盘立刻弹出（参考图上键盘是可见的），
             // 所以这里把 keypad 默认置 true，否则首屏会少一整块键盘、观感差很多。
-            let withdrawState = WithdrawScreen.State()
+            let withdrawState = WithdrawV2Screen.State()
             withdrawState.keypad = true
-            push(WithdrawScreen(), state: withdrawState)
+            push(WithdrawV2Screen(), state: withdrawState)
         // 小荷包：设置、转出、转入、攒钱目标、承诺券（对应页面均未移植）
         case "settings", "out", "in", "goal", "promise":
             break
