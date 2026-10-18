@@ -1,2 +1,3 @@
-status: failure
-run: 39088180917  commit: 3604da84daa9c167fd2bed66f1f3fb093d4722fb  at: 2026-10-18T01:55:25Z
+status: success
+run: 39088269725  commit: bffbde07cbfbd0d04b8f3cb677b1836d2f0b3742  at: 2026-10-18T01:57:15Z
+-rw-r--r--  1 runner  staff    34M Oct 18 01:57 ios/Doutu-unsigned.ipa
