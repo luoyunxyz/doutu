@@ -230,11 +230,27 @@ final class WebHostController: UIViewController, WKScriptMessageHandler {
             }
           } catch(e) {}
           var root = document.getElementById('root');
+          var nav = document.querySelector('.wechat-bottom-navbar');
+          var chain = [];
+          try {
+            for (var el = nav; el && chain.length < 10; el = el.parentElement) {
+              var cs = getComputedStyle(el);
+              var nr = el.getBoundingClientRect();
+              chain.push({
+                tag: el.tagName, cls: String(el.className || '').slice(0, 80),
+                pos: cs.position, tr: cs.transform, fil: cs.filter, per: cs.perspective,
+                ov: cs.overflow, h: Math.round(nr.height), top: Math.round(nr.top),
+                bottom: Math.round(nr.bottom), z: cs.zIndex, disp: cs.display,
+                vis: cs.visibility, op: cs.opacity
+              });
+            }
+          } catch(e) { chain.push({err:String(e)}); }
           return JSON.stringify({
             href: location.href, ready: document.readyState, title: document.title,
             rootLen: root ? root.innerHTML.length : -1,
             rootText: root ? String(root.innerText||'').slice(0,300) : null,
             bodyText: String(document.body ? document.body.innerText : '').slice(0,400),
+            navChain: chain,
             appRoute: typeof window.__fwOpenRoute,
             appFeature: typeof window.__fwOpenFeature,
             doutuApp: typeof window.DoutuApp,
