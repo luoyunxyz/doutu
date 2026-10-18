@@ -242,7 +242,7 @@ final class CustomerServiceScreen: Screen {
 
     // MARK: - 绘制（Java:135-166 顶栏、Java:168-191 内容、Java:194-264 两张卡片）
 
-    func draw(_ draw d: Draw, state: ScreenState) {
+    func draw(_ d: Draw, state: ScreenState) {
         let s = state as? State ?? State()
         let m = metrics(for: s)
 

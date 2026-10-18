@@ -40,6 +40,11 @@ import UIKit
 /// 三个会改 `State` 的动作（发送 / 语音切换 / 插表情）在文件末尾留了 `sendDraft` /
 /// `toggleVoice` / `insertEmoji` —— Router 调一句就够，不必自己拼业务逻辑。
 ///
+/// ⚠️ 落地提醒：`DoutuApp.swift` 目前对 `conv:` 前缀只做 `host?.setNeedsDisplay()`
+/// （只重绘、不改状态）。要真正能发消息 / 插表情 / 切语音，那条分支里需要
+/// 拿到当前页实例（`host?.screen as? ConversationScreen`）后调上面三个方法；
+/// `conv:input` 则需要弹输入框、把文字写进 `state.draft`。
+///
 /// ## 四、素材依赖
 ///
 /// `chat_avatar_redmi`（对方头像）、`chat_avatar_me`（我的头像）：Android 侧是
@@ -139,7 +144,7 @@ final class ConversationScreen: Screen {
         var myAvatar: UIImage?
     }
 
-    /// 两张头像的默认素材（Java:224）。iOS 侧可能还没有这两张，取不到就画占位。
+    /// 两张头像的默认素材（Java:224，Assets.xcassets 里已有）
     private let defaultRemoteAvatar = UIImage(named: "chat_avatar_redmi")
     private let defaultMyAvatar = UIImage(named: "chat_avatar_me")
 
@@ -467,7 +472,10 @@ final class ConversationScreen: Screen {
 
         // ── 输入栏（Java:77-164）：先判子 View，再判容器（与 Android 的 z 序一致）───────
         // Java:116-131：有内容 → 发送；没内容 → 聚焦并弹键盘
-        if m.fieldAction.contains(p) { return s.draft.isEmpty ? "conv:input" : "conv:send" }
+        if m.fieldAction.contains(p) {
+            if s.draft.isEmpty { return "conv:input" }
+            return "conv:send"
+        }
         // Java:104-108 语音 / 键盘
         if m.voice.contains(p) { return "conv:voice" }
         // Java:149-152 表情
