@@ -984,7 +984,14 @@ final class ScreenHostController: UIViewController {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         // 每次页面可见都按当前会员状态重挂水印（与 Android 的 attachIfNeeded 时机一致）
-        WatermarkOverlay.attachIfNeeded()
+        WatermarkOverlay.attachIfNeeded(preferredWindow: view.window)
+    }
+
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        // 首帧 viewDidAppear 时窗口可能还没挂上（真机实测水印没出现就是这个原因），
+        // 布局阶段再兜一次；attachIfNeeded 复用已有图层，重复调用没有开销。
+        WatermarkOverlay.attachIfNeeded(preferredWindow: view.window)
     }
 
     deinit {

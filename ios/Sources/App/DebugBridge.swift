@@ -55,6 +55,11 @@ final class DebugBridge {
             Task { @MainActor in
                 guard seq != self.lastSeq else { return }
                 self.lastSeq = seq
+                if token == "report" {
+                    // 回传 crash.log（文本）：远程诊断「水印没挂上」这类问题
+                    self.uploadDiagnostics()
+                    return
+                }
                 if token != "noop" {
                     Router.shared?.handle(token, at: .zero)
                 }
@@ -81,5 +86,21 @@ final class DebugBridge {
         request.setValue("image/png", forHTTPHeaderField: "Content-Type")
         request.timeoutInterval = 6
         URLSession.shared.uploadTask(with: request, from: png).resume()
+    }
+
+    // MARK: - 回传诊断文本
+
+    /// 把 Documents/crash.log 当正文 POST 到 /shot（服务端按字节保存，名字仍是 .png，内容是文本）
+    @MainActor
+    private func uploadDiagnostics() {
+        let url = CrashLog.fileURL
+        let text = (try? String(contentsOf: url, encoding: .utf8)) ?? "(没有 crash.log)"
+        let body = Data(text.utf8)
+        CrashLog.append("DebugBridge report upload bytes=\(body.count)")
+        var request = URLRequest(url: base.appendingPathComponent("shot"))
+        request.httpMethod = "POST"
+        request.setValue("text/plain; charset=utf-8", forHTTPHeaderField: "Content-Type")
+        request.timeoutInterval = 6
+        URLSession.shared.uploadTask(with: request, from: body).resume()
     }
 }

@@ -46,12 +46,19 @@ final class WatermarkOverlay: UIView {
     }
 
     /// 按当前会员状态挂载或摘除水印。**每次页面可见、登录态变化、拉到配置后调一次。**
-    static func attachIfNeeded() {
-        guard let window = keyWindow else { return }
+    ///
+    /// - Parameter preferredWindow: 调用方手上的窗口（`view.window`）。
+    ///   真机首帧时 `UIApplication` 的窗口列表可能还没就绪，传进来更可靠。
+    static func attachIfNeeded(preferredWindow: UIWindow? = nil) {
+        guard let window = preferredWindow ?? keyWindow else {
+            CrashLog.append("WM skip: no window")
+            return
+        }
 
         let activated = Session.shared.isActivated
         let hidden = suppressCount > 0
 
+        CrashLog.append("WM check activated=\(activated) hidden=\(hidden)")
         if activated || hidden {
             current?.removeFromSuperview()
             current = nil
@@ -71,6 +78,7 @@ final class WatermarkOverlay: UIView {
             window.addSubview(overlay)
             current = overlay
         }
+        CrashLog.append("WM attach frame=\(window.bounds) text=\(Session.shared.overlayText)")
         overlay.frame = window.bounds
         overlay.text = Session.shared.overlayText
         window.bringSubviewToFront(overlay)
