@@ -230,6 +230,9 @@ for (const required of ['Screen', 'ScreenState', 'ScreenHostView', 'Canvas', 'Dr
   }
   const missing = [];
   for (const token of tokens) {
+    // MIME 类型等资源字符串也长得像令牌（`image/png`、`application/octet-stream`），
+    // 但 Router 里永远不会有分支；带斜杠/点的一律跳过。
+    if (token.includes('/') || token.includes('.')) continue;
     if (router.includes(`"${token}"`)) continue;
     // 带冒号的令牌按前缀匹配（Router 里写的是 `hasPrefix("play:")` 或 `"tab:0", "tab:1"`）
     const colon = token.indexOf(':');

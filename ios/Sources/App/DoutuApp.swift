@@ -396,6 +396,17 @@ final class Router {
         case "noop":
             return
 
+        // 调试用：验证备选图标是否真的可用（正式界面走 AppIconChooser 弹窗）
+        case "iconstate":
+            CrashLog.append("ICON state supported=\(UIApplication.shared.supportsAlternateIcons) "
+                + "current=\(UIApplication.shared.alternateIconName ?? "nil")")
+        case let t where t.hasPrefix("icon:"):
+            let name = String(t.dropFirst("icon:".count))
+            let alternate: String? = (name == "default" || name.isEmpty) ? nil : name
+            UIApplication.shared.setAlternateIconName(alternate) { error in
+                CrashLog.append("ICON switch name=\(name) err=\(error?.localizedDescription ?? "ok")")
+            }
+
         // 首页外壳：底部三栏 + 平台页签（Android MainActivity）
         case "tab:0", "tab:1", "tab:2":
             guard let state = self.host?.state as? HomeShellScreen.State else { return }
@@ -566,9 +577,16 @@ final class Router {
             // 编辑金额/奖励、顾客消费记录、联系顾客、退款、理赔、在线帮助均未移植
             break
 
-        // 收款记录页：整页「批量添加」/ 积分入口 / 历史账单
-        case "batch", "points", "history":
-            // 批量添加记录的面板、积分页、历史账单页均未移植
+        // 收款记录页：整页「批量添加」（Android ReceiptActivity.showBatchSheet）
+        case "batch":
+            ReceiptBatchSheet.present { [weak self] in
+                if let state = self?.host?.state as? ReceiptScreen.State {
+                    state.scroll = 0
+                }
+                self?.host?.setNeedsDisplay()
+            }
+        case "points", "history":
+            // 积分页 / 历史账单页：Android 里也没有对应实现
             break
         case let t where t.hasPrefix("avatar:") || t.hasPrefix("entry:"):
             // `entry:` 被三个屏复用，含义不同：

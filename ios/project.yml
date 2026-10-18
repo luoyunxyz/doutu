@@ -62,6 +62,9 @@ targets:
         # 名称必须和 Assets.xcassets 里的 appiconset 一致；Xcode 会生成
         # CFBundleIcons.CFBundleAlternateIcons，再配合 setAlternateIconName 切换。
         ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES: "AppIconAlipay AppIconAlipayHK AppIconWechat"
+        # 把备选 appiconset 一并编进 Assets.car（不加时某些 Xcode 只带主图标，
+        # setAlternateIconName 会报找不到图标）。
+        ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS: YES
         # SwiftUI 的 App 生命周期在 iOS 14+ 需要 Scene Manifest，否则真机启动可能黑屏。
         # 这一项让 Xcode **生成**（而不是有现成的）UIApplicationSceneManifest，
         # 与 Xcode 新建 SwiftUI 工程的默认值一致。
