@@ -23,12 +23,15 @@ struct Draw {
     /// 与 Android 的 Canvas 一致。所以这里只做 translate + scale，之后所有绘制都能直接
     /// 使用参考画布坐标（`x` 向右、`y` 向下），与 Java 源码的写法完全一样。
     ///
+    /// ⚠️ **横纵分别缩放**（sx, sy），对齐 Android 的 `canvas.scale(w / W, h / H)`：
+    /// 早期版本 x、y 都用横向比例，导致画布底部（底部导航栏）被切掉、文字也没被纵向拉伸。
+    ///
     /// 唯一要小心的是**位图**：`UIImage.draw(in:)` 走 UIKit 的绘制通道，方向正确；
     /// 而 `CGContext.draw(cgImage:)` 在 y 向下的上下文里会上下颠倒，所以那条路径自己做了一次翻转。
     static func flip(_ ctx: CGContext, canvas: Canvas) {
         ctx.saveGState()
         ctx.translateBy(x: canvas.bounds.minX, y: canvas.bounds.minY)
-        ctx.scaleBy(x: canvas.scale, y: canvas.scale)
+        ctx.scaleBy(x: canvas.sx, y: canvas.sy)
     }
 
     static func restore(_ ctx: CGContext) {

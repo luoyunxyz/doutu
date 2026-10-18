@@ -201,8 +201,8 @@ final class ScreenHostView: UIView {
     override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let t = touches.first else { return }
         let p = t.location(in: self)
-        let scale = bounds.width / screen.canvasSize.width
-        let dxDesign = (p.x - lastPoint.x) / scale
+        let canvas = Canvas(size: screen.canvasSize, bounds: bounds)
+        let dxDesign = (p.x - lastPoint.x) / canvas.sx
         let totalDx = p.x - touchStart.x
         let totalDy = p.y - touchStart.y
 
@@ -223,8 +223,8 @@ final class ScreenHostView: UIView {
         let dy = p.y - dragStartY
         if abs(dy) > 8 { dragging = true }
         if dragging && maxScroll > 0 {
-            // 屏幕位移 → 参考坐标位移
-            state.scroll = min(max(0, dragStartScroll - dy / scale), maxScroll)
+            // 屏幕位移 → 参考坐标位移（纵向用 sy）
+            state.scroll = min(max(0, dragStartScroll - dy / canvas.sy), maxScroll)
             setNeedsDisplay()
         }
         lastPoint = p
@@ -234,13 +234,16 @@ final class ScreenHostView: UIView {
         defer { dragging = false; draggingCarousel = false; moved = false }
         guard let t = touches.first else { return }
         let p = t.location(in: self)
-        let scale = bounds.width / screen.canvasSize.width
-        let design = CGPoint(x: p.x / scale,
-                             y: (p.y - safeAreaInsets.top) / scale + state.scroll)
+        let canvas = Canvas(size: screen.canvasSize, bounds: bounds)
+        // 屏幕点 → 参考坐标（x 用 sx、y 用 sy），再叠加当前滚动量。
+        // 注意：本视图是全屏铺满的（SwiftUI 侧 ignoresSafeArea），所以**不再扣安全区**，
+        // 否则命中坐标会整体上移，表现就是「点击没反应 / 点错位置」。
+        var design = canvas.design(p)
+        design.y += state.scroll
 
         // 横向拖动松手 → 吸附到最近一页（Android 的 snapCarousel）
         if draggingCarousel {
-            screen.carouselSnap(state, totalDx: (p.x - touchStart.x) / scale)
+            screen.carouselSnap(state, totalDx: (p.x - touchStart.x) / canvas.sx)
             setNeedsDisplay()
             return
         }
