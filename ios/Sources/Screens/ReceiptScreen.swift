@@ -166,7 +166,9 @@ final class ReceiptScreen: Screen {
             y = groups[i].cardBottom
         }
         // 空态：参考图里是一张「今天暂无收款记录」白卡（不是没有内容），提示块要落在它下面
-        contentBottom = groups.isEmpty ? firstCardTop + emptyCardH : y + historyRect.maxY
+        // 注意：非空分支是「最后一张卡底 + historyRect.maxY」，空态必须同样加上，
+        // 否则 drawNotice 里的 base = contentBottom - historyRect.maxY 会把提示块顶进卡片里。
+        contentBottom = groups.isEmpty ? firstCardTop + emptyCardH + historyRect.maxY : y + historyRect.maxY
     }
 
     func maxScroll(_ state: ScreenState) -> CGFloat {
