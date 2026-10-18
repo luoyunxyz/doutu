@@ -28,6 +28,7 @@ final class WebHostController: UIViewController, WKScriptMessageHandler, UIGestu
     private var server: LocalWebServer?
     /// 待执行的路由（页面还没起来时先攥着，起来后再交过去）
     private var pendingRoute: String?
+    private var routeRetry = 0
 
     /// 初始路由：`#/wechat` 或 `#/wechat/...` 或 `feature:xxx`
     init(route: String = "#/wechat") {
@@ -71,6 +72,8 @@ final class WebHostController: UIViewController, WKScriptMessageHandler, UIGestu
         // 给两个入口：左上角浮层按钮（看得见） + 左边缘右滑（符合直觉）。
         installBackAffordance()
         installBackButton()
+        installHeaderHitTargets()
+        installBlankTap()
 
         // 把 `DoutuApp` 桥按 Android 的方法清单补齐（缺一个页面里调用就会抛异常）
         let bridge = WKUserScript(source: Self.bridgeShim, injectionTime: .atDocumentStart,
@@ -135,6 +138,7 @@ final class WebHostController: UIViewController, WKScriptMessageHandler, UIGestu
     /// 从宫格进来时切换路由（页面已就绪就直接调，否则等 didFinish）
     func open(route: String) {
         pendingRoute = route
+        routeRetry = 0
         deliverPendingRouteIfReady()
     }
 
@@ -214,11 +218,22 @@ final class WebHostController: UIViewController, WKScriptMessageHandler, UIGestu
     }
 
     @objc private func headerPlusTapped() {
-        showWeChatPlusMenu()
+        // 不在原生里重画菜单：给网页的加号派发一次真实 click，
+        // 让 wechat-chat-actions.js 走它自带的完整「发起群聊/添加朋友/扫一扫/收付款」。
+        webView.evaluateJavaScript(
+            "(function(){var a=document.querySelector('.wechat-topbar__actions');" +
+            "if(!a)return 0;var s=a.querySelectorAll('svg');if(!s.length)return 0;" +
+            "var p=s[s.length-1];p.dispatchEvent(new MouseEvent('click'," +
+            "{bubbles:true,cancelable:true,view:window}));return 1})()",
+            completionHandler: nil)
     }
 
     @objc private func headerSearchTapped() {
-        showWeChatSearch()
+        webView.evaluateJavaScript(
+            "(function(){var a=document.querySelector('.wechat-topbar__actions');" +
+            "if(!a)return 0;var s=a.querySelector('svg');if(!s)return 0;" +
+            "s.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,view:window}));return 1})()",
+            completionHandler: nil)
     }
 
     // MARK: - 顶部空白 / Windows 登录条菜单
@@ -234,9 +249,11 @@ final class WebHostController: UIViewController, WKScriptMessageHandler, UIGestu
         let point = gesture.location(in: webView)
         // 只接管标题栏 + Windows 登录条这一带；下面聊天区/底栏保持网页自己的点击。
         guard point.y >= 0, point.y <= 140 else { return }
-        WeChatBlankSheet.present(from: self) { [weak self] action in
-            self?.handleBlankAction(action)
-        }
+        // 网页自带的工具菜单就在 wechat-topbar 的 click 处理里。
+        webView.evaluateJavaScript(
+            "(function(){var t=document.querySelector('.wechat-topbar');if(!t)return 0;" +
+            "t.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,view:window}));return 1})()",
+            completionHandler: nil)
     }
 
     func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer,
@@ -308,15 +325,26 @@ final class WebHostController: UIViewController, WKScriptMessageHandler, UIGestu
         let script: String
         if route.hasPrefix("feature:") {
             let name = String(route.dropFirst("feature:".count))
-            script = "window.__fwOpenFeature && window.__fwOpenFeature(\(Self.jsString(name)))"
+            // 必须把网页函数的返回值带回来：override 里的 __fwOpenFeature
+            // 只有真正打开功能时才 return true。之前的壳无条件 return 1，
+            // 页面还没挂载/函数还不存在时也会把 pendingRoute 清掉，功能就永远不弹。
+            script = "(function(){try{if(typeof window.__fwOpenFeature!=='function')return 0;"
+                + "var v=window.__fwOpenFeature(\(Self.jsString(name)));return v?1:0}catch(e){return 0}})()"
         } else {
-            script = "window.__fwOpenRoute && window.__fwOpenRoute(\(Self.jsString(route)))"
+            script = "(function(){try{if(typeof window.__fwOpenRoute==='function'){"
+                + "window.__fwOpenRoute(\(Self.jsString(route)));return 1}"
+                + "location.hash=\(Self.jsString(route));return 1}catch(e){return 0}})()"
         }
-        webView.evaluateJavaScript("(function(){try{\(script);return 1}catch(e){return 0}})()") {
-            [weak self] result, _ in
+        webView.evaluateJavaScript(script) { [weak self] result, _ in
             guard let self else { return }
             if let ok = result as? Int, ok == 1 {
                 self.pendingRoute = nil
+                self.routeRetry = 0
+            } else if self.routeRetry < 20 {
+                self.routeRetry += 1
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                    self.deliverPendingRouteIfReady()
+                }
             }
         }
     }
