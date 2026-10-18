@@ -226,7 +226,7 @@ final class BillDetailV2Screen: Screen {
             d.art(art, CGRect(x: 1096, y: card2Top + 622, width: art.size.width * art.scale,
                               height: art.size.height * art.scale))
         }
-        DrawSwitch.mark(d, cx: 1150, cy: card2Top + 661, on: false)
+        DrawSwitchV2.mark(d, cx: 1150, cy: card2Top + 661, on: false)
     }
 
     /// 只清「值」那一栏再重画（Java:202-216）
@@ -435,7 +435,7 @@ extension BillDetailV2Screen.State: EditableState {
 }
 
 /// 开关的两种画法（开：蓝底白钮在右；关：灰底白钮在左）—— 供账单详情等页面复用
-enum DrawSwitch {
+enum DrawSwitchV2 {
     static func mark(_ d: Draw, cx: CGFloat, cy: CGFloat, on: Bool) {
         d.round(CGRect(x: cx - 56, y: cy - 30, width: 112, height: 60), radius: 30,
                 on ? Draw.color(0xff1677ff) : Draw.color(0xffd7dbe3))
