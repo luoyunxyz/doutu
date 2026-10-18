@@ -78,10 +78,11 @@ final class HomeShellScreen: Screen {
     /// Android 参考图顶部的状态栏漏出来、标题叠字）。再兜底读包根部的同名 PNG。
     private static func loadImage(_ name: String) -> UIImage? {
         if let image = UIImage(named: name) { return image }
-        for candidate in [name, "home_top_loose"] {
-            if let path = Bundle.main.path(forResource: candidate, ofType: "png") {
-                return UIImage(contentsOfFile: path)
-            }
+        // 只有 home_top 有顶层兜底文件；其它资产缺失时必须返回 nil，
+        // 否则会把整张 home_top 误当成 seg_wei 等小图（“微”页签里出现缩略图）。
+        guard name == "home_top" else { return nil }
+        if let path = Bundle.main.path(forResource: "home_top_loose", ofType: "png") {
+            return UIImage(contentsOfFile: path)
         }
         return nil
     }
