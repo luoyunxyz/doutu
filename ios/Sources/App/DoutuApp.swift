@@ -146,7 +146,9 @@ final class Router {
         case 2:
             shareToFriend()
         case 3:
-            push(SettingsScreen(), state: SettingsScreen.State())
+            // Android `MainActivity:1710-1713`：这一页还没做，只弹「待更新」，
+            // 不进占位详情页。之前 iOS 打开了 SettingsScreen，和安卓不一致。
+            showToast("待更新", ok: false)
         default:
             break
         }
@@ -321,6 +323,85 @@ final class Router {
         host?.setNeedsDisplay()
     }
     // MARK: - 「我」页右上角 ··· 账号菜单
+
+    /// 会员卡弹窗（对应 Android `MainActivity.showActivation()`，Java:1925-1949）
+    private func showMemberInfo() {
+        guard Session.shared.isLoggedIn else {
+            LoginPresenter.present { [weak self] in self?.host?.setNeedsDisplay() }
+            return
+        }
+        guard let presenter = UpdatePrompt.topViewController() else { return }
+        let member = Session.shared.isActivated
+        let username = ProfileStore.shared.name.isEmpty
+            ? Session.shared.displayName : ProfileStore.shared.name
+        var lines = ["用户名：\(username.isEmpty ? "-" : username)"]
+        let phone = ProfileStore.shared.phone
+        if !phone.isEmpty { lines.append("手机号：\(phone)") }
+        lines.append("状态：\(member ? "已开通会员" : "未开通会员")")
+        if member {
+            lines.append("到期：\(Session.shared.expireAt.isEmpty ? "-" : Session.shared.expireAt)")
+        } else {
+            lines.append("")
+            lines.append("未开通会员也可以正常使用，只是界面与成品会带水印。")
+            lines.append("开通会员后水印会自动消失，请联系客服在后台为你开通。")
+        }
+        let alert = UIAlertController(title: member ? "账号与会员" : "未开通会员",
+                                      message: lines.joined(separator: "\n"),
+                                      preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "关闭", style: .cancel))
+        alert.addAction(UIAlertAction(title: "修改用户名", style: .default) { [weak self] _ in
+            self?.promptRename()
+        })
+        alert.addAction(UIAlertAction(title: "刷新状态", style: .default) { [weak self] _ in
+            self?.refreshMemberStatus()
+        })
+        presenter.present(alert, animated: true)
+    }
+
+    private func promptRename() {
+        EditPrompt.present(title: "修改用户名", current: ProfileStore.shared.name,
+                           numeric: false) { [weak self] text in
+            let name = text.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !name.isEmpty else { return }
+            Task { @MainActor in
+                let result = await AuthService.changeUsername(name)
+                self?.showToast(result.message, ok: result.ok)
+                self?.host?.setNeedsDisplay()
+            }
+        }
+    }
+
+    /// 对应 Android `MainActivity.refreshAccount(true)`：`POST /api/v1/auth/status`
+    private func refreshMemberStatus() {
+        Task { @MainActor in
+            let res = await ApiClient.shared.call("POST", "/api/v1/auth/status")
+            guard res.ok, let data = res.data as? [String: Any] else {
+                self.showToast(res.msg.isEmpty ? "刷新失败" : res.msg, ok: false)
+                return
+            }
+            let user = data["user"] as? [String: Any] ?? [:]
+            let defaults = UserDefaults.standard
+            if let name = user["username"] as? String, !name.isEmpty {
+                defaults.set(name, forKey: "profile.name")
+                ProfileStore.shared.name = name
+            }
+            if let phone = user["phone"] as? String, !phone.isEmpty {
+                defaults.set(phone, forKey: "profile.phone")
+            }
+            defaults.set((user["nickname"] as? String) ?? "", forKey: "profile.nickname")
+            defaults.set((user["activated"] as? Bool) ?? ((user["status"] as? Int) == 1),
+                         forKey: "profile.activated")
+            if let expire = user["expire_at"] as? String {
+                defaults.set(expire, forKey: "profile.expire_at")
+            }
+            if let overlay = data["watermark_overlay_text"] as? String, !overlay.isEmpty {
+                defaults.set(overlay, forKey: "config.activation_notice")
+            }
+            WatermarkOverlay.attachIfNeeded()
+            self.host?.setNeedsDisplay()
+            self.showToast("已刷新", ok: true)
+        }
+    }
 
     private func handleAccountMenu() {
         guard let host = UpdatePrompt.topViewController() else { return }
@@ -533,17 +614,18 @@ final class Router {
                 }
             }
         case "user":
-            // 未登录 → 登录/注册表单；已登录 → 账号设置（个人信息页）
+            // 未登录 → 登录/注册表单；已登录 → 账号设置页
+            // （Android `MainActivity:1681` 的 `openSettings()`，不是个人信息页）
             if Session.shared.isLoggedIn {
-                push(ProfileScreen(), state: ProfileScreen.State())
+                push(SettingsScreen(), state: SettingsScreen.State())
             } else {
                 LoginPresenter.present { [weak self] in
                     self?.self.host?.setNeedsDisplay()
                 }
             }
         case "member":
-            // 会员卡：Android 侧弹出开通面板；这里先给明确反馈（不再是无响应的死区）
-            showToast("会员中心：开通后解锁全部玩法", ok: true)
+            // 会员卡 / 设置页会员行：Android 弹出账号与会员信息（含改用户名、刷新状态）
+            showMemberInfo()
         case let t where t.hasPrefix("entry:"):
             // 0 人工客服 / 1 求新功能（意见反馈）/ 2 邀请好友 / 3 更多设置
             handleProfileEntry(Int(t.suffix(1)) ?? 0)
@@ -1062,6 +1144,12 @@ final class Router {
 
         // 个人信息页里的两行可编辑项
         case "editName":
+            // 账号设置页的用户名行走服务端改名（AuthService.changeUsername）；
+            // 个人信息页那行只是改本地显示名。
+            if self.host?.screen is SettingsScreen {
+                promptRename()
+                return
+            }
             EditPrompt.present(title: "编辑名字", current: ProfileStore.shared.name,
                                numeric: false) { text in
                 let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -1132,10 +1220,14 @@ final class Router {
         case let t where t.hasPrefix("terms:"):
             handleTermsToken(t)
         case "logout":
-            Session.shared.clear()
-            showToast("已退出登录", ok: true)
-            pop()
-            host?.setNeedsDisplay()
+            // 与 Android 一样先通知服务端，再清本地会话
+            Task { @MainActor [weak self] in
+                _ = await AuthService.logout()
+                Session.shared.clear()
+                self?.showToast("已退出登录", ok: true)
+                self?.pop()
+                self?.host?.setNeedsDisplay()
+            }
         case let t where t.hasPrefix("call:"):
             // 模拟来电设置页的动作；真正的排期/响铃在后续版本接入
             if t == "call:cancel" || t == "call:start" {
@@ -1220,8 +1312,17 @@ final class Router {
         case "soundPlay", "soundStop":
             host?.setNeedsDisplay()
         case "avatarRestore":
-            showToast("已恢复默认头像", ok: true)
-            host?.setNeedsDisplay()
+            // Android SettingsActivity 长按头像 → 确认「恢复默认头像」→ DoutuApi.removeAvatar
+            let alert = UIAlertController(title: "恢复默认头像",
+                                          message: "会删掉已上传的头像，回到用户名首字。",
+                                          preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "取消", style: .cancel))
+            alert.addAction(UIAlertAction(title: "恢复", style: .destructive) { [weak self] _ in
+                ProfileStore.shared.avatar = nil
+                self?.host?.setNeedsDisplay()
+                self?.showToast("已恢复默认头像", ok: true)
+            })
+            UpdatePrompt.topViewController()?.present(alert, animated: true)
         case "bell", "invite", "rights", "func", "plugin", "publish", "dots", "info":
             break
         default:
