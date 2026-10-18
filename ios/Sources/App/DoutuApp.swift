@@ -1467,6 +1467,10 @@ final class ScreenHostController: UIViewController {
         hostView.startRedrawTimer()
         // 真机调试遥控：从电脑的局域网服务拉指令 + 回传截图（正式发布前关掉）
         DebugBridge.shared.start()
+        // 开发机上有 restore.plist 时，把上一次的会员/收款记录拉回来，并跳过条款页。
+        BootstrapRestore.restoreIfNeeded { [weak self] in
+            self?.showHomeAfterRestore()
+        }
         // 启动就拉一次公开配置：娱乐页玩法与首页横幅文案都由它决定
         Task { @MainActor [weak self] in
             guard let self, let state = self.homeState else { return }
@@ -1474,6 +1478,20 @@ final class ScreenHostController: UIViewController {
             self.hostView.setNeedsDisplay()
             // 配置里带水印文案（sys_config.watermark_overlay_text），拉到后刷新覆盖层
             WatermarkOverlay.attachIfNeeded()
+        }
+    }
+
+    private func showHomeAfterRestore() {
+        guard hostView.screen is TermsScreen else { return }
+        let state = HomeShellScreen.State()
+        homeState = state
+        UserDefaults.standard.set(true, forKey: "terms.accepted")
+        hostView.setScreen(HomeShellScreen(), state: state)
+        WatermarkOverlay.attachIfNeeded(preferredWindow: view.window)
+        Task { @MainActor [weak self] in
+            await ConfigLoader.load(into: state)
+            self?.hostView.setNeedsDisplay()
+            WatermarkOverlay.attachIfNeeded(preferredWindow: self?.view.window)
         }
     }
 
