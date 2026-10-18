@@ -550,9 +550,9 @@ final class Router {
         case 2:   // 余额 ✓
             push(BalanceV2Screen(), state: BalanceV2Screen.State())
         case 3:   // 余额宝 ✓
-            push(YuebaoScreen(), state: YuebaoScreen.State())
+            push(YuebaoV2Screen(), state: YuebaoV2Screen.State())
         case 4:   // 花呗 ✓
-            push(HuabeiScreen(), state: HuabeiScreen.State())
+            push(HuabeiV2Screen(), state: HuabeiV2Screen.State())
         case 5:   // 支付消息 ✓
             push(PayMsgScreen(), state: PayMsgScreen.State())
         case 6:   // 支付成功 ✓（Android `zhiGridIntent` case 6 → PaySuccessActivity）
@@ -756,8 +756,8 @@ final class Router {
             // 宫格与常用卡里的入口（按名字分发到已移植的页面）
             let name = String(t.dropFirst("icon:".count))
             switch name {
-            case "余额宝": push(YuebaoScreen(), state: YuebaoScreen.State())
-            case "花呗": push(HuabeiScreen(), state: HuabeiScreen.State())
+            case "余额宝": push(YuebaoV2Screen(), state: YuebaoV2Screen.State())
+            case "花呗": push(HuabeiV2Screen(), state: HuabeiV2Screen.State())
             default: break
             }
         case "all", "zhimaMore":
@@ -985,10 +985,10 @@ final class Router {
             }
         case "yuebao":
             // 「我的」页资产卡第 3 行 → 余额宝页
-            push(YuebaoScreen(), state: YuebaoScreen.State())
+            push(YuebaoV2Screen(), state: YuebaoV2Screen.State())
         case "huabei":
             // 「我的」页资产卡第 4 行 → 花呗页
-            push(HuabeiScreen(), state: HuabeiScreen.State())
+            push(HuabeiV2Screen(), state: HuabeiV2Screen.State())
 
         // 可编辑的数值 / 文字：弹一个输入框，改完只影响本机展示
         //
