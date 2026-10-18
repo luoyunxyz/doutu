@@ -70,6 +70,7 @@ final class WebHostController: UIViewController, WKScriptMessageHandler {
         // 页面本身也没有返回按钮 —— 不补这个就「进去出不来」。
         // 给两个入口：左上角浮层按钮（看得见） + 左边缘右滑（符合直觉）。
         installBackAffordance()
+        installBackButton()
 
         // 把 `DoutuApp` 桥按 Android 的方法清单补齐（缺一个页面里调用就会抛异常）
         let bridge = WKUserScript(source: Self.bridgeShim, injectionTime: .atDocumentStart,
@@ -139,6 +140,8 @@ final class WebHostController: UIViewController, WKScriptMessageHandler {
         if webView.frame != view.bounds {
             webView.frame = view.bounds
         }
+        let top = view.safeAreaInsets.top
+        backButton?.frame = CGRect(x: 10, y: top + 8, width: 34, height: 34)
     }
 
     /// 与 Android `WeiHomeActivity` 的沉浸式一致：本页不显示状态栏。
@@ -156,6 +159,29 @@ final class WebHostController: UIViewController, WKScriptMessageHandler {
         let edge = UIScreenEdgePanGestureRecognizer(target: self, action: #selector(handleEdgePan(_:)))
         edge.edges = .left
         view.addGestureRecognizer(edge)
+    }
+
+    /// iOS 没有 Android 的系统返回键；只留边缘滑动的话很多用户会卡在微主页里。
+    /// 这里加一个很小的左上角返回按钮，位置在微信标题栏左侧空白处，不挡标题。
+    private var backButton: UIButton?
+
+    private func installBackButton() {
+        let button = UIButton(type: .system)
+        button.setImage(UIImage(systemName: "chevron.left"), for: .normal)
+        button.tintColor = UIColor.black.withAlphaComponent(0.8)
+        button.backgroundColor = UIColor.white.withAlphaComponent(0.86)
+        button.layer.cornerRadius = 17
+        button.layer.shadowColor = UIColor.black.cgColor
+        button.layer.shadowOpacity = 0.12
+        button.layer.shadowRadius = 4
+        button.layer.shadowOffset = CGSize(width: 0, height: 1)
+        button.addTarget(self, action: #selector(closeTapped), for: .touchUpInside)
+        view.addSubview(button)
+        backButton = button
+    }
+
+    @objc private func closeTapped() {
+        dismiss(animated: true)
     }
 
     @objc private func handleEdgePan(_ gesture: UIScreenEdgePanGestureRecognizer) {
