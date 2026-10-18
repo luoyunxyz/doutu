@@ -1,0 +1,83 @@
+# Codemagic 构建配置：不依赖 GitHub Actions，也不要求提交 .xcodeproj。
+#
+# 这个仓库用 XcodeGen 生成 DoutuV2.xcodeproj，Codemagic 的自动扫描找不到
+# .xcodeproj/.xcworkspace，所以要在 Add application 时选「Other / Set up manually」，
+# 或者让 Codemagic 直接读取本文件。
+#
+# 构建产物是未签名 IPA，下载后交给全能签/开发者证书签名安装。
+workflows:
+  ios-v2-unsigned:
+    name: Doutu iOS v2 unsigned
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+    environment:
+      xcode: 15.4
+      vars:
+        XCODE_PROJECT: DoutuV2.xcodeproj
+        XCODE_SCHEME: DoutuV2
+    scripts:
+      - name: Install XcodeGen 2.38.0
+        script: |
+          set -euo pipefail
+          ROOT="$(git rev-parse --show-toplevel)"
+          cd "$ROOT"
+          curl -fsSL -o /tmp/xcodegen.zip \
+            https://github.com/yonaskolb/XcodeGen/releases/download/2.38.0/xcodegen.zip
+          rm -rf /tmp/xcodegen
+          unzip -q -o /tmp/xcodegen.zip -d /tmp/xcodegen
+          BIN="$(find /tmp/xcodegen -type f -name xcodegen | head -1)"
+          test -n "$BIN"
+          sudo cp "$BIN" /usr/local/bin/xcodegen
+          sudo chmod +x /usr/local/bin/xcodegen
+          xcodegen --version
+
+      - name: Generate Xcode project
+        script: |
+          set -euo pipefail
+          ROOT="$(git rev-parse --show-toplevel)"
+          cd "$ROOT/ios_v2"
+          xcodegen generate
+          grep -m1 objectVersion DoutuV2.xcodeproj/project.pbxproj
+
+      - name: Build unsigned
+        script: |
+          set -euo pipefail
+          ROOT="$(git rev-parse --show-toplevel)"
+          cd "$ROOT/ios_v2"
+          set -o pipefail
+          xcodebuild \
+            -project DoutuV2.xcodeproj \
+            -scheme DoutuV2 \
+            -sdk iphoneos \
+            -configuration Release \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build 2>&1 | tee build.log | tail -80
+
+      - name: Package unsigned IPA
+        script: |
+          set -euo pipefail
+          ROOT="$(git rev-parse --show-toplevel)"
+          cd "$ROOT/ios_v2"
+          APP="$(find build/Build/Products/Release-iphoneos -maxdepth 1 -name '*.app' | head -1)"
+          test -n "$APP"
+          rm -rf Payload Doutu-final-unsigned.ipa
+          mkdir -p Payload
+          cp -R "$APP" Payload/
+          PLIST="Payload/$(basename "$APP")/Info.plist"
+          for kv in "UIFileSharingEnabled:bool:true" "LSSupportsOpeningDocumentsInPlace:bool:true"; do
+            key=${kv%%:*}; rest=${kv#*:}; type=${rest%%:*}; val=${rest#*:}
+            /usr/libexec/PlistBuddy -c "Delete :$key" "$PLIST" >/dev/null 2>&1 || true
+            /usr/libexec/PlistBuddy -c "Add :$key $type $val" "$PLIST" || true
+          done
+          bash "$ROOT/_ios/v2-set-icons.sh" "$PLIST"
+          zip -qr Doutu-final-unsigned.ipa Payload
+          ls -lh Doutu-final-unsigned.ipa
+          /usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "$PLIST"
+
+    artifacts:
+      - ios_v2/Doutu-final-unsigned.ipa
+      - ios_v2/build.log
