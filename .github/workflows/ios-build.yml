@@ -106,6 +106,20 @@ jobs:
           rm -rf Payload Doutu-unsigned.ipa
           mkdir -p Payload
           cp -R "$APP" Payload/
+
+          # ⚠️ `INFOPLIST_KEY_UIFileSharingEnabled` 这个构建设置会被 Xcode 忽略（实测 Info.plist
+          #    里没有写进去），导致「文件」App 里看不到 App 的 Documents 目录 —— 而真机排障
+          #    要靠它取 crash.log、传 IPA。所以这里在打包时用 PlistBuddy **直接写**进去。
+          PLIST="Payload/$(basename "$APP")/Info.plist"
+          for kv in "UIFileSharingEnabled:bool:true" "LSSupportsOpeningDocumentsInPlace:bool:true"; do
+            key=${kv%%:*}; rest=${kv#*:}; type=${rest%%:*}; val=${rest#*:}
+            /usr/libexec/PlistBuddy -c "Delete :$key" "$PLIST" >/dev/null 2>&1 || true
+            /usr/libexec/PlistBuddy -c "Add :$key $type $val" "$PLIST" || true
+          done
+          echo "--- 文件共享相关键 ---"
+          /usr/libexec/PlistBuddy -c "Print :UIFileSharingEnabled" "$PLIST" || true
+          /usr/libexec/PlistBuddy -c "Print :LSSupportsOpeningDocumentsInPlace" "$PLIST" || true
+
           zip -qr Doutu-unsigned.ipa Payload
           ls -lh Doutu-unsigned.ipa
           /usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" Payload/*.app/Info.plist
