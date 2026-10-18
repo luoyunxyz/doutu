@@ -297,7 +297,7 @@ final class ReceiptScreen: Screen {
 
     /// 页脚（Java:331-343）
     /// 空态白卡：「今天暂无收款记录」（参考图里确实有这张卡，而不是空页面）
-    private func drawEmptyCard(_ d: Draw, top: CGFloat = firstCardTop) {
+    private func drawEmptyCard(_ d: Draw, top: CGFloat = 489) {
         let box = CGRect(x: 40, y: top, width: 1200, height: emptyCardH)
         d.round(box, radius: 20, .white)
         let cx = box.midX
