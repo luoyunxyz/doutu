@@ -87,7 +87,7 @@ class ScreenState {
 /// 承载页面的 UIView：负责缩放、滚动、触摸与重绘。
 ///
 /// 对应 Android 的 `NativeView`（自定义 View + onDraw + onTouchEvent）。
-final class ScreenHostView: UIView {
+final class ScreenHostView: UIView, UIScrollViewDelegate {
     private(set) var screen: Screen
     var state = ScreenState()
     /// 命中后回调动作令牌，由上层决定跳转/弹窗
@@ -113,9 +113,9 @@ final class ScreenHostView: UIView {
     private var edgeBackFired = false
     /// 扫码页底下那层相机预览
     private var cameraView: CameraPreviewView?
-    /// 《用户须知》专用拖动：宿主 touchesMoved 在部分系统上收不到拖动时兜底
-    private var termsPanStart: CGFloat = 0
-    private weak var termsWindowPan: UIPanGestureRecognizer?
+    /// 《用户须知》专用原生 ScrollView：宿主的 touchesMoved 在这台真机上收不到，
+    /// 用真正的 UIScrollView 接管滚动，页面本身仍然完整保留。
+    private var termsScrollView: UIScrollView?
 
     init(screen: Screen) {
         self.screen = screen
@@ -130,41 +130,61 @@ final class ScreenHostView: UIView {
             name: .doutuThemeChanged, object: nil)
     }
 
-    @objc private func handleTermsPan(_ gesture: UIPanGestureRecognizer) {
-        guard screen is TermsScreen else { return }
-        let canvas = Canvas(size: screen.canvasSize, bounds: bounds)
-        switch gesture.state {
-        case .began:
-            termsPanStart = max(0, min(state.scroll, maxScroll))
-        case .changed:
-            let dy = gesture.translation(in: self).y
-            state.scroll = min(max(0, termsPanStart - dy / canvas.sy), maxScroll)
-            setNeedsDisplay()
-        default:
-            break
-        }
-    }
-
     override func didMoveToWindow() {
         super.didMoveToWindow()
-        updateTermsWindowPan()
+        updateTermsScrollView()
     }
 
-    /// 免责声明页如果挂在 Window 上，再补一个 Window 级拖动；某些系统版本
-    /// ScreenHostView 的 touchesMoved 会被别的窗口层级吃掉，但 Window 手势仍能收到。
-    private func updateTermsWindowPan() {
-        guard screen is TermsScreen, let window else {
-            if let pan = termsWindowPan {
-                pan.view?.removeGestureRecognizer(pan)
-                termsWindowPan = nil
-            }
+    /// 只有在《用户须知》页才挂透明 UIScrollView；它负责真实的拖动，页面绘制仍在
+    /// ScreenHostView 里。内容高度按“一屏 + maxScroll”换算，滚动时同步 state.scroll。
+    private func updateTermsScrollView() {
+        guard screen is TermsScreen, window != nil else {
+            termsScrollView?.removeFromSuperview()
+            termsScrollView = nil
             return
         }
-        guard termsWindowPan == nil else { return }
-        let pan = UIPanGestureRecognizer(target: self, action: #selector(handleTermsPan(_:)))
-        pan.cancelsTouchesInView = false
-        window.addGestureRecognizer(pan)
-        termsWindowPan = pan
+        if let existing = termsScrollView {
+            existing.frame = bounds
+            let canvas = Canvas(size: screen.canvasSize, bounds: bounds)
+            existing.contentSize = CGSize(width: bounds.width,
+                                          height: bounds.height + maxScroll * canvas.sy)
+            return
+        }
+        let scroll = UIScrollView(frame: bounds)
+        scroll.backgroundColor = .clear
+        scroll.isOpaque = false
+        scroll.showsVerticalScrollIndicator = false
+        scroll.showsHorizontalScrollIndicator = false
+        scroll.bounces = false
+        scroll.alwaysBounceVertical = false
+        scroll.delaysContentTouches = false
+        scroll.canCancelContentTouches = false
+        scroll.contentInsetAdjustmentBehavior = .never
+        scroll.delegate = self
+        let canvas = Canvas(size: screen.canvasSize, bounds: bounds)
+        scroll.contentSize = CGSize(width: bounds.width,
+                                    height: bounds.height + maxScroll * canvas.sy)
+        let tap = UITapGestureRecognizer(target: self, action: #selector(handleTermsTap(_:)))
+        scroll.addGestureRecognizer(tap)
+        addSubview(scroll)
+        termsScrollView = scroll
+    }
+
+    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        guard screen is TermsScreen else { return }
+        let canvas = Canvas(size: screen.canvasSize, bounds: bounds)
+        state.scroll = min(max(0, scrollView.contentOffset.y / canvas.sy), maxScroll)
+        setNeedsDisplay()
+    }
+
+    @objc private func handleTermsTap(_ gesture: UITapGestureRecognizer) {
+        guard screen is TermsScreen else { return }
+        let p = gesture.location(in: self)
+        let canvas = Canvas(size: screen.canvasSize, bounds: bounds)
+        var design = canvas.design(p)
+        design.y += state.scroll
+        let token = screen.hitTest(state, x: design.x, y: design.y)
+        onAction?(token, design)
     }
 
     @objc private func themeChanged() {
@@ -183,7 +203,7 @@ final class ScreenHostView: UIView {
         screen = next
         self.state = state
         syncCameraBackground()
-        updateTermsWindowPan()
+        updateTermsScrollView()
         setNeedsDisplay()
         // 状态栏图标明暗跟随当前页
         window?.rootViewController?.setNeedsStatusBarAppearanceUpdate()
