@@ -218,9 +218,11 @@ final class WebHostController: UIViewController, WKScriptMessageHandler, UIGestu
     }
 
     @objc private func headerPlusTapped() {
+        CrashLog.append("WEBPLUS native tap")
         webView.evaluateJavaScript(
-            "window.__fwOpenPlusMenu ? window.__fwOpenPlusMenu() : 0",
-            completionHandler: nil)
+            "window.__fwOpenPlusMenu ? window.__fwOpenPlusMenu() : 0") { result, error in
+                CrashLog.append("WEBPLUS js result=\(String(describing: result)) err=\(error?.localizedDescription ?? "-")")
+            }
     }
 
     @objc private func headerSearchTapped() {
@@ -244,9 +246,11 @@ final class WebHostController: UIViewController, WKScriptMessageHandler, UIGestu
         let point = gesture.location(in: webView)
         // 只接管标题栏 + Windows 登录条这一带；下面聊天区/底栏保持网页自己的点击。
         guard point.y >= 0, point.y <= 140 else { return }
+        CrashLog.append("WEBTOOLS native tap y=\(point.y)")
         webView.evaluateJavaScript(
-            "window.__fwOpenToolsSheet ? window.__fwOpenToolsSheet() : 0",
-            completionHandler: nil)
+            "window.__fwOpenToolsSheet ? window.__fwOpenToolsSheet() : 0") { result, error in
+                CrashLog.append("WEBTOOLS js result=\(String(describing: result)) err=\(error?.localizedDescription ?? "-")")
+            }
     }
 
     func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer,
