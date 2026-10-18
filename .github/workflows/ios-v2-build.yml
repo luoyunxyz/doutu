@@ -1,0 +1,284 @@
+# 在云端构建 iOS 包 —— **仓库根是 `doutu/` 时用这一份**
+#
+# 为什么需要两条路径：iOS 的 IPA 必须用 Xcode 工具链编译，Windows 上做不出来。
+# 这个工作流跑在 GitHub 的 macOS runner 上，产出**未签名 IPA**，下载后交给
+# 「万能签」之类的签名服务重签，就能装到 iPhone 上。
+#
+# 用法（仓库根 = `doutu/`，也就是本文件所在的那一层）：
+#   1. 把整个 `doutu/` 推到 GitHub
+#   2. Actions → build-ios-ipa → Run workflow
+#   3. 跑完在 Artifacts 里下载 `Doutu-unsigned-ipa`
+#
+# 如果你的仓库根就是 `ios/` 目录本身，请用 `ios/.github/workflows/ios-build.yml` 那一份
+# （它没有 `working-directory`，路径也不带 `ios/` 前缀）。
+#
+# 自动化核对：`node _ios/verify-ci.mjs` 会检查这两份文件的路径与目录是否自洽。
+
+name: build-ios-v2
+
+on:
+  push:
+    paths:
+      - "ios_v2/**"
+      - ".github/workflows/ios-build.yml"
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: 编译并打包未签名 IPA
+    runs-on: macos-14
+    timeout-minutes: 30
+    # 失败时要把日志提交回仓库，所以需要写权限
+    permissions:
+      contents: write
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+        with:
+          # 失败日志要 commit + push 回来，必须有完整历史与持久凭据
+          persist-credentials: true
+
+      # 先把环境信息记下来（失败时这些最有用）
+      - name: 环境信息
+        run: |
+          set -o pipefail
+          mkdir -p ci-logs
+          {
+            echo "=== sw_vers ==="; sw_vers
+            echo "=== xcodebuild ==="; xcodebuild -version
+            echo "=== swift ==="; swift --version
+            echo "=== 已装的 xcodegen ==="; which xcodegen || echo "(未安装)"
+          } 2>&1 | tee ci-logs/env.log
+
+      # ⚠️ 必须钉版本：XcodeGen 2.46 会写出 Xcode 16 的新工程格式（objectVersion 77），
+      # 而 macos-14 上是 Xcode 15.4，读不了 —— 报
+      #   "The project 'Doutu' cannot be opened because it is in a future
+      #    Xcode project file format (77)"
+      # 2.38.0 写的是 objectVersion 56，Xcode 15 完全兼容，且本项目用到的 yml 特性它都支持。
+      - name: 安装 XcodeGen（钉 2.38.0，理由见上）
+        run: |
+          set -o pipefail
+          curl -fsSL -o /tmp/xcodegen.zip \
+            https://github.com/yonaskolb/XcodeGen/releases/download/2.38.0/xcodegen.zip 2>&1 | tee -a ci-logs/env.log
+          unzip -q -o /tmp/xcodegen.zip -d /tmp/xcodegen 2>&1 | tee -a ci-logs/env.log
+          # 不写死目录层级：zip 里可能是 xcodegen/bin/xcodegen，也可能直接是 bin/xcodegen
+          BIN=$(find /tmp/xcodegen -type f -name xcodegen | head -1)
+          echo "找到 xcodegen 二进制：$BIN" | tee -a ci-logs/env.log
+          test -n "$BIN" || { echo "解压后没找到 xcodegen 可执行文件"; exit 1; }
+          sudo cp "$BIN" /usr/local/bin/xcodegen
+          sudo chmod +x /usr/local/bin/xcodegen
+          xcodegen --version 2>&1 | tee -a ci-logs/env.log
+
+      - name: 网页 CSS 去掉 iOS 安全区（对齐 Android 的 env()=0）
+        run: |
+          python3 _ios/strip-ios-safe-area-v2.py
+          git diff --stat -- ios_v2/Resources/web || true
+
+      - name: 生成 Xcode 工程
+        working-directory: ios_v2
+        run: |
+          set -o pipefail
+          xcodegen --version 2>&1 | tee xcodegen.log
+          xcodegen generate 2>&1 | tee -a xcodegen.log
+          ls -la
+          # 生成的工程格式必须能被本机 Xcode 读（format 77 = Xcode 16，15.4 读不了）
+          echo "--- 检查 objectVersion ---" | tee -a xcodegen.log
+          grep -m1 objectVersion DoutuV2.xcodeproj/project.pbxproj | tee -a xcodegen.log
+          xcodebuild -list -project DoutuV2.xcodeproj 2>&1 | tee -a xcodegen.log
+
+      - name: 编译（不签名）
+        working-directory: ios_v2
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project DoutuV2.xcodeproj \
+            -scheme DoutuV2 \
+            -sdk iphoneos \
+            -configuration Release \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build 2>&1 | tee build.log | tail -60
+
+      - name: 打包成 IPA（Payload 结构）
+        working-directory: ios_v2
+        run: |
+          APP=$(find build/Build/Products/Release-iphoneos -maxdepth 1 -name "*.app" | head -1)
+          echo "找到 App：$APP"
+          test -n "$APP" || { echo "没找到 .app，编译可能失败"; exit 1; }
+
+          # 小微主页用 127.0.0.1 回环 HTTP 提供真正的 origin（WKWebView 自定义 scheme
+          # 下 ES module 会被 CORS 拒）。ATS 默认拦明文 HTTP，而
+          # `INFOPLIST_KEY_NSAppTransportSecurity_*` 构建设置不会生成嵌套字典
+          # （产物里 ATS 整段缺失，真机报「requires the use of a secure connection」）。
+          # 所以打包时用 PlistBuddy 显式写入 localhost 例外。
+          PLIST_APP="$APP/Info.plist"
+          /usr/libexec/PlistBuddy -c "Delete :NSAppTransportSecurity" "$PLIST_APP" >/dev/null 2>&1 || true
+          /usr/libexec/PlistBuddy -c "Add :NSAppTransportSecurity dict" "$PLIST_APP"
+          /usr/libexec/PlistBuddy -c "Add :NSAppTransportSecurity:NSAllowsLocalNetworking bool true" "$PLIST_APP"
+          /usr/libexec/PlistBuddy -c "Add :NSAppTransportSecurity:NSExceptionDomains dict" "$PLIST_APP"
+          /usr/libexec/PlistBuddy -c "Add :NSAppTransportSecurity:NSExceptionDomains:localhost dict" "$PLIST_APP"
+          /usr/libexec/PlistBuddy -c "Add :NSAppTransportSecurity:NSExceptionDomains:localhost:NSExceptionAllowsInsecureHTTPLoads bool true" "$PLIST_APP"
+          /usr/libexec/PlistBuddy -c "Add :NSAppTransportSecurity:NSExceptionDomains:localhost:NSIncludesSubdomains bool true" "$PLIST_APP"
+          echo "--- ATS 回环例外 ---"
+          /usr/libexec/PlistBuddy -c "Print :NSAppTransportSecurity" "$PLIST_APP" || true
+
+          rm -rf Payload DoutuV2-unsigned.ipa
+          mkdir -p Payload
+          cp -R "$APP" Payload/
+
+          # ⚠️ `INFOPLIST_KEY_UIFileSharingEnabled` 这个构建设置会被 Xcode 忽略（实测 Info.plist
+          #    里没有写进去），导致「文件」App 里看不到 App 的 Documents 目录 —— 而真机排障
+          #    要靠它取 crash.log、传 IPA。所以这里在打包时用 PlistBuddy **直接写**进去。
+          PLIST="Payload/$(basename "$APP")/Info.plist"
+          for kv in "UIFileSharingEnabled:bool:true" "LSSupportsOpeningDocumentsInPlace:bool:true"; do
+            key=${kv%%:*}; rest=${kv#*:}; type=${rest%%:*}; val=${rest#*:}
+            /usr/libexec/PlistBuddy -c "Delete :$key" "$PLIST" >/dev/null 2>&1 || true
+            /usr/libexec/PlistBuddy -c "Add :$key $type $val" "$PLIST" || true
+          done
+          echo "--- 文件共享相关键 ---"
+          /usr/libexec/PlistBuddy -c "Print :UIFileSharingEnabled" "$PLIST" || true
+          /usr/libexec/PlistBuddy -c "Print :LSSupportsOpeningDocumentsInPlace" "$PLIST" || true
+
+          zip -qr DoutuV2-unsigned.ipa Payload
+          ls -lh DoutuV2-unsigned.ipa
+          /usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" Payload/*.app/Info.plist
+          /usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" Payload/*.app/Info.plist
+          /usr/libexec/PlistBuddy -c "Print :MinimumOSVersion" Payload/*.app/Info.plist
+
+      # 再出一份 **ad-hoc 签名**（codesign -s -）的包：
+      #   * TrollStore 用它最稳（它会把签名换成自己的 fake 根证书，装完**永久有效**、免 Apple ID）
+      #   * 手机端签名工具（轻松签 / ESign / Feather）也更认「本来就有签名的 Mach-O」
+      # 不需要任何开发者证书，ad-hoc 就是「无证书自签」，只是让 Mach-O 里有一份签名结构。
+      - name: 另出 ad-hoc 签名包（给 TrollStore / 手机端签名工具）
+        working-directory: ios_v2
+        run: |
+          set -o pipefail
+          APP=$(find build/Build/Products/Release-iphoneos -maxdepth 1 -name "*.app" | head -1)
+          test -n "$APP" || { echo "没找到 .app"; exit 1; }
+          rm -rf stage DoutuV2-adhoc.ipa
+          # ⚠️ 压缩包里的顶层目录**必须**叫 Payload（IPA 规范），否则 installd / TrollStore
+          #    会认不出来、装不上。第一版写成 PayloadAdhoc，出来的包是坏的（已踩过）。
+          mkdir -p stage/Payload
+          cp -R "$APP" stage/Payload/
+          ( cd stage && codesign --force --sign - --timestamp=none Payload/*.app ) 2>&1 | tail -5
+          echo "--- codesign 校验 ---"
+          ( cd stage && codesign -dv Payload/*.app ) 2>&1 | head -8 || true
+          ( cd stage && codesign --verify --deep --strict Payload/*.app ) 2>&1 | tail -5 || echo "(verify 有警告，TrollStore 仍可用)"
+          ( cd stage && zip -qr ../DoutuV2-adhoc.ipa Payload )
+          echo "--- adhoc 包顶层结构（必须是 Payload/）---"
+          unzip -l DoutuV2-adhoc.ipa | head -6
+          ls -lh DoutuV2-adhoc.ipa
+
+      - name: 上传 ad-hoc 包
+        uses: actions/upload-artifact@v4
+        with:
+          name: Doutu-adhoc-ipa
+          path: ios_v2/DoutuV2-adhoc.ipa
+          if-no-files-found: error
+
+      # 「装到 iPhone 上」这件事真正依赖的键，这一屏就能看出来：
+      #   CFBundleIcons        —— 有没有 App 图标（没有就是白图标）
+      #   UIApplicationSceneManifest —— SwiftUI 生命周期必需（没有可能黑屏）
+      #   MinimumOSVersion / CFBundleIdentifier / CFBundleDisplayName
+      # 结果会随成功状态一起提交到 ci-logs/info-plist.log，本地 git fetch 即可核对。
+      - name: 核对产物 Info.plist（装机就绪自检）
+        working-directory: ios_v2
+        run: |
+          set -o pipefail
+          PLIST=$(find Payload -maxdepth 2 -name Info.plist | head -1)
+          {
+            echo "=== Info.plist: $PLIST ==="
+            /usr/libexec/PlistBuddy -c "Print" "$PLIST"
+            echo "=== IPA 目录（前 30 行）==="
+            unzip -l DoutuV2-unsigned.ipa | head -30
+            echo "=== 图标文件 ==="
+            ls -la Payload/*.app/AppIcon*.png Payload/*.app/Assets.car 2>/dev/null || echo "(没有 AppIcon*.png / Assets.car)"
+            echo "=== 字体 ==="
+            ls -la Payload/*.app/*.ttf 2>/dev/null || echo "(没有 ttf)"
+            echo "=== adhoc 包顶层结构（必须 Payload/）==="
+            unzip -l DoutuV2-adhoc.ipa 2>/dev/null | head -6 || true
+            echo "=== 两个 IPA ==="
+            ls -lh DoutuV2-unsigned.ipa DoutuV2-adhoc.ipa 2>/dev/null || true
+          } 2>&1 | tee info-plist.log
+
+      - name: 上传 IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: DoutuV2-unsigned-ipa
+          path: ios_v2/DoutuV2-unsigned.ipa
+          if-no-files-found: error
+
+      # 把打好的包推到 `artifacts` 分支（每次 force push，只保留最新一份）。
+      # 目的：**不需要登录 GitHub 网页**也能拿到包 —— 本机 `git fetch origin artifacts`
+      # 就有最新的 DoutuV2-unsigned.ipa / DoutuV2-adhoc.ipa，可以直接用局域网分发给手机。
+      - name: 把 IPA 推到 artifacts 分支
+        if: success()
+        working-directory: ios_v2
+        run: |
+          set -o pipefail
+          rm -rf /tmp/art && mkdir -p /tmp/art
+          cp DoutuV2-unsigned.ipa /tmp/art/ 2>/dev/null || true
+          cp DoutuV2-adhoc.ipa /tmp/art/ 2>/dev/null || true
+          cp info-plist.log /tmp/art/ 2>/dev/null || true
+          cd /tmp/art
+          git init -q
+          git config user.name  "ci-log-bot"
+          git config user.email "ci-log-bot@users.noreply.github.com"
+          git add -A
+          git commit -q -m "artifacts ${GITHUB_SHA}" || echo "没有变更"
+          git push -q --force "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" HEAD:artifacts \
+            && echo "已推送到 artifacts 分支" || echo "推送 artifacts 失败"
+
+      # 成功时也写一个状态标记：开发侧 `git fetch` 后读 ci-logs/status.txt 就能确认成功，
+      # 不需要登录 Actions 页面看结论（仓库私有，无 token 时 API 读不到）。
+      - name: 成功时写入状态标记
+        if: success()
+        run: |
+          mkdir -p ci-logs
+          {
+            echo "status: success"
+            echo "run: $GITHUB_RUN_ID  commit: $GITHUB_SHA  at: $(date -u +%FT%TZ)"
+            ls -lh ios_v2/DoutuV2-unsigned.ipa
+          } > ci-logs/status.txt
+          cp -f ios_v2/info-plist.log ci-logs/info-plist.log 2>/dev/null || true
+          git config user.name  "ci-log-bot"
+          git config user.email "ci-log-bot@users.noreply.github.com"
+          git add -f ci-logs/status.txt ci-logs/info-plist.log || true
+          git commit -m "ci: 构建成功（run $GITHUB_RUN_ID）" || echo "没有可提交的状态"
+          git push origin HEAD:${GITHUB_REF_NAME} || echo "推送状态失败"
+
+      - name: 失败时保留日志
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          # 不管挂在哪一步，两边的 .log 都上传（xcodegen.log 覆盖工程生成阶段，
+          # build.log 覆盖编译阶段）—— 否则早期失败时拿不到任何日志。
+          path: |
+            ios_v2/build.log
+            ios_v2/xcodegen.log
+          if-no-files-found: ignore
+
+      # 关键一步：失败时把日志**提交回仓库**。这样开发侧可以直接 `git pull` 读日志，
+      # 不需要人去 Actions 页面下载 artifact 再粘贴 —— 来回一轮就是几分钟。
+      # 注意：用 GITHUB_TOKEN 推送不会再次触发工作流，所以不会形成循环。
+      - name: 失败时把日志提交回仓库
+        if: failure()
+        run: |
+          set -o pipefail
+          mkdir -p ci-logs
+          cp -f ios_v2/build.log ci-logs/build.log 2>/dev/null || true
+          cp -f ios_v2/xcodegen.log ci-logs/xcodegen.log 2>/dev/null || true
+          cp -f ci-logs/env.log ci-logs/env.log 2>/dev/null || true
+          echo "run: $GITHUB_RUN_ID  commit: $GITHUB_SHA  at: $(date -u +%FT%TZ)" > ci-logs/meta.txt
+          echo "status: failure" > ci-logs/status.txt
+          echo "run: $GITHUB_RUN_ID  commit: $GITHUB_SHA  at: $(date -u +%FT%TZ)" >> ci-logs/status.txt
+          ls -la ci-logs || true
+          git config user.name  "ci-log-bot"
+          git config user.email "ci-log-bot@users.noreply.github.com"
+          git add -f ci-logs || true
+          git commit -m "ci: 构建日志（run $GITHUB_RUN_ID）" || echo "没有可提交的日志"
+          git push origin HEAD:${GITHUB_REF_NAME} || echo "推送日志失败"

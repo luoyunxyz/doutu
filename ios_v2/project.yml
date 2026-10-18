@@ -1,0 +1,67 @@
+# Doutu v2 — clean refactor target (runs beside the legacy bundle for verification)
+name: DoutuV2
+options:
+  bundleIdPrefix: com.luoyun
+  deploymentTarget:
+    iOS: "14.0"
+  createIntermediateGroups: true
+  groupSortPosition: top
+
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    MARKETING_VERSION: "2.0.0"
+    CURRENT_PROJECT_VERSION: "20000"
+    TARGETED_DEVICE_FAMILY: "1"
+    ENABLE_USER_SCRIPT_SANDBOXING: NO
+    SWIFT_STRICT_CONCURRENCY: minimal
+
+targets:
+  DoutuV2:
+    type: application
+    platform: iOS
+    sources:
+      - path: Sources
+      - path: Resources
+        excludes:
+          - "web"
+      - path: Resources/web
+        type: folder
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.luoyun.doutu.v2
+        PRODUCT_NAME: DoutuV2
+        GENERATE_INFOPLIST_FILE: YES
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES: "AppIconAlipay AppIconAlipayHK AppIconWechat"
+        ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS: YES
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+        INFOPLIST_KEY_UIFileSharingEnabled: YES
+        INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace: YES
+        LD_RUNPATH_SEARCH_PATHS: "@executable_path/Frameworks /usr/lib/swift"
+        ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES: YES
+        INFOPLIST_KEY_UIStatusBarHidden: YES
+        INFOPLIST_KEY_UIRequiresFullScreen: YES
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
+        INFOPLIST_KEY_CFBundleDisplayName: 斗图重构版
+        CODE_SIGN_STYLE: Manual
+        CODE_SIGNING_ALLOWED: NO
+        CODE_SIGNING_REQUIRED: NO
+        INFOPLIST_KEY_NSAppTransportSecurity_NSAllowsArbitraryLoads: NO
+        INFOPLIST_KEY_NSAppTransportSecurity_NSAllowsLocalNetworking: YES
+        INFOPLIST_KEY_NSLocalNetworkUsageDescription: 用于连接开发机的调试服务
+        INFOPLIST_KEY_NSPhotoLibraryUsageDescription: 需要访问相册以便更换头像/二维码
+        INFOPLIST_KEY_NSCameraUsageDescription: 需要相机以便扫一扫/拍摄头像
+        INFOPLIST_KEY_NSMicrophoneUsageDescription: 扫码只用画面，不录音
+    dependencies: []
+
+schemes:
+  DoutuV2:
+    build:
+      targets:
+        DoutuV2: all
+    run:
+      config: Debug
+    archive:
+      config: Release
