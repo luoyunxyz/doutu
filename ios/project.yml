@@ -79,8 +79,8 @@ targets:
         LD_RUNPATH_SEARCH_PATHS: "@executable_path/Frameworks /usr/lib/swift"
         # 把 Swift 标准库一起打进包（iOS 14 上少一层系统依赖，出包更稳）
         ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES: YES
-        # 竖屏；显示系统状态栏（Android 顶部时间/电量可见，iOS 不能隐藏）
-        INFOPLIST_KEY_UIStatusBarHidden: NO
+        # 竖屏；用户明确不要顶部系统状态栏
+        INFOPLIST_KEY_UIStatusBarHidden: YES
         INFOPLIST_KEY_UIRequiresFullScreen: YES
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait

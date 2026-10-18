@@ -1489,7 +1489,7 @@ final class ScreenHostController: UIViewController {
         hostView.stopRedrawTimer()
     }
 
-    override var prefersStatusBarHidden: Bool { false }
+    override var prefersStatusBarHidden: Bool { true }
     override var preferredStatusBarStyle: UIStatusBarStyle {
         hostView.screen.lightStatusBar ? .lightContent : .default
     }
@@ -1517,7 +1517,7 @@ struct DoutuApp: App {
                                 ? HomeShellScreen()
                                 : TermsScreen())
                 .ignoresSafeArea()
-                .statusBarHidden(false)
+                .statusBarHidden(true)
                 .onAppear { UpdatePrompt.shared.maybeCheck() }
                 .onChange(of: scenePhase) { phase in
                     if phase == .active { UpdatePrompt.shared.maybeCheck() }
