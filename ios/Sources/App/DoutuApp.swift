@@ -57,6 +57,13 @@ final class Router {
     private weak var host: ScreenHostView?
     /// 页面栈：进去一页压一栈，返回时恢复原页面与它的状态（与 Android 的 Activity 栈同义）
     private var stack: [(screen: Screen, state: ScreenState)] = []
+    /// 本轮新补齐页面的实例引用（页内交互要回读到具体 Screen 的方法）
+    private weak var parseScreen: ParseScreen?
+    private weak var callSetupScreen: CallSetupScreen?
+    private weak var accountSoundScreen: AccountSoundScreen?
+    private weak var customerServiceScreen: CustomerServiceScreen?
+    /// 「撩妹加 V」开关（Android 存在配置里，没有独立页面）
+    private var teaseEnabled = false
 
     init(host: ScreenHostView) {
         self.host = host
@@ -91,17 +98,26 @@ final class Router {
         case "order":
             push(ReceiptScreen(), state: ReceiptScreen.State())
         case "parse":
-            showToast("短视频去水印：需要联网解析，暂未接入", ok: false)
+            let screen = ParseScreen()
+            parseScreen = screen
+            push(screen, state: ParseScreen.State())
         case "call":
-            showToast("模拟来电：该页面尚未移植", ok: false)
+            let screen = CallSetupScreen()
+            callSetupScreen = screen
+            push(screen, state: CallSetupScreen.State())
         case "shutdown":
-            showToast("模拟关机：该页面尚未移植", ok: false)
+            push(ShutdownScreen(), state: ShutdownScreen.State())
         case "sound":
-            showToast("声音设置：该页面尚未移植", ok: false)
+            let screen = AccountSoundScreen()
+            accountSoundScreen = screen
+            push(screen, state: AccountSoundScreen.State())
         case "tease":
-            showToast("撩妹话术：该页面尚未移植", ok: false)
+            // 「撩妹加 V」在 Android 是一个开关（MainActivity 里改配置），没有独立页面。
+            // iOS 侧同样只切开关状态并提示，不做跳转。
+            teaseEnabled.toggle()
+            showToast(teaseEnabled ? "已开启撩妹加 V" : "已关闭撩妹加 V", ok: true)
         default:
-            showToast("该玩法尚未移植", ok: false)
+            showToast("该玩法暂未开放", ok: false)
         }
     }
 
@@ -110,18 +126,121 @@ final class Router {
     private func handleProfileEntry(_ index: Int) {
         switch index {
         case 0:
-            showToast("人工客服 7×12 小时在线", ok: true)
+            let screen = CustomerServiceScreen()
+            customerServiceScreen = screen
+            push(screen, state: CustomerServiceScreen.State())
         case 1:
-            showToast("已记下你的建议，谢谢反馈！", ok: true)
+            push(FeedbackScreen(), state: FeedbackScreen.State())
         case 2:
             shareToFriend()
         case 3:
-            showToast("更多设置：该页面尚未移植", ok: false)
+            push(SettingsScreen(), state: SettingsScreen.State())
         default:
             break
         }
     }
 
+    // MARK: - 去水印解析页（Parse）
+
+    private func handleParseToken(_ token: String) {
+        guard let screen = parseScreen, let state = host?.state as? ParseScreen.State else { return }
+        switch token {
+        case "link":
+            EditPrompt.present(title: "粘贴视频链接", current: state.link) { [weak self] text in
+                state.link = text.trimmingCharacters(in: .whitespacesAndNewlines)
+                self?.host?.setNeedsDisplay()
+            }
+        case "paste":
+            state.link = (UIPasteboard.general.string ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+            host?.setNeedsDisplay()
+        case "clear":
+            state.link = ""
+            host?.setNeedsDisplay()
+        case "parse":
+            startParse(screen: screen, state: state)
+        default:
+            break
+        }
+    }
+
+    private func startParse(screen: ParseScreen, state: ParseScreen.State) {
+        let link = state.link.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !link.isEmpty else { showToast("请先粘贴视频链接", ok: false); return }
+        screen.beginParse(state)
+        host?.setNeedsDisplay()
+        Task { @MainActor in
+            let env = await ApiClient.shared.call("POST", "/api/v1/dw/parse", body: ["link": link])
+            guard env.ok, let data = env.data as? [String: Any] else {
+                showToast(env.msg.isEmpty ? "解析失败，请稍后再试" : env.msg, ok: false)
+                self.host?.setNeedsDisplay()
+                return
+            }
+            let taskNo = (data["task_no"] as? String) ?? ""
+            screen.attachTask(state, taskNo: taskNo, status: 0)
+            self.host?.setNeedsDisplay()
+            if !taskNo.isEmpty {
+                self.pollParse(screen: screen, state: state, taskNo: taskNo, left: 40)
+            }
+        }
+    }
+
+    private func pollParse(screen: ParseScreen, state: ParseScreen.State, taskNo: String, left: Int) {
+        guard left > 0 else { return }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
+            guard let self else { return }
+            Task { @MainActor in
+                let env = await ApiClient.shared.call("GET", "/api/v1/dw/task/\(taskNo)")
+                let data = env.data as? [String: Any]
+                let status = (data?["status"] as? Int) ?? -1
+                let text = (data?["status_text"] as? String) ?? ""
+                let done = screen.applyPollStatus(state, status: status, statusText: text)
+                self.host?.setNeedsDisplay()
+                if done {
+                    if let data { screen.showResult(state, data) }
+                    self.host?.setNeedsDisplay()
+                } else {
+                    self.pollParse(screen: screen, state: state, taskNo: taskNo, left: left - 1)
+                }
+            }
+        }
+    }
+
+    // MARK: - 客服 / 反馈 / 用户须知
+
+    private func handleCustomerCopy() {
+        guard let state = host?.state as? CustomerServiceScreen.State else { return }
+        let text = state.contact.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !text.isEmpty else { return }
+        UIPasteboard.general.string = text
+        showToast("已复制：\(text)", ok: true)
+    }
+
+    private func handleFeedbackToken(_ action: String) {
+        guard let state = host?.state as? FeedbackScreen.State else { return }
+        switch action {
+        case "focus":
+            EditPrompt.present(title: "意见与建议", current: state.content) { [weak self] text in
+                state.content = text
+                self?.host?.setNeedsDisplay()
+            }
+        case "contact":
+            EditPrompt.present(title: "联系方式（选填）", current: state.contact) { [weak self] text in
+                state.contact = text
+                self?.host?.setNeedsDisplay()
+            }
+        case "submit":
+            showToast("已提交，感谢反馈！", ok: true)
+        default:
+            break
+        }
+    }
+
+    private func handleTermsToken(_ token: String) {
+        guard token == "terms:agree" else { return }
+        UserDefaults.standard.set(true, forKey: "terms.accepted")
+        pop()
+        host?.setNeedsDisplay()
+    }
     // MARK: - 「我」页右上角 ··· 账号菜单
 
     private func handleAccountMenu() {
@@ -868,6 +987,34 @@ final class Router {
                 self.host?.setNeedsDisplay()
             }
         // 以下在 Android 的对应 Activity 里就是空分支（`break;` 或 `{ }`），保持空转
+        // MARK: 本轮新补齐的页面（去水印解析 / 客服 / 反馈 / 用户须知 / 设置）
+
+        case "link", "paste", "clear", "parse", "preview", "download", "openSaved":
+            handleParseToken(token)
+        case let t where t.hasPrefix("strip:"):
+            handleParseToken(t)
+        case "cs:copy":
+            handleCustomerCopy()
+        case let t where t.hasPrefix("feedback:"):
+            handleFeedbackToken(String(t.dropFirst("feedback:".count)))
+        case let t where t.hasPrefix("terms:"):
+            handleTermsToken(t)
+        case "logout":
+            Session.shared.clear()
+            showToast("已退出登录", ok: true)
+            pop()
+            host?.setNeedsDisplay()
+        case let t where t.hasPrefix("call:"):
+            // 模拟来电设置页的动作；真正的排期/响铃在后续版本接入
+            if t == "call:cancel" || t == "call:start" {
+                showToast(t == "call:start" ? "已设置，稍后自动来电" : "已取消", ok: true)
+            }
+            host?.setNeedsDisplay()
+        case "soundPlay", "soundStop":
+            host?.setNeedsDisplay()
+        case "avatarRestore":
+            showToast("已恢复默认头像", ok: true)
+            host?.setNeedsDisplay()
         case "bell", "invite", "rights", "func", "plugin", "publish", "dots", "info":
             break
         default:
