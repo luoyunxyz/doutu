@@ -192,7 +192,9 @@ final class ReceiptScreen: Screen {
 
         drawHeader(d)
         drawToday(d)
-        if groups.isEmpty { drawEmptyCard(d) }
+        // Android 2026-10-11 已删掉「今天暂无收款记录」空卡（Java:84-86 的注释）：
+        // 没有记录时页面就只有头栏/今日/页脚，整页仍可点开批量添加。
+        // iOS 这里原来还画了一张空卡，真机首屏与 Android 对不上。
         for group in groups {
             if !group.today { drawDayHeading(d, group) }
             drawGroupCard(d, group)
