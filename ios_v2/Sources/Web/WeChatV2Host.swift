@@ -510,6 +510,10 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler, UIGestureRec
             showWeChatPlusMenu()
         case "wechatSearch":
             showWeChatSearch()
+        case "headerTargets":
+            let visible = args.first as? Bool ?? true
+            headerPlusButton?.isHidden = !visible
+            headerSearchButton?.isHidden = !visible
         default:
             // 其余方法（相册保存、来电音频、键盘、系统栏…）先按成功/空值应答，
             // 让页面逻辑不至于卡住；逐个补齐记在 README 的待办里。
@@ -732,8 +736,29 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler, UIGestureRec
         setPayPageSystemBars: function(visible){ post('setPayPageSystemBars', [!!visible]); },
         setMessageMenuOpen: function(open){ post('setMessageMenuOpen', [!!open]); },
         showSoftKeyboard: function(){ post('showSoftKeyboard', []); },
-        returnToAppHome: function(){ post('returnToAppHome', []); }
+        returnToAppHome: function(){ post('returnToAppHome', []); },
+        setHeaderTargets: function(v){ post('headerTargets', [!!v]); }
       };
+
+      // 原生在上层盖了透明的加号/搜索按钮，原本会挡住网页子页右上角的
+      // “批量添加”等按钮。这里轮询当前是否处于子页/浮层，实时通知原生隐藏。
+      var lastHidden = null;
+      function syncHeaderTargets() {
+        var overlay = document.querySelector('.fw-overlay')
+          || document.querySelector('.fw-add-friend')
+          || document.querySelector('.fw-group-chat')
+          || document.querySelector('.fw-scanpay')
+          || document.querySelector('.fw-receive-pay')
+          || document.querySelector('.fw-local-conversation')
+          || document.querySelector('.fw-chat-pay');
+        var hidden = !!overlay;
+        if (hidden !== lastHidden) {
+          lastHidden = hidden;
+          post('headerTargets', [!hidden]);
+        }
+      }
+      setInterval(syncHeaderTargets, 350);
+      syncHeaderTargets();
     })();
     """
 }
