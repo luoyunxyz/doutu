@@ -371,6 +371,13 @@ final class Router {
         }
     }
 
+    /// 启动/回前台补一次会员状态（Android `refreshAccount(false)` 的等价时机）。
+    func refreshMemberStatusIfNeeded() {
+        guard Session.shared.isLoggedIn else { return }
+        let saved = UserDefaults.standard.string(forKey: "profile.status_text") ?? ""
+        if saved.isEmpty { refreshMemberStatus() }
+    }
+
     /// 对应 Android `MainActivity.refreshAccount(true)`：`POST /api/v1/auth/status`
     private func refreshMemberStatus() {
         Task { @MainActor in
@@ -1466,6 +1473,7 @@ final class ScreenHostController: UIViewController {
         super.viewDidAppear(animated)
         // 每次页面可见都按当前会员状态重挂水印（与 Android 的 attachIfNeeded 时机一致）
         WatermarkOverlay.attachIfNeeded(preferredWindow: view.window)
+        Router.shared?.refreshMemberStatusIfNeeded()
         // 真机免点按验证：Documents/demo.txt 里放一个命令令牌，启动即跳到那一页
         DebugBridge.shared.runLaunchTokenIfNeeded()
     }
