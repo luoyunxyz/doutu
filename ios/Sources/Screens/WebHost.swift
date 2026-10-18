@@ -155,6 +155,9 @@ final class WebHostController: UIViewController, WKScriptMessageHandler, UIGestu
         let right = view.bounds.width
         headerPlusButton?.frame = CGRect(x: right - 42, y: 8, width: 40, height: 50)
         headerSearchButton?.frame = CGRect(x: right - 68, y: 8, width: 26, height: 50)
+        if let b = headerPlusButton {
+            CrashLog.append("WEBHDR frame \(b.frame) bounds=\(view.bounds) hidden=\(b.isHidden) alpha=\(b.alpha)")
+        }
     }
 
     /// 与 Android `WeiHomeActivity` 的沉浸式一致：本页不显示状态栏。
@@ -202,6 +205,7 @@ final class WebHostController: UIViewController, WKScriptMessageHandler, UIGestu
     /// 页面顶栏的加号/放大镜在 React 侧没有点击处理；再叠两个透明命中区，
     /// 位置按真机 1170×2532 截图上量出来的 33pt 头部中心放。视觉仍用网页图标（已放大）。
     private func installHeaderHitTargets() {
+        CrashLog.append("WEBHDR install")
         let plus = UIButton(type: .custom)
         plus.backgroundColor = .clear
         plus.accessibilityLabel = "微信加号"
@@ -244,6 +248,7 @@ final class WebHostController: UIViewController, WKScriptMessageHandler, UIGestu
 
     @objc private func blankTapped(_ gesture: UITapGestureRecognizer) {
         let point = gesture.location(in: webView)
+        CrashLog.append("WEBTAP blank y=\(point.y)")
         // 只接管标题栏 + Windows 登录条这一带；下面聊天区/底栏保持网页自己的点击。
         guard point.y >= 0, point.y <= 140 else { return }
         CrashLog.append("WEBTOOLS native tap y=\(point.y)")
