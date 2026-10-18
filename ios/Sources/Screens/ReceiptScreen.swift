@@ -56,6 +56,8 @@ final class ReceiptScreen: Screen {
     private let pillChevronX: CGFloat = 1241
 
     private let firstCardTop: CGFloat = 489
+    /// 空态白卡高度（按参考图 receipt-list-reference 量：489..1014）
+    private let emptyCardH: CGFloat = 525
 
     private let labelBase: CGFloat = 113.9
     private let labelSize: CGFloat = 50
@@ -163,7 +165,8 @@ final class ReceiptScreen: Screen {
             groups[i].cardBottom = groups[i].cardTop + cardHeight(groups[i].items.count)
             y = groups[i].cardBottom
         }
-        contentBottom = groups.isEmpty ? firstCardTop : y + historyRect.maxY
+        // 空态：参考图里是一张「今天暂无收款记录」白卡（不是没有内容），提示块要落在它下面
+        contentBottom = groups.isEmpty ? firstCardTop + emptyCardH : y + historyRect.maxY
     }
 
     func maxScroll(_ state: ScreenState) -> CGFloat {
@@ -184,6 +187,7 @@ final class ReceiptScreen: Screen {
 
         drawHeader(d)
         drawToday(d)
+        if groups.isEmpty { drawEmptyCard(d) }
         for group in groups {
             if !group.today { drawDayHeading(d, group) }
             drawGroupCard(d, group)
@@ -284,6 +288,17 @@ final class ReceiptScreen: Screen {
     }
 
     /// 页脚（Java:331-343）
+    /// 空态白卡：「今天暂无收款记录」（参考图里确实有这张卡，而不是空页面）
+    private func drawEmptyCard(_ d: Draw) {
+        let box = CGRect(x: 40, y: firstCardTop, width: 1200, height: emptyCardH)
+        d.round(box, radius: 20, .white)
+        let cx = box.midX
+        d.circle(cx: cx, cy: box.minY + 210, r: 118, Draw.color(0xFFEFEFEF))
+        d.centerText("¥", cx: cx, baseline: box.minY + 254, size: 96,
+                     Draw.color(0xFFBFBFBF), bold: true)
+        d.centerText("今天暂无收款记录", cx: cx, baseline: box.minY + 430, size: 46,
+                     Draw.color(0xFF8C8C8C))
+    }
     private func drawNotice(_ d: Draw) {
         let base = contentBottom - historyRect.maxY
         let notice1 = "由于功能更新"
