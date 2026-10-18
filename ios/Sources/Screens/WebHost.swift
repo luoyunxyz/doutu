@@ -90,6 +90,12 @@ final class WebHostController: UIViewController, WKScriptMessageHandler {
         let jsErrorHook = WKUserScript(source: WebHostController.errorHook, injectionTime: .atDocumentStart, forMainFrameOnly: false)
         config.userContentController.addUserScript(jsErrorHook)
 
+        // 微信底栏兜底：iOS 上它是 static 定位，恰好贴到 WKWebView 底边，
+        // 真机/截图里经常整条不见。固定到视口底部，并保证子元素可见。
+        let navFix = WKUserScript(source: Self.navFix, injectionTime: .atDocumentEnd,
+                                  forMainFrameOnly: true)
+        config.userContentController.addUserScript(navFix)
+
         // 真正的 origin：Android 用 `https://fake-world.local` + shouldInterceptRequest，
         // iOS 这边用 127.0.0.1 回环 HTTP。自定义 scheme 下 ES module 会被 CORS 拒绝，
         // 页面只剩经典脚本渲染的外壳（微信标题栏 + “Windows 微信已登录”，下面全白）。
@@ -233,7 +239,15 @@ final class WebHostController: UIViewController, WKScriptMessageHandler {
           var nav = document.querySelector('.wechat-bottom-navbar');
           var chain = [];
           try {
-            for (var el = nav; el && chain.length < 10; el = el.parentElement) {
+            var navCS0 = nav ? getComputedStyle(nav) : null;
+            if (nav) {
+              chain.push({
+                navColor: navCS0.color, navBg: navCS0.backgroundColor,
+                navHTML: String(nav.innerHTML || '').slice(0, 500),
+                childCount: nav.children.length
+              });
+            }
+            for (var el = nav; el && chain.length < 12; el = el.parentElement) {
               var cs = getComputedStyle(el);
               var nr = el.getBoundingClientRect();
               chain.push({
@@ -384,6 +398,35 @@ final class WebHostController: UIViewController, WKScriptMessageHandler {
         (document.head || document.documentElement).appendChild(m);
       }
       m.setAttribute('content', 'width=360, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
+    })();
+    """
+
+    /// 底栏兜底：固定到视口底部，避免被 `.wechat-page { overflow:hidden }` 裁掉。
+    private static let navFix = """
+    (function () {
+      function apply() {
+        try {
+          if (document.getElementById('doutu-ios-nav-fix')) return;
+          var s = document.createElement('style');
+          s.id = 'doutu-ios-nav-fix';
+          s.textContent = [
+            '.wechat-bottom-navbar{position:fixed!important;left:0!important;',
+            'right:0!important;bottom:0!important;height:68px!important;',
+            'display:grid!important;grid-template-columns:repeat(4,1fr)!important;',
+            'align-items:center!important;background:#f8f8f8!important;',
+            'z-index:2147483000!important;}',
+            '.wechat-bottom-navbar *{opacity:1!important;visibility:visible!important;}'
+          ].join('');
+          (document.head || document.documentElement).appendChild(s);
+        } catch (e) {}
+      }
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', apply);
+      } else {
+        apply();
+      }
+      setTimeout(apply, 800);
+      setTimeout(apply, 2500);
     })();
     """
 
