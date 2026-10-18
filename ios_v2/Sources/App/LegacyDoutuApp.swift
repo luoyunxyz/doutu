@@ -321,7 +321,7 @@ final class Router {
         UserDefaults.standard.set(true, forKey: "terms.accepted")
         // 根页面直接就是 TermsScreen，没有可 pop 的栈；必须显式切到首页。
         // 之前只 pop()，真机上就是“点了同意还停在免责声明”。
-        host?.setScreen(HomeShellScreen(), state: HomeShellScreen.State())
+        host?.setScreen(HomeV2Screen(), state: HomeV2Screen.State())
         host?.setNeedsDisplay()
     }
     // MARK: - 「我」页右上角 ··· 账号菜单
@@ -625,11 +625,21 @@ final class Router {
 
         // 首页外壳：底部三栏 + 平台页签（Android MainActivity）
         case "tab:0", "tab:1", "tab:2":
+            if let state = self.host?.state as? HomeV2Screen.State {
+                state.tab = HomeV2Screen.Tab(rawValue: Int(token.suffix(1)) ?? 0) ?? .home
+                self.host?.setNeedsDisplay()
+                return
+            }
             guard let state = self.host?.state as? HomeShellScreen.State else { return }
             state.tab = HomeShellScreen.Tab(rawValue: Int(token.suffix(1)) ?? 0) ?? .home
             state.scroll = 0
             self.host?.setNeedsDisplay()
         case let t where t.hasPrefix("page:"):
+            if let state = self.host?.state as? HomeV2Screen.State {
+                state.servicePage = max(0, min(3, Int(t.suffix(1)) ?? 0))
+                self.host?.setNeedsDisplay()
+                return
+            }
             guard let state = self.host?.state as? HomeShellScreen.State else { return }
             state.servicePage = max(0, min(3, Int(t.suffix(1)) ?? 0))
             self.host?.setNeedsDisplay()
@@ -1468,10 +1478,14 @@ final class ScreenHostController: UIViewController {
     private var router: Router?
     /// 首页外壳的状态（配置拉回来要写进它）
     private var homeState: HomeShellScreen.State?
+    private var homeV2State: HomeV2Screen.State?
 
     init(screen: Screen) {
         hostView = ScreenHostView(screen: screen)
-        if let home = screen as? HomeShellScreen {
+        if let home = screen as? HomeV2Screen {
+            homeV2State = HomeV2Screen.State()
+            hostView.state = homeV2State!
+        } else if let home = screen as? HomeShellScreen {
             homeState = HomeShellScreen.State()
             hostView.state = homeState!
         } else if screen is TermsScreen {
@@ -1502,8 +1516,14 @@ final class ScreenHostController: UIViewController {
         DebugBridge.shared.start()
         // 启动就拉一次公开配置：娱乐页玩法与首页横幅文案都由它决定
         Task { @MainActor [weak self] in
-            guard let self, let state = self.homeState else { return }
-            await ConfigLoader.load(into: state)
+            guard let self else { return }
+            if let state = self.homeV2State {
+                await ConfigLoader.load(into: state)
+            } else if let state = self.homeState {
+                await ConfigLoader.load(into: state)
+            } else {
+                return
+            }
             self.hostView.setNeedsDisplay()
             // 配置里带水印文案（sys_config.watermark_overlay_text），拉到后刷新覆盖层
             WatermarkOverlay.attachIfNeeded()

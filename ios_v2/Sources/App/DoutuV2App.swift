@@ -7,7 +7,7 @@ struct DoutuV2App: App {
     var body: some Scene {
         WindowGroup {
             ScreenHostContainer(screen: UserDefaults.standard.bool(forKey: "terms.accepted")
-                                ? HomeShellScreen()
+                                ? HomeV2Screen()
                                 : TermsScreen())
                 .ignoresSafeArea()
                 .statusBarHidden(true)

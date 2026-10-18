@@ -8,10 +8,19 @@ import Foundation
 ///
 /// 设计原则：**拉失败不影响界面**。取不到就用内置兜底（一条「短视频一键去水印」+ 时间问候语），
 /// 用户照样能用。
+protocol HomeConfigState: AnyObject {
+    var playbookSections: [[String: Any]]? { get set }
+    var entertainmentRows: [Playbook.RowBox] { get set }
+    var entertainmentBottom: CGFloat { get set }
+}
+
+extension HomeShellScreen.State: HomeConfigState {}
+extension HomeV2Screen.State: HomeConfigState {}
+
 enum ConfigLoader {
     /// 拉一次公开配置并应用到界面状态
     @discardableResult
-    static func load(into state: HomeShellScreen.State) async -> Bool {
+    static func load<S: HomeConfigState>(into state: S) async -> Bool {
         let envelope = await ApiClient.shared.call("GET", "/api/v1/config", root: true)
         guard envelope.ok, let data = envelope.data as? [String: Any] else { return false }
 
