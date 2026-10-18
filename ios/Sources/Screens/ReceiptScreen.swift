@@ -124,6 +124,8 @@ final class ReceiptScreen: Screen {
 
     private var groups: [DayGroup] = []
     private var contentBottom: CGFloat = 0
+    /// 提示块（由于功能更新 / 查看历史账单）的锚点 = 最后一张卡的底部
+    private var noticeBase: CGFloat = 0
 
     init() {
         avatar = UIImage(named: "rec_avatar")
@@ -166,10 +168,10 @@ final class ReceiptScreen: Screen {
                 + (groups[i].items.isEmpty ? emptyCardH : cardHeight(groups[i].items.count))
             y = groups[i].cardBottom
         }
-        // 空态：参考图里是一张「今天暂无收款记录」白卡（不是没有内容），提示块要落在它下面
-        // 注意：非空分支是「最后一张卡底 + historyRect.maxY」，空态必须同样加上，
-        // 否则 drawNotice 里的 base = contentBottom - historyRect.maxY 会把提示块顶进卡片里。
-        contentBottom = groups.isEmpty ? firstCardTop + emptyCardH + historyRect.maxY : y + historyRect.maxY
+        // 提示块锚点：最后一张卡的底部（空列表时是空态白卡的底部）。
+        // 之前用 contentBottom - historyRect.maxY 反推，真机上对不上，这里改成直接锚定。
+        noticeBase = groups.last?.cardBottom ?? (firstCardTop + emptyCardH)
+        contentBottom = noticeBase + historyRect.maxY
     }
 
     func maxScroll(_ state: ScreenState) -> CGFloat {
@@ -308,7 +310,7 @@ final class ReceiptScreen: Screen {
                      Draw.color(0xFF8C8C8C))
     }
     private func drawNotice(_ d: Draw) {
-        let base = contentBottom - historyRect.maxY
+        let base = noticeBase
         let notice1 = "由于功能更新"
         let notice2 = "当前只展示5月4日以后的账单"
         let half = Draw.width(notice2, size: notice2Size) * squeeze / 2 + noticeRuleGap
@@ -404,7 +406,7 @@ final class ReceiptScreen: Screen {
             }
             return "batch"
         }
-        let base = contentBottom - historyRect.maxY
+        let base = noticeBase
         if cy > base + historyRect.minY - 10 && cy < base + historyRect.maxY + 10
             && x > historyRect.minX - 10 && x < historyRect.maxX + 10 {
             return "history"
