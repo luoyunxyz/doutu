@@ -8,9 +8,9 @@ import UIKit
 final class ReceiptBatchSheet: UIViewController {
     private let dim = UIControl()
     private let sheet = UIView()
-    private var tierSwitches: [UISwitch] = []
+    private var tierSwitches: [BatchCheck] = []
     private var tierCounts: [UITextField] = []
-    private let customSwitch = UISwitch()
+    private let customSwitch = BatchCheck()
     private let customMin = UITextField()
     private let customMax = UITextField()
     private let customCount = UITextField()
@@ -129,9 +129,8 @@ final class ReceiptBatchSheet: UIViewController {
         let row = UIView()
         row.tag = 110 + index
 
-        let toggle = UISwitch()
+        let toggle = BatchCheck()
         toggle.tag = 1
-        toggle.onTintColor = UIColor(red: 0x14 / 255, green: 0x78 / 255, blue: 0xfc / 255, alpha: 1)
         row.addSubview(toggle)
         tierSwitches.append(toggle)
 
@@ -161,7 +160,7 @@ final class ReceiptBatchSheet: UIViewController {
         switchLabel.textColor = UIColor(red: 0x23 / 255, green: 0x25 / 255, blue: 0x2b / 255, alpha: 1)
         row.addSubview(switchLabel)
 
-        customSwitch.onTintColor = UIColor(red: 0x14 / 255, green: 0x78 / 255, blue: 0xfc / 255, alpha: 1)
+        customSwitch.tag = 1
         row.addSubview(customSwitch)
 
         let dash = UILabel()
@@ -233,21 +232,21 @@ final class ReceiptBatchSheet: UIViewController {
         for i in 0..<tierSwitches.count {
             guard let row = sheet.viewWithTag(110 + i) else { continue }
             row.frame = CGRect(x: 16, y: 88 + CGFloat(i) * 46, width: contentW, height: 46)
-            row.viewWithTag(1)?.frame = CGRect(x: 0, y: 8, width: 51, height: 31)
-            row.viewWithTag(2)?.frame = CGRect(x: 60, y: 11, width: contentW - 150, height: 22)
-            row.viewWithTag(3)?.frame = CGRect(x: contentW - 80, y: 8, width: 80, height: 30)
+            row.viewWithTag(1)?.frame = CGRect(x: 0, y: 8, width: 30, height: 30)
+            row.viewWithTag(2)?.frame = CGRect(x: 36, y: 11, width: contentW - 100, height: 22)
+            row.viewWithTag(3)?.frame = CGRect(x: contentW - 60, y: 8, width: 60, height: 30)
         }
 
         if let row = sheet.viewWithTag(120) {
             row.frame = CGRect(x: 16, y: 88 + CGFloat(tierSwitches.count) * 46,
                                width: contentW, height: 56)
-            customSwitch.frame = CGRect(x: 0, y: 12, width: 51, height: 31)
-            row.viewWithTag(2)?.frame = CGRect(x: 60, y: 16, width: 60, height: 22)
-            let fieldW: CGFloat = 60
-            customMin.frame = CGRect(x: 122, y: 12, width: fieldW, height: 30)
-            row.viewWithTag(3)?.frame = CGRect(x: 184, y: 12, width: 12, height: 30)
-            customMax.frame = CGRect(x: 198, y: 12, width: fieldW, height: 30)
-            customCount.frame = CGRect(x: contentW - 64, y: 12, width: 64, height: 30)
+            customSwitch.frame = CGRect(x: 0, y: 12, width: 30, height: 30)
+            row.viewWithTag(2)?.frame = CGRect(x: 36, y: 16, width: 56, height: 22)
+            let fieldW: CGFloat = 58
+            customMin.frame = CGRect(x: 96, y: 12, width: fieldW, height: 30)
+            row.viewWithTag(3)?.frame = CGRect(x: 156, y: 12, width: 12, height: 30)
+            customMax.frame = CGRect(x: 170, y: 12, width: fieldW, height: 30)
+            customCount.frame = CGRect(x: contentW - 60, y: 12, width: 60, height: 30)
         }
 
         let monthY = 88 + CGFloat(tierSwitches.count) * 46 + 60
@@ -347,5 +346,49 @@ extension ReceiptBatchSheet: UITextFieldDelegate {
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
         textField.resignFirstResponder()
         return true
+    }
+}
+
+/// Android `CheckBox` 的替身：方框 + 蓝色勾，避免用 iOS 的 UISwitch。
+final class BatchCheck: UIControl {
+    var isOn = false {
+        didSet { setNeedsDisplay() }
+    }
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        backgroundColor = .clear
+        addTarget(self, action: #selector(toggle), for: .touchUpInside)
+    }
+
+    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+
+    @objc private func toggle() {
+        isOn.toggle()
+        sendActions(for: .valueChanged)
+    }
+
+    override func draw(_ rect: CGRect) {
+        let side: CGFloat = 20
+        let box = CGRect(x: (bounds.width - side) / 2, y: (bounds.height - side) / 2,
+                         width: side, height: side)
+        let path = UIBezierPath(roundedRect: box, cornerRadius: 3)
+        if isOn {
+            UIColor(red: 0x14 / 255, green: 0x78 / 255, blue: 0xfc / 255, alpha: 1).setFill()
+            path.fill()
+            let check = UIBezierPath()
+            check.move(to: CGPoint(x: box.minX + 4.5, y: box.midY))
+            check.addLine(to: CGPoint(x: box.minX + 8.5, y: box.maxY - 6))
+            check.addLine(to: CGPoint(x: box.maxX - 4, y: box.minY + 6))
+            check.lineWidth = 2
+            check.lineCapStyle = .round
+            check.lineJoinStyle = .round
+            UIColor.white.setStroke()
+            check.stroke()
+        } else {
+            UIColor(red: 0xc4 / 255, green: 0xc7 / 255, blue: 0xcc / 255, alpha: 1).setStroke()
+            path.lineWidth = 1.5
+            path.stroke()
+        }
     }
 }
