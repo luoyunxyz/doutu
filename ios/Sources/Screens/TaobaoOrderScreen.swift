@@ -259,13 +259,15 @@ final class TaobaoOrderScreen: Screen {
         /// Java:62 `GUARANTEE_COUNT`
         var guaranteeCount = "2"
 
-        /// 订单信息那一块当前是展开的（Java:142 `orderExpanded = true`，参考图上就是展开、箭头朝上）
+        /// 订单信息那一块当前是展开的（Java:142 `orderExpanded = true`，参考图上就是展开、箭头朝上）。
+        /// 上层的 `order:toggle` 分支要做的事就是把它翻转再重绘（Java:521-524 是在就地 `render()`）。
         var orderExpanded = true
 
         /// 六个推荐位（Java:64-69 的 `REC_TITLE/REC_PRICE/REC_TAG/REC_SOLD`，共 6 组）
         var recs: [Rec] = State.recDefaults
 
-        /// Java:803-807 `customImage()`：用户自己换的商品图（存盘 / 相册那套属于上层）
+        /// Java:803-807 `customImage()`：用户自己换的商品图（存盘 / 相册那套属于上层）。
+        /// 非 nil 时盖掉 `order_main`；`order:pickImage` 由上层弹「从相册选择 / 恢复参考图」。
         var customGoodsImage: UIImage?
 
         /// 一个推荐位的四行字
@@ -1016,9 +1018,14 @@ final class TaobaoOrderScreen: Screen {
         // 所以这里先减回去 —— 滚到中间时返回键照样点得着（同 `CustomerServiceScreen`）。
         let chromeY = y - s.scroll
 
-        // Java:332-336 返回（`rect(53, 74, 38, 62)`，bar 的绝对顶是 152）→ Java:335 `finish()`
-        if pxRect(53, statusBar + 74, 38, 62).contains(CGPoint(x: x, y: chromeY)) {
-            return "back"
+        // 固定在顶栏上的两个热区：返回（Java:332-336 → `finish()`）与标题（Java:342）。
+        // 顺序与绘制一致，后登记的先命中。
+        let chromeHits: [(CGRect, ActionToken)] = [
+            (pxRect(53, statusBar + 74, 38, 62), "back"),
+            (toolbarTitleBox(s.title), "order:title"),
+        ]
+        for (rect, token) in chromeHits.reversed() where rect.contains(CGPoint(x: x, y: chromeY)) {
+            return token
         }
 
         // 只有落在滚动视口里（屏幕坐标 359..2904，见文件头「滚动」）的触摸才判内容
@@ -1029,8 +1036,6 @@ final class TaobaoOrderScreen: Screen {
 
         // 登记顺序 = 绘制顺序；最后统一 reversed，所以后画的压在上面先命中。
         var hits: [(CGRect, ActionToken)] = [
-            // Java:342 标题 → edit("标题", TITLE)
-            (toolbarTitleBox(s.title), "order:title"),
             // Java:365 短地址 → edit("收货地址（短）", ADDRESS)
             (inkBox(s.address, left: 164, center: 454, size: fAddress, bold: true),
              "order:address"),
@@ -1121,3 +1126,26 @@ final class TaobaoOrderScreen: Screen {
         return "noop"
     }
 }
+
+// MARK: - 还缺的素材（Android `drawable-nodpi/order_*.png`，iOS Assets 里一张都没有）
+//
+// 本文件用的是同名动态查找（`art(_:)`），所以把下面这些图按**同名**加进
+// `ios/Resources/Assets.xcassets` 就自动替换掉矢量兜底，代码不用再改。
+// 尺寸是 Android 原图的像素尺寸，进 imageset 时建议按 1x 原图（`Contents.json` 里
+// 只填 universal 1x）或按 3x 提供，绘制端只做拉伸，不依赖 scale。
+//
+//   order_ic_back        38×62   顶栏返回（近黑 `<`）
+//   order_ic_dots        80×24   顶栏右上角三个点（装饰，不接点击）
+//   order_ic_pin         57×61   地址卡定位针
+//   order_shop_logo     130×130  店铺 logo（原图近黑的整块方图）
+//   order_main          480×480  商品主图（用户换过图时用 `State.customGoodsImage`）
+//   order_ic_caret_down  40×24   商品标题右侧 / 订单信息收起态
+//   order_ic_caret_up    41×26   订单信息展开态 / 应付款右侧
+//   order_ic_arrow_r     27×39   店铺「进店逛逛」、退款说明、优惠、保障依据四个右箭头
+//   order_ic_coupon      83×70   金额区的券图标（淘宝红 #F00030）
+//   order_ic_info        51×34   收货信息右侧小信息标
+//   order_ic_service     70×70   底栏「客服」（橙 #D84000）
+//   order_ic_more        65×64   底栏「更多」
+//   order_rec_1..6      480×480  六个推荐位图（`order_rec_1` … `order_rec_6`）
+//
+// 另：`drawable-nodpi/order_ic_service2.png`（92×78）在这一版 Java 里没被引用，所以这里也没有。

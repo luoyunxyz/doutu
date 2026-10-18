@@ -146,7 +146,7 @@ final class Router {
         guard let screen = parseScreen, let state = host?.state as? ParseScreen.State else { return }
         switch token {
         case "link":
-            EditPrompt.present(title: "粘贴视频链接", current: state.link) { [weak self] text in
+            EditPrompt.present(title: "粘贴视频链接", current: state.link, numeric: false) { [weak self] text in
                 state.link = text.trimmingCharacters(in: .whitespacesAndNewlines)
                 self?.host?.setNeedsDisplay()
             }
@@ -219,12 +219,12 @@ final class Router {
         guard let state = host?.state as? FeedbackScreen.State else { return }
         switch action {
         case "focus":
-            EditPrompt.present(title: "意见与建议", current: state.content) { [weak self] text in
+            EditPrompt.present(title: "意见与建议", current: state.content, numeric: false) { [weak self] text in
                 state.content = text
                 self?.host?.setNeedsDisplay()
             }
         case "contact":
-            EditPrompt.present(title: "联系方式（选填）", current: state.contact) { [weak self] text in
+            EditPrompt.present(title: "联系方式（选填）", current: state.contact, numeric: false) { [weak self] text in
                 state.contact = text
                 self?.host?.setNeedsDisplay()
             }
