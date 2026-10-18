@@ -22,6 +22,8 @@ CMD = os.path.join(SHARE, "cmd.json")
 SHOTS = os.path.join(SHARE, "shots")
 OUT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "_ios", "shots")
 HOST = "192.168.1.171"
+LOG = ("/var/mobile/Containers/Data/Application/"
+       "6A0FD58B-3AE5-44FE-A6B2-88514FB21056/Documents/crash.log")
 
 
 def ssh():
@@ -51,10 +53,21 @@ class Capturer:
         # 还留着上一条业务指令，冷启动后会先把那条指令执行掉（例如又跳进客服页），
         # 后面的步骤就全乱了。
         self.send("noop")
+        # 在日志里打一个标记；App 真正启动到 DebugBridge 轮询之后，才会在标记后面
+        # 出现 "DebugBridge started"。启动没完成就发 token，会被后一条覆盖掉
+        # （DebugBridge 只读 cmd.json 的最后一条），于是经常抓到上一屏/客服页。
+        marker = "---CAPTURE-%d---" % int(time.time() * 1000)
+        run(self.c, "echo '%s' >> %s" % (marker, LOG))
         run(self.c, "killall -9 Doutu 2>/dev/null; sleep 0.8; uiopen doutu://; sleep 2.8")
         ps = run(self.c, "ps aux | grep -i Doutu | grep -v grep")
         if "Doutu.app" not in ps:
             run(self.c, "uiopen doutu://; sleep 2.5")
+        for _ in range(30):
+            tail = run(self.c, "tail -60 %s" % LOG)
+            pos = tail.rfind(marker)
+            if pos >= 0 and "DebugBridge started" in tail[pos:]:
+                break
+            time.sleep(0.5)
         self.started = time.time()
 
     def send(self, token):
@@ -136,6 +149,9 @@ CASES = {
     "service": (["entry:0"], False),
     "analytics": (["zhiCell:7", "analytics"], False),
     "receipt_loaded": (["zhiCell:11", "entry:1792296000000", "back"], False),
+    "receipt": (["zhiCell:11"], False),
+    "receipt_detail": (["zhiCell:11", "entry:1792296000000"], False),
+    "settings2": (["user"], False),
     "parsegrid": (["tab:0", "page:0", "weiCell:3:2"], False),
     "feedback": (["entry:1"], False),
     "settings": (["entry:3"], False),
