@@ -58,6 +58,10 @@ targets:
         # 图标资源集名称（Assets.xcassets/AppIcon.appiconset）。不写的话 XcodeGen
         # 生成的工程不带 ASSETCATALOG_COMPILER_APPICON_NAME，装到手机上就是白图标。
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        # 「修改应用图标」那一格：支付宝 / 支付宝(香港) / 微信 三套备选图标。
+        # 名称必须和 Assets.xcassets 里的 appiconset 一致；Xcode 会生成
+        # CFBundleIcons.CFBundleAlternateIcons，再配合 setAlternateIconName 切换。
+        ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES: "AppIconAlipay AppIconAlipayHK AppIconWechat"
         # SwiftUI 的 App 生命周期在 iOS 14+ 需要 Scene Manifest，否则真机启动可能黑屏。
         # 这一项让 Xcode **生成**（而不是有现成的）UIApplicationSceneManifest，
         # 与 Xcode 新建 SwiftUI 工程的默认值一致。
