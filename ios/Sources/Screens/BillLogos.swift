@@ -2,7 +2,7 @@ import UIKit
 
 /// 账单/账单详情共用的商家品牌图标表。
 /// 与 Android BillScreen.loadMerchantLogos() 的 56 个 mch_* 一一对应，
-/// 另带几个按分类 mark 兜底的 ill_logo_*。
+/// 另带几个按分类 mark 兜底的 bill_logo_*。
 enum BillLogos {
     static let assets: [String: String] = [
         "麦当劳": "mch_mcdonalds",
@@ -72,7 +72,7 @@ enum BillLogos {
         "抖音": "bill_logo_douyin",
     ]
 
-    static func image(for merchant: String, mark: String = ") -> UIImage? {
+    static func image(for merchant: String, mark: String = "") -> UIImage? {
         if let res = assets[merchant] { return UIImage(named: res) }
         if !mark.isEmpty, let res = assets[mark] { return UIImage(named: res) }
         return nil
