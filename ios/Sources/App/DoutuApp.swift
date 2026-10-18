@@ -128,7 +128,19 @@ final class Router {
         case 0:
             let screen = CustomerServiceScreen()
             customerServiceScreen = screen
-            push(screen, state: CustomerServiceScreen.State())
+            let state = CustomerServiceScreen.State()
+            let defaults = UserDefaults.standard
+            state.notice = defaults.string(forKey: "config.cs_notice") ?? ""
+            state.contact = defaults.string(forKey: "config.cs_contact") ?? ""
+            state.qrUrl = defaults.string(forKey: "config.cs_qr_image") ?? ""
+            push(screen, state: state)
+            if !state.qrUrlTrimmed.isEmpty {
+                CustomerServiceQrLoader.load(state.qrUrlTrimmed) { [weak self] image in
+                    state.qrImage = image
+                    state.qrFailed = (image == nil)
+                    self?.host?.setNeedsDisplay()
+                }
+            }
         case 1:
             push(FeedbackScreen(), state: FeedbackScreen.State())
         case 2:

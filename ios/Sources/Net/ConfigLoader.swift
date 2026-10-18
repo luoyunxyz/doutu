@@ -40,6 +40,22 @@ enum ConfigLoader {
                 enabled: enabled
             )
         }
+
+        // ③ 人工客服（对应 Android `Session.applyCustomerService`）
+        // 之前漏了这一段，iOS 客服页永远显示「二维码待后台配置 / 联系方式待后台配置」，
+        // 而 Android 同账号是有服务器下发的二维码与联系方式的。
+        if let service = data["customer_service"] as? [String: Any] {
+            let defaults = UserDefaults.standard
+            defaults.set((service["notice"] as? String ?? "")
+                            .trimmingCharacters(in: .whitespacesAndNewlines),
+                         forKey: "config.cs_notice")
+            defaults.set((service["contact"] as? String ?? "")
+                            .trimmingCharacters(in: .whitespacesAndNewlines),
+                         forKey: "config.cs_contact")
+            defaults.set((service["qr_image"] as? String ?? "")
+                            .trimmingCharacters(in: .whitespacesAndNewlines),
+                         forKey: "config.cs_qr_image")
+        }
         return true
     }
 }
