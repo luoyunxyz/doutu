@@ -554,9 +554,9 @@ final class Router {
         case 4:   // 花呗 ✓
             push(HuabeiV2Screen(), state: HuabeiV2Screen.State())
         case 5:   // 支付消息 ✓
-            push(PayMsgScreen(), state: PayMsgScreen.State())
+            push(PayMsgV2Screen(), state: PayMsgV2Screen.State())
         case 6:   // 支付成功 ✓（Android `zhiGridIntent` case 6 → PaySuccessActivity）
-            push(PaySuccessScreen(), state: PaySuccessScreen.State())
+            push(PaySuccessV2Screen(), state: PaySuccessV2Screen.State())
         case 7:   // 自定义账单 ✓
             push(BillV2Screen(), state: BillV2Screen.State())
         case 8:   // 个人信息 ✓
@@ -1035,10 +1035,10 @@ final class Router {
                 self.host?.setNeedsDisplay()
             }
         case let t where t.hasPrefix("detail:"):
-            // 账单消息页点某张卡 → 账单详情。卡片文字表在 `PayMsgScreen.bill(at:)` 里
+            // 账单消息页点某张卡 → 账单详情。卡片文字表在 `PayMsgV2Screen.bill(at:)` 里
             // 组装成 `Bill`，两页共用一份模型（Android 也是这么接的）。
             if let index = Int(t.dropFirst("detail:".count)),
-               let bill = PayMsgScreen.bill(at: index) {
+               let bill = PayMsgV2Screen.bill(at: index) {
                 let state = BillDetailScreen.State()
                 state.bill = bill
                 push(BillDetailScreen(), state: state)
@@ -1046,7 +1046,7 @@ final class Router {
 
         // 消息列表页：「消息盒子」那一行进支付消息页
         case "box":
-            push(PayMsgScreen(), state: PayMsgScreen.State())
+            push(PayMsgV2Screen(), state: PayMsgV2Screen.State())
 
         // 支付成功页：点「完成」/「回首页」都退回上一页
         case "done", "home":
