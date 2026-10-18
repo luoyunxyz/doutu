@@ -92,7 +92,7 @@ final class Router {
     private func handlePlay(_ key: String) {
         switch key {
         case "avatar":
-            push(ProfileScreen(), state: ProfileScreen.State())
+            push(ProfileV2Screen(), state: ProfileV2Screen.State())
         case "balance":
             push(BalanceV2Screen(), state: BalanceV2Screen.State())
         case "order":
@@ -147,7 +147,7 @@ final class Router {
             shareToFriend()
         case 3:
             // Android `MainActivity:1710-1713`：这一页还没做，只弹「待更新」，
-            // 不进占位详情页。之前 iOS 打开了 SettingsScreen，和安卓不一致。
+            // 不进占位详情页。之前 iOS 打开了 SettingsV2Screen，和安卓不一致。
             showToast("待更新", ok: false)
         default:
             break
@@ -339,7 +339,7 @@ final class Router {
         var lines = ["用户名：\(username.isEmpty ? "-" : username)"]
         let phone = ProfileStore.shared.phone
         if !phone.isEmpty { lines.append("手机号：\(phone)") }
-        lines.append("状态：\(SettingsScreen.statusText)")
+        lines.append("状态：\(SettingsV2Screen.statusText)")
         if member {
             lines.append("到期：\(Session.shared.expireAt.isEmpty ? "-" : Session.shared.expireAt)")
         } else {
@@ -560,9 +560,9 @@ final class Router {
         case 7:   // 自定义账单 ✓
             push(BillV2Screen(), state: BillV2Screen.State())
         case 8:   // 个人信息 ✓
-            push(ProfileScreen(), state: ProfileScreen.State())
+            push(ProfileV2Screen(), state: ProfileV2Screen.State())
         case 9:   // 切换账号 ✓
-            push(SwitchAccountScreen(), state: SwitchAccountScreen.State())
+            push(SwitchAccountV2Screen(), state: SwitchAccountV2Screen.State())
         case 10:  // 财富页：普通版进理财，黑卡用户进成长版 ✓
             if LicaiVersion.blackCard(LicaiVersion.current()) {
                 push(GrowthV2Screen(), state: GrowthV2Screen.State())
@@ -683,7 +683,7 @@ final class Router {
             // 未登录 → 登录/注册表单；已登录 → 账号设置页
             // （Android `MainActivity:1681` 的 `openSettings()`，不是个人信息页）
             if Session.shared.isLoggedIn {
-                push(SettingsScreen(), state: SettingsScreen.State())
+                push(SettingsV2Screen(), state: SettingsV2Screen.State())
             } else {
                 LoginPresenter.present { [weak self] in
                     self?.self.host?.setNeedsDisplay()
@@ -705,8 +705,8 @@ final class Router {
                 self.host?.setNeedsDisplay()
             }
         case "profile":
-            // 身份行 → 个人信息页（Java: 点「我的」页的身份行进 ProfileScreen）
-            push(ProfileScreen(), state: ProfileScreen.State())
+            // 身份行 → 个人信息页（Java: 点「我的」页的身份行进 ProfileV2Screen）
+            push(ProfileV2Screen(), state: ProfileV2Screen.State())
         case "back":
             pop()
         case "balance":
@@ -1226,7 +1226,7 @@ final class Router {
         case "editName":
             // 账号设置页的用户名行走服务端改名（AuthService.changeUsername）；
             // 个人信息页那行只是改本地显示名。
-            if self.host?.screen is SettingsScreen {
+            if self.host?.screen is SettingsV2Screen {
                 promptRename()
                 return
             }
@@ -1248,7 +1248,7 @@ final class Router {
         // 注意：`back` 在本 switch 的**前面**已有分支（`pop()`），这里不再重复 ——
         // 重复的 case 只会得到一条 "already handled" 警告，且第二个分支永远不执行。
         case "manage", "new", "footer":
-            // 账号管理 / 新增账号 / 底部说明：Android 的 SwitchAccountScreen 里这三处是
+            // 账号管理 / 新增账号 / 底部说明：Android 的 SwitchAccountV2Screen 里这三处是
             // 位图与文字（`sw_foot` 等），**没有点击监听**，所以这里保持无动作即为一致。
             break
         case let t where t.hasPrefix("switch:"):
