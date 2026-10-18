@@ -238,18 +238,23 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler, UIGestureRec
     // MARK: - 顶部空白 / Windows 登录条菜单
 
     private func installBlankTap() {
-        let tap = UITapGestureRecognizer(target: self, action: #selector(blankTapped(_:)))
-        tap.cancelsTouchesInView = false
-        tap.delegate = self
-        webView.addGestureRecognizer(tap)
+        // 以前是单击：菜单第一项（发起群聊/添加朋友）就在 y<140 内，单击会被
+        // 这个原生手势抢走，表现为“点群聊却弹出 7 项工具菜单 / 点添加朋友又退回”。
+        // 改成轻长长按，顶部普通点击完全交给网页，避免和加号菜单冲突。
+        let press = UILongPressGestureRecognizer(target: self, action: #selector(blankTapped(_:)))
+        press.minimumPressDuration = 0.6
+        press.cancelsTouchesInView = false
+        press.delegate = self
+        webView.addGestureRecognizer(press)
     }
 
-    @objc private func blankTapped(_ gesture: UITapGestureRecognizer) {
+    @objc private func blankTapped(_ gesture: UILongPressGestureRecognizer) {
+        guard gesture.state == .began else { return }
         let point = gesture.location(in: webView)
         CrashLog.append("WEBTAP blank y=\(point.y)")
         // 只接管标题栏 + Windows 登录条这一带；下面聊天区/底栏保持网页自己的点击。
         guard point.y >= 0, point.y <= 140 else { return }
-        CrashLog.append("WEBTOOLS native tap y=\(point.y)")
+        CrashLog.append("WEBTOOLS native longpress y=\(point.y)")
         webView.evaluateJavaScript(
             "window.__fwOpenToolsSheet ? window.__fwOpenToolsSheet() : 0") { result, error in
                 CrashLog.append("WEBTOOLS js result=\(String(describing: result)) err=\(error?.localizedDescription ?? "-")")
