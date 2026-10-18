@@ -45,6 +45,9 @@ enum AuthService {
         )
         ProfileStore.shared.name = name
         ProfileStore.shared.phone = phone
+        if let status = user["status_text"] as? String, !status.isEmpty {
+            UserDefaults.standard.set(status, forKey: "profile.status_text")
+        }
         return Outcome(ok: true, message: res.msg.isEmpty ? "登录成功" : res.msg)
     }
 

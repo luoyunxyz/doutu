@@ -391,6 +391,9 @@ final class Router {
             defaults.set((user["nickname"] as? String) ?? "", forKey: "profile.nickname")
             defaults.set((user["activated"] as? Bool) ?? ((user["status"] as? Int) == 1),
                          forKey: "profile.activated")
+            if let status = user["status_text"] as? String, !status.isEmpty {
+                defaults.set(status, forKey: "profile.status_text")
+            }
             if let expire = user["expire_at"] as? String {
                 defaults.set(expire, forKey: "profile.expire_at")
             }
