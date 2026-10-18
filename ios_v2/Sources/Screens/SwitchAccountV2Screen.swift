@@ -1,11 +1,11 @@
 import UIKit
 
-/// 账号列表模型（对应 Android `features/zhi/data/Accounts.java` 的 iOS 版）。
+/// 账号列表模型（对应 Android `features/zhi/data/AccountsV2.java` 的 iOS 版）。
 ///
 /// Android 端账号存在本地（SharedPreferences 序列化），「当前账号」是其中一个标记。
 /// iOS 先做成内存 + UserDefaults 的等价实现，接上网络层后由接口同步。
-final class Accounts {
-    static let shared = Accounts()
+final class AccountsV2 {
+    static let shared = AccountsV2()
 
     /// 参考图卡片上印着的那个号码：只有别的号才需要盖掉重画
     static let defaultPhone = "138****8888"
@@ -37,7 +37,7 @@ final class Accounts {
     func isCurrent(_ id: String) -> Bool { id == currentId }
 
     /// 切换账号：除了记下新的当前账号，还要把它写进「个人信息」存档 ——
-    /// 否则「我的」页仍显示上一个人的名字（对应 Android `Accounts.switchTo` + `applyProfile`）
+    /// 否则「我的」页仍显示上一个人的名字（对应 Android `AccountsV2.switchTo` + `applyProfile`）
     func switchTo(_ id: String) {
         guard let account = all.first(where: { $0.id == id }) else { return }
         currentId = id
@@ -107,7 +107,7 @@ final class SwitchAccountV2Screen: Screen {
     private var art: [String: UIImage] = [:]
 
     /// 这一帧算出来的位置（点哪儿要用，Java:87-89）
-    private var shown: [Accounts.Account] = []
+    private var shown: [AccountsV2.Account] = []
     private var footerY = SwitchAccountV2Screen.H
     private var contentH: CGFloat = SwitchAccountV2Screen.H
 
@@ -125,7 +125,7 @@ final class SwitchAccountV2Screen: Screen {
 
     func draw(_ d: Draw, state: ScreenState) {
         let s = (state as? State) ?? State()
-        shown = Accounts.shared.all
+        shown = AccountsV2.shared.all
         let addTop = self.addTop(shown.count)
         footerY = max(footerYDefault, addTop + cardH + 80)
         contentH = max(Self.H, footerY + footerH + 46)
@@ -146,7 +146,7 @@ final class SwitchAccountV2Screen: Screen {
     }
 
     /// Java:124-159
-    private func drawAccount(_ d: Draw, _ account: Accounts.Account, top: CGFloat) {
+    private func drawAccount(_ d: Draw, _ account: AccountsV2.Account, top: CGFloat) {
         d.art(art["card"], CGRect(x: 0, y: top, width: Self.W, height: cardH))
 
         let picture = account.avatar ?? art["avatar"]
@@ -160,13 +160,13 @@ final class SwitchAccountV2Screen: Screen {
             d.rect(CGRect(x: 300, y: top + 78, width: 1006 - 300, height: 234 - 78), card)
             d.text(account.name, x: phoneX, baseline: top + nameBaseline, size: nameSize, ink)
             d.text(account.phone, x: phoneX, baseline: top + phoneBaselineNamed, size: phoneSize, ink)
-        } else if account.phone != Accounts.defaultPhone {
+        } else if account.phone != AccountsV2.defaultPhone {
             // 卡片上印的是参考图里那个号，只有别的号才盖掉重画（Java:150-157）
             d.rect(CGRect(x: 300, y: top + 112, width: 1006 - 300, height: 202 - 112), card)
             d.text(account.phone, x: phoneX, baseline: top + phoneBaseline, size: phoneSize, ink)
         }
 
-        if Accounts.shared.isCurrent(account.id) {
+        if AccountsV2.shared.isCurrent(account.id) {
             d.art(art["tag"], CGRect(x: tagX, y: top + tagDy, width: tagW, height: tagH))
         }
     }
@@ -205,7 +205,7 @@ final class SwitchAccountV2Screen: Screen {
         for (i, account) in shown.enumerated() {
             let top = cardTop(i)
             if cy >= top && cy <= top + cardH {
-                if Accounts.shared.isCurrent(account.id) { return "toast:这已经是当前账号" }
+                if AccountsV2.shared.isCurrent(account.id) { return "toast:这已经是当前账号" }
                 return "switch:\(account.id)"
             }
         }
