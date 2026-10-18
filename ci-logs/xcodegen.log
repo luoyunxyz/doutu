@@ -1,2 +1,30 @@
 Version: 2.38.0
-Spec validation error: Target "DoutuV2" has a missing source directory "/Users/runner/work/doutu/doutu/ios_v2/Assets/home_top_loose.png"
+⚙️  Generating plists...
+⚙️  Generating project...
+⚙️  Writing project...
+Created project at /Users/runner/work/doutu/doutu/ios_v2/DoutuV2.xcodeproj
+No "base" settings found
+No "debug config" settings found
+No "release config" settings found
+No "iOS" settings found
+--- 检查 objectVersion ---
+	objectVersion = 54;
+Command line invocation:
+    /Applications/Xcode_15.4.app/Contents/Developer/usr/bin/xcodebuild -list -project DoutuV2.xcodeproj
+
+User defaults from command line:
+    IDEPackageSupportUseBuiltinSCM = YES
+
+Information about project "DoutuV2":
+    Targets:
+        DoutuV2
+
+    Build Configurations:
+        Debug
+        Release
+
+    If no build configuration is specified and -scheme is not passed then "Debug" is used.
+
+    Schemes:
+        DoutuV2
+
