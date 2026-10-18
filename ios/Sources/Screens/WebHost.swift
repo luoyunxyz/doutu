@@ -134,17 +134,16 @@ final class WebHostController: UIViewController, WKScriptMessageHandler {
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         guard let webView else { return }
-        // Android 的 WebView 在系统状态栏下方（内容区从状态栏底边开始）；
-        // iOS 这里把 WKWebView 下移同样的 safeAreaInsets.top，页面高度相应减少。
-        // 包内 CSS 的 env(safe-area-inset-*) 已由 _ios/strip-ios-safe-area.py 清零，
-        // 否则页面会再叠一次 47/34pt 的内边距，底栏正好被顶出屏幕。
-        let top = view.safeAreaInsets.top
-        let target = CGRect(x: 0, y: top, width: view.bounds.width,
-                            height: max(1, view.bounds.height - top))
-        if webView.frame != target {
-            webView.frame = target
+        // Android 的微主页是沉浸式全屏（隐藏状态栏，页面从 y=0 开始）。
+        // iOS 同样隐藏状态栏并把 WebView 铺满，避免顶部多出 47pt 白边。
+        if webView.frame != view.bounds {
+            webView.frame = view.bounds
         }
     }
+
+    /// 与 Android `WeiHomeActivity` 的沉浸式一致：本页不显示状态栏。
+    override var prefersStatusBarHidden: Bool { true }
+    override var preferredStatusBarStyle: UIStatusBarStyle { .lightContent }
 
     // MARK: - 返回
 
