@@ -94,6 +94,8 @@ def main():
     ap.add_argument("--password", default="alpine")
     ap.add_argument("--stage", default=r"D:\AAA\ipa\app-stage3")
     ap.add_argument("--keep-data", action="store_true")
+    ap.add_argument("--copy-prefs", action="store_true",
+                    help="把旧容器的会员状态 plist 覆盖到所有容器（会清掉收款记录等用户数据，默认关闭）")
     args = ap.parse_args()
 
     app = prepare(args.ipa, args.stage)
@@ -132,8 +134,9 @@ def main():
     o, e = run(c, "ldid -S/tmp/ent.plist %s/Doutu 2>&1; echo rc=$?" % dest)
     print("ldid:", o or e)
 
-    # 会员状态：写回所有数据容器（新装可能换了容器）
-    if not args.keep_data:
+    # 会员状态：默认不再覆盖 plist（旧逻辑会把 receipt.records 等用户数据一起清掉）。
+    # 只有显式 --copy-prefs 时才做旧容器的整份拷贝。
+    if args.copy_prefs and not args.keep_data:
         o, _ = run(c, "find /var/mobile/Containers/Data/Application -name "
                        "'com.luoyun.doutu.plist' -path '*/Library/Preferences/*' 2>/dev/null")
         targets = [line.strip() for line in o.splitlines() if line.strip()]

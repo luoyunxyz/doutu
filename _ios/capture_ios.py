@@ -165,6 +165,7 @@ CASES = {
     "wei0": (["tab:0", "page:0", "weiCell:0:0"], True),
     "wei1": (["tab:0", "page:0", "weiCell:0:1"], True),
     "wei6": (["tab:0", "page:0", "weiCell:1:2"], True),
+    "wei_window": (["tab:0", "page:0", "weiCell:0:0"], False, True),
     "wei7": (["tab:0", "page:0", "weiCell:1:3"], True),
 }
 
