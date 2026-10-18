@@ -1490,7 +1490,9 @@ final class ScreenHostController: UIViewController {
     }
 
     override var prefersStatusBarHidden: Bool { false }
-    override var preferredStatusBarStyle: UIStatusBarStyle { .default }
+    override var preferredStatusBarStyle: UIStatusBarStyle {
+        hostView.screen.lightStatusBar ? .lightContent : .default
+    }
     override var preferredScreenEdgesDeferringSystemGestures: UIRectEdge { .all }
 }
 

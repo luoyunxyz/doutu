@@ -38,6 +38,19 @@ extension Screen {
     /// 这是只有真机上才会暴露的那类 bug，所以用这个开关把它摆到明面上。
     var selfScrolls: Bool { true }
 
+    /// 这一屏顶部的背景是不是深色/彩色，需要白色状态栏图标。
+    /// Android 各 Activity 通过 `SYSTEM_UI_FLAG_LIGHT_STATUS_BAR` 的正反来选；
+    /// 这里按同样的页面清单集中判断，避免每个页面各写一遍。
+    var lightStatusBar: Bool {
+        switch self {
+        case is ZhiHomeScreen, is LicaiScreen, is GrowthScreen, is HuabeiScreen,
+             is YuebaoScreen, is PaySuccessScreen, is TravelScreen, is ZhimaCreditScreen:
+            return true
+        default:
+            return false
+        }
+    }
+
     // MARK: - 手势钩子（默认不处理）
 
     /// 长按（对应 Android 的 `screen.longPress(state, x, y)`）。
@@ -131,6 +144,8 @@ final class ScreenHostView: UIView {
         self.state = state
         syncCameraBackground()
         setNeedsDisplay()
+        // 状态栏图标明暗跟随当前页
+        window?.rootViewController?.setNeedsStatusBarAppearanceUpdate()
     }
 
     /// 按当前屏的需要装上 / 卸下相机预览
