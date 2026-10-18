@@ -760,6 +760,14 @@ final class Router {
         // 收款码页：二维码 / 名字 / 三个动作 / 收款记录 / 助手 / 经营 / 商家服务 / 升级
         case "name" where host?.state is CollectMoneyScreen.State:
             editCollectName()
+        case "qr" where host?.state is CollectMoneyScreen.State:
+            guard let host, let state = host.state as? CollectMoneyScreen.State,
+                  let presenter = UpdatePrompt.topViewController() else { break }
+            QRImagePicker.present(from: presenter) { image in
+                guard let image else { return }
+                state.qrImage = image
+                host.setNeedsDisplay()
+            }
         case "records" where host?.state is CollectMoneyScreen.State:
             push(ReceiptScreen(), state: ReceiptScreen.State())
         case "qr", "name", "amount", "save", "more2", "records", "assistant",

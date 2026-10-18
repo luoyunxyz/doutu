@@ -19,6 +19,8 @@ final class CollectMoneyScreen: Screen {
 
     final class State: ScreenState {
         var name = "落陨(**玮)"
+        /// 从相册选的收款二维码（Android `CollectMoneyActivity.pickCode`）
+        var qrImage: UIImage?
     }
 
     // MARK: - 调色板（Java:39-60）
@@ -342,6 +344,12 @@ final class CollectMoneyScreen: Screen {
 
     /// 二维码（Java:380-404）：37×37 模块阵列 + 中间小图
     private func drawCode(_ d: Draw, _ s: State) {
+        if let image = s.qrImage {
+            d.round(CGRect(x: qrL - 10, y: qrT - 10, width: qrSize + 20, height: qrSize + 20),
+                     radius: 8, .white)
+            d.art(image, CGRect(x: qrL, y: qrT, width: qrSize, height: qrSize))
+            return
+        }
         let module = qrSize / CGFloat(qrModules)
         let field = ensureQr()
         d.ctx.saveGState()
