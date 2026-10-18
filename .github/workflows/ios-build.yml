@@ -70,6 +70,11 @@ jobs:
           sudo chmod +x /usr/local/bin/xcodegen
           xcodegen --version 2>&1 | tee -a ci-logs/env.log
 
+      - name: 网页 CSS 去掉 iOS 安全区（对齐 Android 的 env()=0）
+        run: |
+          python3 _ios/strip-ios-safe-area.py
+          git diff --stat -- ios/Resources/web || true
+
       - name: 生成 Xcode 工程
         working-directory: ios
         run: |
