@@ -382,7 +382,7 @@ final class Router {
 
     /// 收款码页「修改」姓名：Android CollectMoneyActivity.editName 的等价实现。
     private func editCollectName() {
-        guard let state = host?.state as? CollectMoneyScreen.State,
+        guard let state = host?.state as? CollectMoneyV2Screen.State,
               let presenter = UpdatePrompt.topViewController() else { return }
         let alert = UIAlertController(title: "修改收款人姓名", message: nil, preferredStyle: .alert)
         alert.addTextField { field in
@@ -739,7 +739,7 @@ final class Router {
             }
             switch name {
             case "扫一扫": push(ScanOverlayScreen(), state: ScanOverlayScreen.State())
-            case "收款": push(CollectMoneyScreen(), state: CollectMoneyScreen.State())
+            case "收款": push(CollectMoneyV2Screen(), state: CollectMoneyV2Screen.State())
             case "历史记录": push(ReceiptScreen(), state: ReceiptScreen.State())
             default: break    // 添加朋友：对应页面未移植
             }
@@ -768,17 +768,17 @@ final class Router {
             push(ZhimaCreditScreen(), state: ZhimaCreditScreen.State())
 
         // 收款码页：二维码 / 名字 / 三个动作 / 收款记录 / 助手 / 经营 / 商家服务 / 升级
-        case "name" where host?.state is CollectMoneyScreen.State:
+        case "name" where host?.state is CollectMoneyV2Screen.State:
             editCollectName()
-        case "qr" where host?.state is CollectMoneyScreen.State:
-            guard let host, let state = host.state as? CollectMoneyScreen.State,
+        case "qr" where host?.state is CollectMoneyV2Screen.State:
+            guard let host, let state = host.state as? CollectMoneyV2Screen.State,
                   let presenter = UpdatePrompt.topViewController() else { break }
             QRImagePicker.present(from: presenter) { image in
                 guard let image else { return }
                 state.qrImage = image
                 host.setNeedsDisplay()
             }
-        case "records" where host?.state is CollectMoneyScreen.State:
+        case "records" where host?.state is CollectMoneyV2Screen.State:
             push(ReceiptScreen(), state: ReceiptScreen.State())
         case "qr", "name", "amount", "save", "more2", "records", "assistant",
              "business", "promo", "service", "upgrade":
@@ -1097,7 +1097,7 @@ final class Router {
             // 收钱 / 碰一下 / 转账
             let name = String(t.dropFirst("row:".count))
             if name == "收钱" {
-                push(CollectMoneyScreen(), state: CollectMoneyScreen.State())
+                push(CollectMoneyV2Screen(), state: CollectMoneyV2Screen.State())
             }
 
         // 余额页 / 小荷包：提现与转账（提现页 WithdrawScreen 未移植）
