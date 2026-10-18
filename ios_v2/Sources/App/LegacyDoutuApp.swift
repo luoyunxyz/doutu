@@ -565,9 +565,9 @@ final class Router {
             push(SwitchAccountScreen(), state: SwitchAccountScreen.State())
         case 10:  // 财富页：普通版进理财，黑卡用户进成长版 ✓
             if LicaiVersion.blackCard(LicaiVersion.current()) {
-                push(GrowthScreen(), state: GrowthScreen.State())
+                push(GrowthV2Screen(), state: GrowthV2Screen.State())
             } else {
-                push(LicaiScreen(), state: LicaiScreen.State())
+                push(LicaiV2Screen(), state: LicaiV2Screen.State())
             }
         case 11:  // 收款记录 ✓
             push(ReceiptV2Screen(), state: ReceiptV2Screen.State())
@@ -852,12 +852,12 @@ final class Router {
 
         // 理财页：展开保障面板 / 隐藏金额 / 主题选择
         case "toggleExpand":
-            if let state = self.host?.state as? LicaiScreen.State {
+            if let state = self.host?.state as? LicaiV2Screen.State {
                 state.expand = state.expand > 0.5 ? 0 : 1
                 self.host?.setNeedsDisplay()
             }
         case "toggleHide":
-            if let state = self.host?.state as? LicaiScreen.State {
+            if let state = self.host?.state as? LicaiV2Screen.State {
                 state.hidden.toggle()
                 self.host?.setNeedsDisplay()
             }
@@ -869,7 +869,7 @@ final class Router {
                 NotificationCenter.default.post(name: .doutuThemeChanged, object: nil)
             }
         case "licai":
-            push(LicaiScreen(), state: LicaiScreen.State())
+            push(LicaiV2Screen(), state: LicaiV2Screen.State())
 
         // 提现页：金额输入 / 键盘 / 支付密码
         case "amount":
@@ -1018,7 +1018,7 @@ final class Router {
 
         // 成长版：页签切换、理财师头像与名字
         case "redraw", "noop":
-            if let growth = self.host?.screen as? GrowthScreen, let state = self.host?.state as? GrowthScreen.State {
+            if let growth = self.host?.screen as? GrowthV2Screen, let state = self.host?.state as? GrowthV2Screen.State {
                 _ = growth
                 state.selectedTab = state.selectedTab == 0 ? 1 : 0
                 self.host?.setNeedsDisplay()
@@ -1203,7 +1203,7 @@ final class Router {
         // 模块内切换，这里保持 noop 并如实记录在 PORT-STATUS 里。
         case let t where t.hasPrefix("nav:"):
             let index = Int(t.dropFirst("nav:".count)) ?? -1
-            if self.host?.screen is LicaiScreen || self.host?.screen is GrowthScreen {
+            if self.host?.screen is LicaiV2Screen || self.host?.screen is GrowthV2Screen {
                 switch index {
                 case 0:
                     pop()                       // 回支首页
