@@ -378,15 +378,17 @@ final class Router {
         if saved.isEmpty { refreshMemberStatus() }
     }
 
-    /// 对应 Android `MainActivity.refreshAccount(true)`：`POST /api/v1/auth/status`
+    /// 对应 Android `DoutuApi.status`：`GET /api/v1/auth/status`
     private func refreshMemberStatus() {
         Task { @MainActor in
-            let res = await ApiClient.shared.call("POST", "/api/v1/auth/status")
+            // Android 用 GET；之前写成 POST 会被服务端回「请求方法不支持」，启动时还会弹 toast。
+            let res = await ApiClient.shared.call("GET", "/api/v1/auth/status")
             guard res.ok, let data = res.data as? [String: Any] else {
                 self.showToast(res.msg.isEmpty ? "刷新失败" : res.msg, ok: false)
                 return
             }
-            let user = data["user"] as? [String: Any] ?? [:]
+            // /auth/status 的用户字段平铺在 data 上；login/register 才是 data.user。
+            let user = data["user"] as? [String: Any] ?? data
             let defaults = UserDefaults.standard
             if let name = user["username"] as? String, !name.isEmpty {
                 defaults.set(name, forKey: "profile.name")
