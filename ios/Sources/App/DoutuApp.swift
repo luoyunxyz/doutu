@@ -293,7 +293,19 @@ final class Router {
             "feature:share-to-friend",      // 15 分享好友
         ]
         let index = row * 4 + col
-        guard index >= 0, index < routes.count, let route = routes[index] else { return }
+        guard index >= 0, index < routes.count else { return }
+
+        // 抖音去水印：Android 这一格走 `openParseWithGate()` 进原生解析页（和娱乐页
+        // 「短视频一键去水印」是同一个 ParseActivity）。之前这里留了 nil，
+        // 结果宫格里唯一一个已移植的入口反而点不动。
+        if index == 14 {
+            let screen = ParseScreen()
+            parseScreen = screen
+            push(screen, state: ParseScreen.State())
+            return
+        }
+
+        guard let route = routes[index] else { return }
 
         if route == "feature:share-to-friend" {
             shareToFriend()

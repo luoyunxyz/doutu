@@ -28,8 +28,6 @@ final class WebHostController: UIViewController, WKScriptMessageHandler {
     private var server: LocalWebServer?
     /// 待执行的路由（页面还没起来时先攥着，起来后再交过去）
     private var pendingRoute: String?
-    /// 左上角返回按钮（这个模态没有导航栏，必须自己补）
-    private var backButton: UIButton?
 
     /// 初始路由：`#/wechat` 或 `#/wechat/...` 或 `feature:xxx`
     init(route: String = "#/wechat") {
@@ -56,6 +54,12 @@ final class WebHostController: UIViewController, WKScriptMessageHandler {
         webView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         webView.navigationDelegate = self
         webView.scrollView.bounces = false
+        // 不要让 WKWebView 把安全区（刘海 47pt + 底部 34pt）加进内容 inset：
+        // 页面会整体下移 47pt，底部导航条正好被挤出屏幕（真机表现就是「底栏消失」）。
+        // Android 的 WebView 没有这个 inset，页面从 0 开始排版。
+        webView.scrollView.contentInsetAdjustmentBehavior = .never
+        webView.scrollView.contentInset = .zero
+        webView.scrollView.scrollIndicatorInsets = .zero
         webView.isOpaque = false
         webView.backgroundColor = .white
         view.addSubview(webView)
@@ -123,35 +127,15 @@ final class WebHostController: UIViewController, WKScriptMessageHandler {
 
     // MARK: - 返回
 
-    /// 左上角半透明返回按钮 + 左边缘右滑
+    /// 左边缘右滑返回。
+    ///
+    /// Android 那边用系统返回键/手势；iOS 这个模态没有导航栏，页面本身也没有返回按钮。
+    /// 早期版本在左上角叠了一个「‹ 返回」胶囊，但它不属于 Android 的界面，
+    /// 会盖住微信标题栏 —— 与「UI 一模一样」冲突，所以去掉，只保留边缘手势。
     private func installBackAffordance() {
-        let button = UIButton(type: .system)
-        button.setTitle("‹ 返回", for: .normal)
-        button.titleLabel?.font = .systemFont(ofSize: 13, weight: .semibold)
-        button.setTitleColor(.white, for: .normal)
-        button.backgroundColor = UIColor.black.withAlphaComponent(0.38)
-        button.layer.cornerRadius = 15
-        button.frame = CGRect(x: 8, y: 0, width: 62, height: 30)
-        button.autoresizingMask = [.flexibleRightMargin]
-        button.addTarget(self, action: #selector(goBack), for: .touchUpInside)
-        backButton = button
-        view.addSubview(button)
-
         let edge = UIScreenEdgePanGestureRecognizer(target: self, action: #selector(handleEdgePan(_:)))
         edge.edges = .left
         view.addGestureRecognizer(edge)
-    }
-
-    override func viewDidLayoutSubviews() {
-        super.viewDidLayoutSubviews()
-        // 贴在安全区下方，避免被刘海/状态栏压住
-        let top = view.safeAreaInsets.top + 6
-        backButton?.frame = CGRect(x: 8, y: top, width: 62, height: 30)
-        view.bringSubviewToFront(backButton ?? UIView())
-    }
-
-    @objc private func goBack() {
-        dismiss(animated: true)
     }
 
     @objc private func handleEdgePan(_ gesture: UIScreenEdgePanGestureRecognizer) {
