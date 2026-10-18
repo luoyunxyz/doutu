@@ -162,7 +162,8 @@ final class ReceiptScreen: Screen {
         for i in groups.indices {
             groups[i].cardTop = groups[i].today
                 ? firstCardTop : y + dayGapAbove + dayGapBelow
-            groups[i].cardBottom = groups[i].cardTop + cardHeight(groups[i].items.count)
+            groups[i].cardBottom = groups[i].cardTop
+                + (groups[i].items.isEmpty ? emptyCardH : cardHeight(groups[i].items.count))
             y = groups[i].cardBottom
         }
         // 空态：参考图里是一张「今天暂无收款记录」白卡（不是没有内容），提示块要落在它下面
@@ -244,6 +245,11 @@ final class ReceiptScreen: Screen {
     }
 
     private func drawGroupCard(_ d: Draw, _ group: DayGroup) {
+        if group.items.isEmpty {
+            // 当天没有收款：参考图里仍是一张「今天暂无收款记录」白卡
+            drawEmptyCard(d, top: group.cardTop)
+            return
+        }
         let top = group.cardTop
         d.round(CGRect(x: cardL, y: top, width: cardR - cardL, height: group.cardBottom - top),
                 radius: cardRadius, cardColor)
@@ -291,8 +297,8 @@ final class ReceiptScreen: Screen {
 
     /// 页脚（Java:331-343）
     /// 空态白卡：「今天暂无收款记录」（参考图里确实有这张卡，而不是空页面）
-    private func drawEmptyCard(_ d: Draw) {
-        let box = CGRect(x: 40, y: firstCardTop, width: 1200, height: emptyCardH)
+    private func drawEmptyCard(_ d: Draw, top: CGFloat = firstCardTop) {
+        let box = CGRect(x: 40, y: top, width: 1200, height: emptyCardH)
         d.round(box, radius: 20, .white)
         let cx = box.midX
         d.circle(cx: cx, cy: box.minY + 210, r: 118, Draw.color(0xFFEFEFEF))
