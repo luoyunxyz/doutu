@@ -1,0 +1,80 @@
+import UIKit
+
+/// 账单/账单详情共用的商家品牌图标表。
+/// 与 Android BillScreen.loadMerchantLogos() 的 56 个 mch_* 一一对应，
+/// 另带几个按分类 mark 兜底的 bill_logo_*。
+enum BillLogos {
+    static let assets: [String: String] = [
+        "麦当劳": "mch_mcdonalds",
+        "星巴克": "mch_starbucks",
+        "肯德基": "mch_kfc",
+        "汉堡王": "mch_burgerking",
+        "必胜客": "mch_pizzahut",
+        "塔斯汀": "mch_tasiting",
+        "蜜雪冰城": "mch_mixue",
+        "瑞幸咖啡": "mch_luckin",
+        "喜茶": "mch_heytea",
+        "海底捞": "mch_haidilao",
+        "永辉超市": "mch_yonghui",
+        "盒马鲜生": "mch_hema",
+        "京东到家": "mch_jddj",
+        "美团": "mch_meituan",
+        "美团外卖": "mch_meituan",
+        "饿了么": "mch_eleme",
+        "淘宝": "mch_taobao",
+        "天猫超市": "mch_tmall",
+        "拼多多": "mch_pdd",
+        "得物": "mch_dewu",
+        "苏宁易购": "mch_suning",
+        "华为商城": "mch_huawei",
+        "小米商城": "mch_xiaomi",
+        "苹果商店": "mch_apple",
+        "沃尔玛": "mch_walmart",
+        "滴滴出行": "mch_didi",
+        "高德打车": "mch_amap",
+        "飞猪旅行": "mch_fliggy",
+        "中国铁路": "mch_rail",
+        "中国联通": "mch_cunicom",
+        "中国电信": "mch_ctelecom",
+        "腾讯视频": "mch_tencentvideo",
+        "爱奇艺": "mch_iqiyi",
+        "优酷视频": "mch_youku",
+        "芒果TV": "mch_mgtv",
+        "哔哩哔哩": "mch_bilibili",
+        "网易云音乐": "mch_netease",
+        "QQ音乐": "mch_qqmusic",
+        "Steam": "mch_steam",
+        "菜鸟驿站": "mch_cainiao",
+        "百度网盘": "mch_baidu",
+        "信用卡还款": "mch_credit",
+        "京东健康": "mch_jd",
+        "大润发": "mch_rtmart",
+        "7-ELEVEN": "mch_seven",
+        "哈啰单车": "mch_hellobike",
+        "携程旅行": "mch_ctrip",
+        "腾讯云": "mch_qcloud",
+        "叮当快药": "mch_dingdang",
+        "中国邮政": "mch_chinapost",
+        "屈臣氏": "mch_watsons",
+        "顺丰速运": "mch_sf",
+        "顺丰同城急送": "mch_sf",
+        "美团单车": "mch_meituan",
+        "京东": "mch_jd",
+        "王者荣耀": "mch_hok",
+        "中国移动": "bill_logo_mobile",
+        "云猫": "bill_logo_cat",
+        "花呗": "bill_logo_huabei",
+        "闲鱼": "bill_logo_xianyu",
+        "移动": "bill_logo_mobile",
+        "公交": "bill_logo_bus",
+        "交管": "bill_logo_traffic",
+        "T": "bill_logo_token",
+        "抖音": "bill_logo_douyin",
+    ]
+
+    static func image(for merchant: String, mark: String = "") -> UIImage? {
+        if let res = assets[merchant] { return UIImage(named: res) }
+        if !mark.isEmpty, let res = assets[mark] { return UIImage(named: res) }
+        return nil
+    }
+}
