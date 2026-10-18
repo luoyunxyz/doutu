@@ -47,7 +47,10 @@ class Capturer:
         self.started = time.time()
 
     def reset(self):
-        run(self.c, "killall -9 Doutu 2>/dev/null; sleep 0.6; uiopen doutu://; sleep 2.4")
+        run(self.c, "killall -9 Doutu 2>/dev/null; sleep 0.8; uiopen doutu://; sleep 2.8")
+        ps = run(self.c, "ps aux | grep -i Doutu | grep -v grep")
+        if "Doutu.app" not in ps:
+            run(self.c, "uiopen doutu://; sleep 2.5")
         self.started = time.time()
 
     def send(self, token):
@@ -128,6 +131,7 @@ CASES = {
     "travel": (["出行"], False),
     "service": (["entry:0"], False),
     "analytics": (["zhiCell:7", "analytics"], False),
+    "parsegrid": (["tab:0", "page:0", "weiCell:3:2"], False),
     "feedback": (["entry:1"], False),
     "settings": (["entry:3"], False),
     "wei0": (["tab:0", "page:0", "weiCell:0:0"], True),
