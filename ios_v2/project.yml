@@ -25,6 +25,8 @@ targets:
       - path: Resources
         excludes:
           - "web"
+      - path: Resources/Extras
+        type: folder
       - path: Resources/web
         type: folder
     settings:

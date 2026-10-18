@@ -78,8 +78,10 @@ final class HomeShellScreen: Screen {
     /// Android 参考图顶部的状态栏漏出来、标题叠字）。再兜底读包根部的同名 PNG。
     private static func loadImage(_ name: String) -> UIImage? {
         if let image = UIImage(named: name) { return image }
-        if let path = Bundle.main.path(forResource: name, ofType: "png") {
-            return UIImage(contentsOfFile: path)
+        for candidate in [name, "Extras/" + name] {
+            if let path = Bundle.main.path(forResource: candidate, ofType: "png") {
+                return UIImage(contentsOfFile: path)
+            }
         }
         return nil
     }
