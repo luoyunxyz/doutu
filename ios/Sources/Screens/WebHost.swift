@@ -97,6 +97,12 @@ final class WebHostController: UIViewController, WKScriptMessageHandler {
                                   forMainFrameOnly: true)
         config.userContentController.addUserScript(navFix)
 
+        // 小微主页顶栏的搜索/加号在原 React 页面里只有样式、没有 onClick（点了没反应）。
+        // 这里补上点击投递 + 把两个图标放大一点；原生收到后弹底部操作表。
+        let topbarFix = WKUserScript(source: Self.topbarFix, injectionTime: .atDocumentEnd,
+                                     forMainFrameOnly: true)
+        config.userContentController.addUserScript(topbarFix)
+
         // 真正的 origin：Android 用 `https://fake-world.local` + shouldInterceptRequest，
         // iOS 这边用 127.0.0.1 回环 HTTP。自定义 scheme 下 ES module 会被 CORS 拒绝，
         // 页面只剩经典脚本渲染的外壳（微信标题栏 + “Windows 微信已登录”，下面全白）。
@@ -355,11 +361,65 @@ final class WebHostController: UIViewController, WKScriptMessageHandler {
             reply(callbackId, "[]")
         case "isScanDisabled":
             reply(callbackId, false)
+        case "wechatPlus":
+            showWeChatPlusMenu()
+        case "wechatSearch":
+            showWeChatSearch()
         default:
             // 其余方法（相册保存、来电音频、键盘、系统栏…）先按成功/空值应答，
             // 让页面逻辑不至于卡住；逐个补齐记在 README 的待办里。
             reply(callbackId, NSNull())
         }
+    }
+
+    // MARK: - 小微主页顶栏（搜索 / 加号）
+
+    /// 加号：安卓是右上角下拉菜单；iOS 用底部 action sheet，点一项执行。
+    private func showWeChatPlusMenu() {
+        let sheet = UIAlertController(title: "微信", message: nil, preferredStyle: .actionSheet)
+        for name in ["发起群聊", "添加朋友", "扫一扫", "收付款"] {
+            sheet.addAction(UIAlertAction(title: name, style: .default) { [weak self] _ in
+                self?.runWeChatPlus(name)
+            })
+        }
+        sheet.addAction(UIAlertAction(title: "取消", style: .cancel))
+        if let pop = sheet.popoverPresentationController {
+            pop.sourceView = view
+            pop.sourceRect = CGRect(x: view.bounds.width - 40, y: view.safeAreaInsets.top + 30,
+                                    width: 1, height: 1)
+        }
+        present(sheet, animated: true)
+    }
+
+    private func runWeChatPlus(_ name: String) {
+        switch name {
+        case "扫一扫", "收付款":
+            // WebHost 是模态盖在首页上的；先关掉，再让首页 Router push 原生页。
+            let router = Router.shared
+            dismiss(animated: true) {
+                router?.handle("action:\(name)", at: .zero)
+            }
+        default:
+            let alert = UIAlertController(title: name,
+                                          message: "这个入口对应的原生页面还没移植完。",
+                                          preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "知道了", style: .cancel))
+            present(alert, animated: true)
+        }
+    }
+
+    /// 放大镜：iOS 上先给一个可输入的搜索框（页面的搜索页还没移植）。
+    private func showWeChatSearch() {
+        let alert = UIAlertController(title: "搜索", message: nil, preferredStyle: .alert)
+        alert.addTextField { field in
+            field.placeholder = "搜索"
+            field.clearButtonMode = .whileEditing
+        }
+        alert.addAction(UIAlertAction(title: "取消", style: .cancel))
+        alert.addAction(UIAlertAction(title: "搜索", style: .default) { _ in
+            // 页面暂无搜索结果路由，保留输入入口，避免点击完全没反应。
+        })
+        present(alert, animated: true)
     }
 
     private func reply(_ callbackId: String?, _ value: Any?) {
@@ -450,6 +510,47 @@ final class WebHostController: UIViewController, WKScriptMessageHandler {
       } else {
         apply();
       }
+      setTimeout(apply, 800);
+      setTimeout(apply, 2500);
+    })();
+    """
+
+    private static let topbarFix = """
+    (function(){
+      function post(method){
+        try { window.webkit.messageHandlers.DoutuApp.postMessage({method: method, args: []}); } catch (e) {}
+      }
+      function apply(){
+        var actions = document.querySelector('.wechat-topbar__actions');
+        if (!actions) return;
+        var search = actions.querySelector('.wechat-topbar__icon:not(.wechat-topbar__icon--large)');
+        var plus = actions.querySelector('.wechat-topbar__icon--large');
+        if (search && !search.__doutuSearchBound) {
+          search.__doutuSearchBound = 1;
+          search.style.cursor = 'pointer';
+          search.addEventListener('click', function(e){
+            e.preventDefault(); e.stopPropagation(); post('wechatSearch');
+          }, true);
+        }
+        if (plus && !plus.__doutuPlusBound) {
+          plus.__doutuPlusBound = 1;
+          plus.style.cursor = 'pointer';
+          plus.addEventListener('click', function(e){
+            e.preventDefault(); e.stopPropagation(); post('wechatPlus');
+          }, true);
+        }
+        if (!document.getElementById('doutu-topbar-size')) {
+          var style = document.createElement('style');
+          style.id = 'doutu-topbar-size';
+          style.textContent = [
+            '.wechat-topbar__icon{transform:scale(1.18);transform-origin:center;overflow:visible;}',
+            '.wechat-topbar__icon--large{transform:scale(1.28);transform-origin:center;overflow:visible;}'
+          ].join('');
+          (document.head || document.documentElement).appendChild(style);
+        }
+      }
+      apply();
+      new MutationObserver(apply).observe(document.documentElement, {childList:true, subtree:true});
       setTimeout(apply, 800);
       setTimeout(apply, 2500);
     })();
