@@ -69,9 +69,19 @@ final class HomeShellScreen: Screen {
     private var bannerTick: Timer?
 
     init() {
-        pages = Self.pageArt.map { UIImage(named: $0) }
-        segments = Self.segmentArt.map { UIImage(named: $0) }
-        topImage = UIImage(named: Self.topArt)
+        pages = Self.pageArt.map { Self.loadImage($0) }
+        segments = Self.segmentArt.map { Self.loadImage($0) }
+        topImage = Self.loadImage(Self.topArt)
+    }
+
+    /// 资产目录在 v2 的 Release 包里偶尔取不到 `home_top`（真机表现为
+    /// Android 参考图顶部的状态栏漏出来、标题叠字）。再兜底读包根部的同名 PNG。
+    private static func loadImage(_ name: String) -> UIImage? {
+        if let image = UIImage(named: name) { return image }
+        if let path = Bundle.main.path(forResource: name, ofType: "png") {
+            return UIImage(contentsOfFile: path)
+        }
+        return nil
     }
 
     deinit { bannerTick?.invalidate() }
