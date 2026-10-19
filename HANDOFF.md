@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`809cbe4 WeChat: avoid dead fakeworld CDN for self avatars; timeout fallback`  
-> 最新版本：`2.2.4 / 20024`  
+> 最新提交：`f5a8ea0 WeChat: self chat avatar now matches Me page`  
+> 最新代码版本：`2.2.5 / 20025`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.2.4 / 20024`（已通过 USB 查询确认）
 
 ---
@@ -224,7 +224,13 @@ complete = false
 paintMessageAvatar(img, side, preferred)
 ```
 
-不要再在其它地方直接：
+其中 outgoing（「我」发出的）再走：
+
+```js
+applySelfAvatar(img, preferred)
+```
+
+`applySelfAvatar` 内部使用与「我」页相同的 `__fwResolveProfileAvatar`，不要再在其它地方直接：
 
 ```js
 img.src = ...
@@ -392,6 +398,12 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
     - 整个 `wechat-chat-actions.js` 不执行；
     - 表现是加号、顶部菜单、置顶清理、头像全部无效。
 
+11. **聊天「我」头像与「我」页不是同一张**
+    - 「我」页把 `profile.avatarInfo` 交给 `__fwResolveProfileAvatar` 解析（旧 fakeworld 链接会映射成本地 `user-avatar-1`）；
+    - 聊天页以前直接拒绝 fakeworld 并换成随机头像池，所以永远对不上；
+    - 2.2.5 起所有 outgoing 头像（普通/转账/红包/通话/滑动切换）统一走 `applySelfAvatar`，复用同一个解析器并缓存结果；
+    - 打开会话时先解析再画第一屏，避免先闪一张随机脸。
+
 ---
 
 ## 10. 当前状态
@@ -409,7 +421,7 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
 
 ### 待确认
 
-1. 2.2.4 下“我”的消息头像是否已不再灰色；
+1. 2.2.5 下聊天「我」的头像是否与「我」页完全一致（本地模拟已确认都解析为 `user-avatar-1`）；
 2. 微信主页上下滚动、最后一行是否完整；
 3. 列表头像/网名 18px/12px 是否合适；
 4. 气泡/头像 56px 是否合适；
