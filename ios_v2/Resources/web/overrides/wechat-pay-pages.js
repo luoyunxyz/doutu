@@ -2514,7 +2514,7 @@
             && (el.innerText.includes('零钱') || el.innerText.includes('钱包'));
         });
       if (page) {
-        page.style.setProperty('padding-top', '44px', 'important');
+        page.style.setProperty('padding-top', '40px', 'important');
         page.style.setProperty('box-sizing', 'border-box', 'important');
         page.dataset.fwTopSpacing = '1';
         return;
