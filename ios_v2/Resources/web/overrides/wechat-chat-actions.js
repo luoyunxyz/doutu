@@ -66,6 +66,29 @@
   const BATCH_HANDLE_SEEDS = ["今天也要开心","橘子海","晚风知我意","山野有雾","小岛来信","月亮失约了","云朵收藏家","把日子过慢","汽水半糖","在逃小熊","春日限定","听风看海","小岛晴天","不知名的某某","月光便利店","小狗困了","正在充电中","一颗椰子","青柠气泡","风吹麦浪","半熟芝士","桃桃乌龙","今天不熬夜","宇宙漫游指南","睡不醒星球","山茶与海","快乐研究所","小猫打盹","月光维修站","窗边听雨","普通小孩","心动贩卖机","向阳而生","慢慢喜欢你","一页山河","海盐冰淇淋","晚风邮差","人间观察员","云边小卖部","夏天不散场","月亮邮递员","软糖研究员","日落收藏家","晴天放映机","小熊在发呆","请叫我阿喵","风里有点甜","清醒梦境","平凡浪漫","想去看日出","快乐不打烊","桃子汽水","听雨的人","南方小土豆","今天也很哇塞","保持可爱","海边拾贝壳","星星掉进海里","不吃香菜","小小探险家","喜欢散步","柠檬不萌","有空一起玩","一直在路上","慢热选手","日子甜一点","一只糯米团","糯叽叽本人","小城故事多","向晚而行","风里有诗","有猫就幸福","蓝莓味晚风","认真生活中","周末逃跑计划","晚霞贩卖机","小熊软糖","一颗小行星","晴天见面","今天喝热牛奶","山水有相逢","落日与晚风","自在如风","温柔收藏家","别叫我起床","可乐要加冰","一只小海豹","云朵上的猫","遇见好天气","有趣的灵魂","做个好梦","向快乐出发","月亮不打烊","风也温柔","桃子味汽水","浪漫收藏家","打翻了晚霞","银河散步中","小狗观察日记"];
 
   let state = loadState();
+
+  // 旧版演示数据把第一条会话默认置顶（isPinned:true），导致“老婆”总在最上面。
+  // 只做一次迁移：清掉持久化里的默认 isPinned，并清掉 state 里的 pinnedAt。
+  try {
+    const PIN_CLEARED_KEY = 'fake-world.wechat.default-pin-cleared.v1';
+    if (!localStorage.getItem(PIN_CLEARED_KEY)) {
+      for (let i = 0; i < localStorage.length; i += 1) {
+        const key = localStorage.key(i);
+        if (!key) continue;
+        const value = localStorage.getItem(key) || '';
+        if (value.indexOf('"isPinned":true') !== -1) {
+          localStorage.setItem(key, value.replace(/"isPinned":true/g, '"isPinned":false'));
+        }
+      }
+      if (state.chats && typeof state.chats === 'object') {
+        Object.keys(state.chats).forEach(key => {
+          if (state.chats[key] && state.chats[key].pinnedAt) state.chats[key].pinnedAt = null;
+        });
+      }
+      localStorage.setItem(PIN_CLEARED_KEY, '1');
+      try { saveState(); } catch (_) {}
+    }
+  } catch (_) { /* localStorage 不可用时忽略 */ }
   // 2026-10-11: random friend nicknames come from the 随机昵称网名[百万昵称库] API the user
   // asked for (https://api.aa1.cn/doc/sjwm.html -> GET https://cn.apihz.cn/api/zici/sjwm.php).
   // It answers {"code":200,"msg":"网名"} and sends Access-Control-Allow-Origin: *, so the

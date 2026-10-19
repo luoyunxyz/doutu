@@ -238,27 +238,33 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler, UIGestureRec
     // MARK: - 顶部空白 / Windows 登录条菜单
 
     private func installBlankTap() {
-        // 以前是单击：菜单第一项（发起群聊/添加朋友）就在 y<140 内，单击会被
-        // 这个原生手势抢走，表现为“点群聊却弹出 7 项工具菜单 / 点添加朋友又退回”。
-        // 改成轻长长按，顶部普通点击完全交给网页，避免和加号菜单冲突。
-        let press = UILongPressGestureRecognizer(target: self, action: #selector(blankTapped(_:)))
-        press.minimumPressDuration = 0.6
-        press.cancelsTouchesInView = false
-        press.delegate = self
-        webView.addGestureRecognizer(press)
+        // 顶部空白仍然是单击打开工具菜单；但点击时必须先判断加号菜单是否开着，
+        // 否则加号菜单第一项的点击会被这个手势抢走。cancelsTouchesInView=false
+        // 保证网页自身的按钮点击仍然生效。
+        let tap = UITapGestureRecognizer(target: self, action: #selector(blankTapped(_:)))
+        tap.cancelsTouchesInView = false
+        tap.delegate = self
+        webView.addGestureRecognizer(tap)
     }
 
-    @objc private func blankTapped(_ gesture: UILongPressGestureRecognizer) {
-        guard gesture.state == .began else { return }
+    @objc private func blankTapped(_ gesture: UITapGestureRecognizer) {
         let point = gesture.location(in: webView)
         CrashLog.append("WEBTAP blank y=\(point.y)")
-        // 只接管标题栏 + Windows 登录条这一带；下面聊天区/底栏保持网页自己的点击。
         guard point.y >= 0, point.y <= 140 else { return }
-        CrashLog.append("WEBTOOLS native longpress y=\(point.y)")
+        // 加号菜单开着时，不能把点击转成 7 项工具菜单。
         webView.evaluateJavaScript(
-            "window.__fwOpenToolsSheet ? window.__fwOpenToolsSheet() : 0") { result, error in
-                CrashLog.append("WEBTOOLS js result=\(String(describing: result)) err=\(error?.localizedDescription ?? "-")")
-            }
+            "(function(){var p=document.querySelector('.fw-plus-panel');" +
+            "if(!p)return 0;var s=getComputedStyle(p);" +
+            "return (s.display!=='none'&&s.visibility!=='hidden'&&p.getClientRects().length>0)?1:0})()"
+        ) { [weak self] value, _ in
+            guard let self else { return }
+            if let open = value as? Int, open == 1 { return }
+            CrashLog.append("WEBTOOLS native tap y=\(point.y)")
+            self.webView.evaluateJavaScript(
+                "window.__fwOpenToolsSheet ? window.__fwOpenToolsSheet() : 0") { result, error in
+                    CrashLog.append("WEBTOOLS js result=\(String(describing: result)) err=\(error?.localizedDescription ?? "-")")
+                }
+        }
     }
 
     func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer,
@@ -744,13 +750,12 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler, UIGestureRec
       // “批量添加”等按钮。这里轮询当前是否处于子页/浮层，实时通知原生隐藏。
       var lastHidden = null;
       function syncHeaderTargets() {
-        var overlay = document.querySelector('.fw-overlay')
-          || document.querySelector('.fw-add-friend')
-          || document.querySelector('.fw-group-chat')
-          || document.querySelector('.fw-scanpay')
-          || document.querySelector('.fw-receive-pay')
-          || document.querySelector('.fw-local-conversation')
-          || document.querySelector('.fw-chat-pay');
+        var candidates = document.querySelectorAll('.fw-overlay, .fw-add-friend, .fw-group-chat, .fw-scanpay, .fw-receive-pay, .fw-local-conversation, .fw-chat-pay');
+        var overlay = Array.prototype.find.call(candidates, function (el) {
+          if (!el) return false;
+          var s = getComputedStyle(el);
+          return s.display !== 'none' && s.visibility !== 'hidden' && el.getClientRects().length > 0;
+        });
         var hidden = !!overlay;
         try { document.body.classList.toggle('fw-subpage-open', hidden); } catch (e) {}
         if (hidden !== lastHidden) {
