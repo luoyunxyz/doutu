@@ -1629,16 +1629,67 @@ final class Router {
             push(TaobaoOrderScreen(), state: TaobaoOrderScreen.State())
         case let t where t.hasPrefix("order:"):
             guard let state = host?.state as? TaobaoOrderScreen.State else { return }
-            switch t {
-            case "order:toggle":
+            let key = String(t.dropFirst("order:".count))
+            switch key {
+            case "toggle":
                 state.orderExpanded.toggle()
-            case "order:copy":
+            case "copy":
                 UIPasteboard.general.string = state.orderNo
                 showToast("订单号已复制", ok: true)
-            case "order:addCart":
+            case "addCart":
                 showToast("已加入购物车", ok: true)
+            case "pickImage":
+                if let vc = EditPrompt.topViewController() {
+                    QRImagePicker.present(from: vc) { image in
+                        guard let image else { return }
+                        state.customGoodsImage = image
+                        self.host?.setNeedsDisplay()
+                    }
+                }
+            case "pickLogo":
+                if let vc = EditPrompt.topViewController() {
+                    QRImagePicker.present(from: vc) { image in
+                        guard let image else { return }
+                        state.shopLogo = image
+                        self.host?.setNeedsDisplay()
+                    }
+                }
+            case "receiver":
+                EditPrompt.present(title: "修改收货人（姓名 手机号）",
+                                   current: state.name + " " + state.phone,
+                                   numeric: false) { text in
+                    let parts = text.split(whereSeparator: { $0 == " " || $0 == "，" || $0 == "," })
+                    if let name = parts.first { state.name = String(name) }
+                    if parts.count > 1 { state.phone = parts[1].filter { $0.isNumber } }
+                    self.host?.setNeedsDisplay()
+                }
+            case let value where value.hasPrefix("rec:"):
+                guard let index = Int(value.dropFirst("rec:".count)) else { break }
+                let rec = state.rec(at: index)
+                EditPrompt.present(title: "推荐位 \(index + 1)（标题|价格|标签|销量）",
+                                   current: [rec.title, rec.price, rec.tag, rec.sold].joined(separator: "|"),
+                                   numeric: false) { text in
+                    let parts = text.split(separator: "|", omittingEmptySubsequences: false).map(String.init)
+                    guard index < state.recs.count else { return }
+                    state.recs[index] = TaobaoOrderScreen.State.Rec(
+                        title: parts.count > 0 ? parts[0] : rec.title,
+                        price: parts.count > 1 ? parts[1] : rec.price,
+                        tag: parts.count > 2 ? parts[2] : rec.tag,
+                        sold: parts.count > 3 ? parts[3] : rec.sold
+                    )
+                    self.host?.setNeedsDisplay()
+                }
             default:
-                break
+                let numericKeys: Set<String> = [
+                    "goodPrice", "count", "paidPrice", "totalPrice", "discount",
+                    "payable", "guaranteeCount", "orderNo", "tradeNo",
+                ]
+                EditPrompt.present(title: state.editTitle(key),
+                                   current: state.editValue(key),
+                                   numeric: numericKeys.contains(key)) { text in
+                    state.applyEdit(key, text)
+                    self.host?.setNeedsDisplay()
+                }
             }
             host?.setNeedsDisplay()
         case "conv":

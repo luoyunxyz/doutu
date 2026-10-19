@@ -221,6 +221,8 @@ final class TaobaoOrderScreen: Screen {
 
         /// Java:39 `SHOP`
         var shop = "Apple Store 官方旗舰店"
+        /// 用户自选的店铺图标；nil 时用内置矢量/素材。
+        var shopLogo: UIImage?
         /// Java:40 `SHOP_NOTE`
         var shopNote = "88VIP好评率98%，平均2天退款"
 
@@ -294,6 +296,76 @@ final class TaobaoOrderScreen: Screen {
             Rec(title: "欧路得美式baggy丹宁", price: "74.3", tag: "直降价", sold: "已售1万+"),
             Rec(title: "【预售开始-立即付】", price: "598", tag: "券后价", sold: "已售5000+"),
         ]
+
+        init() {
+            // 隐私信息不使用真实姓名/手机号/地址，每次进入订单详情都随机一套。
+            name = Self.randomName()
+            phone = Self.randomPhone()
+            let area = Self.randomAddress()
+            address = area.short
+            fullAddress = area.full
+            shop = Self.randomShop()
+            invoice = Bool.random() ? "个人" : "公司"
+
+            let created = Self.randomDate()
+            let dealt = created.addingTimeInterval(TimeInterval(Int.random(in: 180...2400)))
+            let fmt = DateFormatter()
+            fmt.locale = Locale(identifier: "en_US_POSIX")
+            fmt.dateFormat = "yyyy-MM-dd HH:mm:ss"
+            createTime = fmt.string(from: created)
+            dealTime = fmt.string(from: dealt)
+            guarantee = "依据：" + String(createTime.prefix(10)) + "下单交易快照"
+
+            var order = ""
+            for _ in 0..<19 { order.append(String(Int.random(in: 0...9))) }
+            orderNo = order
+            var trade = String(createTime.prefix(10)).replacingOccurrences(of: "-", with: "")
+            trade += "2200"
+            for _ in 0..<16 { trade.append(String(Int.random(in: 0...9))) }
+            tradeNo = trade
+        }
+
+        private static func randomName() -> String {
+            let surnames = ["张", "李", "王", "刘", "陈", "杨", "赵", "周", "吴", "徐"]
+            let gives = ["伟", "娜", "芳", "洋", "晨", "磊", "敏", "昊", "静", "强"]
+            return (surnames.randomElement() ?? "张") + (gives.randomElement() ?? "伟")
+        }
+
+        private static func randomPhone() -> String {
+            let prefixes = ["138", "139", "150", "151", "158", "159", "186", "187", "188", "189"]
+            var value = prefixes.randomElement() ?? "138"
+            for _ in 0..<8 { value.append(String(Int.random(in: 0...9))) }
+            return value
+        }
+
+        private static func randomAddress() -> (short: String, full: String) {
+            let cities: [(String, String)] = [
+                ("上海市", "浦东新区"), ("上海市", "普陀区"), ("北京市", "朝阳区"),
+                ("广州市", "天河区"), ("深圳市", "南山区"), ("杭州市", "西湖区"),
+            ]
+            let city = cities.randomElement() ?? ("上海市", "浦东新区")
+            let roads = ["世纪大道", "建国路", "体育西路", "科技园路", "文三路", "中山北路"]
+            let road = roads.randomElement() ?? "世纪大道"
+            let number = Int.random(in: 8...888)
+            let building = ["号", "号A座", "号B座", "号C座"][Int.random(in: 0...3)]
+            let room = "\(Int.random(in: 1...30))0\(Int.random(in: 1...9))"
+            let province = city.0.replacingOccurrences(of: "市", with: "")
+            return ("\(road)\(number)\(building)\(room)",
+                    "\(province) \(city.0) \(city.1) \(road)\(number)\(building)\(room)")
+        }
+
+        private static func randomShop() -> String {
+            let names = ["优品数码旗舰店", "星辰优选旗舰店", "果粉之家官方店",
+                         "潮玩生活旗舰店", "元气好物官方店", "极客数码专营店"]
+            return names.randomElement() ?? "优品数码旗舰店"
+        }
+
+        private static func randomDate() -> Date {
+            let now = Date()
+            let days = Double(Int.random(in: 1...20)) * 24 * 60 * 60
+            let seconds = Double(Int.random(in: 0...86399))
+            return now.addingTimeInterval(-days - seconds)
+        }
 
         /// Java:171-181 `maskedPhone()`：「86-159＊＊＊＊0520」。
         ///
@@ -548,7 +620,12 @@ final class TaobaoOrderScreen: Screen {
         d.rect(pxRect(pageLeft, shopTop, pageRight - pageLeft, shopBottom - shopTop), card)
 
         // Java:400 店铺 logo（130×130）
-        drawIcon(d, "order_shop_logo", pxRect(56, 697, 130, 130))
+        let logoRect = pxRect(56, 697, 130, 130)
+        if let logo = s.shopLogo {
+            d.clipped(to: logoRect, radius: 10) { d.art(logo, logoRect) }
+        } else {
+            drawIcon(d, "order_shop_logo", logoRect)
+        }
 
         // Java:402 店铺名
         d.text(s.shop, x: px(222), baseline: px(inkBaseline(center: 730, size: fShop)),
@@ -1041,6 +1118,8 @@ final class TaobaoOrderScreen: Screen {
              "order:address"),
             // Java:369 收货人 → editReceiver()（姓名 + 手机号两个输入框）
             (inkBox(s.receiver, left: 161, center: 538, size: fReceiver), "order:receiver"),
+            // 店铺 logo → 相册选择 / 恢复默认
+            (pxRect(56, 697, 130, 130), "order:pickLogo"),
             // Java:403 店铺名 → edit("店铺名称", SHOP)
             (inkBox(s.shop, left: 222, center: 730, size: fShop, bold: true), "order:shop"),
             // Java:406 店铺说明 → edit("店铺说明", SHOP_NOTE)
@@ -1149,3 +1228,87 @@ final class TaobaoOrderScreen: Screen {
 //   order_rec_1..6      480×480  六个推荐位图（`order_rec_1` … `order_rec_6`）
 //
 // 另：`drawable-nodpi/order_ic_service2.png`（92×78）在这一版 Java 里没被引用，所以这里也没有。
+
+// MARK: - 订单详情可编辑
+extension TaobaoOrderScreen.State: EditableState {
+    func editTitle(_ key: String) -> String {
+        switch key {
+        case "title": return "修改交易状态"
+        case "address": return "修改收货地址"
+        case "fullAddress": return "修改完整收货地址"
+        case "shop": return "修改店铺名称"
+        case "shopNote": return "修改店铺说明"
+        case "goodsTitle": return "修改商品标题"
+        case "goodPrice": return "修改商品原价"
+        case "spec": return "修改商品规格"
+        case "count": return "修改购买数量"
+        case "refund": return "修改退款说明"
+        case "paidPrice": return "修改实付价"
+        case "totalPrice": return "修改商品总价"
+        case "discount": return "修改优惠金额"
+        case "payable": return "修改应付款"
+        case "orderNo": return "修改订单号"
+        case "invoice": return "修改发票信息"
+        case "tradeNo": return "修改交易号"
+        case "createTime": return "修改创建时间"
+        case "dealTime": return "修改成交时间"
+        case "guarantee": return "修改保障依据"
+        case "guaranteeCount": return "修改保障项数"
+        default: return "修改订单信息"
+        }
+    }
+
+    func editValue(_ key: String) -> String {
+        switch key {
+        case "title": return title
+        case "address": return address
+        case "fullAddress": return fullAddress
+        case "shop": return shop
+        case "shopNote": return shopNote
+        case "goodsTitle": return goodsTitle
+        case "goodPrice": return goodPrice
+        case "spec": return goodsSpec
+        case "count": return goodCount
+        case "refund": return refundNote
+        case "paidPrice": return paidPrice
+        case "totalPrice": return totalPrice
+        case "discount": return discount
+        case "payable": return payable
+        case "orderNo": return orderNo
+        case "invoice": return invoice
+        case "tradeNo": return tradeNo
+        case "createTime": return createTime
+        case "dealTime": return dealTime
+        case "guarantee": return guarantee
+        case "guaranteeCount": return guaranteeCount
+        default: return ""
+        }
+    }
+
+    func applyEdit(_ key: String, _ text: String) {
+        switch key {
+        case "title": title = text
+        case "address": address = text
+        case "fullAddress": fullAddress = text
+        case "shop": shop = text
+        case "shopNote": shopNote = text
+        case "goodsTitle": goodsTitle = text
+        case "goodPrice": goodPrice = text
+        case "spec": goodsSpec = text
+        case "count": goodCount = text
+        case "refund": refundNote = text
+        case "paidPrice": paidPrice = text
+        case "totalPrice": totalPrice = text
+        case "discount": discount = text
+        case "payable": payable = text
+        case "orderNo": orderNo = text
+        case "invoice": invoice = text
+        case "tradeNo": tradeNo = text
+        case "createTime": createTime = text
+        case "dealTime": dealTime = text
+        case "guarantee": guarantee = text
+        case "guaranteeCount": guaranteeCount = text
+        default: break
+        }
+    }
+}

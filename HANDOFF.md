@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 2.4.54：模拟来电页所有控件真正接上状态`  
-> 最新代码版本：`2.4.54 / 20094`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 2.4.55：淘宝订单全部字段可编辑、隐私随机化`  
+> 最新代码版本：`2.4.55 / 20095`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.51 / 20091`（已通过 USB 查询确认）
 
 ---
@@ -736,6 +736,14 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
       - 联系人、姓名输入、头像选择都会回填当前 State；
       - 铃声选择/恢复默认/试听至少给出明确状态与提示；
     - `avatar` 令牌在 Router 里优先按 `CallSetupScreen.State` 处理，选完回填 `state.avatarImage`，不会再误跳个人资料页。
+
+71. **淘宝订单详情全部信息可编辑、隐私随机化**
+    - `TaobaoOrderScreen.hitTest` 早就吐出 `order:address/receiver/shop/goodsTitle/...`，但 Router 只处理 toggle/copy/addCart，其它字段点了没反应；
+    - 2.4.55：
+      - 新增 `TaobaoOrderScreen.State` 的 `EditableState`，覆盖地址、完整地址、收货人、店名、店铺说明、商品标题/规格/原价/数量/退款说明、实付/总价/优惠/应付、订单号、发票、交易号、创建/成交时间、保障依据/项数、交易状态；
+      - `order:receiver` 用「姓名 手机号」一个输入框同时改两项；`order:rec:<i>` 用「标题|价格|标签|销量」改推荐位；
+      - `order:pickImage` / `order:pickLogo` 从相册换商品主图和店铺图标；
+      - `State.init()` 每次进入随机生成姓名、手机号、地址、店名、发票、订单号、交易号、创建/成交时间，不再使用真实隐私数据。
 
 ---
 
