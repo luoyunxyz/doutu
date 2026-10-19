@@ -4129,6 +4129,16 @@
     if(!map.size) CONTACT_FALLBACKS.forEach(add);
     return [...map.values()].sort((a,b)=>getInitial(a.name).localeCompare(getInitial(b.name))||a.name.localeCompare(b.name,'zh-CN'));
   }
+  // Native 模拟来电页读取微信通讯录用：返回备注名 + 头像，避免原生再猜一遍数据源。
+  window.__fwGetCallContacts = function () {
+    try {
+      return collectContacts().map(item => ({
+        id: String(item.id || item.name || ''),
+        name: String(item.remark || item.name || '').trim(),
+        avatar: String(item.avatar || '')
+      }));
+    } catch (_) { return []; }
+  };
   function markChatRead(row) {
     const info=getChatInfo(row);
     if(!info)return;

@@ -16,6 +16,16 @@ final class WeChatContactStore: NSObject, WKNavigationDelegate {
         self.completion = completion
         finished = false
 
+        if let server = LocalWebServer.shared {
+            server.start { [weak self] port in
+                self?.startWeb(port: port ?? 18080)
+            }
+        } else {
+            startWeb(port: 18080)
+        }
+    }
+
+    private func startWeb(port: UInt16) {
         let config = WKWebViewConfiguration()
         let web = WKWebView(frame: .zero, configuration: config)
         web.navigationDelegate = self
@@ -24,9 +34,14 @@ final class WeChatContactStore: NSObject, WKNavigationDelegate {
         if let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow }) {
             window.addSubview(web)
         }
-        web.load(URLRequest(url: URL(string: "http://localhost:18080/")!))
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + 4) { [weak self] in
+        // 直接进「微」的路由，页面初始化时才会把 allProfiles/contacts 同步进
+        // localStorage；只开根路径有时只拿到空壳。
+        let raw = "http://localhost:\(port)/index.html#/wechat"
+        CrashLog.append("WeChatContactStore loading \(raw)")
+        if let url = URL(string: raw) {
+            web.load(URLRequest(url: url))
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 9) { [weak self] in
             self?.finish([])
         }
     }
@@ -42,9 +57,14 @@ final class WeChatContactStore: NSObject, WKNavigationDelegate {
     }
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        CrashLog.append("WeChatContactStore didFinish")
         let js = """
         (function () {
           try {
+            if (typeof window.__fwGetCallContacts === 'function') {
+              var hooked = window.__fwGetCallContacts();
+              if (Array.isArray(hooked) && hooked.length) return JSON.stringify(hooked);
+            }
             var list = JSON.parse(localStorage.getItem('allProfiles') || '[]');
             if (!Array.isArray(list) || !list.length) {
               var state = JSON.parse(localStorage.getItem('fake-world.wechat.chat-actions.v1') || '{}');
@@ -60,31 +80,40 @@ final class WeChatContactStore: NSObject, WKNavigationDelegate {
           } catch (e) { return '[]'; }
         })();
         """
-        webView.evaluateJavaScript(js) { [weak self] result, _ in
-            guard let self else { return }
-            let raw = (result as? String) ?? "[]"
-            let data = raw.data(using: .utf8) ?? Data()
-            let array = (try? JSONSerialization.jsonObject(with: data)) as? [[String: Any]] ?? []
-            let limited = Array(array.prefix(40))
-            let group = DispatchGroup()
-            var contacts = Array(repeating: CallSetupScreen.Contact(id: "", name: ""),
-                                 count: limited.count)
-            let lock = NSLock()
-            for (index, item) in limited.enumerated() {
-                let id = item["id"] as? String ?? ""
-                let name = item["name"] as? String ?? ""
-                let avatar = item["avatar"] as? String ?? ""
-                group.enter()
-                Self.loadAvatar(avatar) { image in
-                    lock.lock()
-                    contacts[index] = CallSetupScreen.Contact(id: id, name: name, avatar: image)
-                    lock.unlock()
-                    group.leave()
-                }
+        // 等 React 路由挂载完、__fwSyncNativeProfiles 写入 localStorage 后再读。
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak webView] in
+            guard let webView else { return }
+            webView.evaluateJavaScript(js) { [weak self] result, _ in
+                self?.handleContactsResult(result)
             }
-            group.notify(queue: .main) {
-                self.finish(contacts.filter { !$0.id.isEmpty && !$0.name.isEmpty })
+        }
+    }
+
+    private func handleContactsResult(_ result: Any?) {
+        guard !finished else { return }
+        let raw = (result as? String) ?? "[]"
+        let data = raw.data(using: .utf8) ?? Data()
+        let array = (try? JSONSerialization.jsonObject(with: data)) as? [[String: Any]] ?? []
+        CrashLog.append("WeChatContactStore raw=\(array.count)")
+        let limited = Array(array.prefix(40))
+        let group = DispatchGroup()
+        var contacts = Array(repeating: CallSetupScreen.Contact(id: "", name: ""),
+                             count: limited.count)
+        let lock = NSLock()
+        for (index, item) in limited.enumerated() {
+            let id = item["id"] as? String ?? ""
+            let name = item["name"] as? String ?? ""
+            let avatar = item["avatar"] as? String ?? ""
+            group.enter()
+            Self.loadAvatar(avatar) { image in
+                lock.lock()
+                contacts[index] = CallSetupScreen.Contact(id: id, name: name, avatar: image)
+                lock.unlock()
+                group.leave()
             }
+        }
+        group.notify(queue: .main) {
+            self.finish(contacts.filter { !$0.id.isEmpty && !$0.name.isEmpty })
         }
     }
 

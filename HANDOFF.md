@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 2.4.60：模拟来电选微信联系人、复刻微信来电页`  
-> 最新代码版本：`2.4.60 / 20100`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 2.4.61：通讯录改为 JS 导出 + 本地相册换头像`  
+> 最新代码版本：`2.4.61 / 20101`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.51 / 20091`（已通过 USB 查询确认）
 
 ---
@@ -777,6 +777,13 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
       - 76×76 圆角头像、白色姓名、「邀请你语音通话...」；
       - 底部 67 圆按钮：挂断/接听；接通后变成麦克风/挂断/扬声器，带文字标签；
       - 铃声循环 + 震动保留。
+
+77. **通讯录仍为空 / 头像换不了**
+    - 2.4.60 只读 localStorage，而且隐藏 WebView 不一定是「微」启动的服务器；2.4.61：
+      - `WeChatContactStore` 先 `LocalWebServer.shared.start` 拿真实端口，再开 `index.html#/wechat`，等 2 秒让 React 路由挂载；
+      - override JS 新增 `window.__fwGetCallContacts()`，直接复用 `collectContacts()`（allProfiles + state.contacts + DOM），返回备注名/头像；
+      - 原生优先调用这个函数，再退回 localStorage；加 `CrashLog` 记录 raw 数量便于排查；
+    - 头像替换改成本地 `QRImagePicker`，选完直接写 `state.avatarImage`，不再依赖上传接口，网络失败也能换。
 
 ---
 

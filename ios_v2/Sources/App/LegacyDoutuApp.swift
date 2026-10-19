@@ -763,10 +763,13 @@ final class Router {
             if self.host?.screen is ReceiptDetailV2Screen { return }
             // 模拟来电页的头像：选完要回填到当页 State，而不是只改个人资料。
             if let state = self.host?.state as? CallSetupScreen.State {
-                AvatarPicker.present { ok, message in
-                    state.avatarImage = ProfileStore.shared.avatar
-                    self.host?.setNeedsDisplay()
-                    self.showToast(message, ok: ok)
+                if let vc = EditPrompt.topViewController() {
+                    QRImagePicker.present(from: vc) { image in
+                        guard let image else { return }
+                        state.avatarImage = image
+                        self.host?.setNeedsDisplay()
+                        self.showToast("头像已更新", ok: true)
+                    }
                 }
                 return
             }
