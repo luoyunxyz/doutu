@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 2.4.24：银行卡两张卡之间补出参考图的缝`  
-> 最新代码版本：`2.4.24 / 20064`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 2.4.25：小支主页底部 5 格导航接进 Router`  
+> 最新代码版本：`2.4.25 / 20065`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.18 / 20058`（已通过 USB 查询确认）
 
 ---
@@ -562,6 +562,10 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
 40. **银行卡两张卡贴在一起，没有参考图的缝**
     - `.fw-bc__body` 用 `display:flex; gap:7.25px` 排列卡片；iOS 14.3 不支持 flex gap，gap 被忽略，两张卡直接贴住；
     - 2.4.24 给 `.fw-bc__card` 加 `margin-bottom:7.25px`，在卡 1/卡 2、卡 2/添加行之间补出 7.25px 灰缝，再随整页缩放。
+
+41. **小支主页底部导航点不动**
+    - `ZhiHomeV2Screen.hitTest` 在 `y >= 2560` 返回 `nav:0..4`，但 Router 的 `nav:` 分支只处理 `LicaiV2Screen/GrowthV2Screen`，ZhiHome 的令牌落到空分支，所以首页/理财/消息/我的全无反应；
+    - 2.4.25 在 Router 里补 `ZhiHomeV2Screen` 的映射：0 回顶、1 理财（黑卡进 Growth）、2 视频空、3 消息、4 我；与底栏切图 `zhi_navbar` 的 5 格顺序一致。
 
 ---
 

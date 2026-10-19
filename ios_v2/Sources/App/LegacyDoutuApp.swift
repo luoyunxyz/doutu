@@ -1203,6 +1203,28 @@ final class Router {
         // 模块内切换，这里保持 noop 并如实记录在 PORT-STATUS 里。
         case let t where t.hasPrefix("nav:"):
             let index = Int(t.dropFirst("nav:".count)) ?? -1
+            // 小支主页自己的 5 格底栏：0 支首页 / 1 理财 / 2 视频(未做) / 3 消息 / 4 我。
+            // 之前这里只处理 Licai/Growth，ZhiHome 的 nav: 令牌直接落到 default，所以
+            // 从「支」主页进小支后，底部四格全部点不动。
+            if self.host?.screen is ZhiHomeV2Screen {
+                switch index {
+                case 0:
+                    self.host?.state.scroll = 0
+                    self.host?.setNeedsDisplay()
+                case 1:
+                    if LicaiVersion.blackCard(LicaiVersion.current()) {
+                        push(GrowthV2Screen(), state: GrowthV2Screen.State())
+                    } else {
+                        push(LicaiV2Screen(), state: LicaiV2Screen.State())
+                    }
+                case 3:
+                    push(MessageScreen(), state: MessageScreen.State())
+                case 4:
+                    push(MeScreen(), state: MeScreen.State())
+                default:
+                    break                       // 2 = 视频，Android 同样是空
+                }
+            }
             if self.host?.screen is LicaiV2Screen || self.host?.screen is GrowthV2Screen {
                 switch index {
                 case 0:
