@@ -27,6 +27,10 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler, UIGestureRec
     /// 包内网页的本地 HTTP 服务（真正的 origin，ES module 才能加载）
     private var server: LocalWebServer?
     /// 待执行的路由（页面还没起来时先攥着，起来后再交过去）
+    /// 关闭后 1 秒内不允许再次 present，挡住「返回键/空白菜单那一下」穿透到首页宫格，
+    /// 导致 dismiss 后立刻又打开一个新的微主页。
+    static var lastCloseAt: Date?
+
     private var pendingRoute: String?
     private var routeRetry = 0
 
@@ -220,6 +224,12 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler, UIGestureRec
     }
 
     @objc private func closeTapped() {
+        closeHost()
+    }
+
+    /// 所有“退出整个微主页”的动作都走这里，统一记录关闭时间。
+    private func closeHost() {
+        Self.lastCloseAt = Date()
         dismiss(animated: true)
     }
 
@@ -310,7 +320,7 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler, UIGestureRec
     private func handleBlankAction(_ action: String) {
         switch action {
         case "返回APP主页":
-            dismiss(animated: true)
+            closeHost()
         case "调节字体大小":
             showFontSizeMenu()
         case "开启电脑设备登录显示":
@@ -373,7 +383,7 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler, UIGestureRec
                 || hash.contains("/wechat/pay")
                 || hash.contains("/wechat/transfer")
             if !isSubpage {
-                DispatchQueue.main.async { self.dismiss(animated: true) }
+                DispatchQueue.main.async { self.closeHost() }
                 return
             }
             self.webView.evaluateJavaScript(
@@ -389,7 +399,7 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler, UIGestureRec
                     handled = false
                 }
                 if !handled {
-                    DispatchQueue.main.async { self.dismiss(animated: true) }
+                    DispatchQueue.main.async { self.closeHost() }
                 }
             }
         }
@@ -569,8 +579,9 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler, UIGestureRec
         case "returnToAppHome":
             // 这个页面是 present 出来的，没有导航栈；Android 那边是 finish()。
             if presentingViewController != nil {
-                dismiss(animated: true)
+                closeHost()
             } else {
+                Self.lastCloseAt = Date()
                 navigationController?.popToRootViewController(animated: true)
             }
         case "hasGalleryPermission":

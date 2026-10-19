@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 2.4.63：修复微主页退出后自动重入 / 边缘返回`  
-> 最新代码版本：`2.4.63 / 20103`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 2.4.64：关闭微主页后 1 秒内禁止重入`  
+> 最新代码版本：`2.4.64 / 20104`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.51 / 20091`（已通过 USB 查询确认）
 
 ---
@@ -796,6 +796,11 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
     - 边缘返回原来无条件先问网页 `__fwHandleChatPayBack`；微主页/小微主页上它可能返回 true，导致永远不 dismiss；
     - 现在先读 `location.hash`，只有聊天/支付/转账子页面才交给网页处理，其它页面直接 dismiss；
     - 返回按钮在 `viewDidLayoutSubviews` 里 `bringSubviewToFront`，避免被 WebView / 顶栏透明命中区盖住。
+
+80. **2.4.63 仍会退出后自动打开**
+    - 用户点的是顶部空白菜单的「返回APP主页」；关闭动作结束后，触摸落点可能继续传给首页宫格的「微」，于是又 `presentWeb` 一次；
+    - 2.4.64 所有真正的退出都走 `WeChatV2Host.closeHost()`，记录 `lastCloseAt`；`presentWeb` 在关闭后 1 秒内直接 return；
+    - 覆盖：左上角返回、边缘右滑、顶部菜单「返回APP主页」、网页 bridge `returnToAppHome` 四条路径。
 
 ---
 

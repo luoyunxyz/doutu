@@ -626,6 +626,11 @@ final class Router {
     /// 全屏弹出小微主页并把路由交过去
     private func presentWeb(route: String) {
         guard let host = UpdatePrompt.topViewController() else { return }
+        // 关闭微主页后的 1 秒内忽略再次打开，挡住返回动作穿透到首页宫格。
+        if let closedAt = WeChatV2Host.lastCloseAt,
+           Date().timeIntervalSince(closedAt) < 1.0 {
+            return
+        }
         // 防止双击/连续点击把两个微主页叠在一起：返回时只 dismiss 最上面那个，
         // 下面那个会立刻露出来，看起来就像「退出后又自动进入」。
         if let existing = host as? WeChatV2Host {
