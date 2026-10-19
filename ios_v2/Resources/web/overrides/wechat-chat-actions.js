@@ -8732,6 +8732,14 @@
     const path = raw.replace(/^#/, '').split(/[?#]/)[0].replace(/\/+$/, '');
     return path === '/wechat/my' || path === '/wechat/my/index';
   }
+  // 2026-10-19: 通讯录的滚动区是 flex column，应用把每个分组/字母段当成 flex item。
+  // 默认 flex-shrink:1 会在内容超高时把所有分组压扁到几十像素，行与行叠在一起。
+  // 这里只给通讯录路由打 body 标记，由 CSS 取消分组的 shrink，让滚动区真正滚动。
+  function isContactsRoute() {
+    const raw = String(location.hash || '');
+    const path = raw.replace(/^#/, '').split(/[?#]/)[0].replace(/\/+$/, '');
+    return path === '/wechat/contacts' || path === '/wechat/contacts/index';
+  }
   function isStaticTabRoute() { return isStaticDiscoverRoute() || isStaticMyRoute(); }
   // Any element that visually belongs to a fixed-height tab (the WeChat page
   // container or the app root) must not scroll vertically.
@@ -8755,6 +8763,7 @@
     if (!document.body) return;
     document.body.classList.toggle('fw-static-discover-tab', isStaticDiscoverRoute());
     document.body.classList.toggle('fw-static-my-tab', isStaticMyRoute());
+    document.body.classList.toggle('fw-contacts-tab', isContactsRoute());
   }
   function init() {
     if (!document.body) { document.addEventListener('DOMContentLoaded', init, { once: true }); return; }

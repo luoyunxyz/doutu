@@ -3,9 +3,9 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`f5a8ea0 WeChat: self chat avatar now matches Me page`  
-> 最新代码版本：`2.2.5 / 20025`（已推送，待 Codemagic 构建）  
-> 设备当前安装：`2.2.4 / 20024`（已通过 USB 查询确认）
+> 最新提交：`本轮 2.2.6：修复通讯录行重叠`  
+> 最新代码版本：`2.2.6 / 20026`（已推送，待 Codemagic 构建）  
+> 设备当前安装：`2.2.5 / 20025`（已通过 USB 查询确认）
 
 ---
 
@@ -403,6 +403,11 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
     - 聊天页以前直接拒绝 fakeworld 并换成随机头像池，所以永远对不上；
     - 2.2.5 起所有 outgoing 头像（普通/转账/红包/通话/滑动切换）统一走 `applySelfAvatar`，复用同一个解析器并缓存结果；
     - 打开会话时先解析再画第一屏，避免先闪一张随机脸。
+
+12. **通讯录页面行与行重叠**
+    - 通讯录滚动区是 `wechat-scroll-area flex flex-col`，每个「新的朋友 / 星标 / 字母分组」都是 flex item；
+    - 内容超高时默认 `flex-shrink:1` 会把分组压扁（实测 4 行只分到 41px，行内 48px 的布局互相重叠）；
+    - 2.2.6 起按路由给 `body` 加 `fw-contacts-tab`，只对通讯录把滚动区直接子项设为 `flex:0 0 auto`，恢复分组高度并让滚动区真正滚动；其它 tab 不受影响。
 
 ---
 

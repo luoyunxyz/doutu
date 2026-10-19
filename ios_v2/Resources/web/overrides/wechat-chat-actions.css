@@ -948,6 +948,21 @@ body.fw-static-my-tab .wechat-page .wechat-scroll-area > * {
   overscroll-behavior: none !important;
 }
 
+/* 2026-10-19: 通讯录页
+   应用的通讯录滚动区是 `wechat-scroll-area flex flex-col`，每个「新的朋友 / 星标 /
+   字母分组」都是它的 flex item。内容总高度超过视口时，默认的 flex-shrink:1 会把
+   每个分组压扁（实测 4 行只分到 41px，行内 48px 的气泡互相重叠）。
+   这里只对通讯录路由取消 shrink，让分组保持内容高度，由滚动区负责滚动。
+   其它 tab（微信/发现/我）不受影响。 */
+body.fw-contacts-tab .wechat-page .wechat-scroll-area {
+  overflow-y: auto !important;
+  overscroll-behavior-y: contain !important;
+  -webkit-overflow-scrolling: touch;
+}
+body.fw-contacts-tab .wechat-page .wechat-scroll-area > * {
+  flex: 0 0 auto !important;
+}
+
 /* The My tab hides its title bar, but the app is edge-to-edge. Keep a compact
    safe-area inset so the profile header is fully visible below the status area. */
 body.fw-static-my-tab .wechat-page > .wechat-topbar { display: none !important; }
