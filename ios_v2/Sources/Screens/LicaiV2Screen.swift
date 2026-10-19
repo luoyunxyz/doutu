@@ -1,10 +1,10 @@
 import UIKit
 
-/// 鐞嗚储椤?鈥斺€?`features/zhi/ui/LicaiV2Screen.java` 鐨?1:1 绉绘锛?280脳2816锛孨AV_TOP 2560锛屽唴瀹归珮 4440锛夈€?
+/// 理财页 —— `features/zhi/ui/LicaiV2Screen.java` 的 1:1 移植（1280×2816，NAV_TOP 2560，内容高 4440）。
 ///
-/// 涓や釜鐗规畩涔嬪锛?
-/// 1. **椤堕儴钃濆簳涓嶆槸娓愬彉锛屾槸浜屾澶氶」寮忚壊褰╁満**锛氫笁涓€氶亾鍚?6 涓郴鏁帮紝鍙噰 8脳8 涓偣鐢熸垚灏忎綅鍥惧啀鎷変几閾烘弧銆?
-/// 2. **鍙睍寮€闈㈡澘**锛歚expand` 鏃舵暣椤靛鍑?PANEL_H(601)锛岄《閮ㄨ鍓尯鍙橀珮銆佷笅鏂规暣浣撲笅绉汇€?
+/// 两个特殊之处：
+/// 1. **顶部蓝底不是渐变，是二次多项式色彩场**：三个通道各 6 个系数，只采 8×8 个点生成小位图再拉伸铺满。
+/// 2. **可展开面板**：`expand` 时整页多出 PANEL_H(601)，顶部裁剪区变高、下方整体下移。
 final class LicaiV2Screen: Screen {
     var zhiTabIndex: Int? { 1 }
     let canvasSize = CGSize(width: 1280, height: 2816)
@@ -22,22 +22,22 @@ final class LicaiV2Screen: Screen {
         var hidden = false
         var expand: CGFloat = 0
         var index = ["3808.33", "12495.44", "3002.50"]
-        var indexPct = ["鈭?.14%", "鈭?.16%", "鈭?.34%"]
-        var fundName = "姹囧畨榧庡埄绾€哄€哄埜C"
+        var indexPct = ["−0.14%", "−1.16%", "−1.34%"]
+        var fundName = "汇安鼎利纯债债券C"
         var fundPct = "+5.07%"
-        var stockName = "娣遍珮閫?
+        var stockName = "深高速"
         var stockPct = "+4.32%"
-        var etfName = ["閫氫俊ET...ETF", "绉戝垱50...ETF", "鐓ょ偔ET...ETF"]
-        var etfPct = ["鈭?.38%", "鈭?.30%", "鈭?.39%"]
-        var windName = "鍒涙柊鑽?
-        var windPct = "鈭?.26%"
-        var windLine1 = "鍒涙柊鑽斂绛栧埄濂斤紝鍙犲姞AI鎶€"
-        var windLine2 = "鏈姞鎸佸偓鍖栥€?
-        var prodName = "骞村勾浜綔鎷涘晢淇＄敤娣诲埄"
+        var etfName = ["通信ET...ETF", "科创50...ETF", "煤炭ET...ETF"]
+        var etfPct = ["−3.38%", "−1.30%", "−1.39%"]
+        var windName = "创新药"
+        var windPct = "−1.26%"
+        var windLine1 = "创新药政策利好，叠加AI技"
+        var windLine2 = "术加持催化。"
+        var prodName = "年年享｜招商信用添利"
         var prodPct = "+6.56%"
     }
 
-    // MARK: - 璋冭壊鏉匡紙Java:149-166锛?
+    // MARK: - 调色板（Java:149-166）
     private let pageBg = Draw.color(0xfff2f3f7)
     private let cardColor = Draw.color(0xffffffff)
     private let ink = Draw.color(0xff23252b)
@@ -49,7 +49,7 @@ final class LicaiV2Screen: Screen {
     private let tagBg = Draw.color(0xffe4f0fc)
     private let squeeze: CGFloat = 0.93
 
-    // MARK: - 鍑犱綍锛圝ava:169-226锛?
+    // MARK: - 几何（Java:169-226）
     private let caretY: CGFloat = 515
     private let fuliTop: CGFloat = 546
     private let fuliBottom: CGFloat = 728
@@ -78,18 +78,18 @@ final class LicaiV2Screen: Screen {
     ]
     private let row1Art = ["icYuebao", "icWenjian", "icGold", "icFund", "icStock"]
     private let row2Art = ["icDingqi", "icJinjie", "icBaoxian", "icBangni", "icYanglao"]
-    private let row1Text = ["浣欓瀹?, "绋冲仴鐞嗚储", "榛勯噾", "鍩洪噾", "鑲＄エ"]
-    private let row2Text = ["瀹氭湡", "杩涢樁鐞嗚储", "淇濋櫓", "甯綘鎶?, "鍏昏€侀噾"]
+    private let row1Text = ["余额宝", "稳健理财", "黄金", "基金", "股票"]
+    private let row2Text = ["定期", "进阶理财", "保险", "帮你投", "养老金"]
     private let row1Cx: [CGFloat] = [141, 390, 639, 888, 1137]
     private let row2Cx: [CGFloat] = [143, 391, 639, 888, 1137]
     private let navX: [CGFloat] = [128, 382, 639, 898, 1151]
-    private let pills = ["鐑攢浜у搧", "鏈堟湀浜?, "瀛ｅ浜?, "骞村勾浜?]
+    private let pills = ["热销产品", "月月享", "季季享", "年年享"]
     private let pillL: [CGFloat] = [80, 372, 659, 946]
     private let pillR: CGFloat = 1201
     private let pillTop: CGFloat = 3554
     private let pillBottom: CGFloat = 3669
 
-    /// 涓夐€氶亾鐨勪簩娆＄郴鏁帮紙Java:241-245锛夛細`v = c0 + c1x + c2y + c3x虏 + c4xy + c5y虏`
+    /// 三通道的二次系数（Java:241-245）：`v = c0 + c1x + c2y + c3x² + c4xy + c5y²`
     private let headerBlue: [[CGFloat]] = [
         [34.54431, -0.0314062, 0.0169517, 0.00000517, -0.00000712, 0.00000510],
         [141.45530, -0.0532967, 0.0250387, 0.00001342, -0.00001059, 0.00000673],
@@ -128,7 +128,7 @@ final class LicaiV2Screen: Screen {
         plate = Self.buildPlate(headerBlue)
     }
 
-    /// 閲?8脳8 涓偣鐢熸垚椤堕儴鑹插僵鍦猴紙Java:289-310锛?
+    /// 采 8×8 个点生成顶部色彩场（Java:289-310）
     private static func buildPlate(_ coeffs: [[CGFloat]]) -> UIImage? {
         let n = 8
         let full = LicaiV2Screen.headerBottom + LicaiV2Screen.panelH
@@ -162,7 +162,7 @@ final class LicaiV2Screen: Screen {
         return max(0, Self.contentH + Self.panelH * s.expand - Self.H)
     }
 
-    // MARK: - 缁樺埗锛圝ava:319-346锛?
+    // MARK: - 绘制（Java:319-346）
 
     func draw(_ d: Draw, state: ScreenState) {
         let s = (state as? State) ?? State()
@@ -174,7 +174,7 @@ final class LicaiV2Screen: Screen {
 
         d.ctx.saveGState()
         d.ctx.clip(to: CGRect(x: 0, y: 0, width: Self.W, height: Self.headerBottom + off))
-        // V1/V2/V3/鎴愰暱鐗堝悇鏈夎嚜宸辩殑椤堕儴鑳屾櫙鍒囧浘锛涙櫘閫氱増鎵嶇敤娓愬彉 plate銆?
+        // V1/V2/V3/成长版各有自己的顶部背景切图；普通版才用渐变 plate。
         let theme = LicaiVersion.theme()
         if !theme.backgroundRes.isEmpty, let bg = UIImage(named: theme.backgroundRes) {
             d.art(bg, CGRect(x: 0, y: 0, width: Self.W, height: Self.headerBottom))
@@ -204,31 +204,31 @@ final class LicaiV2Screen: Screen {
         drawNav(d)
     }
 
-    /// 椤堕儴锛圝ava:375-407锛?
+    /// 顶部（Java:375-407）
     private func drawHeader(_ d: Draw, _ s: State, _ off: CGFloat) {
         d.art(art["mascot"], CGRect(x: 35, y: 158, width: 173 - 35, height: 296 - 158))
         d.art(art["searchbar"], CGRect(x: 140, y: 150, width: 1000 - 140, height: 292 - 150))
         d.art(art["search"], CGRect(x: 998, y: 156, width: 1116 - 998, height: 268 - 156))
         d.art(art["gear"], CGRect(x: 1142, y: 156, width: 1260 - 1142, height: 268 - 156))
 
-        d.text("鎬昏祫浜?鍏?", x: 45, baseline: 388, size: 45, Draw.color(0xffd6e6ff))
+        d.text("总资产(元)", x: 45, baseline: 388, size: 45, Draw.color(0xffd6e6ff))
         d.text(s.hidden ? "****" : s.total, x: 45, baseline: 498, size: 100, .white)
         d.art(art["eye"], CGRect(x: 286, y: 338, width: 374 - 286, height: 412 - 338))
         d.round(CGRect(x: 410, y: 342, width: 616 - 410, height: 406 - 342), radius: 32,
                 Draw.color(0xff1a6dd7))
         d.art(art["shield"], CGRect(x: 428, y: 344, width: 478 - 428, height: 404 - 344))
-        d.text("淇濋殰涓?, x: 488, baseline: 390, size: 42, .white)
+        d.text("保障中", x: 488, baseline: 390, size: 42, .white)
 
-        d.text("鏄ㄦ棩鏀剁泭", x: 814, baseline: 387, size: 45, Draw.color(0xffd6e6ff))
+        d.text("昨日收益", x: 814, baseline: 387, size: 45, Draw.color(0xffd6e6ff))
         d.rightText(s.hidden ? "****" : s.yesterday, right: 990, baseline: 498, size: 100, .white)
         d.rect(CGRect(x: 1017, y: 340, width: 2.5, height: 500 - 340),
                UIColor.white.withAlphaComponent(0x55 / 255.0))
-        d.text("瀹跺涵淇濋殰", x: 1069, baseline: 386, size: 45, Draw.color(0xffd6e6ff))
+        d.text("家庭保障", x: 1069, baseline: 386, size: 45, Draw.color(0xffd6e6ff))
         d.text(s.family, x: 1104, baseline: 489, size: 100, .white)
         let familyWidth = Draw.width(s.family, size: 100)
-        d.text("浠?, x: 1104 + familyWidth + 6, baseline: 486, size: 40, .white)
+        d.text("份", x: 1104 + familyWidth + 6, baseline: 486, size: 40, .white)
 
-        // 鎶樺彔绠ご锛氬睍寮€鏃舵棆杞?180掳锛圝ava:400-405锛?
+        // 折叠箭头：展开时旋转 180°（Java:400-405）
         let cy = caretY + off
         d.ctx.saveGState()
         d.ctx.translateBy(x: 639, y: cy)
@@ -243,19 +243,19 @@ final class LicaiV2Screen: Screen {
         d.ctx.restoreGState()
     }
 
-    /// 淇濋殰璧勪骇 / 棰濆害闈㈡澘锛圝ava:414-423锛?
+    /// 保障资产 / 额度面板（Java:414-423）
     private func drawPanel(_ d: Draw, _ s: State) {
-        d.text("鎴戠殑淇濋殰璧勪骇", x: 45, baseline: 638, size: 44, Draw.color(0xffd6e6ff))
-        d.text("淇濋櫓", x: 44, baseline: 776, size: 44, .white)
-        d.text("2浠藉厤璐逛繚鍗曚繚闅滀腑", x: 158, baseline: 776, size: 44, Draw.color(0xffd6e6ff))
-        d.text("鎴戠殑棰濆害", x: 45, baseline: 902, size: 44, Draw.color(0xffd6e6ff))
-        d.text("鑺卞憲", x: 44, baseline: 1041, size: 44, .white)
-        d.text("鍙敤2,710.98", x: 158, baseline: 1041, size: 44, Draw.color(0xffd6e6ff))
-        d.text("淇＄敤鍗?, x: 676, baseline: 1041, size: 44, .white)
-        d.text("2000鍏嶈垂棰濆害璧?, x: 833, baseline: 1041, size: 44, Draw.color(0xffd6e6ff))
+        d.text("我的保障资产", x: 45, baseline: 638, size: 44, Draw.color(0xffd6e6ff))
+        d.text("保险", x: 44, baseline: 776, size: 44, .white)
+        d.text("2份免费保单保障中", x: 158, baseline: 776, size: 44, Draw.color(0xffd6e6ff))
+        d.text("我的额度", x: 45, baseline: 902, size: 44, Draw.color(0xffd6e6ff))
+        d.text("花呗", x: 44, baseline: 1041, size: 44, .white)
+        d.text("可用2,710.98", x: 158, baseline: 1041, size: 44, Draw.color(0xffd6e6ff))
+        d.text("信用卡", x: 676, baseline: 1041, size: 44, .white)
+        d.text("2000免费额度起", x: 833, baseline: 1041, size: 44, Draw.color(0xffd6e6ff))
     }
 
-    /// 瀹牸鍗★紙Java:425-444锛?
+    /// 宫格卡（Java:425-444）
     private func drawGridCard(_ d: Draw, bar: Bool) {
         let box = CGRect(x: 0, y: gridTop, width: Self.W, height: gridBottom - gridTop)
         d.clipped(to: box, radius: 58) {
@@ -276,13 +276,13 @@ final class LicaiV2Screen: Screen {
         d.circle(cx: 668, cy: 1175, r: 6.5, Draw.color(0xffdedde1))
     }
 
-    /// 榛勯噾璐︽埛鍗★紙Java:446-489锛?
+    /// 黄金账户卡（Java:446-489）
     private func drawGoldCard(_ d: Draw) {
         d.round(goldCard, radius: 28, cardColor)
         d.round(CGRect(x: 78, y: 1249, width: 228 - 78, height: 1305 - 1249), radius: 10,
                 Draw.color(0xffe42838))
-        d.centerText("璐︽埛鏈嶅姟", cx: 153, baseline: 1291, size: 40, .white)
-        d.text("浣犵殑榛勯噾璐︽埛鍋滅暀鍦ㄥ紑鎴峰緢涔呬簡", x: 240, baseline: 1303, size: 53,
+        d.centerText("账户服务", cx: 153, baseline: 1291, size: 40, .white)
+        d.text("你的黄金账户停留在开户很久了", x: 240, baseline: 1303, size: 53,
                Draw.color(0xff22242a), bold: true)
 
         let bubble = CGRect(x: 105, y: 1378, width: 430 - 105, height: 1445 - 1378)
@@ -293,7 +293,7 @@ final class LicaiV2Screen: Screen {
         }
         d.path([CGPoint(x: 180, y: 1443), CGPoint(x: 197, y: 1462), CGPoint(x: 205, y: 1443)],
                fill: Draw.color(0xff0f6ff5))
-        d.centerText("鏌ョ湅浠婃棩鍥藉唴瀹炴椂閲戜环", cx: 267, baseline: 1432, size: 34, .white)
+        d.centerText("查看今日国内实时金价", cx: 267, baseline: 1432, size: 34, .white)
 
         d.art(art["goldChart"], CGRect(x: 698, y: 1316, width: 1202 - 698, height: 1502 - 1316))
 
@@ -312,23 +312,23 @@ final class LicaiV2Screen: Screen {
         d.circle(cx: 503, cy: 1476, r: 15, blue)
         d.round(CGRect(x: 757, y: 1467, width: 22, height: 18), radius: 6, Draw.color(0xffd8e5f5))
 
-        d.centerText("杩涘叆寮€鎴?, cx: 193, baseline: 1536, size: 36, deepBlue)
-        d.centerText("韬唤鏍￠獙", cx: 467, baseline: 1536, size: 36, deepBlue)
-        d.centerText("寮€鎴锋垚鍔?, cx: 770, baseline: 1536, size: 36, deepBlue)
+        d.centerText("进入开户", cx: 193, baseline: 1536, size: 36, deepBlue)
+        d.centerText("身份校验", cx: 467, baseline: 1536, size: 36, deepBlue)
+        d.centerText("开户成功", cx: 770, baseline: 1536, size: 36, deepBlue)
 
-        d.text("寮€閫氶粍閲戝疄鏃朵氦鏄撹处鎴?, x: 85, baseline: 1643, size: 43, Draw.color(0xff2f3138))
+        d.text("开通黄金实时交易账户", x: 85, baseline: 1643, size: 43, Draw.color(0xff2f3138))
         d.round(CGRect(x: 985, y: 1580, width: 215, height: 88), radius: 44, blue)
-        d.centerText("鍘诲紑鎴?, cx: 1092, baseline: 1649, size: 48, .white, bold: true)
+        d.centerText("去开户", cx: 1092, baseline: 1649, size: 48, .white, bold: true)
     }
 
-    /// 鑷€夊崱杞挱锛圝ava:491-505锛?
+    /// 自选卡轮播（Java:491-505）
     private func drawCarousel(_ d: Draw, _ s: State) {
         d.round(CGRect(x: -550, y: carouselTop, width: 30 - (-550), height: carouselBottom - carouselTop),
                 radius: 27, cardColor)
-        // Java 鐨?drawArt 鍙傛暟鏄?(left, top, right, bottom)锛涜繖閲屽搴?CGRect 鐨?
-        // width/height 蹇呴』浼犮€屽銆侀珮銆嶏紝涓嶈兘鍐嶄紶 right/bottom銆?
-        // 涔嬪墠浼犳垚 57+585 / 1742+461锛屽浘鐗囪鏀惧ぇ鍒?642脳2203 骞朵笖鍙湶鍑哄乏涓婅锛?
-        // 鐪熸満琛ㄧ幇灏辨槸銆屽熀閲戣嚜閫夈€嶈窇鍒板崱鐗囦腑闂淬€佽蛋鍔垮浘鍜屽姞鑷€夋寜閽叏涓嶈銆?
+        // Java 的 drawArt 参数是 (left, top, right, bottom)；这里对应 CGRect 的
+        // width/height 必须传「宽、高」，不能再传 right/bottom。
+        // 之前传成 57+585 / 1742+461，图片被放大到 642×2203 并且只露出左上角，
+        // 真机表现就是「基金自选」跑到卡片中间、走势图和加自选按钮全不见。
         d.art(art["cardFund"], CGRect(x: 57, y: carouselY, width: carouselCardW,
                                       height: 461))
         d.art(art["cardStock"], CGRect(x: 669, y: carouselY, width: carouselCardW,
@@ -336,16 +336,16 @@ final class LicaiV2Screen: Screen {
 
         d.text(s.fundName, x: 100, baseline: 1851, size: 50, ink, bold: true)
         d.text(s.fundPct, x: 99, baseline: 1934, size: 56, red, bold: true)
-        d.text("杩戜竴骞村噣鍊煎闀?, x: 100, baseline: 2003, size: 43, muted)
+        d.text("近一年净值增长", x: 100, baseline: 2003, size: 43, muted)
 
         let nx = 705 + Draw.width(s.stockName, size: 50, bold: true)
         d.text(s.stockName, x: 705, baseline: 1851, size: 50, ink, bold: true)
         d.text(s.stockPct, x: nx + 16, baseline: 1851, size: 47, red, bold: true)
         d.text(s.stockPct, x: 704, baseline: 1929, size: 56, red, bold: true)
-        d.text("鏈€澶ф定骞?, x: 705, baseline: 2001, size: 43, muted)
+        d.text("最大涨幅", x: 705, baseline: 2001, size: 43, muted)
     }
 
-    /// 琛屾儏闈㈡澘锛圝ava:507-534锛?
+    /// 行情面板（Java:507-534）
     private func drawBoard(_ d: Draw, _ s: State) {
         d.clipped(to: board, radius: 30) {
             d.gradient(board, from: Draw.color(0xffdceefe), to: Draw.color(0xfffbfbfb),
@@ -376,24 +376,24 @@ final class LicaiV2Screen: Screen {
     }
 
     private static func indexLabel(_ i: Int) -> String {
-        i == 0 ? "涓婅瘉鎸囨暟" : (i == 1 ? "娣辫瘉鎴愭寚" : "鍒涗笟鏉挎寚")
+        i == 0 ? "上证指数" : (i == 1 ? "深证成指" : "创业板指")
     }
 
-    /// 椤电鏉★紙Java:540-547锛?
+    /// 页签条（Java:540-547）
     private func drawTabs(_ d: Draw) {
         let band = CGRect(x: 0, y: tabBottom, width: Self.W, height: 3540 - tabBottom)
         d.gradient(band, from: Draw.color(0xfffcfcfc), to: pageBg, vertical: true)
         d.art(art["tabbar"], CGRect(x: 0, y: tabTop, width: Self.W, height: tabBottom - tabTop))
     }
 
-    /// 瀹夌ǔ鐞嗚储锛圝ava:549-588锛?
+    /// 安稳理财（Java:549-588）
     private func drawSteadySection(_ d: Draw, _ s: State) {
         d.clipped(to: steadyCard, radius: 28) {
             d.gradient(steadyCard, from: Draw.color(0xffe7ecfd), to: .white, vertical: true)
         }
         d.art(art["steadyMark"], CGRect(x: 540, y: 3374, width: 1242 - 540, height: 3512 - 3374))
-        d.text("瀹夌ǔ鐞嗚储", x: 99, baseline: 3488, size: 59, ink, bold: true)
-        d.text("涓绘姇鍊哄埜路娉㈠姩灏徛锋敹鐩婄ǔ", x: 388, baseline: 3489, size: 50, Draw.color(0xff5e5f63))
+        d.text("安稳理财", x: 99, baseline: 3488, size: 59, ink, bold: true)
+        d.text("主投债券·波动小·收益稳", x: 388, baseline: 3489, size: 50, Draw.color(0xff5e5f63))
         chevron(d, x: 1187, cy: 3465, color: Draw.color(0xff8a8f99))
 
         for (i, pill) in pills.enumerated() {
@@ -414,13 +414,13 @@ final class LicaiV2Screen: Screen {
                       Draw.color(0xffc3c9d4), width: 2.5)
         d.rect(CGRect(x: plusX + 15, y: 3773, width: 22, height: 4), Draw.color(0xff8d949f))
         d.rect(CGRect(x: plusX + 24, y: 3764, width: 4, height: 22), Draw.color(0xff8d949f))
-        tag(d, left: 645, top: 3750, "瓒?0涓囦汉鍏虫敞", size: 32)
-        tag(d, left: 890, top: 3750, "閾惰绯?, size: 32)
+        tag(d, left: 645, top: 3750, "超10万人关注", size: 32)
+        tag(d, left: 890, top: 3750, "银行系", size: 32)
 
         d.text(s.prodPct, x: 98, baseline: 3932, size: 62, red, bold: true)
-        d.text("杩戜竴骞村噣鍊煎闀?, x: 99, baseline: 3980, size: 43, muted)
-        d.text("鐏垫椿鐢宠祹", x: 583, baseline: 3939, size: 61, ink, bold: true)
-        d.text("10鍏冭捣璐?锝?涓綆椋庨櫓 锝?鍊哄埜鍩洪噾", x: 583, baseline: 3983, size: 42, muted)
+        d.text("近一年净值增长", x: 99, baseline: 3980, size: 43, muted)
+        d.text("灵活申赎", x: 583, baseline: 3939, size: 61, ink, bold: true)
+        d.text("10元起购 ｜ 中低风险 ｜ 债券基金", x: 583, baseline: 3983, size: 42, muted)
     }
 
     private func tag(_ d: Draw, left: CGFloat, top: CGFloat, _ label: String, size: CGFloat) {
@@ -430,13 +430,13 @@ final class LicaiV2Screen: Screen {
                      Draw.color(0xff1677ff))
     }
 
-    /// 搴曢儴瀵艰埅锛圝ava:597-610锛?
+    /// 底部导航（Java:597-610）
     private func drawNav(_ d: Draw) {
         d.art(art["navbar"], CGRect(x: 0, y: Self.navTop, width: Self.W, height: Self.H - Self.navTop))
         d.art(art["navHome"], CGRect(x: 20, y: 2560, width: 245 - 20, height: 2816 - 2560))
         d.rect(CGRect(x: 340, y: 2584, width: 426 - 340, height: 2732 - 2584),
                Draw.color(0xfffafbff))
-        // 閫変腑鎬佸繀椤绘煋鎴愪富棰樿摑锛涚洿鎺ョ敾 lci_nav_licai 鏄湭閫変腑鐨勬繁鐏般€?
+        // 选中态必须染成主题蓝；直接画 lci_nav_licai 是未选中的深灰。
         let navLicai = art["navLicai"]?.withTintColor(Draw.color(0xff1677ff), renderingMode: .alwaysOriginal)
             ?? art["navLicai"]
         d.art(navLicai, CGRect(x: 340, y: 2584, width: 426 - 340, height: 2732 - 2584))
@@ -454,7 +454,7 @@ final class LicaiV2Screen: Screen {
         d.ctx.restoreGState()
     }
 
-    // MARK: - 鍛戒腑锛圝ava:615-708锛?
+    // MARK: - 命中（Java:615-708）
 
     func hitTest(_ state: ScreenState, x: CGFloat, y: CGFloat) -> ActionToken {
         let s = (state as? State) ?? State()
@@ -528,10 +528,10 @@ final class LicaiV2Screen: Screen {
     }
 }
 
-// MARK: - 鍙紪杈戯紙鐐规暟瀛楀脊杈撳叆妗嗭級
+// MARK: - 可编辑（点数字弹输入框）
 
 extension LicaiV2Screen.State: EditableState {
-    /// 閿悕涓?Java 鐨?`State.KEYS` 涓€鑷达紙椤哄簭涔熶竴鑷达級
+    /// 键名与 Java 的 `State.KEYS` 一致（顺序也一致）
     private static let editKeys = [
         "total", "yesterday", "family",
         "idx0", "idx1", "idx2", "idxp0", "idxp1", "idxp2",
@@ -541,23 +541,23 @@ extension LicaiV2Screen.State: EditableState {
         "prodName", "prodPct",
     ]
 
-    /// 涓?Java 鐨?`State.TITLES` 閫愭潯瀵瑰簲
+    /// 与 Java 的 `State.TITLES` 逐条对应
     private static let editTitles = [
-        "缂栬緫鎬昏祫浜?, "缂栬緫鏄ㄦ棩鏀剁泭", "缂栬緫瀹跺涵淇濋殰浠芥暟",
-        "缂栬緫涓婅瘉鎸囨暟", "缂栬緫娣辫瘉鎴愭寚", "缂栬緫鍒涗笟鏉挎寚",
-        "缂栬緫涓婅瘉娑ㄨ穼骞?, "缂栬緫娣辫瘉娑ㄨ穼骞?, "缂栬緫鍒涗笟鏉挎定璺屽箙",
-        "缂栬緫鍩洪噾鍚嶇О", "缂栬緫鍩洪噾娑ㄥ箙", "缂栬緫鑲＄エ鍚嶇О", "缂栬緫鑲＄エ娑ㄥ箙",
-        "缂栬緫ETF绗?鍚?, "缂栬緫ETF绗?鍚?, "缂栬緫ETF绗?鍚?,
-        "缂栬緫ETF绗?娑ㄥ箙", "缂栬緫ETF绗?娑ㄥ箙", "缂栬緫ETF绗?娑ㄥ箙",
-        "缂栬緫椋庡彛鍚嶇О", "缂栬緫椋庡彛娑ㄥ箙", "缂栬緫椋庡彛璇存槑绗竴琛?, "缂栬緫椋庡彛璇存槑绗簩琛?,
-        "缂栬緫浜у搧鍚嶇О", "缂栬緫浜у搧娑ㄥ箙",
+        "编辑总资产", "编辑昨日收益", "编辑家庭保障份数",
+        "编辑上证指数", "编辑深证成指", "编辑创业板指",
+        "编辑上证涨跌幅", "编辑深证涨跌幅", "编辑创业板涨跌幅",
+        "编辑基金名称", "编辑基金涨幅", "编辑股票名称", "编辑股票涨幅",
+        "编辑ETF第1名", "编辑ETF第2名", "编辑ETF第3名",
+        "编辑ETF第1涨幅", "编辑ETF第2涨幅", "编辑ETF第3涨幅",
+        "编辑风口名称", "编辑风口涨幅", "编辑风口说明第一行", "编辑风口说明第二行",
+        "编辑产品名称", "编辑产品涨幅",
     ]
 
     func editTitle(_ key: String) -> String {
         if let index = Self.editKeys.firstIndex(of: key), index < Self.editTitles.count {
             return Self.editTitles[index]
         }
-        return "缂栬緫" + key
+        return "编辑" + key
     }
 
     func editValue(_ key: String) -> String {

@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 2.4.27：宿主统一绘制支模块五格底栏`  
-> 最新代码版本：`2.4.27 / 20067`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 2.4.28：修复 2.4.27 中文注释编码，保留宿主统一底栏`  
+> 最新代码版本：`2.4.28 / 20068`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.18 / 20058`（已通过 USB 查询确认）
 
 ---
@@ -576,6 +576,10 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
     - 根因是每个页面自己画底栏：`GrowthV2Screen.drawNav` 只画 `art["nav"]`，资产缺失/被内容盖住时整根消失；页面之间选中态也各画各的，Router 还要逐屏补 `nav:`；
     - 2.4.27 改成 **宿主统一底栏**：`Screen` 新增 `zhiTabIndex`，ZhiHome=0、Licai/Growth=1、Message=3、Me=4；`ScreenHostView.draw` 在页面绘制后统一覆盖一根 1280×256 的底栏（白底、五格、选中项染 #1677ff、home indicator）；
     - 命中也在宿主层优先拦截 `y>=2560`，不再依赖各页面自己的 `hitTest`；这样财富页、消息页、我的页、支首页都共用同一根底栏，选中态和切换都一致。
+
+44. **2.4.27 中文编码事故**
+    - 用 PowerShell 批量插 `zhiTabIndex` 时按 ANSI 读写，把 Growth/Licai/Message/Me 的中文注释和字符串写成了乱码；
+    - 2.4.28 已从 ba2b6f5 恢复这些文件，再用 edit 工具重新插入 `zhiTabIndex`；宿主底栏、Router、主题背景都保留。
 
 ---
 

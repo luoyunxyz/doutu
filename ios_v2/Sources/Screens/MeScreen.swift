@@ -1,39 +1,39 @@
 import UIKit
 
-/// 鎴戠殑锛堝皬鏀富椤电殑銆屾垜鐨勩€嶉〉锛夆€斺€?`features/zhi/ui/MeScreen.java` 鐨?1:1 绉绘銆?
+/// 我的（小支主页的「我的」页）—— `features/zhi/ui/MeScreen.java` 的 1:1 移植。
 ///
-/// 绉绘瑕佺偣锛堝鐓?Java 婧愮爜閫愭鎶勶紝娉ㄩ噴閲屾爣浜?Java 琛屽彿浠ヤ究鏍稿锛夛細
-///   - 鍙傝€冪敾甯?W=1280 H=2816锛屽唴瀹归珮 CONTENT_H=4067锛屽簳閮ㄥ鑸粠 NAV_TOP=2560 寮€濮?
-///   - 椤甸潰搴曡壊 PAGE_BG锛屽崱鐗囥€乥anner銆佸ご鍍忕瓑鏄綅鍥撅紙鏉ヨ嚜 Android 鐨?res/drawable锛?
-///   - 椤堕儴鍥涗釜鎸夐挳锛堣繑鍥?鑰虫満/榻胯疆/绠ご锛夈€佸ご鍍忋€佸悕瀛椼€佹墜鏈哄彿鑳跺泭閮芥槸杩欓噷鐢荤殑
-///   - 搴曢儴瀵艰埅鐢?5 鏍硷細娑堟伅 / 閫氳褰?/ 鍙戠幇 / 鎴戯紙鍏朵腑涓ゆ牸鏇挎崲鎴愭湰椤电殑閫変腑鎬侊級
+/// 移植要点（对照 Java 源码逐段抄，注释里标了 Java 行号以便核对）：
+///   - 参考画布 W=1280 H=2816，内容高 CONTENT_H=4067，底部导航从 NAV_TOP=2560 开始
+///   - 页面底色 PAGE_BG，卡片、banner、头像等是位图（来自 Android 的 res/drawable）
+///   - 顶部四个按钮（返回/耳机/齿轮/箭头）、头像、名字、手机号胶囊都是这里画的
+///   - 底部导航用 5 格：消息 / 通讯录 / 发现 / 我（其中两格替换成本页的选中态）
 final class MeScreen: Screen {
     var zhiTabIndex: Int? { 4 }
-    // MARK: - 鍙傝€冪敾甯冿紙Java MeScreen.java:30-34锛?
+    // MARK: - 参考画布（Java MeScreen.java:30-34）
     let canvasSize = CGSize(width: 1280, height: 2816)
     static let W: CGFloat = 1280
     static let H: CGFloat = 2816
     static let NAV_TOP: CGFloat = 2560
     static let CONTENT_H: CGFloat = 4067
 
-    /// 椤甸潰鐘舵€侊紙Java 鐨?MeScreen.State锛?
+    /// 页面状态（Java 的 MeScreen.State）
     final class State: ScreenState {
-        /// 銆屽畬鎴愯韩浠姐€嶆í骞呭彲鐢ㄥ畠鑷繁鐨?脳 鍏虫帀
+        /// 「完成身份」横幅可用它自己的 × 关掉
         var banner = true
     }
 
-    // MARK: - 璋冭壊鏉匡紙Java:44-48锛?
+    // MARK: - 调色板（Java:44-48）
     private let pageBg = Draw.color(0xfff2f3f7)
     private let barBg = Draw.color(0xfffafbff)
     private let phonePill = Draw.color(0xffe3ecf6)
     private let phoneInk = Draw.color(0xff2e4162)
     private let nameInk = Draw.color(0xff27292d)
 
-    /// 鏂囧瓧妯悜鎷変几鏍″噯锛圝ava:51-52锛屾寜鍙傝€冨浘閫愭閲忓嚭鏉ョ殑锛?
+    /// 文字横向拉伸校准（Java:51-52，按参考图逐段量出来的）
     private let sxName: CGFloat = 1.020
     private let sxPhone: CGFloat = 1.000
 
-    // MARK: - 鍑犱綍锛圝ava:55-103锛?
+    // MARK: - 几何（Java:55-103）
     private let plateH: CGFloat = 700
     private let blackHeaderH: CGFloat = 620
 
@@ -60,23 +60,23 @@ final class MeScreen: Screen {
 
     private let cardLeft: CGFloat = 28
     private let cardRight: CGFloat = 1250
-    /// 8 寮犳湇鍔″崱鐨勪笂涓嬭竟鐣岋紙鍐呭鍧愭爣锛孞ava:84-86锛?
+    /// 8 张服务卡的上下边界（内容坐标，Java:84-86）
     private let cards: [(CGFloat, CGFloat)] = [
         (698, 841), (878, 1303), (1341, 1484), (1521, 2123),
         (2161, 2665), (2702, 3089), (3126, 3513), (3550, 3937),
     ]
 
-    /// 璧勪骇鍗＄殑 4 琛岋紙Java:91-93锛?
+    /// 资产卡的 4 行（Java:91-93）
     private let assetTop: CGFloat = 1540
     private let assetRowH: CGFloat = 153.5
 
-    /// 鍥炬爣缃戞牸鐨勫洓鍒椾腑蹇冿紙Java:96-97锛?
+    /// 图标网格的四列中心（Java:96-97）
     private let gridCx: [CGFloat] = [180, 486, 792, 1098]
     private let gridColW: CGFloat = 306
 
-    // MARK: - 浣嶅浘
+    // MARK: - 位图
 
-    /// 涓?Android res/drawable 鐨勬槧灏勶細杩欓噷鐢ㄨ祫婧愬悕鍙栧浘锛宍Assets.swift` 閲岀櫥璁般€?
+    /// 与 Android res/drawable 的映射：这里用资源名取图，`Assets.swift` 里登记。
     private static let artNames = [
         "plate": "me_bgplate", "backOld": "me_backold", "headset": "me_headset",
         "gear": "me_gear", "headChevron": "me_chevron", "avatar": "me_avatar",
@@ -88,7 +88,7 @@ final class MeScreen: Screen {
     ]
     private var art: [String: UIImage] = [:]
 
-    /// 璧勬枡锛堝搴?Android 鐨?ProfileStore锛氬悕瀛椼€佹墜鏈哄彿銆佸ご鍍忥級
+    /// 资料（对应 Android 的 ProfileStore：名字、手机号、头像）
     private let profile: ProfileStore
 
     init(profile: ProfileStore = .shared) {
@@ -98,25 +98,25 @@ final class MeScreen: Screen {
         }
     }
 
-    // MARK: - 婊氬姩锛圝ava:137-139锛?
+    // MARK: - 滚动（Java:137-139）
 
     func maxScroll(_ state: ScreenState) -> CGFloat {
         max(0, Self.CONTENT_H - Self.NAV_TOP)
     }
 
-    // MARK: - 缁樺埗锛圝ava:143-168锛?
+    // MARK: - 绘制（Java:143-168）
 
     func draw(_ d: Draw, state: ScreenState) {
         let s = (state as? State) ?? State()
         let blackCard = LicaiVersion.blackCard(LicaiVersion.current())
 
-        // Java:147 鈥斺€?鍏堥摵鏁撮〉搴曠伆
+        // Java:147 —— 先铺整页底灰
         d.rect(CGRect(x: 0, y: 0, width: Self.W, height: Self.H), pageBg)
 
         d.ctx.saveGState()
         d.ctx.translateBy(x: 0, y: -s.scroll)
 
-        // Java:150-158 椤堕儴澶у浘锛堥粦鍗＄毊鑲?or 鏅€氬簳鏉匡級
+        // Java:150-158 顶部大图（黑卡皮肤 or 普通底板）
         if blackCard {
             headerPlate(d, "blackBackground", artHeight: blackHeaderH, bottom: plateH)
         } else if let plate = art["plate"] {
@@ -128,7 +128,7 @@ final class MeScreen: Screen {
         if s.banner {
             d.art(art["banner"], bannerRect)
         }
-        // Java:163-165 鍏紶鏈嶅姟鍗?
+        // Java:163-165 八张服务卡
         for (i, card) in cards.enumerated() {
             d.art(art["card\(i + 1)"], CGRect(x: cardLeft, y: card.0,
                                               width: cardRight - cardLeft, height: card.1 - card.0))
@@ -144,7 +144,7 @@ final class MeScreen: Screen {
         let height = min(bottom, artHeight)
         d.art(bitmap, CGRect(x: 0, y: 0, width: Self.W, height: height + 2))
         if height + 1 >= bottom { return }
-        // 浣嶅浘鏈€鍚庝竴琛屽欢浼稿埌鍗＄墖椤堕儴锛岀洊浣忚繃婊ゆ畫鐣欑殑娴呰壊鎺ョ紳锛圝ava:187-189锛?
+        // 位图最后一行延伸到卡片顶部，盖住过滤残留的浅色接缝（Java:187-189）
         let srcW = bitmap.size.width * bitmap.scale
         let srcH = bitmap.size.height * bitmap.scale
         _ = (srcW, srcH)
@@ -159,7 +159,7 @@ final class MeScreen: Screen {
         drawTinted(d, "gear", gear, tint)
         drawTinted(d, "headChevron", headChevron, tint)
 
-        // 澶村儚锛氫紭鍏堢敤鐢ㄦ埛璁剧疆鐨勫ご鍍忥紝娌℃湁灏辩敤绱犳潗榛樿鍥?
+        // 头像：优先用用户设置的头像，没有就用素材默认图
         let avatarImage = profile.avatar ?? art["avatar"]
         d.clipped(to: avatar, radius: avatarRadius) {
             d.art(avatarImage, avatar)
@@ -172,7 +172,7 @@ final class MeScreen: Screen {
                      phoneInk, sx: sxPhone)
     }
 
-    /// 甯︾潃鑹茬殑浣嶅浘锛堝搴?Java 鐨?PorterDuffColorFilter SRC_IN锛?
+    /// 带着色的位图（对应 Java 的 PorterDuffColorFilter SRC_IN）
     private func drawTinted(_ d: Draw, _ name: String, _ r: CGRect, _ tint: UIColor?) {
         guard let image = art[name] else { return }
         guard let tint else { d.art(image, r); return }
@@ -194,12 +194,12 @@ final class MeScreen: Screen {
         _ = blackCard
     }
 
-    // MARK: - 鍛戒腑娴嬭瘯锛圝ava:242-316锛屽垎鏀『搴忓繀椤讳笌 Java 瀹屽叏涓€鑷达級
+    // MARK: - 命中测试（Java:242-316，分支顺序必须与 Java 完全一致）
 
     func hitTest(_ state: ScreenState, x: CGFloat, y: CGFloat) -> ActionToken {
         let s = (state as? State) ?? State()
 
-        // 搴曢儴瀵艰埅锛? 鏍硷紝鍙栨渶杩戠殑鍒楀績锛圝ava:243锛?
+        // 底部导航：5 格，取最近的列心（Java:243）
         if y >= Self.NAV_TOP {
             let centers: [CGFloat] = [128, 382, 639, 898, 1151]
             var best = 0
@@ -208,25 +208,25 @@ final class MeScreen: Screen {
                 bestD = abs(c - x)
                 best = i
             }
-            if best == 3 { return "nav:3" }   // 鏈〉閫変腑椤?
+            if best == 3 { return "nav:3" }   // 本页选中项
             return "nav:\(best)"
         }
 
         let cy = y + s.scroll
 
-        // 椤堕儴韬唤鍖猴紙Java:246-255锛?
+        // 顶部身份区（Java:246-255）
         if cy < 540 {
             if cy > 160 && cy < 280 {
                 if x >= backOld.minX - 20 && x <= backOld.maxX + 20 { return "noop" }
                 if x >= headset.minX - 20 && x <= headset.maxX + 10 { return "noop" }
                 if x >= gear.minX - 10 { return "noop" }
             }
-            // 鏁存潯韬唤琛岋紙澶村儚銆佸悕瀛椼€佹墜鏈哄彿锛夐兘杩涗釜浜轰俊鎭?
+            // 整条身份行（头像、名字、手机号）都进个人信息
             if x >= 60 && x <= 1110 { return "profile" }
             return "noop"
         }
 
-        // 瀹屾垚韬唤妯箙锛圝ava:256-260锛?
+        // 完成身份横幅（Java:256-260）
         if cy >= bannerRect.minY && cy <= bannerRect.maxY {
             if x >= bannerDone.minX && x <= bannerDone.maxX { return "noop" }
             if x >= bannerClose.minX && x <= bannerClose.maxX { return "bannerClose" }
@@ -237,10 +237,10 @@ final class MeScreen: Screen {
         if cy <= cards[0].1 { return "noop" }
         if cy <= cards[1].1 { return "noop" }
 
-        // 璐﹀崟鍗?鈫?璐﹀崟椤碉紙Java:269锛?
+        // 账单卡 → 账单页（Java:269）
         if cy <= cards[2].1 { return "bills" }
 
-        // 璧勪骇鍗＄殑鍥涜锛圝ava:270-279锛?
+        // 资产卡的四行（Java:270-279）
         if cy <= cards[3].1 {
             var row = Int((cy - assetTop) / assetRowH)
             row = max(0, min(3, row))
@@ -253,7 +253,7 @@ final class MeScreen: Screen {
             }
         }
 
-        // 鍚庨潰鍥涘紶鍗＄殑鍥炬爣缃戞牸锛欽ava 閲?grid() 鐩墠涓€寰嬭繑鍥?noop锛堝皻鏈帴鍔熻兘锛?
+        // 后面四张卡的图标网格：Java 里 grid() 目前一律返回 noop（尚未接功能）
         if cy <= cards[4].1 { return "noop" }
         if cy <= cards[5].1 { return cy < 2830 ? "noop" : "noop" }
         if cy <= cards[6].1 { return cy < 3255 ? "noop" : "noop" }
