@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 2.4.33：把 zhiTabIndex 提升为 protocol 要求`  
-> 最新代码版本：`2.4.33 / 20073`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 2.4.34：V1/V2/V3 切换后要求退出重开`  
+> 最新代码版本：`2.4.34 / 20074`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.32 / 20072`（已通过 USB 查询确认）
 
 ---
@@ -607,6 +607,11 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
       `SCREEN GrowthV2Screen zhi=nil bounds=(0,0,390,844)`
     - `zhiTabIndex` 之前只写在 `extension Screen` 里，没有写进 `protocol Screen` 的声明；通过 `Screen` 存在类型访问时，Swift 永远拿扩展默认的 nil，GrowthV2 类里的 `{ 1 }` 完全不参与动态派发；
     - 2.4.33 把 `var zhiTabIndex: Int? { get }` 提升为 protocol 要求，扩展仍保留默认 nil；这样 GrowthV2/Licai/Message/Me 的实现才会真正被调用，底栏 idx 不再恒 nil。
+
+50. **V1/V2/V3 原地切换残留**
+    - 五档主题的背景、卡面、铭牌、底栏资产差异大，原地 `setNeedsDisplay` 会残留上一套图层，视觉问题很大；
+    - 2.4.34 选择主题后不再原地重绘，直接弹「主题已切换 / 请退出并重新打开 App」，点「退出 App」执行 `exit(0)`；下次启动 `LicaiVersion.current()` 按新主题完整绘制；
+    - `VersionPicker.requireRestart()` 延迟 0.25s 等 action sheet 收起后弹 alert，避免 presentation 冲突。
 
 ---
 

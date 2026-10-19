@@ -862,11 +862,10 @@ final class Router {
                 self.host?.setNeedsDisplay()
             }
         case "version":
-            // 理财主题选择（五档）。选完立刻重绘：黑卡主题会换掉「我的」页、消息页、
-            // 支首页的配色与图标，所以不只当前页要重画。
+            // 理财主题选择（五档）。V1/V2/V3 的背景、卡面、铭牌差异太大，原地重绘会残留
+            // 上一套资产；选择后统一要求退出重开，下次启动按新主题完整绘制。
             VersionPicker.present { _ in
-                self.host?.setNeedsDisplay()
-                NotificationCenter.default.post(name: .doutuThemeChanged, object: nil)
+                VersionPicker.requireRestart()
             }
         case "licai":
             push(LicaiV2Screen(), state: LicaiV2Screen.State())

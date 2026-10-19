@@ -1,4 +1,5 @@
 import UIKit
+import Darwin
 
 extension Notification.Name {
     /// 理财主题变了 —— 「我的」页 / 消息页 / 支首页 的配色与图标要跟着换
@@ -47,5 +48,25 @@ enum VersionPicker {
         }
         presented = sheet
         host.present(sheet, animated: true)
+    }
+
+    /// 主题切换后不尝试原地重绘（V1/V2/V3 的资产/布局差异太大，原地切换会残留上一套
+    /// 背景、卡面、底栏），直接要求用户退出重开，下次启动按新主题完整绘制。
+    static func requireRestart() {
+        guard let host = EditPrompt.topViewController() else { return }
+        let alert = UIAlertController(
+            title: "主题已切换",
+            message: "请退出并重新打开 App，新的理财主题会在重启后完整生效。",
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "退出 App", style: .destructive) { _ in
+            CrashLog.append("THEME restart required, exiting")
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                exit(0)
+            }
+        })
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+            host.present(alert, animated: true)
+        }
     }
 }
