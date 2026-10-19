@@ -79,6 +79,15 @@ final class ProfileStore {
 
 // MARK: - 理财皮肤版本（对应 Android 的 LicaiVersion）
 
+/// 「撩妹加 V」开关：原生 Router 和微网页的扫一扫提示共用。
+enum TeaseStore {
+    private static let key = "play.tease.enabled"
+    static var enabled: Bool {
+        get { UserDefaults.standard.bool(forKey: key) }
+        set { UserDefaults.standard.set(newValue, forKey: key) }
+    }
+}
+
 // MARK: - 路由（动作令牌 → 页面）
 
 /// 动作令牌到页面的分发。
@@ -102,7 +111,7 @@ final class Router {
     private weak var accountSoundScreen: AccountSoundScreen?
     private weak var customerServiceScreen: CustomerServiceScreen?
     /// 「撩妹加 V」开关（Android 存在配置里，没有独立页面）
-    private var teaseEnabled = false
+    private var teaseEnabled = TeaseStore.enabled
 
     init(host: ScreenHostView) {
         self.host = host
@@ -166,6 +175,7 @@ final class Router {
             // 这里必须同时改 playbook 原始行里的 enabled，否则页面重画后开关又回到关闭态。
             let next = !(currentPlaybookSwitch("tease") ?? teaseEnabled)
             teaseEnabled = next
+            TeaseStore.enabled = next
             setPlaybookSwitch("tease", enabled: next)
             host?.setNeedsDisplay()
             showToast(next ? "已开启撩妹加 V" : "已关闭撩妹加 V", ok: true)
@@ -184,14 +194,17 @@ final class Router {
         } else {
             sections = nil
         }
-        guard let sections else { return nil }
+        guard let sections else {
+            return key == "tease" ? TeaseStore.enabled : nil
+        }
         for section in sections {
             for row in (section["rows"] as? [[String: Any]] ?? [])
             where (row["key"] as? String) == key {
-                return row["enabled"] as? Bool ?? false
+                return row["enabled"] as? Bool
+                    ?? (key == "tease" ? TeaseStore.enabled : false)
             }
         }
-        return nil
+        return key == "tease" ? TeaseStore.enabled : nil
     }
 
     /// 写回娱乐页开关行，保证点击后立即反映到重绘的开关上。

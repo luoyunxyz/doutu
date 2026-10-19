@@ -4075,7 +4075,7 @@
 
   /** 「扫一扫」在摄像头坏了的时候弹的那一句。 */
   function openCameraBrokenDialog() {
-    makeDialog('摄像头不可用', '检测到摄像头硬件损坏，扫一扫功能暂时无法使用。', '', [
+    makeDialog('扫一扫不可用', '摄像头物理损坏，无法使用扫一扫功能。', '', [
       { label: '我知道了', primary: true, onClick: () => closeOverlay() },
     ]);
   }

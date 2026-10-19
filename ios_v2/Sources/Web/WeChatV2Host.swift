@@ -130,6 +130,13 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler, UIGestureRec
         """, injectionTime: .atDocumentEnd, forMainFrameOnly: true)
         config.userContentController.addUserScript(headerRoute)
 
+        // 「撩妹加 V」开着时，网页里的扫一扫要直接弹摄像头损坏提示。
+        let scanFlag = WKUserScript(
+            source: "window.__fwScanDisabled = \(TeaseStore.enabled ? "true" : "false");",
+            injectionTime: .atDocumentStart,
+            forMainFrameOnly: true)
+        config.userContentController.addUserScript(scanFlag)
+
         // 真正的 origin：Android 用 `https://fake-world.local` + shouldInterceptRequest，
         // iOS 这边用 127.0.0.1 回环 HTTP。自定义 scheme 下 ES module 会被 CORS 拒绝，
         // 页面只剩经典脚本渲染的外壳（微信标题栏 + “Windows 微信已登录”，下面全白）。
@@ -164,6 +171,13 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler, UIGestureRec
         pendingRoute = route
         routeRetry = 0
         deliverPendingRouteIfReady()
+    }
+
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        webView?.evaluateJavaScript(
+            "window.__fwScanDisabled = \(TeaseStore.enabled ? "true" : "false");",
+            completionHandler: nil)
     }
 
     override func viewDidLayoutSubviews() {
@@ -589,7 +603,7 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler, UIGestureRec
         case "getGalleryItems":
             reply(callbackId, "[]")
         case "isScanDisabled":
-            reply(callbackId, false)
+            reply(callbackId, TeaseStore.enabled)
         case "wechatPlus":
             showWeChatPlusMenu()
         case "wechatSearch":
@@ -815,7 +829,7 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler, UIGestureRec
         requestGalleryPermission: function(){ post('requestGalleryPermission', []); },
         saveImageToGallery: function(dataUrl){ post('saveImageToGallery', [String(dataUrl)]); return 'ok'; },
         hasGalleryPermission: function(){ post('hasGalleryPermission', []); return true; },
-        isScanDisabled: function(){ post('isScanDisabled', []); return false; },
+        isScanDisabled: function(){ return window.__fwScanDisabled === true; },
         setCallAudioMode: function(inCall, speakerOn){ post('setCallAudioMode', [!!inCall, !!speakerOn]); },
         setPayPageSystemBars: function(visible){ post('setPayPageSystemBars', [!!visible]); },
         setMessageMenuOpen: function(open){ post('setMessageMenuOpen', [!!open]); },

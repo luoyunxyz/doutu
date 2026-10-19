@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 2.4.68：选小支/小微时清除随机态`  
-> 最新代码版本：`2.4.68 / 20108`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 2.4.69：撩妹加 V 联动扫一扫摄像头损坏提示`  
+> 最新代码版本：`2.4.69 / 20109`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.67 / 20107`（已通过 USB 查询确认）
 
 ---
@@ -827,6 +827,15 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
     - 设备截图确认「随机小支/小微」是选中态；`drawStyleChips` 的 `case 0/1` 条件是 `!s.randomStyle && style==...`；
     - 点「小支收款 / 小微收款」时只改了 `s.style`，没有把 `s.randomStyle` 置 false；随机 chip 继续亮着，看起来就是点击没反应；
     - 2.4.68 在 index 0/1 分支加 `s.randomStyle = false`，再改 `style`；点具体收款方会立即切过去。
+
+85. **撩妹加 V 打开后扫一扫要提示摄像头损坏**
+    - 网页 `wechat-chat-actions.js` 早就有 `cameraBroken()` → `openCameraBrokenDialog()`，但原生 `isScanDisabled` 永远回 false；
+    - 新增 `TeaseStore`（`play.tease.enabled`），娱乐页切开关时同步写入；
+    - `WeChatV2Host` 在 documentStart 注入 `window.__fwScanDisabled`，bridge shim 的 `isScanDisabled()` 同步读它；
+    - `viewWillAppear` 再刷新一次，保证已打开的微页面也能拿到最新开关；
+    - 原生 `isScanDisabled` 分支也改为返回 `TeaseStore.enabled`；
+    - 弹窗文案改为「扫一扫不可用 / 摄像头物理损坏，无法使用扫一扫功能。」；
+    - 关闭「撩妹加 V」后 flag 为 false，扫一扫恢复正常进入付款页。
 
 ---
 
