@@ -4031,7 +4031,7 @@ body.fw-device-row-hidden .wechat-device-row { display: none !important; }
 .fw-scanpay-success__done:active { background: #e6e6e6; }
 
 /* 独立整屏打开时的外壳（小微主页 → 支付成功）。 */
-.fw-pay-success { position: fixed; top:0;right:0;bottom:0;left:0; z-index: 100300; background: #fff; }
+.fw-pay-success { position: fixed; top:0;right:0;bottom:0;left:0; z-index: 2147483001; background: #fff; }
 .fw-pay-success--enter { animation: fw-chat-pay-up .18s cubic-bezier(.2, .8, .2, 1) forwards; }
 .fw-pay-success--exit { animation: fw-chat-pay-down .18s ease-in forwards; }
 @media (max-width: 700px) {
