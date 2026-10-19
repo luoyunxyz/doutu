@@ -134,6 +134,9 @@ final class MeScreen: Screen {
             let key = "card\(i + 1)"
             let rect = CGRect(x: cardLeft, y: card.0,
                               width: cardRight - cardLeft, height: card.1 - card.0)
+            // 卡片素材外圈是半透明白边，直接叠在灰底上会形成一条浅紫/灰色描边。
+            // 先用同尺寸白圆角垫底，让半透明边缘融进白色，再画卡片。
+            d.round(rect, radius: 10, .white)
             if let image = art[key], let cg = image.cgImage, cg.width > 4, cg.height > 4 {
                 let crop = CGRect(x: 2, y: 2, width: cg.width - 4, height: cg.height - 4)
                 d.art(image, src: crop, rect)
