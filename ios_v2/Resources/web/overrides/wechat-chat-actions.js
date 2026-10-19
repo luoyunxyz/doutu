@@ -2471,6 +2471,9 @@
       record.addedNodes.forEach(node => { if (node.nodeType === 1) normalizeMoreIconGeometry(node); });
     }
     syncChatSystemBars();
+    // 朋友圈是 body 上的全屏覆盖层，出现/移除时立刻同步底栏显隐。
+    document.body.classList.toggle('fw-moments-open',
+      !!document.querySelector('.fw-moments-feed, .fw-moments-page'));
   }).observe(document.body, { childList: true, subtree: true });
   function closeChatPayScreen() { const page=chatPayScreen; if(!page||!page.isConnected||page.dataset.closing==='1')return; page.dataset.closing='1';page.classList.add('fw-chat-pay-screen--exit'); const finish=()=>{if(!page.isConnected)return;page.remove();chatPayScreen=null;document.body.classList.remove('fw-chat-pay-open');syncChatSystemBars()};page.addEventListener('animationend',finish,{once:true});setTimeout(finish,190); }
   window.__fwCloseChatPay=()=>{const open=!!chatPayScreen?.isConnected;if(open)closeChatPayScreen();return open};
@@ -6378,14 +6381,37 @@
       element.classList.add('is-default');
       if (image) image.removeAttribute('src');
     };
+    const paint = src => {
+      const next = String(src || '').trim();
+      if (!next) { useDefault(); return; }
+      if (!image) {
+        element.style.backgroundImage = 'url("' + next.replace(/"/g, '\\"') + '")';
+        return;
+      }
+      image.onerror = () => { image.onerror = null; useDefault(); };
+      image.src = next;
+      // 解析结果仍可能是会挂起的远程地址，1.6s 没画出来就回默认封面。
+      setTimeout(() => {
+        if (image.isConnected && !image.naturalWidth) useDefault();
+      }, 1600);
+    };
     if (!value) { useDefault(); return; }
     element.classList.remove('is-default');
-    if (!image) {
-      element.style.backgroundImage = 'url("' + value.replace(/"/g, '\\"') + '")';
+    // 2026-10-19: fakeworld 的封面图在真机上会一直挂起、不触发 onerror，只剩灰渐变。
+    // 和「我」页/聊天头像一样，先交给应用的 __fwResolveProfileAvatar 解析成本地图。
+    if (/^https?:\/\//i.test(value) && typeof window.__fwResolveProfileAvatar === 'function') {
+      element.classList.add('is-default');
+      try {
+        Promise.resolve(window.__fwResolveProfileAvatar(value)).then(resolved => {
+          if (!element.isConnected) return;
+          const src = String(resolved || '').trim();
+          if (src) { element.classList.remove('is-default'); paint(src); }
+          else useDefault();
+        }).catch(() => { if (element.isConnected) useDefault(); });
+      } catch (_) { useDefault(); }
       return;
     }
-    image.onerror = () => { image.onerror = null; useDefault(); };
-    image.src = value;
+    paint(value);
   }
   function resolveTimelineAvatar(url) {
     const value = String(url || '').trim();
@@ -7153,9 +7179,21 @@
     // to the time row (it slides out from the right of the two dots).
     lane.innerHTML = '<img class="fw-tl-item__avatar" alt=""><div class="fw-tl-item__body"><div class="fw-tl-item__name"></div><p class="fw-tl-item__text"></p><div class="fw-tl-item__media"></div><div class="fw-tl-item__meta"><span class="fw-tl-item__place"></span><span class="fw-tl-item__time"></span><button type="button" class="fw-tl-item__more" aria-label="更多操作"><i></i><i></i></button><div class="fw-tl-item__actions" hidden></div></div><div class="fw-tl-item__social" hidden></div></div>';
     const avatar = lane.querySelector('.fw-tl-item__avatar');
+    const avatarFallback = localPhotoFor(item.authorAvatar || item.authorName);
     avatar.src = resolveTimelineAvatar(item.authorAvatar);
     avatar.alt = item.authorName;
-    avatar.onerror = () => { avatar.onerror = null; avatar.src = localPhotoFor(item.authorAvatar || item.authorName); };
+    avatar.onerror = () => { avatar.onerror = null; avatar.src = avatarFallback; };
+    // 2026-10-19: 内置 demo 头像仍是 fakeworld 死链，真机上会挂起不报错，显示成灰块。
+    // 走应用的同一个头像解析器换成本地图，并用 watchdog 兜底。
+    try {
+      const resolved = window.__fwResolveProfileAvatar?.(item.authorAvatar);
+      if (resolved && typeof resolved.then === 'function') {
+        resolved.then(src => { if (src && avatar.isConnected) avatar.src = src; }).catch(() => {});
+      }
+    } catch (_) { /* keep the fallback */ }
+    setTimeout(() => {
+      if (avatar.isConnected && !avatar.naturalWidth) avatar.src = avatarFallback;
+    }, 1200);
     const nameEl = lane.querySelector('.fw-tl-item__name');
     nameEl.textContent = item.authorName;
     // My own posts do not open a per-friend moments page (that page is for 好友).
@@ -8824,6 +8862,8 @@
     document.body.classList.toggle('fw-static-discover-tab', isStaticDiscoverRoute());
     document.body.classList.toggle('fw-static-my-tab', isStaticMyRoute());
     document.body.classList.toggle('fw-contacts-tab', isContactsRoute());
+    // 朋友圈是覆盖在「发现」上的全屏页，底栏不应该跟进来。
+    document.body.classList.toggle('fw-moments-open', !!document.querySelector('.fw-moments-feed, .fw-moments-page'));
   }
   function init() {
     if (!document.body) { document.addEventListener('DOMContentLoaded', init, { once: true }); return; }

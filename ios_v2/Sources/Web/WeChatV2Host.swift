@@ -258,10 +258,12 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler, UIGestureRec
         webView.evaluateJavaScript(
             "(function(){try{" +
             "var h=location.hash||'';" +
-            "var sub=document.querySelector('.fw-overlay, .fw-add-friend, .fw-group-chat, .fw-scanpay, .fw-receive-pay, .fw-local-conversation, .fw-chat-pay');" +
+            "var path=h.replace(/^#/,'').split(/[?#]/)[0].replace(/\\/+$/,'');" +
+            "var home=(path===''||path==='/wechat'||path==='/wechat/index');" +
+            "if(!home)return 0;" +
+            "var sub=document.querySelector('.fw-overlay, .fw-add-friend, .fw-group-chat, .fw-scanpay, .fw-receive-pay, .fw-local-conversation, .fw-chat-pay, .fw-moments-feed, .fw-moments-page, .fw-friend-profile-page, .fw-my-profile-editor, .fw-my-avatar-picker');" +
             "if(sub)return 0;" +
-            "var home=(h===''||h==='#'||h.indexOf('#/wechat')===0);" +
-            "return home?1:0}catch(e){return 0}})()"
+            "return 1}catch(e){return 0}})()"
         ) { [weak self] value, _ in
             guard let self else { return }
             if let home = value as? Int, home == 0 { return }

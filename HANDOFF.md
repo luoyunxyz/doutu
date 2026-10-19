@@ -3,9 +3,9 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 2.2.9：气泡/头像间距 + 切换发送人后的卡片方向`  
-> 最新代码版本：`2.2.9 / 20029`（已推送，待 Codemagic 构建）  
-> 设备当前安装：`2.2.8 / 20028`（用户反馈 2.2.8 收款重叠已正常）
+> 最新提交：`本轮 2.3.0：朋友圈背景/头像/底栏 + 工具菜单触发范围`  
+> 最新代码版本：`2.3.0 / 20030`（已推送，待 Codemagic 构建）  
+> 设备当前安装：`2.2.9 / 20029`（已通过 USB 查询确认）
 
 ---
 
@@ -423,6 +423,16 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
     - iOS 14.3 的 WKWebView 不支持 flex `gap`，`.fw-chat-message` 上所有 `gap: 56px` 实际等于 0，只剩气泡 6px margin；
     - 2.2.9 改用头像 `margin-left/right: 12px`，气泡边到头像 18px（尾巴 6px 后仍有 12px 可见距离）；
     - 滑动只改一行时，转账/红包/通话卡片的背景图、`fw-tf-state--in`、图标顺序是创建时写死的；2.2.9 在 `finishSwipe` 调 `syncMessageRowSide`，卡片尾巴/状态/图标实时跟着发送人换边。
+
+16. **底部 7 项工具菜单在朋友圈/子页也能弹出**
+    - 原生 `blankTapped` 之前用 `h.indexOf('#/wechat') === 0` 判断主页，`#/wechat/discover`、`#/wechat/contacts`、`#/wechat/my` 都算主页；
+    - 2.3.0 改成精确路径 `''` / `#/wechat` / `#/wechat/index`，并把 `.fw-moments-feed`、`.fw-moments-page`、好友资料等浮层加入排除列表；
+    - 现在只在微信主页顶部空白处弹出。
+
+17. **朋友圈背景不显示 / 发送人灰块 / 底部切换栏露出**
+    - 封面和发送人头像仍是 fakeworld 死链，真机上一直挂起、不触发 `onerror`，封面只剩灰渐变、头像只剩灰块；
+    - 2.3.0 让 `applyCoverImage` 和 `buildTimelineItem` 都走 `__fwResolveProfileAvatar` 解析成本地图，头像再加 1.2s watchdog；
+    - 朋友圈全屏时给 `body` 加 `fw-moments-open`，CSS 隐藏 `.wechat-bottom-navbar`，返回后自动移除。
 
 ---
 
