@@ -224,6 +224,7 @@ final class ScreenHostView: UIView, UIScrollViewDelegate {
         let navH = bounds.height * 256 / 2816
         zhiTabBar.frame = CGRect(x: 0, y: bounds.height - navH,
                                  width: bounds.width, height: navH)
+        bringSubviewToFront(zhiTabBar)
     }
 
     override func didMoveToWindow() {
@@ -301,6 +302,10 @@ final class ScreenHostView: UIView, UIScrollViewDelegate {
         if let index = next.zhiTabIndex {
             zhiTabBar.isHidden = false
             zhiTabBar.selected = index
+            let navH = bounds.height * 256 / 2816
+            zhiTabBar.frame = CGRect(x: 0, y: bounds.height - navH,
+                                     width: bounds.width, height: navH)
+            bringSubviewToFront(zhiTabBar)
             CrashLog.append("ZHITAB \(type(of: next)) idx=\(index) frame=\(zhiTabBar.frame) bounds=\(bounds)")
         } else {
             zhiTabBar.isHidden = true

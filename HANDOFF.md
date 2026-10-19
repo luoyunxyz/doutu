@@ -3,9 +3,9 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 2.4.30：底栏子视图加运行日志/颜色修正`  
-> 最新代码版本：`2.4.30 / 20070`（已推送，待 Codemagic 构建）  
-> 设备当前安装：`2.4.28 / 20068`（已通过 USB 查询确认）
+> 最新提交：`本轮 2.4.31：底栏强制 frame/bringToFront + ZHITAB 日志`  
+> 最新代码版本：`2.4.31 / 20071`（已推送，待 Codemagic 构建）  
+> 设备当前安装：`2.4.29 / 20069`（已通过 USB 查询确认）
 
 ---
 
@@ -590,6 +590,12 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
     - 用户实测仍是 2.4.28（设备查询确认），2.4.29 的独立子视图还没装；
     - 2.4.30 给 `setScreen` 加 `ZHITAB` 日志（screen 类型、index、frame、bounds），并修正底栏蓝色为 `Draw.color(0xff1677ff)`；
     - 安装 2.4.30 后若财富页仍无底栏，直接拉 `Documents/crash.log` 里 `ZHITAB` 行即可判断是 `zhiTabIndex` nil、frame 为 0，还是视图被盖住。
+
+47. **2.4.29 财富页仍无底栏（真机）**
+    - 设备装的是 2.4.29；独立子视图仍没显示，说明不是绘制上下文问题，而是 frame/层级或 `zhiTabIndex` 在真机上没生效；
+    - 2.4.31 在 `setScreen` 里直接按 `bounds` 重算 `zhiTabBar.frame` 并 `bringSubviewToFront`，不再等 `layoutSubviews`；
+    - 每次进入支页写 `ZHITAB <Screen> idx=<n> frame=<...> bounds=<...>` 到 `Documents/crash.log`；
+    - 下一步按日志定位：无 ZHITAB → zhiTabIndex nil / 不是 ScreenHostView；frame 在屏幕外 → bounds/坐标系问题；frame 正确但看不到 → 上层视图遮挡。
 
 ---
 
