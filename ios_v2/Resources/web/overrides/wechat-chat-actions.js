@@ -889,7 +889,7 @@
   function bundledAvatarFor(seed) {
     const hash = avatarSeedHash(seed);
     const palette = ['#5b8def', '#e28a5b', '#55a87a', '#b276c9', '#d35f75', '#4f9fb2', '#b58b4a'];
-    const color = palette[hash % palette.length];
+    const color = palette[Math.abs(hash) % palette.length];
     const raw = String(seed == null ? '' : seed).trim();
     const text = (raw.charAt(0) || '微').replace(/[&<>"']/g, ch => ({
       '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
@@ -902,7 +902,7 @@
   }
   function apiAvatarFor(seed) {
     const hash = avatarSeedHash(seed);
-    return AVATAR_API_POOL[hash % AVATAR_API_POOL.length];
+    return AVATAR_API_POOL[Math.abs(hash) % AVATAR_API_POOL.length];
   }
 
   function makeAvatarUrl() { return remoteAvatarUrl(); }
