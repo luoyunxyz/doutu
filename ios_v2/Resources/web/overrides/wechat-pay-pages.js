@@ -2681,6 +2681,7 @@
       openAmountEditor('修改零钱金额', shown, value => {
         storeBalanceAmount(value, true);
         updateBundledBalance(value);
+        payToast('零钱金额已保存');
       });
       return;
     }
@@ -2693,6 +2694,8 @@
       openAmountEditor('修改零钱通金额', shown, value => {
         try { localStorage.setItem(LQT_KEY, value); } catch (_) { /* no-op */ }
         node.textContent = '¥' + value;
+        syncEditableAmounts();
+        payToast('零钱通金额已保存');
       });
     }
   }, true);
