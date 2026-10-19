@@ -3,9 +3,9 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 2.4.49：余额提现的可用余额可点击修改`  
-> 最新代码版本：`2.4.49 / 20089`（已推送，待 Codemagic 构建）  
-> 设备当前安装：`2.4.44 / 20084`（已通过 USB 查询确认）
+> 最新提交：`本轮 2.4.50：可用余额热区移到 amount 之后，避免被吃掉`  
+> 最新代码版本：`2.4.50 / 20090`（已推送，待 Codemagic 构建）  
+> 设备当前安装：`2.4.49 / 20089`（已通过 USB 查询确认）
 
 ---
 
@@ -703,6 +703,10 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
     - `WithdrawV2Screen.drawAmountCard` 只在金额为空时显示「可用余额 ¥…」，但那一行没有 hitTest；`WithdrawStore` 已有 `setAvail` 却没有入口；
     - 2.4.49 在可用余额文字区域加 `hit(..., "avail")`；
     - Router 新增 `case "avail"`：弹数字输入框，当前值 `WithdrawStore.avail`，保存后 `setAvail` 并重绘；金额、校验、提现按钮都读同一个 avail。
+
+66. **2.4.49 点可用余额仍打不开输入**
+    - `WithdrawV2Screen.hitTest` 用 `hits.reversed()`，后加入的热区优先；`"amount"` 整块热区 `y 1000…1150` 覆盖了可用余额，且在 `avail` 之后加入，所以永远返回 `"amount"` 打开数字键盘；
+    - 2.4.50 把 `avail` 热区移到 `amount/quota/info` 之后加入，reversed 时先命中 `"avail"`，才能弹修改可用余额的输入框。
 
 ---
 

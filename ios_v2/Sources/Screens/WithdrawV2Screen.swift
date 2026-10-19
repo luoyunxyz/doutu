@@ -422,8 +422,6 @@ final class WithdrawV2Screen: Screen {
         } else {
             d.rightText("可用余额 ¥" + ReceiptStore.money(avail), right: availRight,
                         baseline: availBase, size: availSize, caption)
-            // 可用余额本身可点：点开数字键盘修改 WithdrawStore.avail。
-            hit(CGRect(x: 650, y: availBase - 62, width: availRight - 640, height: 92), "avail")
         }
 
         rule(d, y: divider1Y, l: dividerL, r: dividerR)
@@ -442,6 +440,10 @@ final class WithdrawV2Screen: Screen {
         }
         hit(CGRect(x: 60, y: quotaBaseY - 55, width: 600, height: 72), "quota")
         hit(CGRect(x: 660, y: quotaBaseY - 55, width: 80, height: 72), "info")
+        // 必须最后加：hitTest 是 reversed()，否则会被上面整块 "amount" 热区吃掉。
+        if !filled {
+            hit(CGRect(x: 650, y: availBase - 62, width: availRight - 640, height: 92), "avail")
+        }
     }
 
     /// ⊗ 清空按钮（Java:381-398）
