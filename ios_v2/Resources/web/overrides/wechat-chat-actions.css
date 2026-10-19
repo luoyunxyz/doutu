@@ -4869,3 +4869,14 @@ body.fw-subpage-open .wechat-bottom-navbar { display:none !important; }
 .fw-chat-message__bubble { max-width: calc(100% - 120px) !important; margin-left: 4px !important; margin-right: 4px !important; }
 .fw-local-conversation__header { height: 76px !important; flex: 0 0 76px !important; padding-top: 8px !important; box-sizing: border-box !important; }
 .fw-local-conversation__header strong { font-size: 18px !important; }
+
+/* 列表再远一点；会话气泡/头像不再互相压住 */
+.wechat-dialogue-list > * { column-gap: 40px !important; gap: 40px !important; }
+.fw-local-friend-row--fallback { gap: 40px !important; }
+.fw-local-friend-row--fallback > img { flex: 0 0 48px !important; width: 48px !important; height: 48px !important; margin-right: 32px !important; }
+.fw-chat-message { gap: 56px !important; align-items: flex-start !important; }
+.fw-chat-message__avatar { flex: 0 0 40px !important; width: 40px !important; height: 40px !important; }
+.fw-chat-message__bubble { max-width: calc(100% - 132px) !important; margin: 0 6px !important; }
+.fw-local-conversation__messages { overflow-x: hidden !important; touch-action: pan-y !important; }
+.fw-chat-message { touch-action: pan-y !important; }
+.fw-local-conversation__header { height: 88px !important; flex: 0 0 88px !important; padding-top: 12px !important; }

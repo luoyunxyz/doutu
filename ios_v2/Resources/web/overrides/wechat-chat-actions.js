@@ -1653,6 +1653,7 @@
       const row=event.target instanceof Element?event.target.closest('.fw-chat-message'):null;
       if(!row||!row.__fwMessage)return;
       swipeState={row,message:row.__fwMessage,id:event.pointerId,x:event.clientX,y:event.clientY,dx:0,active:false};
+      try { row.setPointerCapture(event.pointerId); } catch (_) {}
       cancelPress();
       const timer=setTimeout(()=>{
         pressState=null;
