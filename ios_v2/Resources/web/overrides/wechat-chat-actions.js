@@ -1209,6 +1209,29 @@
       }, true);
     };
     const makeTime = text => { const el=document.createElement('div'); el.className='fw-chat-time'; el.textContent=text; messages.appendChild(el); };
+    // 所有消息头像都走这一个入口：先接口/资料图，失败立刻换成本地确定性头像，
+    // 永远不允许 src 为空或停留在灰色占位。
+    const paintMessageAvatar = (img, side, preferred) => {
+      if (!img) return;
+      const incoming = side === 'incoming';
+      const seed = incoming ? String(friend.name || friend.id || 'friend') : 'self-avatar';
+      const fallback = bundledAvatarFor(seed);
+      const primary = preferred
+        || (incoming ? (friendAvatar || apiAvatarFor(seed))
+                      : (getSelfAvatar() || fallbackSelfAvatar || apiAvatarFor(seed)));
+      img.referrerPolicy = 'no-referrer';
+      img.dataset.fwAvatarSide = side;
+      if (incoming) { img.dataset.fwFriendAvatar = '1'; delete img.dataset.fwSelfAvatar; }
+      else { img.dataset.fwSelfAvatar = '1'; img.dataset.fwAvatarValue = getSelfAvatar(); }
+      img.onerror = () => {
+        img.onerror = null;
+        if (img.src !== fallback) img.src = fallback;
+      };
+      img.src = primary || fallback;
+      if (img.complete && img.naturalWidth === 0 && img.src !== fallback) img.src = fallback;
+      img.alt = incoming ? String(friend.remark || friend.name || '对方') : getSelfName();
+      img.title = img.alt;
+    };
     const makeBubble = (text, side, avatar, message) => {
       const line=document.createElement('div'); line.className='fw-chat-message fw-chat-message--'+side;
       // Rows tied to a stored message can be re-assigned to the other speaker by swiping.
@@ -1236,24 +1259,7 @@
         },true);
         if (groupPress) attachGroupAvatarPress(img, message, groupPress);
       }
-      img.src=side==='outgoing' ? fallbackSelfAvatar : (groupSender ? (groupMemberAvatar(groupSender) || avatar) : avatar);
-      if(side==='outgoing') { img.title=getSelfName(); img.dataset.fwSelfAvatar='1'; img.dataset.fwAvatarValue=getSelfAvatar(); resolveSelfAvatar(getSelfAvatarValue()).then(src=>{if(src&&img.isConnected)img.src=src;}); }
-      // Keep the exact profile image URL. Replacing a failed URL with a stock avatar
-      // made chat differ from the native profile page; both should represent same source.
-      // Incoming group members are the exception: their photo often lives on a retired
-      // CDN, so a failure swaps in a bundled avatar instead of a broken-image glyph.
-      img.onerror=()=>{
-        if(side==='outgoing'){ img.dataset.fwAvatarLoadError='1'; return; }
-        const stage=img.dataset.fwAvatarStage||'origin';
-        if(stage==='origin'){
-          img.dataset.fwAvatarStage='api';
-          const api=apiAvatarFor(groupSender||friend.name||'');
-          if(api&&api!==img.src){ img.src=api; return; }
-        }
-        if(stage!=='bundled'){ img.dataset.fwAvatarStage='bundled'; img.src=bundledAvatarFor(groupSender||friend.name||''); return; }
-        img.dataset.fwAvatarFallback='1';
-        img.dataset.fwAvatarLoadError='1';
-      };
+      paintMessageAvatar(img, side, groupSender ? groupMemberAvatar(groupSender) : null);
       const bubble=document.createElement('div'); bubble.className='fw-chat-message__bubble';
       if(isImageSource(text)){
         const photo=document.createElement('img');
@@ -1717,12 +1723,7 @@
       if(avatar&&content){
         if(target==='incoming'){ row.prepend(avatar); avatar.after(content); }
         else { row.append(content,avatar); }
-        const nextAvatar = target==='incoming' ? friendAvatar : (getSelfAvatar() || fallbackSelfAvatar);
-        const localAvatar = bundledAvatarFor(target==='incoming' ? (friend.name || friend.id || 'friend') : 'self-avatar');
-        avatar.onerror = () => { avatar.onerror = null; avatar.src = localAvatar; };
-        avatar.src = nextAvatar || localAvatar;
-        avatar.alt = target==='incoming' ? (friend.remark || friend.name || '对方') : getSelfName();
-        avatar.title = avatar.alt;
+        paintMessageAvatar(avatar, target);
       }
       showToast(target==='incoming'?'已改为对方发送':'已改为我发送');
     };
