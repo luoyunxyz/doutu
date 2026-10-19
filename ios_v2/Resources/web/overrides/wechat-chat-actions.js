@@ -8881,6 +8881,8 @@
     document.body.classList.toggle('fw-contacts-tab', isContactsRoute());
     // 朋友圈是覆盖在「发现」上的全屏页，底栏不应该跟进来。
     document.body.classList.toggle('fw-moments-open', !!document.querySelector('.fw-moments-feed, .fw-moments-page'));
+    // 设备登录选择是底部弹层，微信底栏 z-index 极高，必须暂时隐藏，否则会盖住最后一项。
+    document.body.classList.toggle('fw-device-sheet-open', !!document.querySelector('.fw-device-sheet'));
   }
   function init() {
     if (!document.body) { document.addEventListener('DOMContentLoaded', init, { once: true }); return; }
@@ -9146,6 +9148,15 @@
     const layer = document.createElement('div');
     layer.className = 'fw-device-sheet';
     layer.innerHTML = '<section class="fw-device-sheet__panel" role="dialog" aria-modal="true" aria-label="设备登录显示"><header><button type="button" data-device-close>取消</button><strong>设备登录显示</strong><span></span></header><div class="fw-device-sheet__list"></div></section>';
+    let closed = false;
+    const close = () => {
+      if (closed) return;
+      closed = true;
+      layer.classList.remove('is-open');
+      document.body.classList.remove('fw-device-sheet-open');
+      // 等滑出动画结束再移除；下面还有 240ms 兜底。
+      setTimeout(() => layer.remove(), 220);
+    };
     const list = layer.querySelector('.fw-device-sheet__list');
     DEVICE_ROW_OPTIONS.concat([{ value: 'hidden', label: '不显示' }]).forEach(option => {
       const item = document.createElement('button');
@@ -9156,14 +9167,16 @@
         event.preventDefault();
         event.stopPropagation();
         setDeviceRowChoice(option.value);
-        layer.remove();
+        close();
         showToast(option.value === 'hidden' ? '已隐藏设备登录状态' : '已切换为 ' + option.label);
       });
       list.appendChild(item);
     });
-    layer.querySelector('[data-device-close]').addEventListener('click', () => layer.remove());
-    layer.addEventListener('pointerdown', event => { if (event.target === layer) layer.remove(); });
+    layer.querySelector('[data-device-close]').addEventListener('click', close);
+    layer.addEventListener('pointerdown', event => { if (event.target === layer) close(); });
     document.body.appendChild(layer);
+    document.body.classList.add('fw-device-sheet-open');
+    requestAnimationFrame(() => layer.classList.add('is-open'));
   }
   document.addEventListener('click', event => {
     const row = event.target instanceof Element ? event.target.closest('.wechat-device-row') : null;

@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 2.3.4：好友资料页顶部留白加大到 24px`  
-> 最新代码版本：`2.3.4 / 20034`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 2.3.5：设备登录底部弹层完善`  
+> 最新代码版本：`2.3.5 / 20035`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.3.1 / 20031`（已通过 USB 查询确认）
 
 ---
@@ -451,6 +451,12 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
 21. **好友资料页顶到屏幕最上沿**
     - 真机隐藏状态栏后 `env(safe-area-inset-top)` 实测为 0，`.fw-friend-profile-page` 的 `padding-top` 也就是 0，返回箭头和页头贴顶；
     - 2.3.3 改成 `calc(env(safe-area-inset-top, 0px) + 12px)`；用户反馈仍然偏短，2.3.4 加大到 **+24px**，header top 从 0 → 24、头像 top 从 66 → 90。
+
+22. **微信主页「Windows 微信已登录」底部弹层被底栏盖住**
+    - 弹层 `.fw-device-sheet` 的 z-index 是 20100，而 `.wechat-bottom-navbar` 是 2147483000，底栏把「不显示」和底部安全区整个盖住；
+    - 2.3.5 把弹层 z-index 提到 2147483001，打开时给 `body` 加 `fw-device-sheet-open` 隐藏底栏；
+    - 面板加 `padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 6px)`，并补上底部滑入/滑出动画；
+    - 现在四个选项（iPad / Mac / Windows / 不显示）都能完整看到和点击。
 
 ---
 

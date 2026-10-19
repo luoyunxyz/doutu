@@ -2682,11 +2682,15 @@ body.fw-keyboard-open .fw-native-composer-root > .fw-native-chat-feature-panel {
 .fw-device-sheet {
   position: fixed;
   top:0;right:0;bottom:0;left:0;
-  z-index: 20100;
+  /* 微信底栏 z-index 是 2147483000，弹层必须比它高，同时打开时把底栏隐藏。 */
+  z-index: 2147483001;
   display: flex;
   align-items: flex-end;
   background: rgba(0,0,0,.4);
+  opacity: 0;
+  transition: opacity .18s ease;
 }
+.fw-device-sheet.is-open { opacity: 1; }
 .fw-device-sheet__panel {
   display: flex;
   flex-direction: column;
@@ -2695,7 +2699,12 @@ body.fw-keyboard-open .fw-native-composer-root > .fw-native-chat-feature-panel {
   border-radius: 12px 12px 0 0;
   background: #ededed;
   overflow: hidden;
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 6px);
+  transform: translateY(100%);
+  transition: transform .22s cubic-bezier(.2,.75,.25,1);
 }
+.fw-device-sheet.is-open .fw-device-sheet__panel { transform: translateY(0); }
+body.fw-device-sheet-open .wechat-bottom-navbar { display: none !important; }
 .fw-device-sheet__panel header {
   display: flex;
   align-items: center;
