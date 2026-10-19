@@ -23,7 +23,9 @@ final class MeScreen: Screen {
     }
 
     // MARK: - 调色板（Java:44-48）
-    private let pageBg = Draw.color(0xfff2f3f7)
+    // 2026-10-19: Android 的「我的」正文底色是白色（顶部渐变只覆盖头图区）。
+    // 之前用 #f2f3f7，白卡半透明边缘叠在灰底上就形成一圈浅紫/灰描边。
+    private let pageBg = UIColor.white
     private let barBg = Draw.color(0xfffafbff)
     private let phonePill = Draw.color(0xffe3ecf6)
     private let phoneInk = Draw.color(0xff2e4162)
