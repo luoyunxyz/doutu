@@ -4906,3 +4906,6 @@ body.fw-subpage-open .wechat-bottom-navbar { display:none !important; }
   -webkit-overflow-scrolling: touch !important;
   touch-action: pan-y !important;
 }
+
+/* 让最后一行不被底栏压住，并保留一段可滚动空间 */
+.wechat-dialogue-list { padding-bottom: 88px !important; box-sizing: border-box !important; }
