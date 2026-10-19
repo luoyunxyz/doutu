@@ -55,6 +55,8 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler, UIGestureRec
         webView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         webView.navigationDelegate = self
         webView.scrollView.bounces = false
+        webView.scrollView.isScrollEnabled = true
+        webView.scrollView.panGestureRecognizer.isEnabled = true
         // 不要让 WKWebView 把安全区（刘海 47pt + 底部 34pt）加进内容 inset：
         // 页面会整体下移 47pt，底部导航条正好被挤出屏幕（真机表现就是「底栏消失」）。
         // Android 的 WebView 没有这个 inset，页面从 0 开始排版。
