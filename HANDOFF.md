@@ -3,9 +3,9 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 2.4.28：修复 2.4.27 中文注释编码，保留宿主统一底栏`  
-> 最新代码版本：`2.4.28 / 20068`（已推送，待 Codemagic 构建）  
-> 设备当前安装：`2.4.18 / 20058`（已通过 USB 查询确认）
+> 最新提交：`本轮 2.4.29：支模块底栏改成独立子视图`  
+> 最新代码版本：`2.4.29 / 20069`（已推送，待 Codemagic 构建）  
+> 设备当前安装：`2.4.28 / 20068`（已通过 USB 查询确认）
 
 ---
 
@@ -580,6 +580,11 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
 44. **2.4.27 中文编码事故**
     - 用 PowerShell 批量插 `zhiTabIndex` 时按 ANSI 读写，把 Growth/Licai/Message/Me 的中文注释和字符串写成了乱码；
     - 2.4.28 已从 ba2b6f5 恢复这些文件，再用 edit 工具重新插入 `zhiTabIndex`；宿主底栏、Router、主题背景都保留。
+
+45. **2.4.28 财富页仍看不到底栏**
+    - 2.4.27/2.4.28 的底栏是画在页面同一个 CGContext 里；GrowthV2 的 draw 内部有 save/restore + clip，页面的 restore 不配对时会把后画的底栏裁掉/移位，所以财富页依然没有；
+    - 2.4.29 改成独立 `ZhiTabBarView` 子视图：白底、五格、选中项，`ScreenHostView` 的 `layoutSubviews` 把它固定在底部 `h*256/2816`，`setScreen` 根据 `zhiTabIndex` 显示/选中；
+    - 独立视图不参与页面绘制上下文，财富页/理财页/消息/我的都能稳定看到；点击在子视图的 `touchesEnded` 里直接发 `nav:<i>`，不再依赖页面 hitTest。
 
 ---
 

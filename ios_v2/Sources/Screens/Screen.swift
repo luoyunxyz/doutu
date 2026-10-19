@@ -91,6 +91,77 @@ class ScreenState {
     var scroll: CGFloat = 0
 }
 
+/// 支模块统一的五格底栏 —— 独立 UIView，盖在页面最上面。
+///
+/// 不能和页面画在同一个 CGContext 里：财富页/理财页的 draw 会 save/restore + clip，
+/// 一旦有一个页面 restore 不配对，后面再画的底栏就会被裁掉/移位。独立子视图不受影响。
+final class ZhiTabBarView: UIView {
+    var selected = 0 { didSet { setNeedsDisplay() } }
+    var onSelect: ((Int) -> Void)?
+
+    private let centers: [CGFloat] = [128, 382, 639, 898, 1151]
+    private let tint = UIColor(red: 0x16 / 255.0, green: 0x77 / 255.0,
+                               blue: 0xff / 255.0, alpha: 1)
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        isOpaque = true
+        backgroundColor = .white
+        isUserInteractionEnabled = true
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) { fatalError("init(coder:) 未实现") }
+
+    override func draw(_ rect: CGRect) {
+        let w = bounds.width, h = bounds.height
+        UIColor.white.setFill()
+        UIRectFill(bounds)
+        UIColor(white: 0.93, alpha: 1).setFill()
+        UIRectFill(CGRect(x: 0, y: 0, width: w, height: 0.5))
+
+        let names = ["lci_nav_home", "lci_nav_licai", "lci_nav_video", "lci_nav_msg", "lci_nav_me"]
+        for (i, refX) in centers.enumerated() {
+            let cx = w * refX / 1280
+            if i == 0 && selected == 0 {
+                let side = h * 70 / 256
+                UIImage(named: "lci_nav_zhi")?.draw(in: CGRect(x: cx - side / 2,
+                                                               y: h * 16 / 256,
+                                                               width: side, height: side))
+                let font = UIFont.systemFont(ofSize: max(8, h * 26 / 256))
+                let text = "首页" as NSString
+                let tw = text.size(withAttributes: [.font: font]).width
+                text.draw(at: CGPoint(x: cx - tw / 2, y: h * 146 / 256 - font.lineHeight),
+                          withAttributes: [.font: font, .foregroundColor: tint])
+                continue
+            }
+            var image = UIImage(named: names[i])
+            if i == selected {
+                image = image?.withTintColor(tint, renderingMode: .alwaysOriginal)
+            }
+            let iw = w * 86 / 1280
+            let ih = h * 148 / 256
+            image?.draw(in: CGRect(x: cx - iw / 2, y: h * 44 / 256, width: iw, height: ih))
+        }
+        UIColor(white: 0.78, alpha: 1).setFill()
+        UIBezierPath(roundedRect: CGRect(x: w * 430 / 1280, y: h * 222 / 256,
+                                         width: w * 420 / 1280, height: max(2, h * 8 / 256)),
+                     cornerRadius: 2).fill()
+    }
+
+    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+        guard let touch = touches.first else { return }
+        let x = touch.location(in: self).x
+        var best = 0
+        var bestD = CGFloat.greatestFiniteMagnitude
+        for (i, refX) in centers.enumerated() {
+            let cx = bounds.width * refX / 1280
+            if abs(cx - x) < bestD { bestD = abs(cx - x); best = i }
+        }
+        onSelect?(best)
+    }
+}
+
 /// 承载页面的 UIView：负责缩放、滚动、触摸与重绘。
 ///
 /// 对应 Android 的 `NativeView`（自定义 View + onDraw + onTouchEvent）。
@@ -101,6 +172,8 @@ final class ScreenHostView: UIView, UIScrollViewDelegate {
     var onAction: ((ActionToken, CGPoint) -> Void)?
     /// 定时重绘（首页横幅的轮播要靠它推进）
     private var redrawTimer: Timer?
+    /// 支模块统一底栏（独立子视图，永远盖在页面最上面）
+    private let zhiTabBar = ZhiTabBarView()
 
     /// 最大滚动距离（参考画布坐标）
     private var maxScroll: CGFloat { max(0, screen.maxScroll(state)) }
@@ -135,6 +208,23 @@ final class ScreenHostView: UIView, UIScrollViewDelegate {
         NotificationCenter.default.addObserver(
             self, selector: #selector(themeChanged),
             name: .doutuThemeChanged, object: nil)
+        if let index = screen.zhiTabIndex {
+            zhiTabBar.isHidden = false
+            zhiTabBar.selected = index
+        } else {
+            zhiTabBar.isHidden = true
+        }
+        zhiTabBar.onSelect = { [weak self] index in
+            self?.onAction?("nav:\(index)", .zero)
+        }
+        addSubview(zhiTabBar)
+    }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        let navH = bounds.height * 256 / 2816
+        zhiTabBar.frame = CGRect(x: 0, y: bounds.height - navH,
+                                 width: bounds.width, height: navH)
     }
 
     override func didMoveToWindow() {
@@ -209,6 +299,12 @@ final class ScreenHostView: UIView, UIScrollViewDelegate {
     func setScreen(_ next: Screen, state: ScreenState = ScreenState()) {
         screen = next
         self.state = state
+        if let index = next.zhiTabIndex {
+            zhiTabBar.isHidden = false
+            zhiTabBar.selected = index
+        } else {
+            zhiTabBar.isHidden = true
+        }
         syncCameraBackground()
         updateTermsScrollView()
         setNeedsDisplay()
@@ -266,45 +362,6 @@ final class ScreenHostView: UIView, UIScrollViewDelegate {
         }
         screen.draw(Draw(ctx: ctx, canvas: canvas), state: state)
         ctx.restoreGState()
-
-        // 2026-10-19: 支模块底栏统一由宿主绘制，页面只声明自己是哪一格。
-        // 页面自己的底栏会被这根覆盖，所以再也不会出现“财富页没有底栏”。
-        if let selected = screen.zhiTabIndex {
-            ctx.saveGState()
-            Draw.flip(ctx, canvas: canvas)
-            drawZhiTabBar(Draw(ctx: ctx, canvas: canvas), selected: selected)
-            ctx.restoreGState()
-        }
-    }
-
-    private let zhiNavCenters: [CGFloat] = [128, 382, 639, 898, 1151]
-    private let zhiNavBlue = UIColor(red: 0x16 / 255.0, green: 0x77 / 255.0, blue: 0xff / 255.0, alpha: 1)
-
-    private func drawZhiTabBar(_ d: Draw, selected: Int) {
-        d.rect(CGRect(x: 0, y: 2560, width: 1280, height: 256), .white)
-        d.rect(CGRect(x: 0, y: 2560, width: 1280, height: 0.5),
-               UIColor(white: 0.93, alpha: 1))
-        let names = ["lci_nav_home", "lci_nav_licai", "lci_nav_video", "lci_nav_msg", "lci_nav_me"]
-        for (i, cx) in zhiNavCenters.enumerated() {
-            if i == 0 && selected == 0 {
-                // 选中「首页」时，图标是实心蓝色支字标，文字单独画。
-                d.art(UIImage(named: "lci_nav_zhi"),
-                      CGRect(x: cx - 35, y: 2576, width: 70, height: 70))
-                d.centerText("首页", cx: cx, baseline: 2706, size: 26, zhiNavBlue)
-                continue
-            }
-            let base = UIImage(named: names[i])
-            let image: UIImage?
-            if i == selected {
-                image = base?.withTintColor(zhiNavBlue, renderingMode: .alwaysOriginal)
-            } else {
-                image = base
-            }
-            d.art(image, CGRect(x: cx - 43, y: 2604, width: 86, height: 148))
-        }
-        // 底部 home indicator
-        d.round(CGRect(x: 430, y: 2782, width: 420, height: 8), radius: 4,
-                UIColor(white: 0.78, alpha: 1))
     }
 
     // MARK: - 触摸（对照 Android 的 onTouchEvent：横向拖动轮播、纵向滚动、抬起时命中）
@@ -387,18 +444,6 @@ final class ScreenHostView: UIView, UIScrollViewDelegate {
         // 否则命中坐标会整体上移，表现就是「点击没反应 / 点错位置」。
         var design = canvas.design(p)
         design.y += state.scroll
-
-        // 支模块统一底栏：命中优先于页面自己的 hitTest，保证任何支页都能切 tab。
-        if !dragging, screen.zhiTabIndex != nil, design.y >= 2560 {
-            var best = 0
-            var bestD = CGFloat.greatestFiniteMagnitude
-            for (i, cx) in zhiNavCenters.enumerated() where abs(cx - design.x) < bestD {
-                bestD = abs(cx - design.x)
-                best = i
-            }
-            onAction?("nav:\(best)", design)
-            return
-        }
 
         // 横向拖动松手 → 吸附到最近一页（Android 的 snapCarousel）
         if draggingCarousel {
