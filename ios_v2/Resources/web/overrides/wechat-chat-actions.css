@@ -4859,3 +4859,13 @@ body.fw-subpage-open .wechat-bottom-navbar { display:none !important; }
 
 .fw-local-friend-row--fallback { gap: 28px !important; }
 .wechat-dialogue-list > * > img { margin-right: 24px !important; }
+
+/* 微信列表：头像/名字再远；会话：气泡与头像不重叠；会话顶部加高 */
+.wechat-dialogue-list > * { column-gap: 32px !important; gap: 32px !important; }
+.fw-local-friend-row--fallback { gap: 36px !important; }
+.fw-local-friend-row--fallback > img { flex: 0 0 48px !important; width: 48px !important; height: 48px !important; margin-right: 28px !important; }
+.fw-chat-message { gap: 48px !important; align-items: flex-start !important; }
+.fw-chat-message__avatar { flex: 0 0 40px !important; width: 40px !important; height: 40px !important; }
+.fw-chat-message__bubble { max-width: calc(100% - 120px) !important; margin-left: 4px !important; margin-right: 4px !important; }
+.fw-local-conversation__header { height: 76px !important; flex: 0 0 76px !important; padding-top: 8px !important; box-sizing: border-box !important; }
+.fw-local-conversation__header strong { font-size: 18px !important; }
