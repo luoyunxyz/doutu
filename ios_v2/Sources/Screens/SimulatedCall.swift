@@ -90,6 +90,7 @@ final class SimulatedCallViewController: UIViewController {
     private var vibrateTimer: Timer?
     private var durationTimer: Timer?
     private var seconds = 0
+    private let gradientLayer = CAGradientLayer()
 
     private let subtitleLabel = UILabel()
     private let durationLabel = UILabel()
@@ -119,15 +120,18 @@ final class SimulatedCallViewController: UIViewController {
         stopAll()
     }
 
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        gradientLayer.frame = view.bounds
+    }
+
     private func buildBackground() {
-        let gradient = CAGradientLayer()
-        gradient.frame = view.bounds
-        gradient.colors = [Draw.color(0xff1f2937).cgColor,
-                           Draw.color(0xff0b1020).cgColor,
-                           UIColor.black.cgColor]
-        gradient.locations = [0, 0.45, 1]
-        gradient.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-        view.layer.insertSublayer(gradient, at: 0)
+        gradientLayer.frame = view.bounds
+        gradientLayer.colors = [Draw.color(0xff1f2937).cgColor,
+                                Draw.color(0xff0b1020).cgColor,
+                                UIColor.black.cgColor]
+        gradientLayer.locations = [0, 0.45, 1]
+        view.layer.insertSublayer(gradientLayer, at: 0)
     }
 
     private func buildContent() {

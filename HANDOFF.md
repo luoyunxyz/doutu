@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 2.4.58：模拟来电真正响铃/全屏接听`  
-> 最新代码版本：`2.4.58 / 20098`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 2.4.59：修复 CAGradientLayer autoresizingMask 编译错误`  
+> 最新代码版本：`2.4.59 / 20099`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.51 / 20091`（已通过 USB 查询确认）
 
 ---
@@ -763,6 +763,10 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
       - 接听后停止铃声，显示「通话中」和计时，挂断按钮退出；
       - App 从后台回来时补查一次是否已到点，避免 Timer 暂停导致不响；
       - `call:cancel` 同时取消计时器；`call:ring:preview` 真正播放 3 秒铃声。
+
+75. **2.4.58 构建报错：CAGradientLayer.autoresizingMask**
+    - `CAGradientLayer` 的 `autoresizingMask` 是 `CAAutoresizingMask`，没有 `.flexibleWidth/.flexibleHeight`；
+    - 2.4.59 去掉该行，改成持有 `gradientLayer` 并在 `viewDidLayoutSubviews()` 里同步 `frame = view.bounds`。
 
 ---
 
