@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 2.3.3：好友资料页顶部留白`  
-> 最新代码版本：`2.3.3 / 20033`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 2.3.4：好友资料页顶部留白加大到 24px`  
+> 最新代码版本：`2.3.4 / 20034`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.3.1 / 20031`（已通过 USB 查询确认）
 
 ---
@@ -450,7 +450,7 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
 
 21. **好友资料页顶到屏幕最上沿**
     - 真机隐藏状态栏后 `env(safe-area-inset-top)` 实测为 0，`.fw-friend-profile-page` 的 `padding-top` 也就是 0，返回箭头和页头贴顶；
-    - 2.3.3 改成 `calc(env(safe-area-inset-top, 0px) + 12px)`，整个资料页下移 12px，顶部留出呼吸空间。
+    - 2.3.3 改成 `calc(env(safe-area-inset-top, 0px) + 12px)`；用户反馈仍然偏短，2.3.4 加大到 **+24px**，header top 从 0 → 24、头像 top 从 66 → 90。
 
 ---
 
