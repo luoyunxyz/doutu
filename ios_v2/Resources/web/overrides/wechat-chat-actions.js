@@ -812,14 +812,25 @@
   try { window.__fwAvatarPlaceholder = PLACEHOLDER_AVATAR; } catch (_) { /* 非浏览器环境忽略 */ }
 
   const AVATAR_POOL_SIZE = 400;
+  // 远程随机头像接口每次请求都可能换脸，且 iOS 原生层没有实现头像缓存桥。
+  // 这里改成随包内的固定头像池：同一个 seed 永远同一张脸，重启不变。
+  const BUNDLED_AVATAR_FILES = [
+    './assets/user-avatar-1-CKPDcH57.jpg',
+    './assets/user-avatar-4-Cmbgep_s.jpg',
+    './assets/user-avatar-5-DMigR-cn.jpg',
+    './assets/user-avatar-6-Cq95zrQT.jpg',
+    './assets/user-avatar-7-C4bh6bYx.jpg',
+    './assets/user-avatar-8-BysMeksY.jpg',
+    './assets/user-avatar-10-ZKj7tiz_.jpg',
+  ];
   // 群成员 / 随机生成的联系人：同一个 index 永远拿到同一张脸（API 结果按 seed 缓存）
   function avatarUrl(index) {
     return apiAvatarFor('member-' + String(index));
   }
   // 所有远程头像都失败时的最后一层：内联占位（以前指向打包的那批图片）
   function bundledAvatarFor(seed) {
-    void seed;
-    return PLACEHOLDER_AVATAR;
+    const hash = avatarSeedHash(seed);
+    return BUNDLED_AVATAR_FILES[hash % BUNDLED_AVATAR_FILES.length] || PLACEHOLDER_AVATAR;
   }
   function makeAvatarUrl() { return remoteAvatarUrl(); }
   const AVATAR_API = 'https://v2.xxapi.cn/api/head';
@@ -836,6 +847,7 @@
   // same person keeps the same face across renders; the app's avatar cache freezes the
   // 302 redirect into a local file so it stays put on later opens.
   function apiAvatarFor(seed) {
+    return bundledAvatarFor(seed);
     const key = 'fake-world.wechat.head-avatar.' + avatarSeedHash(seed);
     try {
       const remembered = localStorage.getItem(key) || '';
@@ -856,9 +868,8 @@
     return url;
   }
   function makeBatchAvatarUrl() {
-    // 以前这里还会从一个打包图片 id 池里抽一张，其实 id 压根没用上（返回的是 API 地址）。
-    // 本地图片删掉之后，这里就是纯 API 了。
-    return remoteAvatarUrl();
+    return bundledAvatarFor('batch-' + Date.now() + Math.random().toString(36).slice(2));
+  }
   }
 
     function migrateGeneratedProfiles() {
@@ -879,6 +890,27 @@
     saveState();
   }
   migrateGeneratedProfiles();
+
+  // 老版本把远程随机头像 URL 存进了 state，启动时统一迁回本地固定头像。
+  (function normalizeRemoteAvatars() {
+    let changed = false;
+    const local = value => typeof value === 'string' && /^https?:\/\//i.test(value);
+    (Array.isArray(state.contacts) ? state.contacts : []).forEach(friend => {
+      if (friend && (!friend.avatar || local(friend.avatar))) {
+        friend.avatar = bundledAvatarFor(String(friend.id || friend.name || 'contact'));
+        changed = true;
+      }
+    });
+    (Array.isArray(state.groups) ? state.groups : []).forEach(group => {
+      if (!group || !Array.isArray(group.memberAvatars)) return;
+      group.memberAvatars = group.memberAvatars.map((value, index) => {
+        if (!local(value)) return value;
+        changed = true;
+        return bundledAvatarFor(String(group.id || group.name || 'group') + '|' + index);
+      });
+    });
+    if (changed) saveState();
+  })();
   // 2026-10-11: contacts and group members created by an earlier build carried a bundled
   // cartoon avatar. They now take a real picture from the 随机头像 API instead.
   (function migrateBundledAvatars() {
@@ -2034,7 +2066,7 @@
       if (template) {
         row = template.cloneNode(true);
         const img = row.querySelector('img');
-        if (img) { img.src = getStableFriendAvatar(friend, friend.avatar || makeAvatarUrl()); img.onerror = () => { img.onerror = null; img.src = CONTACT_FALLBACKS[0].avatar; }; }
+        if (img) { img.src = getStableFriendAvatar(friend, friend.avatar || bundledAvatarFor(String(friend.id || friend.name || "friend"))); img.onerror = () => { img.onerror = null; img.src = CONTACT_FALLBACKS[0].avatar; }; }
         const leaves = [...row.querySelectorAll('span,div')].filter(el => el.children.length === 0);
         const templateName = getChatInfo(template)?.name;
         const nameNode = leaves.find(el => el.textContent.trim() === templateName) || leaves.find(el => el.textContent.trim() && el.textContent.trim().length < 40);
@@ -2048,7 +2080,7 @@
         row = document.createElement('button'); row.type = 'button';
         row.className = 'fw-local-friend-row fw-local-friend-row--fallback';
         row.innerHTML = '<img alt=""><span class="fw-local-friend-copy"><strong></strong><small></small></span><time></time>';
-        const img = row.querySelector('img'); img.src = getStableFriendAvatar(friend, friend.avatar || makeAvatarUrl());
+        const img = row.querySelector('img'); img.src = getStableFriendAvatar(friend, friend.avatar || bundledAvatarFor(String(friend.id || friend.name || "friend")));
         img.onerror = () => { img.onerror = null; img.src = CONTACT_FALLBACKS[0].avatar; };
         row.querySelector('strong').textContent = label;
         row.querySelector('small').textContent = chatListPreview(friend);

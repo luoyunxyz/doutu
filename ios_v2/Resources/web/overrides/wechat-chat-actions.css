@@ -4822,3 +4822,11 @@ body.fw-subpage-open .wechat-bottom-navbar { display:none !important; }
 .fw-chat-message { gap: 18px; }
 .fw-chat-message__bubble { max-width: calc(100% - 78px); }
 .fw-chat-message--transfer { gap: 2.2vw; }
+
+
+/* 头像与名字/气泡再拉开一点，避免贴脸 */
+.wechat-dialogue-list > * { gap: 14px !important; }
+.fw-local-friend-row--fallback { gap: 20px !important; }
+.fw-chat-message { gap: 24px !important; }
+.fw-chat-message__bubble { max-width: calc(100% - 88px) !important; }
+.fw-chat-message--transfer { gap: 2.2vw !important; }
