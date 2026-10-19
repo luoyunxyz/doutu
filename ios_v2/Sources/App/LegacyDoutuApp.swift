@@ -750,6 +750,15 @@ final class Router {
             // 收款详情页也有一个 avatar 热区（Android 换收款人头像）。iOS 还没做
             // 收款头像存储，不能落到「换我的头像」这条分支上。
             if self.host?.screen is ReceiptDetailV2Screen { return }
+            // 模拟来电页的头像：选完要回填到当页 State，而不是只改个人资料。
+            if let state = self.host?.state as? CallSetupScreen.State {
+                AvatarPicker.present { ok, message in
+                    state.avatarImage = ProfileStore.shared.avatar
+                    self.host?.setNeedsDisplay()
+                    self.showToast(message, ok: ok)
+                }
+                return
+            }
             // 换头像：未登录先去登录，已登录直接从相册选
             if Session.shared.isLoggedIn {
                 AvatarPicker.present { ok, message in
@@ -1546,9 +1555,74 @@ final class Router {
                 self?.host?.setNeedsDisplay()
             }
         case let t where t.hasPrefix("call:"):
-            // 模拟来电设置页的动作；真正的排期/响铃在后续版本接入
-            if t == "call:cancel" || t == "call:start" {
-                showToast(t == "call:start" ? "已设置，稍后自动来电" : "已取消", ok: true)
+            guard let state = host?.state as? CallSetupScreen.State else { return }
+            switch t {
+            case "call:cancel":
+                state.pendingAt = nil
+                showToast("已取消", ok: true)
+            case "call:start":
+                let now = Date()
+                if state.timeMode == CallSetupScreen.modeDelay {
+                    state.pendingAt = now.addingTimeInterval(
+                        TimeInterval(max(1, state.delayMinutes)) * 60)
+                } else if state.timeMode == CallSetupScreen.modeAt, state.atHour >= 0 {
+                    var comps = Calendar.current.dateComponents([.year, .month, .day], from: now)
+                    comps.hour = state.atHour
+                    comps.minute = state.atMinute
+                    var at = Calendar.current.date(from: comps) ?? now
+                    if at <= now { at = at.addingTimeInterval(24 * 60 * 60) }
+                    state.pendingAt = at
+                } else if state.timeMode == CallSetupScreen.modeAt {
+                    showToast("请先选择时间", ok: false)
+                    return
+                } else {
+                    state.pendingAt = now
+                }
+                showToast("已设置，稍后自动来电", ok: true)
+            case "call:time:now":
+                state.timeMode = CallSetupScreen.modeNow
+            case "call:time:delay":
+                EditPrompt.present(title: "延迟分钟数",
+                                   current: String(state.delayMinutes), numeric: true) { text in
+                    let minutes = Int(text.filter { $0.isNumber }) ?? 1
+                    state.delayMinutes = max(1, minutes)
+                    state.timeMode = CallSetupScreen.modeDelay
+                    self.host?.setNeedsDisplay()
+                }
+            case "call:time:at":
+                EditPrompt.present(title: "指定时间（HH:mm）",
+                                   current: CallSetupScreen.atText(state).contains(":")
+                                        ? CallSetupScreen.atText(state) : "12:00",
+                                   numeric: true) { text in
+                    let digits = text.filter { $0.isNumber }
+                    guard digits.count == 4 else { return }
+                    let hour = Int(digits.prefix(2)) ?? 12
+                    let minute = Int(digits.suffix(2)) ?? 0
+                    guard hour < 24, minute < 60 else { return }
+                    state.atHour = hour
+                    state.atMinute = minute
+                    state.timeMode = CallSetupScreen.modeAt
+                    self.host?.setNeedsDisplay()
+                }
+            case "call:ring:pick":
+                state.ringtoneLabel = "本地铃声"
+                showToast("已选择本地铃声", ok: true)
+            case "call:ring:default":
+                state.ringtoneLabel = ""
+            case "call:ring:preview":
+                showToast("正在试听", ok: true)
+            case "name":
+                EditPrompt.present(title: "来电人姓名", current: state.name, numeric: false) { text in
+                    state.name = text
+                    self.host?.setNeedsDisplay()
+                }
+            case let value where value.hasPrefix("call:contact:"):
+                let id = String(value.dropFirst("call:contact:".count))
+                if let contact = state.contacts.first(where: { $0.id == id }) {
+                    state.name = contact.name
+                }
+            default:
+                break
             }
             host?.setNeedsDisplay()
         case "orderDetail":

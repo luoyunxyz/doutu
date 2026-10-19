@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 2.4.53：娱乐页开关状态/兜底玩法补全`  
-> 最新代码版本：`2.4.53 / 20093`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 2.4.54：模拟来电页所有控件真正接上状态`  
+> 最新代码版本：`2.4.54 / 20094`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.51 / 20091`（已通过 USB 查询确认）
 
 ---
@@ -727,6 +727,15 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
       - 再 `setNeedsDisplay`，开关立即变化；
     - `Playbook.sections(from:)` 原来把没有 `enabled` 字段的行当成 false 全部丢掉；2.4.53 改成「显式 false 才隐藏，开关行始终保留」；
     - `defaultSections` 从只有「短视频去水印」补成完整兜底：parse / order / call / shutdown / sound / tease，服务端配置拉取失败时六项玩法仍在。
+
+70. **模拟来电页大部分控件只有令牌没有行为**
+    - `CallSetupScreen.hitTest` 会吐 `call:time:*`、`call:contact:*`、`call:ring:*`、`name`、`avatar`，但 Router 的 `call:` 分支只处理 start/cancel，其它全部落到默认 `break`；
+    - 2.4.54 补齐：
+      - 立即/延迟 N 分钟/指定 HH:mm 三档都写回 `timeMode`、`delayMinutes`、`atHour/atMinute`；
+      - 开始 → 计算 `pendingAt`，页面出现「已安排」条；取消 → 清空；
+      - 联系人、姓名输入、头像选择都会回填当前 State；
+      - 铃声选择/恢复默认/试听至少给出明确状态与提示；
+    - `avatar` 令牌在 Router 里优先按 `CallSetupScreen.State` 处理，选完回填 `state.avatarImage`，不会再误跳个人资料页。
 
 ---
 
