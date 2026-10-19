@@ -22,6 +22,9 @@ protocol Screen: AnyObject {
     func draw(_ draw: Draw, state: ScreenState)
     /// 命中测试：入参是**参考画布坐标**
     func hitTest(_ state: ScreenState, x: CGFloat, y: CGFloat) -> ActionToken
+    /// 支模块五格底栏的当前选中项（0 首页 / 1 理财 / 2 视频 / 3 消息 / 4 我的）。
+    /// 必须写在 protocol 里，否则通过 `Screen` 存在类型访问时永远拿到扩展默认的 nil。
+    var zhiTabIndex: Int? { get }
 }
 
 extension Screen {

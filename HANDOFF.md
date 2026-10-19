@@ -3,9 +3,9 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 2.4.32：每次切页记录 SCREEN/zhi 日志`  
-> 最新代码版本：`2.4.32 / 20072`（已推送，待 Codemagic 构建）  
-> 设备当前安装：`2.4.29 / 20069`（已通过 USB 查询确认）
+> 最新提交：`本轮 2.4.33：把 zhiTabIndex 提升为 protocol 要求`  
+> 最新代码版本：`2.4.33 / 20073`（已推送，待 Codemagic 构建）  
+> 设备当前安装：`2.4.32 / 20072`（已通过 USB 查询确认）
 
 ---
 
@@ -601,6 +601,12 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
     - 不能只依赖 ZHITAB：如果 `zhiTabIndex` 为 nil 就不会记录；
     - `setScreen` 每次写 `SCREEN <class> zhi=<nil/Int> bounds=<...>`，财富页到底是哪个类、bounds 多少、zhi 是否 nil 一眼可见；
     - 安装 2.4.32 后进财富页，拉 `crash.log`，把 `SCREEN` / `ZHITAB` 两行发来即可继续定位。
+
+49. **根因：zhiTabIndex 不是 protocol 要求**
+    - 2.4.32 真机日志实测：
+      `SCREEN GrowthV2Screen zhi=nil bounds=(0,0,390,844)`
+    - `zhiTabIndex` 之前只写在 `extension Screen` 里，没有写进 `protocol Screen` 的声明；通过 `Screen` 存在类型访问时，Swift 永远拿扩展默认的 nil，GrowthV2 类里的 `{ 1 }` 完全不参与动态派发；
+    - 2.4.33 把 `var zhiTabIndex: Int? { get }` 提升为 protocol 要求，扩展仍保留默认 nil；这样 GrowthV2/Licai/Message/Me 的实现才会真正被调用，底栏 idx 不再恒 nil。
 
 ---
 
