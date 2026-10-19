@@ -332,8 +332,24 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler, UIGestureRec
     @objc private func handleEdgePan(_ gesture: UIScreenEdgePanGestureRecognizer) {
         guard gesture.state == .ended else { return }
         let translation = gesture.translation(in: view)
-        if translation.x > 60, abs(translation.y) < 120 {
-            dismiss(animated: true)
+        guard translation.x > 60, abs(translation.y) < 120 else { return }
+        // 2026-10-19: 先让网页处理自己的返回栈（聊天页 → 微信列表、转账详情 → 聊天页）。
+        // 网页没处理时才退出整个微主页；否则在聊天里右滑会直接回到应用首页。
+        webView.evaluateJavaScript(
+            "(function(){try{return window.__fwHandleChatPayBack?window.__fwHandleChatPayBack():false}catch(e){return false}})()"
+        ) { [weak self] result, _ in
+            guard let self else { return }
+            let handled: Bool
+            if let flag = result as? Bool {
+                handled = flag
+            } else if let number = result as? NSNumber {
+                handled = number.boolValue
+            } else {
+                handled = false
+            }
+            if !handled {
+                DispatchQueue.main.async { self.dismiss(animated: true) }
+            }
         }
     }
 

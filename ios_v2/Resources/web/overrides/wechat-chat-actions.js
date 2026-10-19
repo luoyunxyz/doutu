@@ -1637,6 +1637,11 @@
       messages.appendChild(line);
     };
     const drawMessages = (keepScrollTop=false) => {
+      // 2026-10-19: 收款/转账后可能残留旧会话页。每次重绘前只保留当前页，
+      // 防止旧页面的「打招呼 + 转账卡片」叠在当前页下面，看起来像消息重复。
+      document.querySelectorAll('.fw-local-conversation').forEach(other => {
+        if (other !== page) other.remove();
+      });
       const previousScrollTop=messages.scrollTop;
       // 打招呼消息只由 greeting.mine / greeting.friend 渲染一次；
       // friend.messages 里任何同文案的旧副本都在这里清掉。
@@ -9477,7 +9482,12 @@
       if (moments) { moments.remove(); return true; }
       const feed = document.querySelector('.fw-moments-feed');
       if (feed) { feed.remove(); return true; }
-      return typeof previousBack === 'function' ? previousBack() : false;
+      // 2026-10-19: 本地会话是最后打开的全屏页。返回键/左侧边缘手势必须先把聊天页
+      // 收回「微信」列表，而不是退出整个微主页回到应用首页。
+      const handledByInner = typeof previousBack === 'function' ? previousBack() : false;
+      if (handledByInner) return true;
+      if (document.querySelector('.fw-local-conversation')) { closeLocalConversation(); return true; }
+      return false;
     };
 
     // 原生侧（iOS WebHost）直接调这两个入口，避免 Safari/WKWebView 对 SVG 的

@@ -602,6 +602,12 @@ body.fw-conversation-scale-active { --fw-conversation-scale:1; }
   gap: 0; padding: 21px 12px 18px; box-sizing: border-box; overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
 }
+/* 2026-10-19: 消息行是滚动区的 flex item。收款后消息变多、总高度超过一屏时，
+   默认 flex-shrink:1 会把每条消息压扁，出现行与行/转账卡片互相重叠。
+   消息行必须保持自身高度，超出部分交给滚动区。 */
+.fw-local-conversation__messages > * {
+  flex: 0 0 auto;
+}
 .fw-chat-time {
   align-self: center; margin: 0 0 20px; color: #b2b2b2; font-size: 12px; line-height: 18px; font-weight: 400;
 }
