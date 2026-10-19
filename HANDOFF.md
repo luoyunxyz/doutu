@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 2.4.29：支模块底栏改成独立子视图`  
-> 最新代码版本：`2.4.29 / 20069`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 2.4.30：底栏子视图加运行日志/颜色修正`  
+> 最新代码版本：`2.4.30 / 20070`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.28 / 20068`（已通过 USB 查询确认）
 
 ---
@@ -585,6 +585,11 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
     - 2.4.27/2.4.28 的底栏是画在页面同一个 CGContext 里；GrowthV2 的 draw 内部有 save/restore + clip，页面的 restore 不配对时会把后画的底栏裁掉/移位，所以财富页依然没有；
     - 2.4.29 改成独立 `ZhiTabBarView` 子视图：白底、五格、选中项，`ScreenHostView` 的 `layoutSubviews` 把它固定在底部 `h*256/2816`，`setScreen` 根据 `zhiTabIndex` 显示/选中；
     - 独立视图不参与页面绘制上下文，财富页/理财页/消息/我的都能稳定看到；点击在子视图的 `touchesEnded` 里直接发 `nav:<i>`，不再依赖页面 hitTest。
+
+46. **2.4.29 仍无底栏 / 卡下拉**
+    - 用户实测仍是 2.4.28（设备查询确认），2.4.29 的独立子视图还没装；
+    - 2.4.30 给 `setScreen` 加 `ZHITAB` 日志（screen 类型、index、frame、bounds），并修正底栏蓝色为 `Draw.color(0xff1677ff)`；
+    - 安装 2.4.30 后若财富页仍无底栏，直接拉 `Documents/crash.log` 里 `ZHITAB` 行即可判断是 `zhiTabIndex` nil、frame 为 0，还是视图被盖住。
 
 ---
 

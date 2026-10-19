@@ -100,8 +100,7 @@ final class ZhiTabBarView: UIView {
     var onSelect: ((Int) -> Void)?
 
     private let centers: [CGFloat] = [128, 382, 639, 898, 1151]
-    private let tint = UIColor(red: 0x16 / 255.0, green: 0x77 / 255.0,
-                               blue: 0xff / 255.0, alpha: 1)
+    private let tint = Draw.color(0xff1677ff)
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -302,6 +301,7 @@ final class ScreenHostView: UIView, UIScrollViewDelegate {
         if let index = next.zhiTabIndex {
             zhiTabBar.isHidden = false
             zhiTabBar.selected = index
+            CrashLog.append("ZHITAB \(type(of: next)) idx=\(index) frame=\(zhiTabBar.frame) bounds=\(bounds)")
         } else {
             zhiTabBar.isHidden = true
         }
