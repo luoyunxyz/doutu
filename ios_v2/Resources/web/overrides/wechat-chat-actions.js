@@ -1574,6 +1574,18 @@
     };
     const drawMessages = (keepScrollTop=false) => {
       const previousScrollTop=messages.scrollTop;
+      // 打招呼的两条由 greeting.mine/friend 单独渲染；如果历史数据把它们
+      // 又复制进了 friend.messages，滑动后就会重复出现。这里按对象和文案
+      // 去重，确保一次只渲染一份。
+      const greetingTexts = new Set([
+        String(greeting.mine.text || ('我是' + getSelfName())),
+        String(greeting.friend.text || '我通过了你的朋友验证请求，现在我们可以开始聊天了'),
+      ]);
+      friend.messages = friend.messages.filter((item, index, arr) =>
+        item !== greeting.mine && item !== greeting.friend
+        && !(item && item.type !== 'greeting' && greetingTexts.has(String(item.text || '')))
+        && arr.indexOf(item) === index
+      );
       messages.replaceChildren();
       // 两条消息之间的最小间隔：不足这个时间就不插新的时间（微信的做法）。
       // 想改成 5 分钟只动这一个数字。
