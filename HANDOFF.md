@@ -3,9 +3,9 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 2.4.7：账单页钉到视口 + 钱包顶部间距按 DOM 判断`  
-> 最新代码版本：`2.4.7 / 20047`（已推送，待 Codemagic 构建）  
-> 设备当前安装：`2.4.5 / 20045`（已通过 USB 查询确认）
+> 最新提交：`本轮 2.4.8：补齐 iOS 14.3 不支持的 inset 全屏浮层`  
+> 最新代码版本：`2.4.8 / 20048`（已推送，待 Codemagic 构建）  
+> 设备当前安装：`2.4.7 / 20047`（已通过 USB 查询确认）
 
 ---
 
@@ -496,6 +496,11 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
     - 真机加载的 `wechat-pay-pages.css` 里 `#fw-pay-pages-host` 的 `inset:0` 丢了，fixed 元素按静态位置落到屏幕下方（实测 host top=845），自绘账单页一直在屏幕外；
     - 2.4.7 只在 `kind === 'bills'` 时给 host 显式 `top/left/right/bottom:0`，账单页钉到视口；钱包仍用 bundled 页面，不改变其 UI；
     - `applyBundledPaySpacing` 不再按 hash 判断，只要可见的钱包 root 在 DOM 里就加 40px —— 即使 hash 还残留 `?bills=1`，钱包也不会再贴顶。
+
+30. **账单右上角三点菜单不显示**
+    - iOS 14.3 的 WKWebView 不支持 `inset` 简写：`.fw-bills-menu { position:fixed; inset:0 }` 里的 top/left 全部失效，fixed 元素按静态位置掉到 `top=845`，菜单在屏幕外；
+    - 2.4.8 给所有全屏浮层（账单三点菜单、批量添加、账单编辑/选择、收支统计、提现页、银行卡页、toast）补 `top/right/bottom/left: 0` 长写；
+    - `#fw-pay-pages-host` 仍由 JS 只在 bills 路由钉住，避免钱包的 bundled 页面被自绘页替换。
 
 ---
 

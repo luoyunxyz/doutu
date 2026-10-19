@@ -660,3 +660,22 @@
 .fw-wd-sheet__copy small { font-size: 13px; color: #9a9a9a; }
 .fw-wd-sheet__tick { display: none; width: 18px; height: 18px; border-radius: 50%; background: #58be6a; }
 .fw-wd-sheet__add { width: 100%; padding: 15px 16px; text-align: left; font-size: 16px; color: #576b95; }
+
+/* 2026-10-19: iOS 14.3 WKWebView does not support the inset shorthand, so fixed full-screen overlays (bills menu included) fall to their static position below the viewport. Explicit longhands fix them; the pay host is pinned separately by JS. */
+.fw-bill-editor,
+.fw-bill-picker,
+.fw-bill-edit,
+.fw-pay-toast-host,
+.fw-bills-menu,
+.fw-bill-batch,
+.fw-bill-stats,
+.fw-wd,
+.fw-bc,
+.fw-wdp,
+.fw-wd-editor,
+.fw-wd-sheet {
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+}
