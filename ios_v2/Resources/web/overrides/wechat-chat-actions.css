@@ -4851,3 +4851,8 @@ body.fw-subpage-open .wechat-bottom-navbar { display:none !important; }
 .wechat-dialogue-list > * > img { margin-right: 14px !important; }
 .fw-chat-message { gap: 36px !important; }
 .fw-chat-message__bubble { max-width: calc(100% - 100px) !important; }
+
+/* 最后再拉开一次：列表头像/名字、会话头像/气泡 */
+.wechat-dialogue-list > * > img { margin-right: 20px !important; }
+.fw-chat-message { gap: 40px !important; }
+.fw-chat-message__bubble { max-width: calc(100% - 108px) !important; }

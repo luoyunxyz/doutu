@@ -949,7 +949,7 @@
       const oldName = String(friend.name || '');
       const nextName = candidates.find(name => !used.has(name.toLocaleLowerCase()));
       if (!nextName) break;
-      used.add(nextName.toLocaleLowerCase()); friend.name = nextName; friend.realName = ''; friend.avatar = makeBatchAvatarUrl(); friend.generatedProfileVersion = 2; friend.starred = false;
+      used.add(nextName.toLocaleLowerCase()); friend.name = nextName; friend.realName = ''; friend.avatar = apiAvatarFor(friend.name); friend.generatedProfileVersion = 2; friend.starred = false;
       const oldRecord = state.chats?.[oldName];
       if (oldRecord && !state.chats[nextName]) { state.chats[nextName] = oldRecord; delete state.chats[oldName]; }
       const record = chatRecord(nextName); record.pinnedAt = null; record.unreadCount = 0; record.unread = false; record.unreadOverride = true; record.generatedDefaultsApplied = true;
@@ -965,7 +965,10 @@
       && /^https?:\/\//i.test(value)
       && !/api\.dicebear\.com/i.test(value);
     (Array.isArray(state.contacts) ? state.contacts : []).forEach(friend => {
-      if (friend && (!friend.avatar || legacyRemote(friend.avatar))) {
+      if (friend && friend.source === '随机生成' && /api\.aa1\.cn/i.test(String(friend.avatar || ''))) {
+        friend.avatar = apiAvatarFor(friend.name || friend.id || 'contact');
+        changed = true;
+      } else if (friend && (!friend.avatar || legacyRemote(friend.avatar))) {
         friend.avatar = apiAvatarFor(String(friend.name || friend.id || 'contact'));
         changed = true;
       }
@@ -2711,7 +2714,7 @@
       const info = getChatInfo(row);
       const name = String(info?.name || row.textContent || '').trim().slice(0, 12) || '微信好友';
       img.src = apiAvatarFor(name);
-      img.style.marginRight = '14px';
+      img.style.marginRight = '20px';
       img.dataset.fwStableAvatar = '1';
     }
   }
@@ -3171,7 +3174,7 @@
           name, nickname: conv.nickname || '', wechatId: 'wx' + Math.random().toString(36).slice(2, 12),
           gender: ['女', '男', '未知'][Math.floor(Math.random() * 3)], remark: '', realName: '',
           phone: '', region: conv.region || '', verification: '你加TA(需验证)', source: '随机生成',
-          avatar: avatarFor(conv.avatarIndex), starred: false, messages: conv.messages.slice(),
+          avatar: avatarFor((conv.avatarIndex || 1) + created), starred: false, messages: conv.messages.slice(),
           createdAt: Date.now(), generatedProfileVersion: 2,
         };
         // A fabricated history should not open with the demo verification lines.
@@ -4323,7 +4326,7 @@
       const names=new Set([...state.contacts.map(friend=>String(friend.name||'').toLocaleLowerCase()),...getRows().map(row=>getChatInfo(row)?.name.toLocaleLowerCase()).filter(Boolean)]);const ids=new Set(state.contacts.map(friend=>String(friend.wechatId||'').toLocaleLowerCase()));
       const apiPool=[...apiNames];let added=0;const batchId=Date.now(),generated=[];
       const takeName=()=>apiPool.length?apiPool.shift():'';
-      let attempts=0;while(added<count&&attempts<10000){attempts++;const name=takeName();if(!name)break;const lower=name.toLocaleLowerCase(),wechatId='wx'+Math.random().toString(36).slice(2,12);if(names.has(lower)||ids.has(wechatId.toLocaleLowerCase()))continue;names.add(lower);ids.add(wechatId.toLocaleLowerCase());const id='friend-'+batchId+'-'+added,avatar=makeBatchAvatarUrl();generated.push({id,name,wechatId,gender:['女','男','未知'][Math.floor(Math.random()*3)],remark:'',realName:'',phone:'',region:['广东 深圳','北京 北京','上海 上海','浙江 杭州','四川 成都'][Math.floor(Math.random()*5)],verification:'你加TA(需验证)',source:'随机生成',requestMessage:'',avatar,starred:false,createdAt:batchId+added});added++;}
+      let attempts=0;while(added<count&&attempts<10000){attempts++;const name=takeName();if(!name)break;const lower=name.toLocaleLowerCase(),wechatId='wx'+Math.random().toString(36).slice(2,12);if(names.has(lower)||ids.has(wechatId.toLocaleLowerCase()))continue;names.add(lower);ids.add(wechatId.toLocaleLowerCase());const id='friend-'+batchId+'-'+added,avatar=apiAvatarFor(name + '|' + id);generated.push({id,name,wechatId,gender:['女','男','未知'][Math.floor(Math.random()*3)],remark:'',realName:'',phone:'',region:['广东 深圳','北京 北京','上海 上海','浙江 杭州','四川 成都'][Math.floor(Math.random()*5)],verification:'你加TA(需验证)',source:'随机生成',requestMessage:'',avatar,starred:false,createdAt:batchId+added});added++;}
       if(!added){showToast('网名接口暂时不可用，请稍后再试');return;}generated.forEach(friend=>{friend.avatar=freezeRemoteAvatar(friend.avatar);});state.contacts.unshift(...generated);if(!saveState()){state.contacts.splice(0,generated.length);showToast('保存失败，请检查设备存储空间');return;}closeOverlay();applyState();setTimeout(applyState,80);showToast(added===count?('已随机添加'+added+'位好友'):('网名接口返回不足，已添加 '+added+' 位好友'));window.dispatchEvent(new CustomEvent('fw:contacts-updated',{detail:{count:added}}));
     };
   }
