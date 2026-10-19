@@ -115,14 +115,14 @@ final class ZhiTabBarView: UIView {
     private let centers: [CGFloat] = [128, 382, 639, 898, 1151]
     private let tint = Draw.color(0xff1677ff)
 
-    /// 底栏颜色跟随理财主题：普通版蓝，成长版/V1/V2/V3 用各自 accent 金色系。
-    private var colors: (selected: UIColor, muted: UIColor?) {
-        let theme = LicaiVersion.theme()
-        if theme.value == LicaiVersion.normal {
-            return (tint, nil)
-        }
-        let accent = Draw.color(theme.accent)
-        return (accent, accent.withAlphaComponent(0.52))
+    private let labels = ["首页", "理财", "视频", "消息", "我的"]
+
+    private func drawLabel(_ text: String, cx: CGFloat, h: CGFloat, color: UIColor) {
+        let font = UIFont.systemFont(ofSize: max(8, h * 26 / 256))
+        let ns = text as NSString
+        let tw = ns.size(withAttributes: [.font: font]).width
+        ns.draw(at: CGPoint(x: cx - tw / 2, y: h * 146 / 256 - font.lineHeight),
+                withAttributes: [.font: font, .foregroundColor: color])
     }
 
     override init(frame: CGRect) {
@@ -143,40 +143,42 @@ final class ZhiTabBarView: UIView {
         UIRectFill(CGRect(x: 0, y: 0, width: w, height: 0.5))
 
         let names = ["lci_nav_home", "lci_nav_licai", "lci_nav_video", "lci_nav_msg", "lci_nav_me"]
-        let palette = colors
+        let theme = LicaiVersion.theme()
+        let normal = theme.value == LicaiVersion.normal
+        let labelColor = normal ? tint : Draw.color(theme.accent)
         for (i, refX) in centers.enumerated() {
             let cx = w * refX / 1280
             if i == 0 {
                 if selected == 0 {
                     let side = h * 70 / 256
-                    UIImage(named: "lci_nav_zhi")?.withTintColor(palette.selected, renderingMode: .alwaysOriginal)
+                    let iconColor = normal ? tint : Draw.color(theme.foreground)
+                    UIImage(named: "lci_nav_zhi")?.withTintColor(iconColor, renderingMode: .alwaysOriginal)
                         .draw(in: CGRect(x: cx - side / 2, y: h * 16 / 256, width: side, height: side))
-                    let font = UIFont.systemFont(ofSize: max(8, h * 26 / 256))
-                    let text = "首页" as NSString
-                    let tw = text.size(withAttributes: [.font: font]).width
-                    text.draw(at: CGPoint(x: cx - tw / 2, y: h * 146 / 256 - font.lineHeight),
-                              withAttributes: [.font: font, .foregroundColor: palette.selected])
+                    drawLabel("首页", cx: cx, h: h, color: labelColor)
                 } else {
                     // lci_nav_home 是 225×256 的宽图（含图标+首页文字），不能按其它格的
                     // 86×148 拉伸，否则首页图标会被压扁变形。
                     let iw = w * 225 / 1280
-                    var image = UIImage(named: "lci_nav_home")
-                    if let muted = palette.muted {
-                        image = image?.withTintColor(muted, renderingMode: .alwaysOriginal)
-                    }
-                    image?.draw(in: CGRect(x: cx - iw / 2, y: 0, width: iw, height: h))
+                    UIImage(named: "lci_nav_home")?
+                        .draw(in: CGRect(x: cx - iw / 2, y: 0, width: iw, height: h))
                 }
                 continue
             }
             var image = UIImage(named: names[i])
-            if i == selected {
-                image = image?.withTintColor(palette.selected, renderingMode: .alwaysOriginal)
-            } else if let muted = palette.muted {
-                image = image?.withTintColor(muted, renderingMode: .alwaysOriginal)
+            if i == selected && normal {
+                image = image?.withTintColor(tint, renderingMode: .alwaysOriginal)
             }
             let iw = w * 86 / 1280
             let ih = h * 148 / 256
-            image?.draw(in: CGRect(x: cx - iw / 2, y: h * 44 / 256, width: iw, height: ih))
+            let imageY = h * 44 / 256
+            image?.draw(in: CGRect(x: cx - iw / 2, y: imageY, width: iw, height: ih))
+            // 黑卡主题的选中态：图标保持素材里的深色实心，只把文字染成主题金色。
+            if i == selected && !normal {
+                UIColor.white.setFill()
+                UIRectFill(CGRect(x: cx - iw / 2, y: imageY + ih * 0.62,
+                                  width: iw, height: ih * 0.38))
+                drawLabel(labels[i], cx: cx, h: h, color: labelColor)
+            }
         }
         UIColor(white: 0.78, alpha: 1).setFill()
         UIBezierPath(roundedRect: CGRect(x: w * 430 / 1280, y: h * 222 / 256,
