@@ -7212,9 +7212,29 @@
     const media = lane.querySelector('.fw-tl-item__media');
     item.images.forEach((src, imageIndex) => {
       const img = document.createElement('img');
+      const imageFallback = localPhotoFor(src);
       img.src = src;
       img.alt = '图片';
-      img.onerror = () => { img.onerror = null; img.src = localPhotoFor(src); };
+      img.onerror = () => { img.onerror = null; img.src = imageFallback; };
+      img.onload = () => {
+        if (item.images.length !== 1 || !img.naturalWidth) return;
+        // 单图按原比例展示，最多占正文宽度 68%、高 320px。
+        const maxW = Math.max(48, Math.min((media.clientWidth || 240) * 0.68, 240));
+        const scale = Math.min(1, maxW / img.naturalWidth, 320 / img.naturalHeight);
+        img.style.width = Math.max(48, Math.round(img.naturalWidth * scale)) + 'px';
+        img.style.height = Math.max(48, Math.round(img.naturalHeight * scale)) + 'px';
+      };
+      // 2026-10-19: 内置动态的图片也是 fakeworld 死链，真机上挂起不报错，只剩灰块。
+      // 和头像一样走应用解析器换成本地图，再用 watchdog 兜底。
+      try {
+        const resolved = window.__fwResolveProfileAvatar?.(src);
+        if (resolved && typeof resolved.then === 'function') {
+          resolved.then(next => { if (next && img.isConnected) img.src = next; }).catch(() => {});
+        }
+      } catch (_) { /* keep the fallback */ }
+      setTimeout(() => {
+        if (img.isConnected && !img.naturalWidth) img.src = imageFallback;
+      }, 1200);
       img.addEventListener('click', event => {
         event.preventDefault();
         event.stopPropagation();
@@ -8310,8 +8330,11 @@
         });
       }, 80);
     };
+    // 2026-10-19: 以前在 overlay 的捕获阶段 stopPropagation，连面板里的
+    // 「取消 / 保存」按钮都收不到点击，表现就是只能保存、无法取消。
+    // 改成冒泡阶段拦截：按钮先执行，再把事件挡在下层页面之前。
     ['pointerdown', 'pointerup', 'touchstart', 'touchend', 'click'].forEach(type => {
-      overlay.addEventListener(type, e => { e.stopPropagation(); }, true);
+      overlay.addEventListener(type, e => { e.stopPropagation(); });
     });
     overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
     form.querySelector('[data-cancel]').addEventListener('click', close);
@@ -8354,12 +8377,9 @@
   }
   function findMyAvatarRow(){ if(!isMyProfileEditRoute()) return null; const label=[...document.querySelectorAll('body *')].find(n=>!n.children.length && String(n.textContent||'').trim()==='头像'); if(!label)return null; let row=label; for(let i=0;row&&i<7;i++,row=row.parentElement){const r=row.getBoundingClientRect?.();if(r&&r.width>=innerWidth*.65&&r.height>=55&&r.height<=260&&r.top<innerHeight*.3&&r.bottom>innerHeight*.08)return row;} return label.parentElement||label; }
   function handleMyAvatarRowTap(e){if(!isMyProfileEditRoute()||document.querySelector('.fw-my-avatar-picker')||document.querySelector('.fw-my-profile-editor'))return;if(myQrRowFromEvent(e))return;const row=findMyAvatarRow();if(!row)return;const r=row.getBoundingClientRect(),t=e.target instanceof Element?e.target:null,x=Number(e.clientX||0),y=Number(e.clientY||0),inside=row.contains(t)||(x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom),right=x>=r.left+r.width*.48;if(!inside||(!right&&!t?.closest?.('img')))return;if(Date.now()<avatarTapLockUntil)return;avatarTapLockUntil=Date.now()+450;e.preventDefault();e.stopImmediatePropagation();openMyAvatarPicker();}
-  document.addEventListener('click', handleMyAvatarTap, true);
-  document.addEventListener('pointerup', handleMyAvatarTap, true);
-  document.addEventListener('touchend', handleMyAvatarTap, true);
-  document.addEventListener('pointerdown', handleMyAvatarRowTap, true);
-  document.addEventListener('touchstart', handleMyAvatarRowTap, true);
-  document.addEventListener('click', handleMyAvatarRowTap, true);
+  // 2026-10-19: 旧的 document 级「头像附近/整行右半边」热区会让个人信息页
+  // 点返回也弹换头像。现在只保留 bindMyAvatarTargets 对头像 img 本体的绑定，
+  // 其它位置一律不再触发换头像。
   function ensureMyAvatarHitTarget() {
     const route = isMyProfileEditRoute();
     const old = document.querySelector('[data-fw-my-avatar-hit-target]');
@@ -8423,12 +8443,16 @@
     }
   }
   function bindMyAvatarTargets() {
-    ensureMyAvatarHitTarget();
-    if (!document.body?.innerText?.includes('个人信息')) return;
+    // 清掉旧版本留下的整行透明热区，避免它继续挡返回键。
+    document.querySelectorAll('[data-fw-my-avatar-hit-target]').forEach(node => node.remove());
+    if (!isMyProfileEditRoute() || !document.body?.innerText?.includes('头像')) return;
+    if (document.querySelector('.fw-my-avatar-picker')) return;
     for (const image of document.querySelectorAll('img')) {
       if (image.__fwAvatarBound) continue;
       const rect = image.getBoundingClientRect();
       if (rect.width < 32 || rect.height < 32 || Math.abs(rect.width - rect.height) > 24) continue;
+      // 只绑个人信息页顶部的头像本体；返回键、名字行、整行都不再算。
+      if (rect.top > innerHeight * 0.4) continue;
       image.__fwAvatarBound = true;
       const open = event => {
         if (document.querySelector('.fw-my-avatar-picker')) return;
@@ -8438,16 +8462,9 @@
       image.addEventListener('click', open, true);
       image.addEventListener('pointerup', open, true);
       image.addEventListener('touchend', open, true);
-      let parent = image.parentElement;
-      for (let i = 0; parent && i < 3; i++, parent = parent.parentElement) {
-        if (parent.__fwAvatarBound) continue;
-        parent.__fwAvatarBound = true;
-        parent.addEventListener('click', open, true);
-      }
     }
   }
   setInterval(bindMyAvatarTargets, 250);
-  setInterval(ensureMyAvatarHitTarget, 120);
   setInterval(ensureMyProfileEditTargets, 120);
 
   /* ---------------------------------------------------------------------------

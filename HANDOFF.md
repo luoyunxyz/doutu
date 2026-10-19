@@ -3,9 +3,9 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 2.3.0：朋友圈背景/头像/底栏 + 工具菜单触发范围`  
-> 最新代码版本：`2.3.0 / 20030`（已推送，待 Codemagic 构建）  
-> 设备当前安装：`2.2.9 / 20029`（已通过 USB 查询确认）
+> 最新提交：`本轮 2.3.1：朋友圈间距/图片 + 个人信息取消/返回`  
+> 最新代码版本：`2.3.1 / 20031`（已推送，待 Codemagic 构建）  
+> 设备当前安装：`2.3.0 / 20030`（已通过 USB 查询确认）
 
 ---
 
@@ -433,6 +433,16 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
     - 封面和发送人头像仍是 fakeworld 死链，真机上一直挂起、不触发 `onerror`，封面只剩灰渐变、头像只剩灰块；
     - 2.3.0 让 `applyCoverImage` 和 `buildTimelineItem` 都走 `__fwResolveProfileAvatar` 解析成本地图，头像再加 1.2s watchdog；
     - 朋友圈全屏时给 `body` 加 `fw-moments-open`，CSS 隐藏 `.wechat-bottom-navbar`，返回后自动移除。
+
+18. **朋友圈头像贴正文 / 图片空白**
+    - 头像和正文之间还是 flex `gap: 9px`，iOS 14.3 不生效，实际 0px；2.3.1 用头像 `margin-right: 12px` 拉开；
+    - 单图是 `width/height:auto`，fakeworld 图没加载时 `naturalWidth=0`，整张图直接 0x0；2.3.1 先给 150x112 占位，`onload` 后按原比例调整，多图保持 72x72；
+    - 图片本身也走 `__fwResolveProfileAvatar` 换本地图，加 1.2s watchdog，不再灰块/空白。
+
+19. **个人信息页取消无效 / 返回弹换头像**
+    - 编辑器 overlay 在捕获阶段 `stopPropagation`，把面板里的「取消 / 保存」点击也拦掉了；2.3.1 改为冒泡阶段拦截，按钮先执行；
+    - 旧逻辑在 document 上监听「头像附近/整行右半边」，还把头像的 3 层祖先都绑了点击，点返回键会冒泡到祖先打开换头像；
+    - 2.3.1 只绑定个人信息页顶部的头像 `img` 本体，移除整行透明热区和 document 级热区，返回键恢复正常。
 
 ---
 

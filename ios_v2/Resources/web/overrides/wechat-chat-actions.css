@@ -3439,8 +3439,10 @@ body.fw-keyboard-open .fw-native-composer-root > .fw-native-chat-feature-panel {
 .fw-tl-item__media img { width: 72px; height: 72px; object-fit: cover; border-radius: 3px; background: #f0f0f0; }
 /* A single photo keeps its own aspect ratio and is capped like WeChat's moments cell. */
 .fw-tl-item__media[data-count="1"] { display: block; }
+/* 2026-10-19: 单图以前是 width/height:auto，fakeworld 图没加载时 naturalWidth=0，
+   整张图直接变成 0x0（朋友圈看起来就是没有图）。先给占位尺寸，加载后 JS 再按比例调整。 */
 .fw-tl-item__media[data-count="1"] img {
-  width: auto; height: auto; max-width: 68%; max-height: 320px; object-fit: contain; border-radius: 4px;
+  width: 150px; height: 112px; max-width: 68%; max-height: 320px; object-fit: cover; border-radius: 4px;
 }
 /* 图片2: "29分钟前" ink 11.3px tall / 50px wide -> ~13px font. */
 .fw-tl-item__meta { position: relative; display: flex; align-items: center; gap: 12px; color: #a3a3a3; font-size: 13px; }
@@ -4837,6 +4839,9 @@ body.fw-keyboard-open .fw-native-composer-root > .fw-native-chat-feature-panel {
 body.fw-subpage-open .wechat-bottom-navbar { display:none !important; }
 /* 2026-10-19: 朋友圈全屏页覆盖在「发现」上时，底部微信切换栏必须一起隐藏。 */
 body.fw-moments-open .wechat-bottom-navbar { display:none !important; }
+/* 2026-10-19: iOS 14.3 不支持 flex gap，朋友圈头像和正文之间只剩 0px。
+   用头像 margin 拉开，跟聊天消息保持一致。 */
+.fw-tl-item__avatar { margin-right: 12px !important; }
 
 /* iOS 14 WKWebView: number 输入在自定义弹层里会偶发无法聚焦，用文本输入 + 数字键盘兜底 */
 .fw-batch-friend-count, .fw-batch-per { -webkit-user-select:text !important; user-select:text !important; pointer-events:auto !important; }
