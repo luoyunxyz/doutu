@@ -3734,7 +3734,7 @@
 
   function openDeviceLoginDialog() {
     const enabled = readDeviceRowChoice() !== 'hidden';
-    const { dialog } = makeDialog('电脑设备登录显示', '开启后，微信主页顶部显示电脑设备登录状态', '<label class="fw-switch-row"><input type="checkbox" class="fw-device-toggle"><span>显示设备登录横条（设备可在横条上切换）</span></label>', [
+    const { dialog } = makeDialog('电脑设备登录显示', '开启后，微信主页顶部显示电脑设备登录状态', '<label class="fw-switch-row fw-device-switch-row"><span>显示设备登录横条（设备可在横条上切换）</span><input type="checkbox" class="fw-device-toggle"><i class="fw-device-switch" aria-hidden="true"></i></label>', [
       { label: '取消', onClick: closeOverlay },
       { label: '保存', primary: true, onClick: () => {
         const value = dialog.querySelector('.fw-device-toggle').checked;
