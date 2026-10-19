@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 2.4.20：银行卡页隐藏 404 根节点，和 Android 对照一致`  
-> 最新代码版本：`2.4.20 / 20060`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 2.4.21：银行卡页按 Android 参考图改成紧凑版`  
+> 最新代码版本：`2.4.21 / 20061`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.15 / 20055`（已通过 USB 查询确认）
 
 ---
@@ -545,6 +545,11 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
     - iOS 14.3 的 host 缺 `inset`，掉到 48/845，才把 404 露出来；2.4.19 已钉 host。
     - 2.4.20 进一步在 bills/withdraw/cards/cardAdd 这些全屏自绘页隐藏 `#root`，离开时恢复，保证即使 host 定位异常也不会再看到 404。
     - 结论：iOS 银行卡页与 Android 是同一份 HTML/CSS，不需要重画；差异只是 404 层和 host 定位。
+
+38. **银行卡页按用户 Android 参考图改紧凑版**
+    - 用户提供的新参考图：卡面更矮、添加行更矮、footer 在页面中部，不是原来的 104/71.75/760；
+    - 2.4.21 覆盖 `.fw-bc` 尺寸：body top 73、卡面 72、gap 6、添加行 46、footer 537，卡内 logo/名称/掩码/尾号同步缩小；
+    - footer 选择器限定 `.fw-bc .fw-bc__footer`，避免影响添加银行卡页的 footer。
 
 ---
 
