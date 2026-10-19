@@ -2630,6 +2630,7 @@
     try { syncBundledWalletPreview(); } catch (_) { /* service preview is optional */ }
   }
   function syncEditableAmounts() {
+    if (document.querySelector('.fw-inline-amount-input')) return;
     const route = currentRoute();
     if (route === routes.balance) {
       const node = bundledBalanceAmountNode();
@@ -2666,37 +2667,152 @@
       }
     }
   }
-  // 用 window 的 capture：wechat-chat-actions 的 document capture onClick 会先把
-  // 钱包行当聊天行消费掉，document 上再绑就永远收不到这次点击。
-  window.addEventListener('click', (event) => {
-    const target = event.target instanceof Element ? event.target : null;
-    if (!target || target.closest('#fw-pay-pages-host')) return;
+  // 2026-10-19: 点金额 -> 原位变成 input，直接弹数字键盘；输入过程写 localStorage，
+  // 失焦/回车自动收尾并更新显示，不弹窗、不点保存按钮。
+  let amountEditLockUntil = 0;
+  let amountTouchStart = null;
+  function amountTargetFrom(node) {
+    if (!node || !(node instanceof Element) || node.closest('#fw-pay-pages-host')) return null;
     const route = currentRoute();
     if (route === routes.balance) {
-      const node = target.closest('[data-fw-edit-balance="1"]');
-      if (!node) return;
-      event.preventDefault();
-      event.stopImmediatePropagation();
-      const shown = parseMoneyText(node.textContent) || getBalanceAmount();
-      openAmountEditor('修改零钱金额', shown, value => {
-        storeBalanceAmount(value, true);
-        updateBundledBalance(value);
-        payToast('零钱金额已保存');
-      });
-      return;
+      const hit = node.closest('[data-fw-edit-balance="1"]');
+      return hit ? { node: hit, lqt: false } : null;
     }
     if (route === routes.wallet) {
-      const node = target.closest('[data-fw-edit-lqt="1"]');
-      if (!node) return;
+      const hit = node.closest('[data-fw-edit-lqt="1"]');
+      return hit ? { node: hit, lqt: true } : null;
+    }
+    return null;
+  }
+  function beginInlineAmountEdit(info) {
+    const node = info.node;
+    if (!node || document.querySelector('.fw-inline-amount-input')) return;
+    const shown = parseMoneyText(node.textContent);
+    if (shown === null) return;
+    const cs = getComputedStyle(node);
+    const rect = node.getBoundingClientRect();
+    const input = document.createElement('input');
+    input.className = 'fw-inline-amount-input';
+    input.type = 'text';
+    input.inputMode = 'decimal';
+    input.setAttribute('inputmode', 'decimal');
+    input.setAttribute('pattern', '[0-9.]*');
+    input.autocomplete = 'off';
+    input.autocapitalize = 'off';
+    input.enterKeyHint = 'done';
+    input.spellcheck = false;
+    input.value = shown;
+    input.style.fontSize = Math.max(16, Number.parseFloat(cs.fontSize) || 16) + 'px';
+    input.style.flex = '0 0 auto';
+    input.style.fontWeight = cs.fontWeight;
+    input.style.lineHeight = cs.lineHeight;
+    input.style.color = cs.color;
+    input.style.width = Math.max(70, Math.round(rect.width) + 24) + 'px';
+    input.style.height = Math.max(20, Math.round(rect.height)) + 'px';
+    input.style.textAlign = info.lqt ? 'right' : 'left';
+    node.style.visibility = 'hidden';
+    const parent = node.parentElement;
+    let parentOldPosition = null;
+    if (parent) {
+      if (getComputedStyle(parent).position === 'static') {
+        parentOldPosition = parent.style.position;
+        parent.style.position = 'relative';
+      }
+      parent.appendChild(input);
+      const parentRect = parent.getBoundingClientRect();
+      input.style.position = 'absolute';
+      input.style.left = Math.round(rect.left - parentRect.left) + 'px';
+      input.style.top = Math.round(rect.top - parentRect.top) + 'px';
+      input.style.zIndex = '20';
+    }
+    let finished = false;
+    const valueNow = () => parseMoneyText(input.value);
+    const persist = () => {
+      const value = valueNow();
+      if (value === null) return false;
+      if (info.lqt) {
+        try { localStorage.setItem(LQT_KEY, value); } catch (_) { /* no-op */ }
+      } else {
+        storeBalanceAmount(value, true);
+      }
+      return true;
+    };
+    const restore = () => {
+      input.remove();
+      node.style.visibility = '';
+      if (parent && parentOldPosition !== null) parent.style.position = parentOldPosition;
+    };
+    const finish = (commit) => {
+      if (finished) return;
+      finished = true;
+      const value = valueNow();
+      if (commit && value !== null) {
+        persist();
+        if (info.lqt) {
+          node.textContent = '¥' + value;
+          syncEditableAmounts();
+          payToast('零钱通金额已保存');
+        } else {
+          updateBundledBalance(value);
+          payToast('零钱金额已保存');
+        }
+      }
+      restore();
+    };
+    let saveTimer = null;
+    input.addEventListener('input', () => {
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(() => { persist(); }, 500);
+    });
+    input.addEventListener('blur', () => { clearTimeout(saveTimer); finish(true); });
+    input.addEventListener('keydown', event => {
+      if (event.key === 'Enter') { event.preventDefault(); input.blur(); }
+      if (event.key === 'Escape') { event.preventDefault(); finished = true; restore(); }
+    });
+    input.focus();
+    input.select();
+  }
+  function tryStartAmountEdit(target) {
+    if (Date.now() < amountEditLockUntil) return false;
+    const info = amountTargetFrom(target);
+    if (!info) return false;
+    amountEditLockUntil = Date.now() + 700;
+    beginInlineAmountEdit(info);
+    return true;
+  }
+  window.addEventListener('pointerdown', event => {
+    amountTouchStart = { x: event.clientX, y: event.clientY };
+  }, { capture: true, passive: true });
+  window.addEventListener('pointerup', event => {
+    if (amountTouchStart && Math.hypot(event.clientX - amountTouchStart.x, event.clientY - amountTouchStart.y) > 12) return;
+    const target = event.target instanceof Element ? event.target : null;
+    if (tryStartAmountEdit(target)) event.stopPropagation();
+  }, true);
+  window.addEventListener('touchstart', event => {
+    const touch = event.changedTouches && event.changedTouches[0];
+    amountTouchStart = touch ? { x: touch.clientX, y: touch.clientY } : null;
+  }, { capture: true, passive: true });
+  window.addEventListener('touchend', event => {
+    const touch = event.changedTouches && event.changedTouches[0];
+    if (!touch) return;
+    if (amountTouchStart && Math.hypot(touch.clientX - amountTouchStart.x, touch.clientY - amountTouchStart.y) > 12) return;
+    const hit = document.elementFromPoint(touch.clientX, touch.clientY);
+    if (tryStartAmountEdit(hit)) {
+      // 不 preventDefault：让 iOS 继续合成 click，click 里再 focus 一次确保键盘弹出。
+      event.stopPropagation();
+    }
+  }, true);
+  window.addEventListener('click', event => {
+    const openInput = document.querySelector('.fw-inline-amount-input');
+    if (openInput) {
+      openInput.focus();
+      event.stopImmediatePropagation();
+      return;
+    }
+    const target = event.target instanceof Element ? event.target : null;
+    if (tryStartAmountEdit(target)) {
       event.preventDefault();
       event.stopImmediatePropagation();
-      const shown = parseMoneyText(node.textContent) || readLqtAmount();
-      openAmountEditor('修改零钱通金额', shown, value => {
-        try { localStorage.setItem(LQT_KEY, value); } catch (_) { /* no-op */ }
-        node.textContent = '¥' + value;
-        syncEditableAmounts();
-        payToast('零钱通金额已保存');
-      });
     }
   }, true);
   setInterval(syncEditableAmounts, 300);

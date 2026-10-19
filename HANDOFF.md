@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 2.4.11：金额修改保存后给 toast 反馈`  
-> 最新代码版本：`2.4.11 / 20051`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 2.4.12：金额原位输入、数字键盘、自动保存`  
+> 最新代码版本：`2.4.12 / 20052`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.9 / 20049`（已通过 USB 查询确认）
 
 ---
@@ -505,12 +505,14 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
 31. **零钱 / 零钱通金额不可点击修改**
     - 用户实际看到的是 bundled 钱包/零钱页，原有的 `bindBalanceEditor` 只绑在自绘 `.fw-pay-balance` 上，点不到；
     - 2.4.9 给 bundled 零钱页的 `.font-bold.text-4xl`（520.00）和钱包页「零钱通」金额（¥1314.00）打 `data-fw-edit-balance` / `data-fw-edit-lqt`；
-    - 点击弹出 `openAmountEditor`（复用 `.fw-bill-editor` 样式），保存后：
-      - 零钱：写 `fw-balance-amount` + `fw-balance-user-set=1`，同时更新零钱页数字、钱包页「零钱」行、服务页钱包预览；
+    - 2.4.10 把点击从 document capture 改到 **window capture**：`wechat-chat-actions` 的 document capture `onClick` 会把这些钱包行当聊天行先消费掉；
+    - 2.4.12 改成**原位输入**，不再弹窗：
+      - `pointerup` / `touchend`（window capture，优先于聊天 onClick）命中金额后，在原数字位置叠一个 `input`，`inputmode=decimal`，立即 `focus()` 弹数字键盘；
+      - 输入过程 500ms 防抖写 localStorage；失焦或回车自动收尾；
+      - 零钱：写 `fw-balance-amount` + `fw-balance-user-set=1`，保存后更新零钱页数字、钱包页「零钱」行、服务页钱包预览；
       - 零钱通：写 `fw-lingqiantong-amount`，更新钱包页「零钱通」金额；
-    - `syncEditableAmounts` 每 300ms + MutationObserver 重新标记，React 重渲染后仍可点；
-    - 2.4.10 把金额点击从 document capture 改到 **window capture**：`wechat-chat-actions` 的 `document` capture `onClick` 会把这些钱包行当聊天行先消费掉（实测 document 监听收不到，window 能收到）；
-    - 2.4.11 保存后 `payToast('…已保存')`，明确是「修改现有数字并保存」，不新增账单/记录。
+      - 无弹窗、无保存按钮，改的是现有数字，不新增记录。
+    - `syncEditableAmounts` 每 300ms + MutationObserver 重新标记，React 重渲染后仍可点；输入框存在时暂停同步。
 
 ---
 
