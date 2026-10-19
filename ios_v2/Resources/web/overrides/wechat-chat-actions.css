@@ -4830,3 +4830,9 @@ body.fw-subpage-open .wechat-bottom-navbar { display:none !important; }
 .fw-chat-message { gap: 24px !important; }
 .fw-chat-message__bubble { max-width: calc(100% - 88px) !important; }
 .fw-chat-message--transfer { gap: 2.2vw !important; }
+
+/* 网名/头像/气泡再拉开，避免贴脸 */
+.wechat-dialogue-list > * { gap: 20px !important; }
+.fw-local-friend-row--fallback { gap: 22px !important; }
+.fw-chat-message { gap: 28px !important; }
+.fw-chat-message__bubble { max-width: calc(100% - 92px) !important; }
