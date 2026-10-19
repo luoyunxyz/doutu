@@ -261,6 +261,9 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler, UIGestureRec
             "var path=h.replace(/^#/,'').split(/[?#]/)[0].replace(/\\/+$/,'');" +
             "var home=(path===''||path==='/wechat'||path==='/wechat/index');" +
             "if(!home)return 0;" +
+            // 设备登录横条就在顶部，点它是打开设备切换弹层；不能同时再弹 7 项工具菜单。
+            "var hit=document.elementFromPoint(\(point.x),\(point.y));" +
+            "if(hit&&hit.closest('.wechat-device-row'))return 0;" +
             "var sub=document.querySelector('.fw-overlay, .fw-add-friend, .fw-group-chat, .fw-scanpay, .fw-receive-pay, .fw-local-conversation, .fw-chat-pay, .fw-moments-feed, .fw-moments-page, .fw-friend-profile-page, .fw-my-profile-editor, .fw-my-avatar-picker');" +
             "if(sub)return 0;" +
             "return 1}catch(e){return 0}})()"
