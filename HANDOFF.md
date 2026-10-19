@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 2.4.12：金额原位输入、数字键盘、自动保存`  
-> 最新代码版本：`2.4.12 / 20052`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 2.4.13：金额原位输入（修复 2.4.12 CSS 重复）`  
+> 最新代码版本：`2.4.13 / 20053`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.9 / 20049`（已通过 USB 查询确认）
 
 ---
@@ -513,6 +513,7 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
       - 零钱通：写 `fw-lingqiantong-amount`，更新钱包页「零钱通」金额；
       - 无弹窗、无保存按钮，改的是现有数字，不新增记录。
     - `syncEditableAmounts` 每 300ms + MutationObserver 重新标记，React 重渲染后仍可点；输入框存在时暂停同步。
+    - 2.4.12 的 CSS 在修注释时被整份复制了一遍；2.4.13 已从 58977e8 恢复，仅保留 `inset` 兼容块 + `.fw-inline-amount-input`。
 
 ---
 
