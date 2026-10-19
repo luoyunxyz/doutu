@@ -1559,6 +1559,7 @@ final class Router {
             switch t {
             case "call:cancel":
                 state.pendingAt = nil
+                SimulatedCall.shared.cancel()
                 showToast("已取消", ok: true)
             case "call:start":
                 let now = Date()
@@ -1577,6 +1578,15 @@ final class Router {
                     return
                 } else {
                     state.pendingAt = now
+                }
+                if let at = state.pendingAt {
+                    SimulatedCall.shared.schedule(
+                        at: at,
+                        name: state.name.isEmpty ? "朋友" : state.name,
+                        avatar: state.avatarImage) { [weak self] in
+                            state.pendingAt = nil
+                            self?.host?.setNeedsDisplay()
+                        }
                 }
                 showToast("已设置，稍后自动来电", ok: true)
             case "call:time:now":
@@ -1610,6 +1620,7 @@ final class Router {
             case "call:ring:default":
                 state.ringtoneLabel = ""
             case "call:ring:preview":
+                SimulatedCall.shared.preview()
                 showToast("正在试听", ok: true)
             case "name":
                 EditPrompt.present(title: "来电人姓名", current: state.name, numeric: false) { text in

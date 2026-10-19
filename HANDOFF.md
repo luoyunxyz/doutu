@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 2.4.57：State.init() 补 override`  
-> 最新代码版本：`2.4.57 / 20097`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 2.4.58：模拟来电真正响铃/全屏接听`  
+> 最新代码版本：`2.4.58 / 20098`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.51 / 20091`（已通过 USB 查询确认）
 
 ---
@@ -753,6 +753,16 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
 73. **2.4.56 仍未编译过：init() 要 override**
     - 无参数的 `init()` 与 `ScreenState` 隐式的 `init()` 同签名，Swift 要求写成 `override init()`；只补 `super.init()` 不够，仍会报 overriding declaration requires an 'override' keyword；
     - 2.4.57 改成 `override init()` 并保留 `super.init()`。
+
+74. **模拟来电只有 toast，不会真的响**
+    - 2.4.54 只写 `pendingAt`，没有计时器和来电界面；
+    - 2.4.58 新增 `SimulatedCall` + `SimulatedCallViewController`：
+      - `call:start` 用 `Timer` 在 `pendingAt` 到点后弹全屏来电；
+      - 铃声用 `Resources/web/assets/audio/call.mp3` 循环播放，并每 2 秒震动；
+      - 全屏界面有头像、姓名、「邀请你语音通话」、接听/拒绝；
+      - 接听后停止铃声，显示「通话中」和计时，挂断按钮退出；
+      - App 从后台回来时补查一次是否已到点，避免 Timer 暂停导致不响；
+      - `call:cancel` 同时取消计时器；`call:ring:preview` 真正播放 3 秒铃声。
 
 ---
 
