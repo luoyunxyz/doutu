@@ -253,9 +253,16 @@ final class GrowthV2Screen: Screen {
     /// 顶部资产面板下拉展开 / 上拉收起。只有按在面板区域才接管，避免抢掉页面滚动。
     func verticalDrag(_ state: ScreenState, dy: CGFloat, startY: CGFloat) -> Bool {
         guard let s = state as? State else { return false }
+        // 上拉：只要面板还开着，无论手指按在哪，都先收起面板；收完才把后续上拉让给页面滚动。
+        if dy < 0 {
+            guard s.expand > 0 else { return false }
+            s.expand = max(0, s.expand + dy / Self.panelHeight)
+            return true
+        }
+        // 下拉：只有按在面板区域才展开，避免抢掉下面内容的滚动。
         let panelBottom = Self.sheetTop + Self.panelHeight * s.expand + 80
         guard startY <= panelBottom else { return false }
-        s.expand = max(0, min(1, s.expand + dy / Self.panelHeight))
+        s.expand = min(1, s.expand + dy / Self.panelHeight)
         return true
     }
 

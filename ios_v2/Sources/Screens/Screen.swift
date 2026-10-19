@@ -453,6 +453,9 @@ final class ScreenHostView: UIView, UIScrollViewDelegate {
                                startY: touchStartDesignY) {
             verticalDragged = true
             lastPoint = p
+            // 面板收起/展开吃掉的这段纵向位移不要再算进页面滚动，避免收完面板后突然跳一段。
+            dragStartY = p.y
+            dragStartScroll = state.scroll
             setNeedsDisplay()
             return
         }
