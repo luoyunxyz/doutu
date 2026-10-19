@@ -1758,6 +1758,20 @@
       old.style.setProperty('right', '0', 'important');
       old.style.setProperty('bottom', '0', 'important');
     }
+    // 2026-10-19: 银行卡页参考图是 360×792 设计稿。iOS 390×844 如果按原 px 直接铺，
+    // 比例会偏（footer 只在 90% 高度）。把整页当成 360×792 的舞台，等比缩放到 host。
+    if (kind === 'cards') {
+      const bc = old.querySelector('.fw-bc');
+      if (bc) {
+        const rect = old.getBoundingClientRect();
+        const stageW = 360;
+        const stageH = 792;
+        bc.style.width = stageW + 'px';
+        bc.style.height = stageH + 'px';
+        bc.style.transformOrigin = 'top left';
+        bc.style.transform = 'scale(' + ((rect.width || innerWidth) / stageW) + ',' + ((rect.height || innerHeight) / stageH) + ')';
+      }
+    }
     old.scrollTop = 0;
     old.querySelectorAll('.fw-pay-scroll').forEach(el => { el.scrollTop = 0; });
     old.dataset.fwRoute = h;
