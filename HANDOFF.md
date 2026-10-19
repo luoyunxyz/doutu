@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 2.4.13：金额原位输入（修复 2.4.12 CSS 重复）`  
-> 最新代码版本：`2.4.13 / 20053`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 2.4.14：模拟来电盖住底部 tab bar`  
+> 最新代码版本：`2.4.14 / 20054`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.9 / 20049`（已通过 USB 查询确认）
 
 ---
@@ -514,6 +514,12 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
       - 无弹窗、无保存按钮，改的是现有数字，不新增记录。
     - `syncEditableAmounts` 每 300ms + MutationObserver 重新标记，React 重渲染后仍可点；输入框存在时暂停同步。
     - 2.4.12 的 CSS 在修注释时被整份复制了一遍；2.4.13 已从 58977e8 恢复，仅保留 `inset` 兼容块 + `.fw-inline-amount-input`。
+
+32. **模拟来电界面露出底部 tab bar**
+    - `.fw-call` 原来的 `z-index:100400` 低于 `.wechat-bottom-navbar` 的 `z-index:2147483000`，来电全屏层被 tab bar 盖住，看起来页面半透明、底部还是微信 tab；
+    - 2.4.14 把 `.fw-call` 提到 **2147483001**，高于 tab bar；来电页完整覆盖，挂断/接听不再被底部栏遮挡。
+
+---
 
 ---
 

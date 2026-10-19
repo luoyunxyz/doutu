@@ -4400,7 +4400,7 @@ body.fw-device-row-hidden .wechat-device-row { display: none !important; }
    版式照参考图：底层是对方头像放大满屏 + 重度虚化；中间是头像 + 昵称；
    状态文字（未接通「邀请你语音通话...」/ 接通后计时）压在按钮上方；底部一排圆钮。 */
 .fw-call {
-  position: fixed; top:0;right:0;bottom:0;left:0; z-index: 100400; display: flex; flex-direction: column;
+  position: fixed; top:0;right:0;bottom:0;left:0; z-index: 2147483001; display: flex; flex-direction: column;
   box-sizing: border-box; overflow: hidden; color: #fff;
   background: #0d0d0d; font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
   -webkit-tap-highlight-color: transparent;
