@@ -719,3 +719,7 @@
   height: 18px !important;
 }
 
+/* 2026-10-19: iOS 14.3 不支持 flex gap，.fw-bc__body 的 7.25px gap 会被忽略，
+   两张卡会贴在一起。这里用 margin-bottom 补出参考图里的中间缝。 */
+#fw-pay-pages-host .fw-bc__card { margin-bottom: 7.25px; }
+
