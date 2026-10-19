@@ -58,6 +58,20 @@ final class PurseStore {
         return true
     }
 
+    /// 替换第 index 个头像；index 越界时追加。
+    @discardableResult
+    func setAvatar(_ image: UIImage, at index: Int) -> Bool {
+        var list = rawAvatars
+        if index >= 0 && index < list.count {
+            list[index] = image
+        } else {
+            guard list.count < Self.maxAvatars else { return false }
+            list.append(image)
+        }
+        persist(list)
+        return true
+    }
+
     func reset() {
         UserDefaults.standard.removeObject(forKey: nameKey)
         UserDefaults.standard.removeObject(forKey: totalKey)

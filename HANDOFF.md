@@ -3,9 +3,9 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 2.4.51：芝麻信用名片字段可编辑，头像同步个人信息`  
-> 最新代码版本：`2.4.51 / 20091`（已推送，待 Codemagic 构建）  
-> 设备当前安装：`2.4.49 / 20089`（已通过 USB 查询确认）
+> 最新提交：`本轮 2.4.52：信用名片头像可换；小荷包头像可换/加号调接口`  
+> 最新代码版本：`2.4.52 / 20092`（已推送，待 Codemagic 构建）  
+> 设备当前安装：`2.4.51 / 20091`（已通过 USB 查询确认）
 
 ---
 
@@ -712,6 +712,13 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
     - `ZhimaCreditV2Screen.hitTest` 早就返回 `edit:p.label/p.score/...`，但 `State` 没实现 `EditableState`，Router 的通用 `edit:` 分支直接跳过，所以点名片没反应；
     - 2.4.51 给 `ZhimaCreditV2Screen.State` 补 `EditableState`：个人卡 5 个字段 + 企业卡 6 个字段都有标题、当前值、写回；
     - 个人卡原来素材里自带一个默认头像；现在有 `ProfileStore.shared.avatar` 时，按卡片头像位置 `(x+450, y+96, 140, 140)` 圆形裁剪覆盖，默认与个人信息头像同步。
+
+68. **信用名片头像仍不能换 / 小荷包头像不可点**
+    - 信用名片之前只有文字字段 hitTest，头像区域落在 `carousel` 上；2.4.52 加 `zhimaAvatar` 热区，弹「随机头像 / 从相册选择」，只改 `State.cardAvatar`（默认仍同步 ProfileStore 头像）；
+    - 小荷包 `avatar:i` 令牌之前被通用头像分支吞掉；2.4.52 在 Router 里优先处理：
+      - 点已有头像 → 随机头像（xxapi.cn 接口）或相册替换；
+      - 点「+」→ 直接调 `PurseAvatarAPI` 拉一张随机头像并 `PurseStore.addAvatar`，满了 5 个给提示；
+    - 新增 `PurseStore.setAvatar(_:at:)` 和 `PurseAvatarAPI.swift`；接口返回 `code==200` 的 `data` 图片地址后下载成 UIImage。
 
 ---
 

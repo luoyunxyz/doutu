@@ -53,6 +53,8 @@ final class ZhimaCreditV2Screen: Screen {
         /// false = 企业卡收起（310 宽），true = 展开（858 宽）
         var enterpriseOpen = false
 
+        /// 信用名片自己的头像；nil 时同步个人信息头像。
+        var cardAvatar: UIImage?
         var pLabel = "芝麻信用良好"
         var pScore = "636"
         var pQuota = "2500元"
@@ -311,7 +313,7 @@ final class ZhimaCreditV2Screen: Screen {
         let x = carouselX - s.carousel
         d.art(art["personal"], CGRect(x: x, y: carouselY, width: personalW, height: cardH))
         // 信用名片头像默认同步「个人信息」头像；有设置头像时盖掉素材里的默认头像。
-        if let avatar = ProfileStore.shared.avatar {
+        if let avatar = s.cardAvatar ?? ProfileStore.shared.avatar {
             let avatarRect = CGRect(x: x + 450, y: carouselY + 96, width: 140, height: 140)
             d.clipped(to: avatarRect, radius: avatarRect.width / 2) {
                 d.art(avatar, avatarRect)
@@ -480,7 +482,12 @@ final class ZhimaCreditV2Screen: Screen {
                 return "expandEnt"
             }
             if x >= ox && x < ox + personalW {
-                if let field = creditField(x - ox, cy - carouselY, enterprise: false) {
+                let lx = x - ox
+                let ly = cy - carouselY
+                if lx >= 450 && lx <= 590 && ly >= 96 && ly <= 236 {
+                    return "zhimaAvatar"
+                }
+                if let field = creditField(lx, ly, enterprise: false) {
                     return "edit:" + field
                 }
                 return "carousel"

@@ -874,7 +874,67 @@ final class Router {
         case "points", "history":
             // 积分页 / 历史账单页：Android 里也没有对应实现
             break
+        case "zhimaAvatar":
+            if let host = self.host,
+               let state = host.state as? ZhimaCreditV2Screen.State,
+               let vc = EditPrompt.topViewController() {
+                let sheet = UIAlertController(title: "更换信用名片头像", message: nil,
+                                              preferredStyle: .actionSheet)
+                sheet.addAction(UIAlertAction(title: "随机头像", style: .default) { _ in
+                    PurseAvatarAPI.fetch { image in
+                        guard let image else { self.showToast("头像接口暂时不可用", ok: false); return }
+                        state.cardAvatar = image
+                        host.setNeedsDisplay()
+                    }
+                })
+                sheet.addAction(UIAlertAction(title: "从相册选择", style: .default) { _ in
+                    QRImagePicker.present(from: vc) { image in
+                        guard let image else { return }
+                        state.cardAvatar = image
+                        host.setNeedsDisplay()
+                    }
+                })
+                sheet.addAction(UIAlertAction(title: "取消", style: .cancel))
+                if let popover = sheet.popoverPresentationController {
+                    popover.sourceView = vc.view
+                    popover.sourceRect = CGRect(x: vc.view.bounds.midX, y: vc.view.bounds.midY,
+                                                width: 1, height: 1)
+                    popover.permittedArrowDirections = []
+                }
+                vc.present(sheet, animated: true)
+            }
         case let t where t.hasPrefix("avatar:") || t.hasPrefix("entry:"):
+            // 小荷包成员头像：点击已有头像随机换一张，或从相册选。
+            if t.hasPrefix("avatar:"), let host = self.host,
+               host.screen is XiaohebaoV2Screen,
+               let index = Int(t.dropFirst("avatar:".count)),
+               let vc = EditPrompt.topViewController() {
+                let sheet = UIAlertController(title: "更换头像", message: nil,
+                                              preferredStyle: .actionSheet)
+                sheet.addAction(UIAlertAction(title: "随机头像", style: .default) { _ in
+                    PurseAvatarAPI.fetch { image in
+                        guard let image else { self.showToast("头像接口暂时不可用", ok: false); return }
+                        PurseStore.shared.setAvatar(image, at: index)
+                        host.setNeedsDisplay()
+                    }
+                })
+                sheet.addAction(UIAlertAction(title: "从相册选择", style: .default) { _ in
+                    QRImagePicker.present(from: vc) { image in
+                        guard let image else { return }
+                        PurseStore.shared.setAvatar(image, at: index)
+                        host.setNeedsDisplay()
+                    }
+                })
+                sheet.addAction(UIAlertAction(title: "取消", style: .cancel))
+                if let popover = sheet.popoverPresentationController {
+                    popover.sourceView = vc.view
+                    popover.sourceRect = CGRect(x: vc.view.bounds.midX, y: vc.view.bounds.midY,
+                                                width: 1, height: 1)
+                    popover.permittedArrowDirections = []
+                }
+                vc.present(sheet, animated: true)
+                return
+            }
             // `entry:` 被三个屏复用，含义不同：
             //   · HomeShellScreen 的「我」页服务格 → 上面 L238 已处理（先命中）
             //   · ReceiptV2Screen → 单条收款详情（这里的 id 就是 Receipt.id）
@@ -1002,6 +1062,22 @@ final class Router {
                 self.host?.setNeedsDisplay()
             }
         case "add":
+            // 小荷包「+」：调随机头像接口，成功就立即追加一个成员。
+            if let host = self.host, host.screen is XiaohebaoV2Screen {
+                guard !PurseStore.shared.isFull else {
+                    self.showToast("最多添加 5 个头像", ok: false)
+                    return
+                }
+                PurseAvatarAPI.fetch { image in
+                    guard let image, PurseStore.shared.addAvatar(image) else {
+                        self.showToast("头像接口暂时不可用", ok: false)
+                        return
+                    }
+                    host.setNeedsDisplay()
+                    self.showToast("已添加头像", ok: true)
+                }
+                return
+            }
             // 「添加储蓄卡提现」：先给一张新卡，落位规则照 Java（插在第一张不可用卡之前）
             let store = WithdrawStore.shared
             let bank = WithdrawStore.banks[0]
