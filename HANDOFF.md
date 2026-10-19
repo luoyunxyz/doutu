@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 2.3.9：钱包/零钱页顶部留白`  
-> 最新代码版本：`2.3.9 / 20039`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 2.4.0：钱包/零钱页顶部留白加大到 32px`  
+> 最新代码版本：`2.4.0 / 20040`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.3.7 / 20037`（已通过 USB 查询确认）
 
 ---
@@ -475,7 +475,8 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
 
 26. **钱包 / 零钱页顶部贴屏幕**
     - 这两个路由实际显示的是 bundled React 页面（`.relative.flex.flex-col.overflow-hidden`），顶部没有 safe-area，返回箭头和标题贴屏幕最上沿；
-    - 2.3.9 在 `applyBundledPaySpacing` 里按路由找到整页 root，加 `padding-top:16px !important` + `box-sizing:border-box`，离开钱包/零钱页时自动收回；
+    - 2.3.9 在 `applyBundledPaySpacing` 里按路由找到整页 root，加 `padding-top:16px !important` + `box-sizing:border-box`；
+    - 用户反馈 16px 仍然偏短，2.4.0 加大到 **32px**，离开钱包/零钱页时自动收回；
     - 自绘的 `.fw-pay-page` 本身已有 31px 顶部 padding，不受影响。
 
 ---
