@@ -4888,3 +4888,14 @@ body.fw-subpage-open .wechat-bottom-navbar { display:none !important; }
   column-gap: 40px !important;
   gap: 40px !important;
 }
+
+/* 列表间距收回到接近微信：18px 行距 + 12px 头像右边距 */
+.wechat-dialogue-list > button.fw-local-friend-row.fw-local-friend-row--fallback {
+  gap: 18px !important;
+  column-gap: 18px !important;
+}
+.wechat-dialogue-list > button.fw-local-friend-row.fw-local-friend-row--fallback > img {
+  margin-right: 12px !important;
+}
+.fw-local-friend-row--fallback { gap: 18px !important; }
+.fw-chat-message { gap: 56px !important; }

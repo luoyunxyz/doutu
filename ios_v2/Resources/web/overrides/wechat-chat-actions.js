@@ -1583,7 +1583,7 @@
       ]);
       friend.messages = friend.messages.filter((item, index, arr) =>
         item !== greeting.mine && item !== greeting.friend
-        && !(item && item.type !== 'greeting' && greetingTexts.has(String(item.text || '')))
+        && !(item && (item.type === 'greeting' || greetingTexts.has(String(item.text || ''))))
         && arr.indexOf(item) === index
       );
       messages.replaceChildren();
