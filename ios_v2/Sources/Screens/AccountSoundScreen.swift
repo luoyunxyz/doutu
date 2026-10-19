@@ -823,6 +823,9 @@ final class AccountSoundScreen: Screen {
             if index == 2 {
                 s.randomStyle.toggle()                                  // Java:259
             } else {
+                // 选具体收款方时必须退出“随机”，否则 randomStyle 仍为 true，
+                // 画面上随机 chip 一直亮着，点小支/小微看起来像没反应。
+                s.randomStyle = false
                 s.style = index == 0 ? Self.styleZhi : Self.styleWei      // Java:250、254
             }
             afterSettingChange(s)                                        // Java:251/255/260 bindState()

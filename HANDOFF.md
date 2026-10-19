@@ -3,9 +3,9 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 2.4.67：noop 也重绘，修复收款风格点击无反应`  
-> 最新代码版本：`2.4.67 / 20107`（已推送，待 Codemagic 构建）  
-> 设备当前安装：`2.4.51 / 20091`（已通过 USB 查询确认）
+> 最新提交：`本轮 2.4.68：选小支/小微时清除随机态`  
+> 最新代码版本：`2.4.68 / 20108`（已推送，待 Codemagic 构建）  
+> 设备当前安装：`2.4.67 / 20107`（已通过 USB 查询确认）
 
 ---
 
@@ -822,6 +822,11 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
     - `AccountSoundScreen.hitTest` 在 style chip 里已经改完 `s.style / s.randomStyle`，但返回的是 `"noop"`；
     - Router 的 `case "noop": return` 直接返回，不调用 `setNeedsDisplay`，所以状态变了、画面没重绘，看起来像没反应；
     - 2.4.67 改成 `case "noop"` 也 `host?.setNeedsDisplay()`，所有“就地改 State、只吐 noop”的设置项（收款风格、随机金额档位、声音开关等）都会立即刷新。
+
+84. **2.4.67 仍点不动：随机态没有清除**
+    - 设备截图确认「随机小支/小微」是选中态；`drawStyleChips` 的 `case 0/1` 条件是 `!s.randomStyle && style==...`；
+    - 点「小支收款 / 小微收款」时只改了 `s.style`，没有把 `s.randomStyle` 置 false；随机 chip 继续亮着，看起来就是点击没反应；
+    - 2.4.68 在 index 0/1 分支加 `s.randomStyle = false`，再改 `style`；点具体收款方会立即切过去。
 
 ---
 
