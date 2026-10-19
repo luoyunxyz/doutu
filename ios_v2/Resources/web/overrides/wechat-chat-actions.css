@@ -4836,3 +4836,12 @@ body.fw-subpage-open .wechat-bottom-navbar { display:none !important; }
 .fw-local-friend-row--fallback { gap: 22px !important; }
 .fw-chat-message { gap: 28px !important; }
 .fw-chat-message__bubble { max-width: calc(100% - 92px) !important; }
+
+
+/* 微信列表/会话再拉开：头像与名字、头像与气泡 */
+.wechat-dialogue-list > * { column-gap: 24px !important; gap: 24px !important; }
+.wechat-dialogue-list > * > img:first-child,
+.wechat-dialogue-list > * > [class*="avatar"]:first-child { margin-right: 4px !important; }
+.fw-local-friend-row--fallback { gap: 24px !important; }
+.fw-chat-message { gap: 32px !important; }
+.fw-chat-message__bubble { max-width: calc(100% - 96px) !important; }

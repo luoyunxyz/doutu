@@ -859,7 +859,17 @@
   // 所有远程头像都失败时的最后一层：内联占位（以前指向打包的那批图片）
   function bundledAvatarFor(seed) {
     const hash = avatarSeedHash(seed);
-    return BUNDLED_AVATAR_FILES[hash % BUNDLED_AVATAR_FILES.length] || PLACEHOLDER_AVATAR;
+    const palette = ['#5b8def', '#e28a5b', '#55a87a', '#b276c9', '#d35f75', '#4f9fb2', '#b58b4a'];
+    const color = palette[hash % palette.length];
+    const raw = String(seed == null ? '' : seed).trim();
+    const text = (raw.charAt(0) || '微').replace(/[&<>"']/g, ch => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[ch]));
+    const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96">'
+      + '<rect width="96" height="96" rx="5" fill="' + color + '"/>'
+      + '<text x="48" y="61" text-anchor="middle" font-size="42" font-family="-apple-system,BlinkMacSystemFont,sans-serif" fill="#fff">'
+      + text + '</text></svg>';
+    return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
   }
   function makeAvatarUrl() { return remoteAvatarUrl(); }
   const AVATAR_API = 'https://v2.xxapi.cn/api/head';
