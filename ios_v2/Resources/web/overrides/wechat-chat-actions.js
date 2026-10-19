@@ -913,7 +913,7 @@
     const text = String(seed == null ? '' : seed);
     let hash = 11;
     for (let i = 0; i < text.length; i += 1) hash = (hash * 31 + text.charCodeAt(i)) >>> 0;
-    return hash.toString(36);
+    return hash;
   }
   // 2026-10-11: member pictures come from the 随机头像 API the user asked for
   // (https://xxapi.cn/doc/head). The nonce is derived from the member's name, so the

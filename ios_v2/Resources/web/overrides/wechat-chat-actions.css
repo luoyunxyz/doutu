@@ -4856,3 +4856,6 @@ body.fw-subpage-open .wechat-bottom-navbar { display:none !important; }
 .wechat-dialogue-list > * > img { margin-right: 20px !important; }
 .fw-chat-message { gap: 40px !important; }
 .fw-chat-message__bubble { max-width: calc(100% - 108px) !important; }
+
+.fw-local-friend-row--fallback { gap: 28px !important; }
+.wechat-dialogue-list > * > img { margin-right: 24px !important; }
