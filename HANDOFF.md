@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 2.4.19：银行卡页改 query 路由，去掉 404`  
-> 最新代码版本：`2.4.19 / 20059`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 2.4.20：银行卡页隐藏 404 根节点，和 Android 对照一致`  
+> 最新代码版本：`2.4.20 / 20060`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.15 / 20055`（已通过 USB 查询确认）
 
 ---
@@ -537,6 +537,14 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
     - bundled 钱包页的「银行卡」直接跳 `#/wechat/wallet/cards`，React Router 不认这个子路由；
     - 2.4.19 拦截钱包页「银行卡」按钮，改跳 `#/wechat/wallet?cards=1`；`currentRoute()` 识别 `cards=1`，自绘银行卡页覆盖钱包；
     - `card-add=1` 同样处理；`kind === 'cards'/'cardAdd'` 时 host 钉到视口，返回时收回。
+
+37. **ADB 对照 Android 银行卡页**
+    - `adb forward tcp:9222 localabstract:webview_devtools_remote_<pid>` 后通过 CDP 查看 Android WebView：
+      - URL 是 `#/wechat/wallet/cards`，DOM 里同样有 `Unexpected Application Error! 404 Not Found`，但 `#fw-pay-pages-host` 是 `position:fixed;top:0`，把 404 完整盖住；
+      - 银行卡页就是同一份 `.fw-bc` 自绘代码（卡面 104px、body top 89px、footer top 760px）。
+    - iOS 14.3 的 host 缺 `inset`，掉到 48/845，才把 404 露出来；2.4.19 已钉 host。
+    - 2.4.20 进一步在 bills/withdraw/cards/cardAdd 这些全屏自绘页隐藏 `#root`，离开时恢复，保证即使 host 定位异常也不会再看到 404。
+    - 结论：iOS 银行卡页与 Android 是同一份 HTML/CSS，不需要重画；差异只是 404 层和 host 定位。
 
 ---
 

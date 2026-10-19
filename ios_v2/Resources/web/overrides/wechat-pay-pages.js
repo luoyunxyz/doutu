@@ -1716,18 +1716,30 @@
     // 就不再拦截返回键。
     if (entryRootRoute && h !== entryRootRoute) entryRootRoute = '';
     let old = host();
-    if (!kind) { if (old) old.remove(); document.documentElement.classList.remove('fw-pay-route-active'); if (typeof window.__fwSyncSystemBars === 'function') window.__fwSyncSystemBars(); else if (window.DoutuApp && window.DoutuApp.setPayPageSystemBars) window.DoutuApp.setPayPageSystemBars(false); return; }
+    if (!kind) {
+      if (old) old.remove();
+      const root = document.getElementById('root');
+      if (root) root.style.visibility = '';
+      document.documentElement.classList.remove('fw-pay-route-active');
+      if (typeof window.__fwSyncSystemBars === 'function') window.__fwSyncSystemBars(); else if (window.DoutuApp && window.DoutuApp.setPayPageSystemBars) window.DoutuApp.setPayPageSystemBars(false);
+      return;
+    }
     // 2026-10-11: 服务页改用 bundled(React) 那一版 —— 就是以前点收付款时一闪而过的那页
     // （彩色图标 + 钱包余额）。所以这一路由不再盖自绘宿主，只保留"支付页窗口"状态
     // （系统栏可见、safe-area 30px），顶部间距由下面的 applyBundledPaySpacing 负责。
     if (kind === 'service') {
       if (old) old.remove();
+      const root = document.getElementById('root');
+      if (root) root.style.visibility = '';
       document.documentElement.classList.add('fw-pay-route-active');
       if (typeof window.__fwSyncSystemBars === 'function') window.__fwSyncSystemBars();
       else if (window.DoutuApp && window.DoutuApp.setPayPageSystemBars) window.DoutuApp.setPayPageSystemBars(true);
       return;
     }
     ensurePayLayoutStyles();
+    const pinnedPage = kind === 'bills' || kind === 'withdraw' || kind === 'cards' || kind === 'cardAdd';
+    const appRoot = document.getElementById('root');
+    if (appRoot) appRoot.style.visibility = pinnedPage ? 'hidden' : '';
     if (!old) { old = document.createElement('div'); old.id = HOST_ID; document.body.appendChild(old); }
     old.innerHTML = kind === 'wallet' ? walletPage() : kind === 'balance' ? balancePage() : kind === 'bills' ? (billDetailId() ? billDetailPage(billDetailId()) : billsPage()) : kind === 'withdraw' ? withdrawPage() : kind === 'cards' ? bankCardsPage() : kind === 'cardAdd' ? bankAddPage() : paymentPage();
          // Apply the reference top safe area inline as a last-resort guard against host stylesheet order.
@@ -1740,7 +1752,7 @@
      }     old.style.cssText = 'position:fixed;inset:0;z-index:2147483647;display:block;visibility:visible;opacity:1;pointer-events:auto;box-sizing:border-box;width:100vw;height:100vh;transform:none';
     // 2026-10-19: 这份 CSS 在真机上丢了 `inset:0`，fixed 元素按静态位置落到屏幕下方，
     // 自绘页一直不可见。账单页没有 bundled 版本，必须由自绘层显示：单独把它钉到视口。
-    if (kind === 'bills' || kind === 'withdraw' || kind === 'cards' || kind === 'cardAdd') {
+    if (pinnedPage) {
       old.style.setProperty('top', '0', 'important');
       old.style.setProperty('left', '0', 'important');
       old.style.setProperty('right', '0', 'important');
