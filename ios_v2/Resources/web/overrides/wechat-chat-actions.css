@@ -4817,3 +4817,8 @@ body.fw-subpage-open .wechat-bottom-navbar { display:none !important; }
 
 /* iOS 14 WKWebView: number 输入在自定义弹层里会偶发无法聚焦，用文本输入 + 数字键盘兜底 */
 .fw-batch-friend-count, .fw-batch-per { -webkit-user-select:text !important; user-select:text !important; pointer-events:auto !important; }
+
+/* 对话气泡与头像间距：微信参考图约 16-18px，原来只有 10px 明显贴脸 */
+.fw-chat-message { gap: 18px; }
+.fw-chat-message__bubble { max-width: calc(100% - 78px); }
+.fw-chat-message--transfer { gap: 2.2vw; }

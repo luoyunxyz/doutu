@@ -19,7 +19,17 @@ final class LocalWebServer {
     private var started = false
 
     init?() {
-        guard let listener = try? NWListener(using: .tcp) else { return nil }
+        // localStorage 按 origin（含端口）隔离。以前每次启动都随机端口，导致
+        // 重启 App 后微信好友/朋友圈/聊天记录全部“消失”。固定端口后 origin
+        // 稳定为 http://localhost:18080，WKWebView 才能复用同一份 localStorage。
+        var candidate: NWListener?
+        if let fixed = NWEndpoint.Port(rawValue: 18080) {
+            candidate = try? NWListener(using: .tcp, on: fixed)
+        }
+        if candidate == nil {
+            candidate = try? NWListener(using: .tcp)
+        }
+        guard let listener = candidate else { return nil }
         self.listener = listener
         self.root = Bundle.main.bundlePath + "/web"
         listener.newConnectionHandler = { [weak self] connection in
