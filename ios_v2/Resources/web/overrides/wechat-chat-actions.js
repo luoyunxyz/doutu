@@ -2143,7 +2143,7 @@
       if (template) {
         row = template.cloneNode(true);
         const img = row.querySelector('img');
-        if (img) { img.src = getStableFriendAvatar(friend, friend.avatar || bundledAvatarFor(String(friend.id || friend.name || "friend"))); img.onerror = () => { img.onerror = null; img.src = CONTACT_FALLBACKS[0].avatar; }; }
+        if (img) { img.src = getStableFriendAvatar(friend, friend.avatar || bundledAvatarFor(String(friend.id || friend.name || "friend"))); img.onerror = () => { img.onerror = null; img.src = bundledAvatarFor(String(friend.name || friend.id || "friend")); }; }
         const leaves = [...row.querySelectorAll('span,div')].filter(el => el.children.length === 0);
         const templateName = getChatInfo(template)?.name;
         const nameNode = leaves.find(el => el.textContent.trim() === templateName) || leaves.find(el => el.textContent.trim() && el.textContent.trim().length < 40);
@@ -2158,7 +2158,7 @@
         row.className = 'fw-local-friend-row fw-local-friend-row--fallback';
         row.innerHTML = '<img alt=""><span class="fw-local-friend-copy"><strong></strong><small></small></span><time></time>';
         const img = row.querySelector('img'); img.src = getStableFriendAvatar(friend, friend.avatar || bundledAvatarFor(String(friend.id || friend.name || "friend")));
-        img.onerror = () => { img.onerror = null; img.src = CONTACT_FALLBACKS[0].avatar; };
+        img.onerror = () => { img.onerror = null; img.src = bundledAvatarFor(String(friend.name || friend.id || "friend")); };
         row.querySelector('strong').textContent = label;
         row.querySelector('small').textContent = chatListPreview(friend);
         row.querySelector('time').textContent = chatListStamp(friend);
@@ -8779,8 +8779,12 @@
       return value;
     } catch (_) { return value; }
   }
-  function getStableFriendAvatar(friend, fallback = CONTACT_FALLBACKS[0].avatar) {
-    const source = friend?.avatar || fallback || CONTACT_FALLBACKS[0].avatar;
+  function getStableFriendAvatar(friend, fallback) {
+    const seed = String(friend?.name || friend?.id || 'friend');
+    let source = friend?.avatar || fallback || apiAvatarFor(seed);
+    if (!friend?.avatar && (!fallback || source === CONTACT_FALLBACKS[0].avatar)) {
+      source = apiAvatarFor(seed);
+    }
     if (!friend) return source;
     if (!isRemoteAvatarValue(source)) return source;
     const frozen = freezeRemoteAvatar(source);
