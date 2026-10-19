@@ -97,8 +97,8 @@
   const NICKNAME_API_QUERY = 'id=88888888&key=88888888';
   // The shared demo id/key is rate limited (the API answers code 400 「调用频次过快」), so the
   // fetcher runs two workers with a gap and backs off instead of hammering the endpoint.
-  const NICKNAME_REQUEST_GAP = 500;
-  const NICKNAME_BATCH_DEADLINE = 20000;
+  const NICKNAME_REQUEST_GAP = 120;
+  const NICKNAME_BATCH_DEADLINE = 6000;
   function nicknameDelay(ms) { return new Promise(resolve => setTimeout(resolve, Math.max(0, ms))); }
   async function fetchRandomNicknames(count, onProgress) {
     const want = Math.max(1, Math.min(200, Number(count) || 1));
@@ -113,7 +113,7 @@
       let timer = 0;
       try {
         controller = typeof AbortController === 'function' ? new AbortController() : null;
-        if (controller) timer = setTimeout(() => controller.abort(), 8000);
+        if (controller) timer = setTimeout(() => controller.abort(), 4000);
         const response = await fetch(NICKNAME_API + '?' + NICKNAME_API_QUERY + '&t=' + Date.now() + Math.random().toString(36).slice(2), {
           cache: 'no-store',
           signal: controller ? controller.signal : undefined,
@@ -142,7 +142,13 @@
         await nicknameDelay(NICKNAME_REQUEST_GAP);
       }
     };
-    await Promise.all(Array.from({ length: Math.min(2, want) }, worker));
+    await Promise.all(Array.from({ length: Math.min(6, want) }, worker));
+    // 公共 ID/KEY 被限流时不要继续卡住：用随包的昵称池即时补齐。
+    const pool = (window.__fwNamePools && window.__fwNamePools.nicknames) || [];
+    while (names.length < want && pool.length) {
+      const name = String(pool[Math.floor(Math.random() * pool.length)] || '').trim();
+      if (name && !seen.has(name)) { seen.add(name); names.push(name); }
+    }
     return names;
   }
   let activePress = null;
@@ -220,7 +226,7 @@
   const NATIVE_PROFILES_KEY = 'allProfiles';
   function nativeProfileFromFriend(friend, previousById) {
     const id = String(friend?.id || '');
-    const nickname = String(friend?.realName || friend?.name || '').trim();
+    const nickname = String(friend?.name || friend?.realName || '').trim();
     if (!id || !nickname) return null;
     let previous = previousById?.get(id);
     if (!previous && !previousById) {
