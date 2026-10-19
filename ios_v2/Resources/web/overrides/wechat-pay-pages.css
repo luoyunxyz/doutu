@@ -694,3 +694,15 @@
   -webkit-appearance: none;
   border-radius: 0;
 }
+
+/* 2026-10-19: 提现键盘必须贴在屏幕最底部；原来 top:581.25 + bottom:0 在
+   844 高的屏幕上让键盘容器到 844，但 4 行按键只有 200 左右，下面留一条灰带。
+   改成按内容高度从底部往上排，按键自然落到最底。 */
+#fw-pay-pages-host .fw-wd__keypad {
+  top: auto !important;
+  bottom: 0 !important;
+  height: auto !important;
+}
+#fw-pay-pages-host .fw-wd__keys {
+  padding-bottom: calc(8.75px + env(safe-area-inset-bottom, 0px)) !important;
+}

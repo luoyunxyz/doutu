@@ -3,9 +3,9 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 2.4.16：零钱提现改 query 路由，去掉 404`  
-> 最新代码版本：`2.4.16 / 20056`（已推送，待 Codemagic 构建）  
-> 设备当前安装：`2.4.9 / 20049`（已通过 USB 查询确认）
+> 最新提交：`本轮 2.4.17：提现键盘贴到屏幕最底部`  
+> 最新代码版本：`2.4.17 / 20057`（已推送，待 Codemagic 构建）  
+> 设备当前安装：`2.4.15 / 20055`（已通过 USB 查询确认）
 
 ---
 
@@ -527,6 +527,10 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
     - bundled 零钱页的「提现」直接跳 `#/wechat/wallet/withdraw`，React Router 不认这个子路由，渲染 404 错误页；
     - 2.4.16 在 window capture 拦截零钱页的「提现」按钮，改跳 `#/wechat/wallet?withdraw=1`；`currentRoute()` 识别 `withdraw=1` 后让自绘提现页覆盖钱包；
     - `kind === 'withdraw'` 时把自绘 host 钉到视口；返回零钱页时 host 自动收回，显示 bundled 零钱页。
+
+35. **提现键盘底部留灰带**
+    - `.fw-wd__keypad` 原来是 `top:581.25px;bottom:0`，键盘容器到 844 高，但 4 行按键只有约 200px，下面空出一条灰带；
+    - 2.4.17 改成 `top:auto;bottom:0;height:auto`，按按键内容高度从底部往上排，按键直接落到屏幕最底；底部再加 safe-area padding。
 
 ---
 
