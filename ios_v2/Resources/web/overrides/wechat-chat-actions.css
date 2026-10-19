@@ -2705,6 +2705,9 @@ body.fw-keyboard-open .fw-native-composer-root > .fw-native-chat-feature-panel {
 }
 .fw-device-sheet.is-open .fw-device-sheet__panel { transform: translateY(0); }
 body.fw-device-sheet-open .wechat-bottom-navbar { display: none !important; }
+/* 2026-10-19: 设备登录横条选择「不显示」后，React 重绘会把行内 display 覆盖掉；
+   用 body class 锁住，点顶部工具菜单/打开弹窗都不会再冒出来。 */
+body.fw-device-row-hidden .wechat-device-row { display: none !important; }
 .fw-device-sheet__panel header {
   display: flex;
   align-items: center;

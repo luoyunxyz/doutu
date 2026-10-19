@@ -4020,7 +4020,12 @@
     if (label === '添加微信收款助手') return addWechatPayAssistant();
     if (label === '批量添加聊天记录') return openBatchRecordsDialog();
     if (label === '清空所有聊天记录') return openClearRecordsDialog();
-    if (label === '开启电脑设备登录显示') return openDeviceLoginDialog();
+    if (label === '开启电脑设备登录显示') {
+      // 工具菜单关闭时 iOS 可能补发一次 click；如果同步打开弹窗，这一下会落到
+      // 弹窗的「保存」上，把刚隐藏的设备横条重新打开。延后一拍再开。
+      setTimeout(openDeviceLoginDialog, 120);
+      return;
+    }
     if (label === '不懂操作？联系客服') {
       return makeDialog('联系客服', '这是离线演示页面', '<p>客服入口已准备就绪，当前不会连接网络。</p>', [{ label: '知道了', primary: true, onClick: closeOverlay }]);
     }
@@ -9113,9 +9118,13 @@
     return DEVICE_ROW_OPTIONS.some(option => option.value === value) ? value : 'Windows';
   }
   function applyDeviceRow() {
+    const choice = readDeviceRowChoice();
+    // 2026-10-19: 只改 row.style.display 会被 React 重新渲染时覆盖，点顶部工具菜单 /
+    // 打开设备登录弹窗后，已隐藏的横条会重新冒出来。用 body class + CSS !important
+    // 锁住隐藏状态，React 怎么重绘都不会显形。
+    if (document.body) document.body.classList.toggle('fw-device-row-hidden', choice === 'hidden');
     const row = document.querySelector('.wechat-device-row');
     if (!row) return;
-    const choice = readDeviceRowChoice();
     row.dataset.fwDeviceChoice = choice;
     const display = choice === 'hidden' ? 'none' : '';
     if (row.style.display !== display) row.style.display = display;

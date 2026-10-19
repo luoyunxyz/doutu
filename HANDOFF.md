@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 2.3.5：设备登录底部弹层完善`  
-> 最新代码版本：`2.3.5 / 20035`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 2.3.6：锁住已隐藏的设备登录横条`  
+> 最新代码版本：`2.3.6 / 20036`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.3.1 / 20031`（已通过 USB 查询确认）
 
 ---
@@ -457,6 +457,11 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
     - 2.3.5 把弹层 z-index 提到 2147483001，打开时给 `body` 加 `fw-device-sheet-open` 隐藏底栏；
     - 面板加 `padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 6px)`，并补上底部滑入/滑出动画；
     - 现在四个选项（iPad / Mac / Windows / 不显示）都能完整看到和点击。
+
+23. **设备登录横条隐藏后又被工具菜单带出来**
+    - `applyDeviceRow` 之前只改 `row.style.display`，React 重新渲染时会把行内样式覆盖，点顶部工具菜单 / 打开设备登录弹窗后已隐藏的横条又出现；
+    - 2.3.6 增加 `body.fw-device-row-hidden` + CSS `display:none !important` 锁住隐藏状态，React 怎么重绘都不会显形；
+    - 工具菜单点「开启电脑设备登录显示」延后 120ms 打开弹窗，避免工具菜单关闭时补发的 click 落到弹窗「保存」上，把横条重新打开。
 
 ---
 
