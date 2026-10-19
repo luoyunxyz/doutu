@@ -143,10 +143,14 @@ final class ZhiTabBarView: UIView {
         UIColor(white: 0.93, alpha: 1).setFill()
         UIRectFill(CGRect(x: 0, y: 0, width: w, height: 0.5))
 
-        let names = ["lci_nav_home", "lci_nav_licai", "lci_nav_video", "lci_nav_msg", "lci_nav_me"]
         let theme = LicaiVersion.theme()
-        let normal = theme.value == LicaiVersion.normal
-        let labelColor = normal ? tint : Draw.color(theme.accent)
+        if theme.value != LicaiVersion.normal {
+            drawBlackThemeNav(h: h, theme: theme)
+            return
+        }
+        let names = ["lci_nav_home", "lci_nav_licai", "lci_nav_video", "lci_nav_msg", "lci_nav_me"]
+        let normal = true
+        let labelColor = tint
         for (i, refX) in centers.enumerated() {
             let cx = w * refX / 1280
             if i == 0 {
@@ -185,6 +189,24 @@ final class ZhiTabBarView: UIView {
         UIBezierPath(roundedRect: CGRect(x: w * 430 / 1280, y: h * 222 / 256,
                                          width: w * 420 / 1280, height: max(2, h * 8 / 256)),
                      cornerRadius: 2).fill()
+    }
+
+    /// 黑卡主题底栏：Android 用的是 hk_nav_* 的深色实心图标 + 金色选中文字。
+    private func drawBlackThemeNav(h: CGFloat, theme: LicaiVersion.Theme) {
+        let w = bounds.width
+        let icons = ["hk_nav_index", "hk_nav_fortune", "hk_nav_video", "hk_nav_message", "hk_nav_me"]
+        let dark = Draw.color(0xff2a3550)
+        let accent = Draw.color(theme.accent)
+        let size = h * 90 / 256
+        let iconY = h * 16 / 256
+        for (i, refX) in centers.enumerated() {
+            let cx = w * refX / 1280
+            let name = icons[i] + (selected == i ? "_active" : "")
+            UIImage(named: name)?.draw(in: CGRect(x: cx - size / 2, y: iconY,
+                                                  width: size, height: size))
+            drawLabel(labels[i], cx: cx, h: h, baseline: 190,
+                      color: selected == i ? accent : dark)
+        }
     }
 
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {

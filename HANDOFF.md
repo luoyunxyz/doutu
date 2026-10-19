@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 2.4.46：逐字节核对 APK 素材，卡片回归原图直绘`  
-> 最新代码版本：`2.4.46 / 20086`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 2.4.47：补入 Android 黑卡 hk_nav_* 底栏素材`  
+> 最新代码版本：`2.4.47 / 20087`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.44 / 20084`（已通过 USB 查询确认）
 
 ---
@@ -680,6 +680,15 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
     - 对比结果：`me_card1…8`、`hk_me_bg` 与 iOS 素材**逐字节完全相同**；`lci_nav_*`/`zhi_navbar` 只是 PNG 重编码，**像素 diff 为 0**；
     - 所以卡片边框不是素材差异，而是 iOS 后加的裁剪/白底/描边自己产生的边；2.4.46 撤掉这些处理，改成和 Android 一样直接按原尺寸画 `me_card*`；
     - 底栏仍用同一批像素级相同的素材，按主题组合深色图标+金色文字。
+
+63. **黑卡底栏真正缺的是 hk_nav_\* 素材**
+    - 用户指出 Android 是**深色实心图标**，iOS 是细线描边图标；查 APK 发现 Android 黑卡主题用的是另一套：
+      `hk_nav_index/fortune/video/message/me` + `_active`（90×90 JPG）；
+    - iOS `Assets.xcassets` 里**完全没有这 10 张图**，所以只能拿普通版的细线 `lci_nav_*` 拼，视觉必然不对；
+    - 2.4.47 从 APK 抽取这 10 张图，建好对应 imageset；`ZhiTabBarView` 在黑卡主题走 `hk_nav_*`：
+      - 选中：`_active` 深色实心图标 + `theme.accent` 金色文字；
+      - 未选中：普通 `hk_nav_*` 深色图标 + 深色文字；
+      - 图标按 90/256 比例、文字基线 190/256，贴近 Android 布局。
 
 ---
 
