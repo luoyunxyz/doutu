@@ -2664,9 +2664,24 @@
       for (let i = 0; i < pinned.length; i++) if (container.children[i] !== pinned[i]) { needsReorder = true; break; }
       if (needsReorder) container.append(...pinned, ...rows.filter(row => !pinned.includes(row)));
     }
+    paintDialogueAvatars(rows);
     updateWechatTabBadge(totalUnread);
     applyDialogueFontScale(rows);
     applyConversationFontScale();
+  }
+
+  // 原生列表里的头像有些是空 src / 灰色占位，这里一次性补成稳定的内联头像。
+  function paintDialogueAvatars(rows) {
+    for (const row of rows) {
+      const img = row.querySelector('img');
+      if (!img || img.dataset.fwStableAvatar === '1') continue;
+      const src = String(img.getAttribute('src') || '');
+      if (src && src !== PLACEHOLDER_AVATAR && !src.startsWith('data:image/svg+xml')) continue;
+      const info = getChatInfo(row);
+      const name = String(info?.name || row.textContent || '').trim().slice(0, 12) || '微信好友';
+      img.src = bundledAvatarFor(name);
+      img.dataset.fwStableAvatar = '1';
+    }
   }
 
   function applyDialogueFontScale(rows = getRows()) {
