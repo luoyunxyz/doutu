@@ -626,6 +626,16 @@ final class Router {
     /// 全屏弹出小微主页并把路由交过去
     private func presentWeb(route: String) {
         guard let host = UpdatePrompt.topViewController() else { return }
+        // 防止双击/连续点击把两个微主页叠在一起：返回时只 dismiss 最上面那个，
+        // 下面那个会立刻露出来，看起来就像「退出后又自动进入」。
+        if let existing = host as? WeChatV2Host {
+            existing.open(route: route)
+            return
+        }
+        if let presented = host.presentedViewController as? WeChatV2Host {
+            presented.open(route: route)
+            return
+        }
         let web = WeChatV2Host(route: route)
         web.modalPresentationStyle = .fullScreen
         host.present(web, animated: true)

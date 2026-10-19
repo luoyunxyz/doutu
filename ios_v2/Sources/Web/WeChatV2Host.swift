@@ -172,6 +172,7 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler, UIGestureRec
         }
         let top = view.safeAreaInsets.top
         backButton?.frame = CGRect(x: 10, y: top + 8, width: 34, height: 34)
+        if let backButton { view.bringSubviewToFront(backButton) }
         let right = view.bounds.width
         headerPlusButton?.frame = CGRect(x: right - 42, y: 8, width: 40, height: 50)
         headerSearchButton?.frame = CGRect(x: right - 68, y: 8, width: 26, height: 50)
@@ -361,22 +362,35 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler, UIGestureRec
         guard gesture.state == .ended else { return }
         let translation = gesture.translation(in: view)
         guard translation.x > 60, abs(translation.y) < 120 else { return }
-        // 2026-10-19: 先让网页处理自己的返回栈（聊天页 → 微信列表、转账详情 → 聊天页）。
-        // 网页没处理时才退出整个微主页；否则在聊天里右滑会直接回到应用首页。
-        webView.evaluateJavaScript(
-            "(function(){try{return window.__fwHandleChatPayBack?window.__fwHandleChatPayBack():false}catch(e){return false}})()"
-        ) { [weak self] result, _ in
+        // 只有聊天/支付这类子页面才让网页先处理返回；微主页本身、尤其是
+        // 「小微主页」这一层必须直接 dismiss，否则 __fwHandleChatPayBack 返回 true
+        // 会把用户困在页面里，看起来就是「退不出去」。
+        webView.evaluateJavaScript("String(location.hash || '')") { [weak self] result, _ in
             guard let self else { return }
-            let handled: Bool
-            if let flag = result as? Bool {
-                handled = flag
-            } else if let number = result as? NSNumber {
-                handled = number.boolValue
-            } else {
-                handled = false
-            }
-            if !handled {
+            let hash = (result as? String) ?? ""
+            let isSubpage = hash.contains("/wechat/conversation/")
+                || hash.contains("/wechat/chat")
+                || hash.contains("/wechat/pay")
+                || hash.contains("/wechat/transfer")
+            if !isSubpage {
                 DispatchQueue.main.async { self.dismiss(animated: true) }
+                return
+            }
+            self.webView.evaluateJavaScript(
+                "(function(){try{return window.__fwHandleChatPayBack?window.__fwHandleChatPayBack():false}catch(e){return false}})()"
+            ) { [weak self] result, _ in
+                guard let self else { return }
+                let handled: Bool
+                if let flag = result as? Bool {
+                    handled = flag
+                } else if let number = result as? NSNumber {
+                    handled = number.boolValue
+                } else {
+                    handled = false
+                }
+                if !handled {
+                    DispatchQueue.main.async { self.dismiss(animated: true) }
+                }
             }
         }
     }

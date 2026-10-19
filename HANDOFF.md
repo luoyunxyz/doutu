@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 2.4.62：来电昵称令牌修正 + 通讯录原生缓存`  
-> 最新代码版本：`2.4.62 / 20102`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 2.4.63：修复微主页退出后自动重入 / 边缘返回`  
+> 最新代码版本：`2.4.63 / 20103`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.51 / 20091`（已通过 USB 查询确认）
 
 ---
@@ -789,6 +789,13 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
     - 昵称 `hitTest` 吐的是 `"name"`，但 Router 只有 `case "name" where screen is CollectMoneyV2Screen`，CallSetup 永远匹配不到；2.4.62 改成 `"call:name"`，由 `call:` 分支处理；
     - 微页面每次 `syncNativeAddressBook()` 都通过 `FwContacts` message handler 把 profiles 直接交给原生，`WeChatContactStore` 存进 `UserDefaults`（id/备注名/头像 URL）；打开来电页优先用缓存，不再完全依赖隐藏 WebView 的 origin；
     - 标题热区扩大到 `insetBy(-12,-12)`，更容易点出完整通讯录列表。
+
+79. **微主页退不出去 / 退出后自动重入**
+    - `presentWeb` 对连续点击没有去重，可能叠两个 `WeChatV2Host`；dismiss 只关最上面一个，下面那个立刻露出来，看起来像自动重入；
+    - 2.4.63 `presentWeb` 先判断当前 top / presented 是否已经是 `WeChatV2Host`，是就只 `open(route:)`，不再 present 第二层；
+    - 边缘返回原来无条件先问网页 `__fwHandleChatPayBack`；微主页/小微主页上它可能返回 true，导致永远不 dismiss；
+    - 现在先读 `location.hash`，只有聊天/支付/转账子页面才交给网页处理，其它页面直接 dismiss；
+    - 返回按钮在 `viewDidLayoutSubviews` 里 `bringSubviewToFront`，避免被 WebView / 顶栏透明命中区盖住。
 
 ---
 
