@@ -3,9 +3,9 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 2.4.5：账单页改用 query 路由，避免 App 404`  
-> 最新代码版本：`2.4.5 / 20045`（已推送，待 Codemagic 构建）  
-> 设备当前安装：`2.3.7 / 20037`（已通过 USB 查询确认）
+> 最新提交：`本轮 2.4.6：原生加号/搜索热区只在微信主页生效`  
+> 最新代码版本：`2.4.6 / 20046`（已推送，待 Codemagic 构建）  
+> 设备当前安装：`2.4.5 / 20045`（已通过 USB 查询确认）
 
 ---
 
@@ -485,6 +485,12 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
     - 但直接 `#/wechat/wallet/bills` 会让 bundled React Router 渲染 **404 Not Found**，错误页占 48px 把自绘账单页挤到下面；
     - 2.4.5 改成 `#/wechat/wallet?bills=1`：App 只看到已知的 `/wechat/wallet` 路由，不 404；`currentRoute()` 识别 `bills=1` 后让自绘层渲染账单页。
     - 判断条件：`rect.top <= 120 && rect.left >= innerWidth * 0.55`，不会误伤页面中间的「账单」文字。
+
+28. **账单仍然点不动（真机）**
+    - 原生 `installHeaderHitTargets` 在右上角常驻两个透明按钮：搜索 `x = right-68…right-42`、加号 `x = right-42…right-2`，y 8…58；
+    - 「账单」div 在 `x 255…374, y 48…72`，右侧正好被这两个原生热区盖住，真实触摸根本到不了网页；
+    - 2.4.6 让原生只在这些路由显示热区：`''` / `#/wechat` / `#/wechat/index`；其它路由（钱包/账单/服务等）隐藏；
+    - 实现：WKUserScript 监听 hashchange，向 `DoutuApp` 桥发 `headerTargets: [home]`，原生按钮默认隐藏，只在主页显示。
 
 ---
 

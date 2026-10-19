@@ -106,6 +106,25 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler, UIGestureRec
                                      forMainFrameOnly: true)
         config.userContentController.addUserScript(topbarFix)
 
+        // 2026-10-19: 原生加号/搜索热区只属于微信主页。钱包等其他页面的右上角
+        // 也有「账单」等按钮，热区会盖住它们导致点不动。这里监听 hash，把当前
+        // 是否主页告诉原生，原生只在主页显示这两个透明热区。
+        let headerRoute = WKUserScript(source: """
+        (function(){
+          function sync(){
+            try {
+              var path=(location.hash||'').replace(/^#/,'').split(/[?#]/)[0].replace(/\\/+$/,'');
+              var home=(path===''||path==='/wechat'||path==='/wechat/index');
+              window.webkit.messageHandlers.DoutuApp.postMessage({method:'headerTargets',args:[home]});
+            } catch (e) {}
+          }
+          window.addEventListener('hashchange', sync);
+          document.addEventListener('DOMContentLoaded', sync);
+          setTimeout(sync, 0); setTimeout(sync, 300); setTimeout(sync, 1000);
+        })();
+        """, injectionTime: .atDocumentEnd, forMainFrameOnly: true)
+        config.userContentController.addUserScript(headerRoute)
+
         // 真正的 origin：Android 用 `https://fake-world.local` + shouldInterceptRequest，
         // iOS 这边用 127.0.0.1 回环 HTTP。自定义 scheme 下 ES module 会被 CORS 拒绝，
         // 页面只剩经典脚本渲染的外壳（微信标题栏 + “Windows 微信已登录”，下面全白）。
@@ -219,6 +238,9 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler, UIGestureRec
         search.addTarget(self, action: #selector(headerSearchTapped), for: .touchUpInside)
         view.addSubview(search)
         headerSearchButton = search
+        // 默认隐藏，等网页 hash 同步后再决定是否显示（只有微信主页显示）。
+        plus.isHidden = true
+        search.isHidden = true
     }
 
     @objc private func headerPlusTapped() {
