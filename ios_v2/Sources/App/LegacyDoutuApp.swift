@@ -152,11 +152,54 @@ final class Router {
             push(screen, state: AccountSoundScreen.State())
         case "tease":
             // 「撩妹加 V」在 Android 是一个开关（MainActivity 里改配置），没有独立页面。
-            // iOS 侧同样只切开关状态并提示，不做跳转。
-            teaseEnabled.toggle()
-            showToast(teaseEnabled ? "已开启撩妹加 V" : "已关闭撩妹加 V", ok: true)
+            // 这里必须同时改 playbook 原始行里的 enabled，否则页面重画后开关又回到关闭态。
+            let next = !(currentPlaybookSwitch("tease") ?? teaseEnabled)
+            teaseEnabled = next
+            setPlaybookSwitch("tease", enabled: next)
+            host?.setNeedsDisplay()
+            showToast(next ? "已开启撩妹加 V" : "已关闭撩妹加 V", ok: true)
         default:
             showToast("该玩法暂未开放", ok: false)
+        }
+    }
+
+    /// 读取娱乐页开关行当前状态（没有配置时返回 nil）。
+    private func currentPlaybookSwitch(_ key: String) -> Bool? {
+        let sections: [[String: Any]]?
+        if let s = host?.state as? HomeShellScreen.State {
+            sections = s.playbookSections
+        } else if let s = host?.state as? HomeV2Screen.State {
+            sections = s.playbookSections
+        } else {
+            sections = nil
+        }
+        guard let sections else { return nil }
+        for section in sections {
+            for row in (section["rows"] as? [[String: Any]] ?? [])
+            where (row["key"] as? String) == key {
+                return row["enabled"] as? Bool ?? false
+            }
+        }
+        return nil
+    }
+
+    /// 写回娱乐页开关行，保证点击后立即反映到重绘的开关上。
+    private func setPlaybookSwitch(_ key: String, enabled: Bool) {
+        func updated(_ input: [[String: Any]]) -> [[String: Any]] {
+            var sections = input
+            for i in sections.indices {
+                var rows = sections[i]["rows"] as? [[String: Any]] ?? []
+                for j in rows.indices where (rows[j]["key"] as? String) == key {
+                    rows[j]["enabled"] = enabled
+                }
+                sections[i]["rows"] = rows
+            }
+            return sections
+        }
+        if let s = host?.state as? HomeShellScreen.State, let sections = s.playbookSections {
+            s.playbookSections = updated(sections)
+        } else if let s = host?.state as? HomeV2Screen.State, let sections = s.playbookSections {
+            s.playbookSections = updated(sections)
         }
     }
 

@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 2.4.52：信用名片头像可换；小荷包头像可换/加号调接口`  
-> 最新代码版本：`2.4.52 / 20092`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 2.4.53：娱乐页开关状态/兜底玩法补全`  
+> 最新代码版本：`2.4.53 / 20093`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.51 / 20091`（已通过 USB 查询确认）
 
 ---
@@ -719,6 +719,14 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
       - 点已有头像 → 随机头像（xxapi.cn 接口）或相册替换；
       - 点「+」→ 直接调 `PurseAvatarAPI` 拉一张随机头像并 `PurseStore.addAvatar`，满了 5 个给提示；
     - 新增 `PurseStore.setAvatar(_:at:)` 和 `PurseAvatarAPI.swift`；接口返回 `code==200` 的 `data` 图片地址后下载成 UIImage。
+
+69. **娱乐页功能补全**
+    - 「撩妹加 V」之前只改 Router 的 `teaseEnabled` 并 toast，`playbookSections` 里的原始行没变，重绘后开关仍回到关闭态；2.4.53 在 `handlePlay` 里：
+      - 先读当前行 `enabled`，取反；
+      - `setPlaybookSwitch("tease", enabled:)` 写回 `HomeShellScreen.State` / `HomeV2Screen.State` 的原始 JSON；
+      - 再 `setNeedsDisplay`，开关立即变化；
+    - `Playbook.sections(from:)` 原来把没有 `enabled` 字段的行当成 false 全部丢掉；2.4.53 改成「显式 false 才隐藏，开关行始终保留」；
+    - `defaultSections` 从只有「短视频去水印」补成完整兜底：parse / order / call / shutdown / sound / tease，服务端配置拉取失败时六项玩法仍在。
 
 ---
 

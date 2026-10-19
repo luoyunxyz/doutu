@@ -83,12 +83,30 @@ enum Playbook {
         "parse", "order", "call", "shutdown", "sound", "tease", "avatar", "balance",
     ]
 
-    /// 解析不到服务端配置时的兜底（Java:688-690、725-727）
+    /// 解析不到服务端配置时的兜底（Java:688-690、725-727）。
+    /// 必须包含客户端已实现的全部玩法，否则接口失败时娱乐页会只剩一行。
     static var defaultSections: [Section] {
-        [Section(title: "实用功能", accent: "blue", rows: [
-            FeatureRow(key: "parse", title: "短视频一键去水印",
-                       subtitle: "支持抖音、快手、小红书、B站等100+平台"),
-        ])]
+        [
+            Section(title: "实用功能", accent: "blue", rows: [
+                FeatureRow(key: "parse", title: "短视频一键去水印",
+                           subtitle: "支持抖音、快手、小红书、B站等100+平台"),
+                FeatureRow(key: "order", title: "淘宝订单详情",
+                           subtitle: "查看订单详情，轻松管理购物记录"),
+            ]),
+            Section(title: "社恐神器", accent: "purple", rows: [
+                FeatureRow(key: "call", title: "模拟朋友来电",
+                           subtitle: "自定义来电，帮你从尴尬场合脱身"),
+                FeatureRow(key: "shutdown", title: "模拟没电关机",
+                           subtitle: "模拟手机没电关机效果"),
+                FeatureRow(key: "sound", title: "模拟收款声音",
+                           subtitle: "支/小/微到账播报，金额自己定"),
+            ]),
+            Section(title: "乐趣挑逗", accent: "orange", rows: [
+                FeatureRow(key: "tease", title: "撩妹加V",
+                           subtitle: "假装摄像头损坏，去购物加老板（娘）的微信~",
+                           switchRow: true, enabled: false),
+            ]),
+        ]
     }
 
     // MARK: - 服务端配置解析（Java:685-729）
@@ -102,8 +120,12 @@ enum Playbook {
             if title.isEmpty { continue }
             var rows: [FeatureRow] = []
             for raw in (item["rows"] as? [[String: Any]] ?? []) {
-                // enabled=false 的行直接不出现：后台下线一个玩法不用发版
-                if let enabled = raw["enabled"] as? Bool, !enabled { continue }
+                let isSwitch = raw["switch"] as? Bool ?? false
+                let hasEnabled = raw["enabled"] != nil
+                let enabled = raw["enabled"] as? Bool ?? false
+                // 普通玩法只要显式 enabled=false 就不出现；没写 enabled 视为启用。
+                // 开关行（撩妹加 V）始终保留，只是处于关闭态。
+                if hasEnabled && !enabled && !isSwitch { continue }
                 let key = (raw["key"] as? String ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
                 let rowTitle = (raw["title"] as? String ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
                 if key.isEmpty || rowTitle.isEmpty { continue }
@@ -112,7 +134,8 @@ enum Playbook {
                     key: key,
                     title: rowTitle,
                     subtitle: raw["subtitle"] as? String ?? "",
-                    switchRow: raw["switch"] as? Bool ?? false
+                    switchRow: isSwitch,
+                    enabled: enabled
                 ))
             }
             if !rows.isEmpty {
