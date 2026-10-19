@@ -893,7 +893,6 @@
   function makeBatchAvatarUrl() {
     return bundledAvatarFor('batch-' + Date.now() + Math.random().toString(36).slice(2));
   }
-  }
 
     function migrateGeneratedProfiles() {
     const friends = Array.isArray(state.contacts) ? state.contacts.filter(friend => friend?.id && friend.name) : [];
