@@ -1211,6 +1211,12 @@
     const makeTime = text => { const el=document.createElement('div'); el.className='fw-chat-time'; el.textContent=text; messages.appendChild(el); };
     // 所有消息头像都走这一个入口：先接口/资料图，失败立刻换成本地确定性头像，
     // 永远不允许 src 为空或停留在灰色占位。
+    const selfMessageAvatar = () => {
+      const value = String(getSelfAvatar() || '');
+      // fake-world 的旧 CDN 在设备上会一直挂起，不会触发 onerror，只会留下灰色方块。
+      if (!value || /fakeworld|azureedge/i.test(value)) return fallbackSelfAvatar || bundledAvatarFor('self-avatar');
+      return value;
+    };
     const paintMessageAvatar = (img, side, preferred) => {
       if (!img) return;
       const incoming = side === 'incoming';
@@ -1218,7 +1224,7 @@
       const fallback = bundledAvatarFor(seed);
       const primary = preferred
         || (incoming ? (friendAvatar || apiAvatarFor(seed))
-                      : (getSelfAvatar() || fallbackSelfAvatar || apiAvatarFor(seed)));
+                      : (selfMessageAvatar() || apiAvatarFor(seed)));
       img.referrerPolicy = 'no-referrer';
       img.dataset.fwAvatarSide = side;
       if (incoming) { img.dataset.fwFriendAvatar = '1'; delete img.dataset.fwSelfAvatar; }
@@ -1228,6 +1234,11 @@
         if (img.src !== fallback) img.src = fallback;
       };
       img.src = primary || fallback;
+      if (img.__fwAvatarTimer) clearTimeout(img.__fwAvatarTimer);
+      img.onload = () => { if (img.__fwAvatarTimer) { clearTimeout(img.__fwAvatarTimer); img.__fwAvatarTimer = 0; } };
+      img.__fwAvatarTimer = setTimeout(() => {
+        if (img.isConnected && !img.naturalWidth && img.src !== fallback) img.src = fallback;
+      }, 1800);
       if (img.complete && img.naturalWidth === 0 && img.src !== fallback) img.src = fallback;
       img.alt = incoming ? String(friend.remark || friend.name || '对方') : getSelfName();
       img.title = img.alt;
