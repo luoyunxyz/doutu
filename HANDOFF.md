@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 2.4.31：底栏强制 frame/bringToFront + ZHITAB 日志`  
-> 最新代码版本：`2.4.31 / 20071`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 2.4.32：每次切页记录 SCREEN/zhi 日志`  
+> 最新代码版本：`2.4.32 / 20072`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.29 / 20069`（已通过 USB 查询确认）
 
 ---
@@ -596,6 +596,11 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
     - 2.4.31 在 `setScreen` 里直接按 `bounds` 重算 `zhiTabBar.frame` 并 `bringSubviewToFront`，不再等 `layoutSubviews`；
     - 每次进入支页写 `ZHITAB <Screen> idx=<n> frame=<...> bounds=<...>` 到 `Documents/crash.log`；
     - 下一步按日志定位：无 ZHITAB → zhiTabIndex nil / 不是 ScreenHostView；frame 在屏幕外 → bounds/坐标系问题；frame 正确但看不到 → 上层视图遮挡。
+
+48. **2.4.32 增加每次切页的 SCREEN 日志**
+    - 不能只依赖 ZHITAB：如果 `zhiTabIndex` 为 nil 就不会记录；
+    - `setScreen` 每次写 `SCREEN <class> zhi=<nil/Int> bounds=<...>`，财富页到底是哪个类、bounds 多少、zhi 是否 nil 一眼可见；
+    - 安装 2.4.32 后进财富页，拉 `crash.log`，把 `SCREEN` / `ZHITAB` 两行发来即可继续定位。
 
 ---
 

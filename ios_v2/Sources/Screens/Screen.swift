@@ -299,6 +299,7 @@ final class ScreenHostView: UIView, UIScrollViewDelegate {
     func setScreen(_ next: Screen, state: ScreenState = ScreenState()) {
         screen = next
         self.state = state
+        CrashLog.append("SCREEN \(type(of: next)) zhi=\(String(describing: next.zhiTabIndex)) bounds=\(bounds)")
         if let index = next.zhiTabIndex {
             zhiTabBar.isHidden = false
             zhiTabBar.selected = index
