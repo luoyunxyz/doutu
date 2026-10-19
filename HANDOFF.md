@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 2.4.34：V1/V2/V3 切换后要求退出重开`  
-> 最新代码版本：`2.4.34 / 20074`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 2.4.35：财富页资产面板支持下拉/上拉`  
+> 最新代码版本：`2.4.35 / 20075`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.32 / 20072`（已通过 USB 查询确认）
 
 ---
@@ -612,6 +612,13 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
     - 五档主题的背景、卡面、铭牌、底栏资产差异大，原地 `setNeedsDisplay` 会残留上一套图层，视觉问题很大；
     - 2.4.34 选择主题后不再原地重绘，直接弹「主题已切换 / 请退出并重新打开 App」，点「退出 App」执行 `exit(0)`；下次启动 `LicaiVersion.current()` 按新主题完整绘制；
     - `VersionPicker.requireRestart()` 延迟 0.25s 等 action sheet 收起后弹 alert，避免 presentation 冲突。
+
+51. **财富页资产面板不能下拉**
+    - Android 的财富页顶部资产面板可以下拉展开、上拉收起；iOS 只有点箭头的 `toggleExpand`，拖拽完全不处理；
+    - 2.4.35 在 `Screen` 增加 **protocol 要求** `verticalDrag/verticalDragEnd`（同样必须写在 protocol 里才会动态派发），`GrowthV2Screen` 实现：
+      - 按在资产面板区域时 `expand += dy / panelHeight`，0…1 夹紧；
+      - 松手按 0.5 阈值吸附展开/收起；
+    - `ScreenHostView` 在纵向手势优先调用 `verticalDrag`，接管时不再滚页面。
 
 ---
 

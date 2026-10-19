@@ -250,6 +250,20 @@ final class GrowthV2Screen: Screen {
         return max(0, content + Self.panelHeight * s.expand - Self.H)
     }
 
+    /// 顶部资产面板下拉展开 / 上拉收起。只有按在面板区域才接管，避免抢掉页面滚动。
+    func verticalDrag(_ state: ScreenState, dy: CGFloat, startY: CGFloat) -> Bool {
+        guard let s = state as? State else { return false }
+        let panelBottom = Self.sheetTop + Self.panelHeight * s.expand + 80
+        guard startY <= panelBottom else { return false }
+        s.expand = max(0, min(1, s.expand + dy / Self.panelHeight))
+        return true
+    }
+
+    func verticalDragEnd(_ state: ScreenState) {
+        guard let s = state as? State else { return }
+        s.expand = s.expand > 0.5 ? 1 : 0
+    }
+
     // MARK: - 绘制（Java:387-426）
 
     func draw(_ d: Draw, state: ScreenState) {

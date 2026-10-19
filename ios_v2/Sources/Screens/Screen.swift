@@ -25,6 +25,9 @@ protocol Screen: AnyObject {
     /// 支模块五格底栏的当前选中项（0 首页 / 1 理财 / 2 视频 / 3 消息 / 4 我的）。
     /// 必须写在 protocol 里，否则通过 `Screen` 存在类型访问时永远拿到扩展默认的 nil。
     var zhiTabIndex: Int? { get }
+    /// 纵向拖动（财富页下拉展开资产面板）。必须写在 protocol 里才会动态派发。
+    func verticalDrag(_ state: ScreenState, dy: CGFloat, startY: CGFloat) -> Bool
+    func verticalDragEnd(_ state: ScreenState)
 }
 
 extension Screen {
@@ -67,6 +70,13 @@ extension Screen {
     /// 宿主会先把「横向位移明显大于纵向」的手势交给这里；返回 `true` 表示这一屏接管了这次手势
     /// （于是宿主不再拿它当纵向滚动）。`dx` 是相对上一次移动的增量。
     func carouselDrag(_ state: ScreenState, dx: CGFloat) -> Bool { false }
+
+    /// 纵向拖动（对应 Android 财富页下拉展开资产面板）。
+    /// `dy` 是相对上一次移动的增量，`startY` 是按下时的参考画布 y。
+    /// 返回 true 表示这一屏接管了这次纵向手势，宿主不再滚页面。
+    func verticalDrag(_ state: ScreenState, dy: CGFloat, startY: CGFloat) -> Bool { false }
+    /// 纵向拖动松手：用于把面板吸附到展开/收起。
+    func verticalDragEnd(_ state: ScreenState) {}
 
     /// 横向拖动松手：吸附到最近的一页（对应 Android 的 `snapCarousel(x - downX)`）。
     func carouselSnap(_ state: ScreenState, totalDx: CGFloat) {}
@@ -185,6 +195,8 @@ final class ScreenHostView: UIView, UIScrollViewDelegate {
     private var dragging = false
     private var touchStart = CGPoint.zero
     private var lastPoint = CGPoint.zero
+    private var touchStartDesignY: CGFloat = 0
+    private var verticalDragged = false
     /// 横向拖动（轮播）是否已接管这次手势
     private var draggingCarousel = false
     /// 手指是否移动过（长按要求「没移动」）
@@ -380,10 +392,13 @@ final class ScreenHostView: UIView, UIScrollViewDelegate {
         let p = t.location(in: self)
         touchStart = p
         lastPoint = p
+        let beginCanvas = Canvas(size: screen.canvasSize, bounds: bounds)
+        touchStartDesignY = beginCanvas.design(p).y + state.scroll
         dragStartY = p.y
         dragStartScroll = state.scroll
         dragging = false
         draggingCarousel = false
+        verticalDragged = false
         moved = false
         edgeBackFired = false
         downAt = Date()
@@ -433,6 +448,15 @@ final class ScreenHostView: UIView, UIScrollViewDelegate {
             return
         }
 
+        if abs(totalDy) > abs(totalDx),
+           screen.verticalDrag(state, dy: (p.y - lastPoint.y) / canvas.sy,
+                               startY: touchStartDesignY) {
+            verticalDragged = true
+            lastPoint = p
+            setNeedsDisplay()
+            return
+        }
+
         let dy = p.y - dragStartY
         if abs(dy) > 8 { dragging = true }
         if dragging && maxScroll > 0 {
@@ -453,6 +477,13 @@ final class ScreenHostView: UIView, UIScrollViewDelegate {
         // 否则命中坐标会整体上移，表现就是「点击没反应 / 点错位置」。
         var design = canvas.design(p)
         design.y += state.scroll
+
+        if verticalDragged {
+            verticalDragged = false
+            screen.verticalDragEnd(state)
+            setNeedsDisplay()
+            return
+        }
 
         // 横向拖动松手 → 吸附到最近一页（Android 的 snapCarousel）
         if draggingCarousel {
