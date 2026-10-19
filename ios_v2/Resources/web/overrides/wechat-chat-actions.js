@@ -1717,7 +1717,12 @@
       if(avatar&&content){
         if(target==='incoming'){ row.prepend(avatar); avatar.after(content); }
         else { row.append(content,avatar); }
-        avatar.src=target==='incoming'?friendAvatar:getSelfAvatar();
+        const nextAvatar = target==='incoming' ? friendAvatar : (getSelfAvatar() || fallbackSelfAvatar);
+        const localAvatar = bundledAvatarFor(target==='incoming' ? (friend.name || friend.id || 'friend') : 'self-avatar');
+        avatar.onerror = () => { avatar.onerror = null; avatar.src = localAvatar; };
+        avatar.src = nextAvatar || localAvatar;
+        avatar.alt = target==='incoming' ? (friend.remark || friend.name || '对方') : getSelfName();
+        avatar.title = avatar.alt;
       }
       showToast(target==='incoming'?'已改为对方发送':'已改为我发送');
     };
