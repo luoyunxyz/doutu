@@ -431,7 +431,9 @@ final class LicaiScreen: Screen {
         d.art(art["navHome"], CGRect(x: 20, y: 2560, width: 245 - 20, height: 2816 - 2560))
         d.rect(CGRect(x: 340, y: 2584, width: 426 - 340, height: 2732 - 2584),
                Draw.color(0xfffafbff))
-        d.art(art["navLicai"], CGRect(x: 340, y: 2584, width: 426 - 340, height: 2732 - 2584))
+        let navLicai = art["navLicai"]?.withTintColor(Draw.color(0xff1677ff), renderingMode: .alwaysOriginal)
+            ?? art["navLicai"]
+        d.art(navLicai, CGRect(x: 340, y: 2584, width: 426 - 340, height: 2732 - 2584))
     }
 
     private func chevron(_ d: Draw, x: CGFloat, cy: CGFloat, color: UIColor) {

@@ -173,7 +173,11 @@ final class LicaiV2Screen: Screen {
 
         d.ctx.saveGState()
         d.ctx.clip(to: CGRect(x: 0, y: 0, width: Self.W, height: Self.headerBottom + off))
-        if let plate {
+        // V1/V2/V3/成长版各有自己的顶部背景切图；普通版才用渐变 plate。
+        let theme = LicaiVersion.theme()
+        if !theme.backgroundRes.isEmpty, let bg = UIImage(named: theme.backgroundRes) {
+            d.art(bg, CGRect(x: 0, y: 0, width: Self.W, height: Self.headerBottom))
+        } else if let plate {
             d.art(plate, CGRect(x: 0, y: 0, width: Self.W,
                                 height: Self.headerBottom + Self.panelH))
         }
@@ -431,7 +435,10 @@ final class LicaiV2Screen: Screen {
         d.art(art["navHome"], CGRect(x: 20, y: 2560, width: 245 - 20, height: 2816 - 2560))
         d.rect(CGRect(x: 340, y: 2584, width: 426 - 340, height: 2732 - 2584),
                Draw.color(0xfffafbff))
-        d.art(art["navLicai"], CGRect(x: 340, y: 2584, width: 426 - 340, height: 2732 - 2584))
+        // 选中态必须染成主题蓝；直接画 lci_nav_licai 是未选中的深灰。
+        let navLicai = art["navLicai"]?.withTintColor(Draw.color(0xff1677ff), renderingMode: .alwaysOriginal)
+            ?? art["navLicai"]
+        d.art(navLicai, CGRect(x: 340, y: 2584, width: 426 - 340, height: 2732 - 2584))
     }
 
     private func chevron(_ d: Draw, x: CGFloat, cy: CGFloat, color: UIColor) {

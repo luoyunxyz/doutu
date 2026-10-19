@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 2.4.25：小支主页底部 5 格导航接进 Router`  
-> 最新代码版本：`2.4.25 / 20065`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 2.4.26：理财选中态 / 消息与我的底栏 / 主题背景`  
+> 最新代码版本：`2.4.26 / 20066`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.18 / 20058`（已通过 USB 查询确认）
 
 ---
@@ -566,6 +566,11 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
 41. **小支主页底部导航点不动**
     - `ZhiHomeV2Screen.hitTest` 在 `y >= 2560` 返回 `nav:0..4`，但 Router 的 `nav:` 分支只处理 `LicaiV2Screen/GrowthV2Screen`，ZhiHome 的令牌落到空分支，所以首页/理财/消息/我的全无反应；
     - 2.4.25 在 Router 里补 `ZhiHomeV2Screen` 的映射：0 回顶、1 理财（黑卡进 Growth）、2 视频空、3 消息、4 我；与底栏切图 `zhi_navbar` 的 5 格顺序一致。
+
+42. **理财底栏选中态不变 / 进消息出不来 / 我的进不去 / V1V2V3 无变化**
+    - `LicaiV2Screen.drawNav` 直接画 `lci_nav_licai`（未选中深灰），底栏一直像没选中；2.4.26 用 `withTintColor` 把选中理财图标和文字染成 `#1677ff`；
+    - Router 原来只给 ZhiHome/Licai/Growth 处理 `nav:`；2.4.26 补 `MessageScreen`（0 返回、1 理财、4 我）和 `MeScreen`（0 返回、1 理财、3 消息），进消息后能点回首页/我的；
+    - Licai 的 V1/V2/V3 只改了 `LicaiVersion`，页面绘制完全不读主题；2.4.26 在顶部按 `theme.backgroundRes` 画各自的背景切图，普通版仍用渐变 plate。
 
 ---
 

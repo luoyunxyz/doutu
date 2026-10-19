@@ -1225,6 +1225,40 @@ final class Router {
                     break                       // 2 = 视频，Android 同样是空
                 }
             }
+            // 消息页 / 我的页也有同一根五格底栏；之前同样只处理理财页，
+            // 所以进消息后点不回首页、也去不了我的。这里补齐。
+            if self.host?.screen is MessageScreen {
+                switch index {
+                case 0:
+                    pop()                       // 回小支首页（上一页）
+                case 1:
+                    if LicaiVersion.blackCard(LicaiVersion.current()) {
+                        push(GrowthV2Screen(), state: GrowthV2Screen.State())
+                    } else {
+                        push(LicaiV2Screen(), state: LicaiV2Screen.State())
+                    }
+                case 4:
+                    push(MeScreen(), state: MeScreen.State())
+                default:
+                    break
+                }
+            }
+            if self.host?.screen is MeScreen {
+                switch index {
+                case 0:
+                    pop()                       // 回小支首页
+                case 1:
+                    if LicaiVersion.blackCard(LicaiVersion.current()) {
+                        push(GrowthV2Screen(), state: GrowthV2Screen.State())
+                    } else {
+                        push(LicaiV2Screen(), state: LicaiV2Screen.State())
+                    }
+                case 3:
+                    push(MessageScreen(), state: MessageScreen.State())
+                default:
+                    break                       // 4 = 本页
+                }
+            }
             if self.host?.screen is LicaiV2Screen || self.host?.screen is GrowthV2Screen {
                 switch index {
                 case 0:
