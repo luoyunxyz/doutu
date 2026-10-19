@@ -133,7 +133,7 @@ final class WeChatContactStore: NSObject, WKNavigationDelegate {
 
     private func processProfiles(_ array: [[String: Any]]) {
         guard !finished else { return }
-        let limited = Array(array.prefix(40))
+        let limited = Array(array.prefix(300))
         let group = DispatchGroup()
         var contacts = Array(repeating: CallSetupScreen.Contact(id: "", name: ""),
                              count: limited.count)
@@ -142,12 +142,16 @@ final class WeChatContactStore: NSObject, WKNavigationDelegate {
             let id = item["id"] as? String ?? ""
             let name = item["name"] as? String ?? ""
             let avatar = item["avatar"] as? String ?? ""
-            group.enter()
-            Self.loadAvatar(avatar) { image in
-                lock.lock()
-                contacts[index] = CallSetupScreen.Contact(id: id, name: name, avatar: image)
-                lock.unlock()
-                group.leave()
+            if index < 80, !avatar.isEmpty {
+                group.enter()
+                Self.loadAvatar(avatar) { image in
+                    lock.lock()
+                    contacts[index] = CallSetupScreen.Contact(id: id, name: name, avatar: image)
+                    lock.unlock()
+                    group.leave()
+                }
+            } else {
+                contacts[index] = CallSetupScreen.Contact(id: id, name: name, avatar: nil)
             }
         }
         group.notify(queue: .main) {

@@ -1658,23 +1658,18 @@ final class Router {
                 }
             case "call:contacts":
                 guard let vc = EditPrompt.topViewController() else { return }
-                let sheet = UIAlertController(title: "选择微信联系人", message: nil,
-                                              preferredStyle: .actionSheet)
-                for contact in state.contacts.prefix(60) {
-                    sheet.addAction(UIAlertAction(title: contact.name, style: .default) { _ in
-                        state.name = contact.name
-                        state.avatarImage = contact.avatar
-                        self.host?.setNeedsDisplay()
-                    })
+                guard !state.contacts.isEmpty else {
+                    showToast("通讯录为空，请先在微里打开一次通讯录", ok: false)
+                    return
                 }
-                sheet.addAction(UIAlertAction(title: "取消", style: .cancel))
-                if let popover = sheet.popoverPresentationController {
-                    popover.sourceView = vc.view
-                    popover.sourceRect = CGRect(x: vc.view.bounds.midX, y: vc.view.bounds.midY,
-                                                width: 1, height: 1)
-                    popover.permittedArrowDirections = []
+                let picker = ContactPickerViewController(contacts: state.contacts) { contact in
+                    state.name = contact.name
+                    state.avatarImage = contact.avatar
+                    self.host?.setNeedsDisplay()
                 }
-                vc.present(sheet, animated: true)
+                let nav = UINavigationController(rootViewController: picker)
+                nav.modalPresentationStyle = .pageSheet
+                vc.present(nav, animated: true)
             case let value where value.hasPrefix("call:contact:"):
                 let id = String(value.dropFirst("call:contact:".count))
                 if let contact = state.contacts.first(where: { $0.id == id }) {

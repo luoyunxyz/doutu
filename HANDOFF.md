@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 2.4.64：关闭微主页后 1 秒内禁止重入`  
-> 最新代码版本：`2.4.64 / 20104`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 2.4.65：来电联系人改为完整列表选择器`  
+> 最新代码版本：`2.4.65 / 20105`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.51 / 20091`（已通过 USB 查询确认）
 
 ---
@@ -801,6 +801,12 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
     - 用户点的是顶部空白菜单的「返回APP主页」；关闭动作结束后，触摸落点可能继续传给首页宫格的「微」，于是又 `presentWeb` 一次；
     - 2.4.64 所有真正的退出都走 `WeChatV2Host.closeHost()`，记录 `lastCloseAt`；`presentWeb` 在关闭后 1 秒内直接 return；
     - 覆盖：左上角返回、边缘右滑、顶部菜单「返回APP主页」、网页 bridge `returnToAppHome` 四条路径。
+
+81. **来电人只有四个可选**
+    - 原来用 `UIAlertController.actionSheet`，且 `state.contacts.prefix(60)`；iOS 上 actionSheet 一屏只露出几行，联系人多了看起来像只有四个；
+    - 2.4.65 新增 `ContactPickerViewController`：UITableView + 搜索框，列出全部联系人，逐个显示头像/首字；
+    - 点「来电人（从通讯录选择）」改为 present 这个列表，不再限制 60 条；
+    - `WeChatContactStore` 读取上限从 40 提到 300，前 80 个加载头像，其余先用首字，保证所有名字都能选。
 
 ---
 
