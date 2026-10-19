@@ -22,6 +22,45 @@ final class ProfileStore {
         set { defaults.set(newValue, forKey: "profile.phone") }
     }
 
+    /// 展示用手机号：默认随机生成一个，中间四位固定打码。
+    /// 不读真实登录号码，避免个人信息页泄露/复用当前号码。
+    var displayPhoneRaw: String {
+        get {
+            var raw = defaults.string(forKey: "profile.phone.display") ?? ""
+            if raw.isEmpty {
+                raw = Self.randomPhone()
+                defaults.set(raw, forKey: "profile.phone.display")
+            }
+            return raw
+        }
+        set {
+            let digits = newValue.filter { $0.isNumber }
+            if digits.count >= 6 {
+                defaults.set(digits, forKey: "profile.phone.display")
+            }
+        }
+    }
+
+    var displayPhone: String {
+        get { Self.maskPhone(displayPhoneRaw) }
+        set { displayPhoneRaw = newValue }
+    }
+
+    static func maskPhone(_ value: String) -> String {
+        let digits = value.filter { $0.isNumber }
+        guard digits.count >= 7 else { return value }
+        let prefix = digits.prefix(3)
+        let suffix = digits.suffix(4)
+        return "\(prefix)****\(suffix)"
+    }
+
+    static func randomPhone() -> String {
+        let prefixes = ["138", "139", "150", "151", "158", "159", "186", "187", "188", "189"]
+        var value = prefixes.randomElement() ?? "138"
+        for _ in 0..<8 { value.append(String(Int.random(in: 0...9))) }
+        return value
+    }
+
     /// 头像图片（本地缓存，上传成功后替换）
     var avatar: UIImage? {
         get {
@@ -1302,10 +1341,13 @@ final class Router {
                 self.host?.setNeedsDisplay()
             }
         case "editPhone":
-            EditPrompt.present(title: "换绑手机号", current: ProfileStore.shared.phone,
+            EditPrompt.present(title: "换绑手机号", current: ProfileStore.shared.displayPhoneRaw,
                                numeric: true) { text in
                 let digits = text.filter { $0.isNumber }
-                if digits.count >= 6 { ProfileStore.shared.phone = digits }
+                if digits.count >= 6 {
+                    ProfileStore.shared.phone = digits
+                    ProfileStore.shared.displayPhone = digits
+                }
                 self.host?.setNeedsDisplay()
             }
 

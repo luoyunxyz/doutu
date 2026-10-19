@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 2.4.47：补入 Android 黑卡 hk_nav_* 底栏素材`  
-> 最新代码版本：`2.4.47 / 20087`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 2.4.48：个人信息默认随机号码并隐藏中间四位`  
+> 最新代码版本：`2.4.48 / 20088`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.44 / 20084`（已通过 USB 查询确认）
 
 ---
@@ -689,6 +689,15 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
       - 选中：`_active` 深色实心图标 + `theme.accent` 金色文字；
       - 未选中：普通 `hk_nav_*` 深色图标 + 深色文字；
       - 图标按 90/256 比例、文字基线 190/256，贴近 Android 布局。
+
+64. **个人信息手机号默认随机、中间四位隐藏**
+    - 之前 `MeScreen` / `ProfileV2Screen` / `Settings` 直接显示 `ProfileStore.phone`，是真实/当前号码；
+    - 2.4.48 新增 `ProfileStore.displayPhone`：
+      - 首次读取用 `randomPhone()` 生成一个 11 位号码并持久化到 `profile.phone.display`；
+      - 展示统一 `maskPhone`：`138****1234`；
+      - 不读 `profile.phone`，所以不会显示当前登录号码；
+      - 用户手动编辑手机号后，`displayPhoneRaw` 同步更新；
+    - 我的页、个人信息页、账号设置页都改用 `displayPhone`。
 
 ---
 

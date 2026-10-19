@@ -203,7 +203,7 @@ final class SettingsV2Screen: Screen {
             return name.isEmpty ? Session.shared.displayName : name
         }
         /// Java:393 + 416-419 手机号（中间四位打码）
-        var phoneMasked: String { SettingsV2Screen.maskPhone(ProfileStore.shared.phone) }
+        var phoneMasked: String { ProfileStore.shared.displayPhone }
         /// Java:394-396 会员状态文案
         var memberText: String {
             guard Session.shared.isActivated else { return "未开通会员 · 带水印" }

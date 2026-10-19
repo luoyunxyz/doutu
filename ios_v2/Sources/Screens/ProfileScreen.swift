@@ -93,7 +93,7 @@ final class ProfileScreen: Screen {
         // 值列：只有用户自己拥有的两行有值（昵称 / 支付宝账号）
         d.rightText(ProfileStore.shared.name, right: valueRight, baseline: nameValueBase,
                     size: valueSize, valueInk, sx: sxValue)
-        d.rightText(ProfileStore.shared.phone, right: valueRight, baseline: accountValueBase,
+        d.rightText(ProfileStore.shared.displayPhone, right: valueRight, baseline: accountValueBase,
                     size: accountSize, valueInk, sx: sxAccount)
         // 每行右侧的箭头（按行的基线上下各 32 贴图）
         for base in rowBase {

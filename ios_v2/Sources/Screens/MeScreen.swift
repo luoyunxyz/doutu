@@ -166,7 +166,7 @@ final class MeScreen: Screen {
         d.text(profile.name, x: nameX, baseline: nameBase, size: nameSize,
                blackCard ? Draw.color(0xfff4f4f4) : nameInk, bold: true, sx: sxName)
         d.round(phonePillRect, radius: phonePillRadius, phonePill)
-        d.centerText(profile.phone, cx: phoneCx, baseline: phoneBase, size: phoneSize,
+        d.centerText(profile.displayPhone, cx: phoneCx, baseline: phoneBase, size: phoneSize,
                      phoneInk, sx: sxPhone)
     }
 
