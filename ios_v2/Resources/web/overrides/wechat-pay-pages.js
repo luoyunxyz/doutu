@@ -14,6 +14,10 @@
     const path = String(location.pathname || '').replace(/\/$/, '');
     const hash = String(location.hash || '').replace(/^#/, '').replace(/\/$/, '');
     const value = hash || path;
+    // 2026-10-19: 不能用 #/wechat/wallet/bills 直接跳转 —— bundled React Router 不认
+    // 这个子路由，会渲染 404 错误页并把自绘账单页挤到下面。改成在已知的
+    // /wechat/wallet 上带 query，App 仍渲染钱包，自绘层再覆盖成账单。
+    if (/[?&]bills=1(?:&|$)/.test(value)) return routes.bills;
     return value.endsWith('/wechat/service') ? routes.service
       : /\/wechat\/wallet\/bills(\/|$)/.test(value) ? routes.bills
       : /\/wechat\/wallet\/cards\/add(\/|$)/.test(value) ? routes.cardAdd
@@ -2546,7 +2550,8 @@
       if (r.top <= 120 && r.left >= innerWidth * 0.55) {
         event.preventDefault();
         event.stopImmediatePropagation();
-        location.hash = routes.bills;
+        // 走 /wechat/wallet?bills=1：App 只看到已知的钱包路由，不会 404。
+        location.hash = '/wechat/wallet?bills=1';
         return;
       }
       break;

@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 2.4.4：钱包右上角「账单」可点击`  
-> 最新代码版本：`2.4.4 / 20044`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 2.4.5：账单页改用 query 路由，避免 App 404`  
+> 最新代码版本：`2.4.5 / 20045`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.3.7 / 20037`（已通过 USB 查询确认）
 
 ---
@@ -481,7 +481,9 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
 
 27. **钱包右上角「账单」点不动**
     - bundled 钱包页右上角的「账单」只是一个 `<div class="flex items-center justify-end">账单</div>`，没有 onClick；自绘页的 `.fw-wallet-bill` 在另一个 host 上，用户点不到；
-    - 2.4.4 在 document capture 阶段按路由 + 顶部右侧位置 + 精确「账单」文本命中它，直接 `location.hash = '/wechat/wallet/bills'` 进入账单页；
+    - 2.4.4 在 document capture 阶段按路由 + 顶部右侧位置 + 精确「账单」文本命中它，跳转账单页；
+    - 但直接 `#/wechat/wallet/bills` 会让 bundled React Router 渲染 **404 Not Found**，错误页占 48px 把自绘账单页挤到下面；
+    - 2.4.5 改成 `#/wechat/wallet?bills=1`：App 只看到已知的 `/wechat/wallet` 路由，不 404；`currentRoute()` 识别 `bills=1` 后让自绘层渲染账单页。
     - 判断条件：`rect.top <= 120 && rect.left >= innerWidth * 0.55`，不会误伤页面中间的「账单」文字。
 
 ---
