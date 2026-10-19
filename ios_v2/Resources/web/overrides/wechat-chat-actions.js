@@ -1209,26 +1209,75 @@
       }, true);
     };
     const makeTime = text => { const el=document.createElement('div'); el.className='fw-chat-time'; el.textContent=text; messages.appendChild(el); };
-    // 所有消息头像都走这一个入口：先接口/资料图，失败立刻换成本地确定性头像，
-    // 永远不允许 src 为空或停留在灰色占位。
-    const selfMessageAvatar = () => {
-      const value = String(getSelfAvatar() || '');
-      // fake-world 的旧 CDN 在设备上会一直挂起，不会触发 onerror，只会留下灰色方块。
-      if (!value || /fakeworld|azureedge/i.test(value)) return fallbackSelfAvatar || bundledAvatarFor('self-avatar');
-      return value;
+    // 2026-10-19: 聊天里「我」的头像必须和「我」页显示的是同一张。
+    // 「我」页把 profile.avatarInfo 交给应用的 __fwResolveProfileAvatar 解析（旧的
+    // fakeworld URL 会被映射成内置头像）；聊天页以前直接拒绝 fakeworld 并换随机头像池，
+    // 于是两边永远不是同一张脸。现在统一走同一个解析器，并缓存解析结果。
+    let selfAvatarSource = '';
+    let selfAvatarSourceKey = null;
+    let selfAvatarSourceTask = null;
+    const selfAvatarRawValue = () => {
+      const value = getSelfAvatarValue();
+      return typeof value === 'string' ? value.trim() : '';
     };
+    const resolveSelfAvatarSource = () => {
+      const raw = selfAvatarRawValue();
+      const key = raw + '|' + getSelfName();
+      if (selfAvatarSource && selfAvatarSourceKey === key) return Promise.resolve(selfAvatarSource);
+      if (selfAvatarSourceTask && selfAvatarSourceKey === key) return selfAvatarSourceTask;
+      selfAvatarSourceKey = key;
+      selfAvatarSourceTask = Promise.resolve(resolveSelfAvatar(raw))
+        .then(src => {
+          const next = String(src || '').trim();
+          if (next) selfAvatarSource = next;
+          return selfAvatarSource;
+        })
+        .catch(() => selfAvatarSource);
+      return selfAvatarSourceTask;
+    };
+    // 所有「我」发出的头像只走这一个入口：先显示内置占位（绝不先闪一张别人的脸），
+    // 再用「我」页同一个解析结果替换。
+    const applySelfAvatar = (img, preferred) => {
+      if (!img) return;
+      const fallback = bundledAvatarFor('self-avatar');
+      img.referrerPolicy = 'no-referrer';
+      img.alt = getSelfName();
+      img.title = img.alt;
+      img.dataset.fwSelfAvatar = '1';
+      img.dataset.fwAvatarValue = getSelfAvatar();
+      img.onerror = () => {
+        img.onerror = null;
+        if (img.src !== fallback) img.src = fallback;
+      };
+      // 只有解析缓存和当前资料一致时才直接复用，避免资料页换了头像后聊天里还先闪旧脸。
+      const currentKey = selfAvatarRawValue() + '|' + getSelfName();
+      const cached = selfAvatarSource && selfAvatarSourceKey === currentKey ? selfAvatarSource : '';
+      const initial = cached || preferred || PLACEHOLDER_AVATAR;
+      if (img.src !== initial) img.src = initial;
+      if (img.__fwAvatarTimer) clearTimeout(img.__fwAvatarTimer);
+      img.onload = () => { if (img.__fwAvatarTimer) { clearTimeout(img.__fwAvatarTimer); img.__fwAvatarTimer = 0; } };
+      img.__fwAvatarTimer = setTimeout(() => {
+        if (img.isConnected && !img.naturalWidth) img.src = fallback;
+      }, 1800);
+      resolveSelfAvatarSource().then(src => {
+        if (src && img.isConnected && img.dataset.fwAvatarSide !== 'incoming') img.src = src;
+      });
+    };
+    // 所有消息头像都走这一个入口：incoming 用对方资料图，outgoing 用「我」页同款头像。
     const paintMessageAvatar = (img, side, preferred) => {
       if (!img) return;
       const incoming = side === 'incoming';
-      const seed = incoming ? String(friend.name || friend.id || 'friend') : 'self-avatar';
-      const fallback = bundledAvatarFor(seed);
-      const primary = preferred
-        || (incoming ? (friendAvatar || apiAvatarFor(seed))
-                      : (selfMessageAvatar() || apiAvatarFor(seed)));
       img.referrerPolicy = 'no-referrer';
       img.dataset.fwAvatarSide = side;
-      if (incoming) { img.dataset.fwFriendAvatar = '1'; delete img.dataset.fwSelfAvatar; }
-      else { img.dataset.fwSelfAvatar = '1'; img.dataset.fwAvatarValue = getSelfAvatar(); }
+      if (!incoming) {
+        applySelfAvatar(img, preferred);
+        return;
+      }
+      const seed = String(friend.name || friend.id || 'friend');
+      const fallback = bundledAvatarFor(seed);
+      const primary = preferred || friendAvatar || apiAvatarFor(seed);
+      img.dataset.fwFriendAvatar = '1';
+      delete img.dataset.fwSelfAvatar;
       img.onerror = () => {
         img.onerror = null;
         if (img.src !== fallback) img.src = fallback;
@@ -1240,7 +1289,7 @@
         if (img.isConnected && !img.naturalWidth && img.src !== fallback) img.src = fallback;
       }, 1800);
       if (img.complete && img.naturalWidth === 0 && img.src !== fallback) img.src = fallback;
-      img.alt = incoming ? String(friend.remark || friend.name || '对方') : getSelfName();
+      img.alt = String(friend.remark || friend.name || '对方');
       img.title = img.alt;
     };
     const makeBubble = (text, side, avatar, message) => {
@@ -1391,11 +1440,7 @@
           avatar.onerror=()=>{avatar.onerror=null;avatar.src=bundledAvatarFor(groupSender||friend.name||'');};
           avatar.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();openFriendProfile(friend);},true);
         }else{
-          avatar.alt=getSelfName();
-          avatar.dataset.fwSelfAvatar='1';
-          avatar.dataset.fwAvatarValue=getSelfAvatar();
-          avatar.src=fallbackSelfAvatar;
-          resolveSelfAvatar(getSelfAvatarValue()).then(src=>{if(src&&avatar.isConnected)avatar.src=src;});
+          applySelfAvatar(avatar);
         }
         if(incoming){
           if(groupSender){
@@ -1444,8 +1489,7 @@
           openFriendProfile(friend);
         },true);
       }else{
-        img.alt=getSelfName(); img.dataset.fwSelfAvatar='1'; img.dataset.fwAvatarValue=getSelfAvatar(); img.src=fallbackSelfAvatar;
-        resolveSelfAvatar(getSelfAvatarValue()).then(src=>{if(src&&img.isConnected)img.src=src});
+        applySelfAvatar(img);
       }
       if(incoming){
         if(groupSender){
@@ -1516,11 +1560,7 @@
           openFriendProfile(friend);
         }, true);
       } else {
-        avatar.alt = getSelfName();
-        avatar.dataset.fwSelfAvatar = '1';
-        avatar.dataset.fwAvatarValue = getSelfAvatar();
-        avatar.src = fallbackSelfAvatar;
-        resolveSelfAvatar(getSelfAvatarValue()).then(src => { if (src && avatar.isConnected) avatar.src = src; });
+        applySelfAvatar(avatar);
       }
       if (incoming) {
         if (groupSender) {
@@ -1580,11 +1620,7 @@
         avatar.onerror = () => { avatar.onerror = null; avatar.src = bundledAvatarFor(friend.name || ''); };
         avatar.addEventListener('click', event => { event.preventDefault(); event.stopPropagation(); openFriendProfile(friend); }, true);
       } else {
-        avatar.alt = getSelfName();
-        avatar.dataset.fwSelfAvatar = '1';
-        avatar.dataset.fwAvatarValue = getSelfAvatar();
-        avatar.src = fallbackSelfAvatar;
-        resolveSelfAvatar(getSelfAvatarValue()).then(src => { if (src && avatar.isConnected) avatar.src = src; });
+        applySelfAvatar(avatar);
       }
       if (incoming) line.append(avatar, bubble); else line.append(bubble, avatar);
       messages.appendChild(line);
@@ -1667,7 +1703,17 @@
       messages.querySelectorAll('img').forEach(image=>{if(!image.complete)image.addEventListener('load',settle,{once:true});});
     };
     page.__fwDrawMessages=drawMessages;
-    setTimeout(drawMessages, 0);
+    // 先把「我」页同款头像解析出来再画第一屏，避免打开聊天时先闪一张随机脸；
+    // 解析失败/超时也必须画，不能让会话空着。
+    const paintFirstScreen = () => {
+      if (!page.isConnected || messages.childElementCount) return;
+      drawMessages();
+    };
+    Promise.race([
+      resolveSelfAvatarSource(),
+      new Promise(resolve => setTimeout(resolve, 300)),
+    ]).then(paintFirstScreen, paintFirstScreen);
+    setTimeout(paintFirstScreen, 350);
     // Swipe any message sideways to hand it to the other speaker: right keeps it
     // with "我" (the default), left moves it to the friend. The side is written onto
     // the stored message, so it is still there next time the conversation opens.
@@ -2098,10 +2144,13 @@
       page.querySelectorAll('img.fw-chat-message__avatar[data-fw-self-avatar="1"]').forEach(img => {
         const savedAvatar = img.dataset.fwAvatarValue || '';
         if (savedAvatar !== currentAvatar) {
+          // 资料页改了头像：清掉解析缓存，让聊天里所有的「我」立刻重新解析成同一张。
+          // 这里只换解析结果，不先铺占位图，避免把全局监听刚设好的新头像又盖回旧图。
+          selfAvatarSource = '';
+          selfAvatarSourceKey = null;
+          selfAvatarSourceTask = null;
           img.dataset.fwAvatarValue = currentAvatar;
-          img.dataset.fwAvatarLoadError = '';
-          img.src = fallbackSelfAvatar;
-          resolveSelfAvatar(getSelfAvatarValue()).then(src=>{if(src&&img.isConnected&&img.dataset.fwAvatarValue===getSelfAvatar())img.src=src;});
+          resolveSelfAvatarSource().then(src => { if (src && img.isConnected) img.src = src; });
         }
         img.alt = currentName;
         img.title = currentName;
