@@ -266,6 +266,8 @@
       } catch (_) { /* initialize below */ }
       const previousById = new Map(savedProfiles.filter(profile => profile?.id != null).map(profile => [String(profile.id), profile]));
       const profiles = friends.map(friend => nativeProfileFromFriend(friend, previousById)).filter(Boolean);
+      // 原生模拟来电页直接读这份缓存，不依赖隐藏 WebView 的 origin。
+      try { window.webkit?.messageHandlers?.FwContacts?.postMessage(profiles); } catch (_) {}
       if (typeof window.__fwSyncNativeProfiles === 'function') {
         nativeSyncQueued = false;
         return window.__fwSyncNativeProfiles(profiles);

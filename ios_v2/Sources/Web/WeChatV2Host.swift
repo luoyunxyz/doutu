@@ -50,6 +50,7 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler, UIGestureRec
         config.allowsInlineMediaPlayback = true
         config.mediaTypesRequiringUserActionForPlayback = []
         config.userContentController.add(self, name: "DoutuApp")
+        config.userContentController.add(self, name: "FwContacts")
 
         webView = WKWebView(frame: view.bounds, configuration: config)
         webView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
@@ -527,6 +528,10 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler, UIGestureRec
 
     func userContentController(_ controller: WKUserContentController,
                                didReceive message: WKScriptMessage) {
+        if message.name == "FwContacts" {
+            WeChatContactStore.shared.save(message.body)
+            return
+        }
         guard let body = message.body as? [String: Any] else { return }
         // 网页里的 JS 错误钩子（见 errorHook）走的是 {type:'jserror'}，不是 {method:...}。
         // 之前这里直接按 method 取，导致所有网页错误被静默丢掉，白屏完全没有线索。

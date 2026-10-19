@@ -573,7 +573,7 @@ final class CallSetupScreen: Screen {
         if m.ringPick.contains(p) { return "call:ring:pick" }                // Java:288
         if m.ringDefaultRow.contains(p) { return "call:ring:default" }       // Java:253-256
         if m.avatarPreview.contains(p) { return "avatar" }                   // Java:216
-        if m.nameField.contains(p) { return "name" }                         // Java:226-233
+        if m.nameField.contains(p) { return "call:name" }                    // Java:226-233
 
         if s.pendingAt != nil {
             if m.pendingCancel.contains(p) { return "call:cancel" }          // Java:178-182
@@ -581,7 +581,7 @@ final class CallSetupScreen: Screen {
         }
 
         // 点「来电人（从通讯录选择）」标题：弹出完整微信通讯录列表。
-        if m.callerTitle.contains(p) { return "call:contacts" }
+        if m.callerTitle.insetBy(dx: -12, dy: -12).contains(p) { return "call:contacts" }
 
         // 联系人：只认裁到内容宽度以内的那些（超出的部分在 Android 要横滑才看得到）
         if m.contactClip.contains(p) {

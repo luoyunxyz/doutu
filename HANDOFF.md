@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 2.4.61：通讯录改为 JS 导出 + 本地相册换头像`  
-> 最新代码版本：`2.4.61 / 20101`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 2.4.62：来电昵称令牌修正 + 通讯录原生缓存`  
+> 最新代码版本：`2.4.62 / 20102`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.51 / 20091`（已通过 USB 查询确认）
 
 ---
@@ -784,6 +784,11 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
       - override JS 新增 `window.__fwGetCallContacts()`，直接复用 `collectContacts()`（allProfiles + state.contacts + DOM），返回备注名/头像；
       - 原生优先调用这个函数，再退回 localStorage；加 `CrashLog` 记录 raw 数量便于排查；
     - 头像替换改成本地 `QRImagePicker`，选完直接写 `state.avatarImage`，不再依赖上传接口，网络失败也能换。
+
+78. **昵称点不开 / 通讯录缓存**
+    - 昵称 `hitTest` 吐的是 `"name"`，但 Router 只有 `case "name" where screen is CollectMoneyV2Screen`，CallSetup 永远匹配不到；2.4.62 改成 `"call:name"`，由 `call:` 分支处理；
+    - 微页面每次 `syncNativeAddressBook()` 都通过 `FwContacts` message handler 把 profiles 直接交给原生，`WeChatContactStore` 存进 `UserDefaults`（id/备注名/头像 URL）；打开来电页优先用缓存，不再完全依赖隐藏 WebView 的 origin；
+    - 标题热区扩大到 `insetBy(-12,-12)`，更容易点出完整通讯录列表。
 
 ---
 

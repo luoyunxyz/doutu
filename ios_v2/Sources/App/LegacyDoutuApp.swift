@@ -1636,7 +1636,7 @@ final class Router {
             case "call:ring:preview":
                 SimulatedCall.shared.preview()
                 showToast("正在试听", ok: true)
-            case "name":
+            case "call:name":
                 EditPrompt.present(title: "来电人姓名", current: state.name, numeric: false) { text in
                     state.name = text
                     self.host?.setNeedsDisplay()

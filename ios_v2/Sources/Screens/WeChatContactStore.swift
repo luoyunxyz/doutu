@@ -9,12 +9,45 @@ final class WeChatContactStore: NSObject, WKNavigationDelegate {
     private var webView: WKWebView?
     private var completion: (([CallSetupScreen.Contact]) -> Void)?
     private var finished = false
+    private let cacheKey = "wechat.call.contacts.v1"
 
     private override init() { super.init() }
+
+    /// 微页面同步通讯录时通过 FwContacts 消息直接缓存到原生，不依赖隐藏 WebView 的 origin。
+    func save(_ body: Any) {
+        guard let rows = body as? [[String: Any]] else { return }
+        let slim: [[String: String]] = rows.compactMap { row in
+            let id = String(row["id"] as? String ?? row["wechat"] as? String ?? "")
+            let name = String((row["remark"] as? String).flatMap { $0.isEmpty ? nil : $0 }
+                              ?? (row["nickname"] as? String) ?? (row["name"] as? String) ?? "")
+            let avatar = String((row["avatarInfo"] as? String) ?? (row["avatar"] as? String) ?? "")
+            guard !id.isEmpty, !name.isEmpty else { return nil }
+            return ["id": id, "name": name, "avatar": avatar]
+        }
+        guard !slim.isEmpty else { return }
+        UserDefaults.standard.set(slim, forKey: cacheKey)
+        CrashLog.append("WeChatContactStore cached=\(slim.count)")
+    }
+
+    private func cachedProfiles() -> [[String: Any]] {
+        guard let rows = UserDefaults.standard.array(forKey: cacheKey) as? [[String: String]] else {
+            return []
+        }
+        return rows.map { ["id": $0["id"] ?? "", "name": $0["name"] ?? "",
+                           "avatar": $0["avatar"] ?? ""] as [String: Any] }
+    }
 
     func load(completion: @escaping ([CallSetupScreen.Contact]) -> Void) {
         self.completion = completion
         finished = false
+
+        // 优先用微页面主动同步过来的缓存，打开来电页就是即时可用的。
+        let cached = cachedProfiles()
+        if !cached.isEmpty {
+            CrashLog.append("WeChatContactStore use cache=\(cached.count)")
+            processProfiles(cached)
+            return
+        }
 
         if let server = LocalWebServer.shared {
             server.start { [weak self] port in
@@ -95,6 +128,11 @@ final class WeChatContactStore: NSObject, WKNavigationDelegate {
         let data = raw.data(using: .utf8) ?? Data()
         let array = (try? JSONSerialization.jsonObject(with: data)) as? [[String: Any]] ?? []
         CrashLog.append("WeChatContactStore raw=\(array.count)")
+        processProfiles(array)
+    }
+
+    private func processProfiles(_ array: [[String: Any]]) {
+        guard !finished else { return }
         let limited = Array(array.prefix(40))
         let group = DispatchGroup()
         var contacts = Array(repeating: CallSetupScreen.Contact(id: "", name: ""),
