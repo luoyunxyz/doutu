@@ -10,7 +10,8 @@ enum PurseAvatarAPI {
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         URLSession.shared.dataTask(with: request) { data, _, _ in
             guard let data,
-                  let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let parsed = try? JSONSerialization.jsonObject(with: data),
+                  let object = parsed as? [String: Any],
                   (object["code"] as? Int) == 200,
                   let raw = object["data"] as? String,
                   let url = URL(string: raw) else {

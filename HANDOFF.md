@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 2.4.55：淘宝订单全部字段可编辑、隐私随机化`  
-> 最新代码版本：`2.4.55 / 20095`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 2.4.56：修复 TaobaoOrderScreen.State 初始化未调 super`  
+> 最新代码版本：`2.4.56 / 20096`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.51 / 20091`（已通过 USB 查询确认）
 
 ---
@@ -744,6 +744,11 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
       - `order:receiver` 用「姓名 手机号」一个输入框同时改两项；`order:rec:<i>` 用「标题|价格|标签|销量」改推荐位；
       - `order:pickImage` / `order:pickLogo` 从相册换商品主图和店铺图标；
       - `State.init()` 每次进入随机生成姓名、手机号、地址、店名、发票、订单号、交易号、创建/成交时间，不再使用真实隐私数据。
+
+72. **Codemagic SwiftEmitModule 失败**
+    - `TaobaoOrderScreen.State.init()` 是 `ScreenState` 子类的自定义初始化器，但没有调用 `super.init()`；Swift 要求所有路径先完成父类初始化，导致 `SwiftEmitModule` 失败；
+    - 2.4.56 在 `State.init()` 末尾补 `super.init()`；
+    - 同时把 `PurseAvatarAPI` 的 `try? JSONSerialization... as?` 拆成 `try?` + `as?` 两步，避免可选绑定推断歧义。
 
 ---
 

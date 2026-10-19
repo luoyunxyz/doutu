@@ -323,6 +323,7 @@ final class TaobaoOrderScreen: Screen {
             trade += "2200"
             for _ in 0..<16 { trade.append(String(Int.random(in: 0...9))) }
             tradeNo = trade
+            super.init()
         }
 
         private static func randomName() -> String {
