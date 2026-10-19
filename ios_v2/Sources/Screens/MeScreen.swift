@@ -140,7 +140,7 @@ final class MeScreen: Screen {
             // 先用同尺寸白圆角垫底，让半透明边缘融进白色，再画卡片。
             d.round(rect, radius: 10, .white)
             if let image = art[key], let cg = image.cgImage, cg.width > 4, cg.height > 4 {
-                let crop = CGRect(x: 2, y: 2, width: cg.width - 4, height: cg.height - 4)
+                let crop = CGRect(x: 6, y: 6, width: cg.width - 12, height: cg.height - 12)
                 d.art(image, src: crop, rect)
             } else {
                 d.art(art[key], rect)

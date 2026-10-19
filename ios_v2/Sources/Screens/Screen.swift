@@ -117,11 +117,12 @@ final class ZhiTabBarView: UIView {
 
     private let labels = ["首页", "理财", "视频", "消息", "我的"]
 
-    private func drawLabel(_ text: String, cx: CGFloat, h: CGFloat, color: UIColor) {
+    private func drawLabel(_ text: String, cx: CGFloat, h: CGFloat,
+                           baseline: CGFloat = 146, color: UIColor) {
         let font = UIFont.systemFont(ofSize: max(8, h * 26 / 256))
         let ns = text as NSString
         let tw = ns.size(withAttributes: [.font: font]).width
-        ns.draw(at: CGPoint(x: cx - tw / 2, y: h * 146 / 256 - font.lineHeight),
+        ns.draw(at: CGPoint(x: cx - tw / 2, y: h * baseline / 256 - font.lineHeight),
                 withAttributes: [.font: font, .foregroundColor: color])
     }
 
@@ -175,9 +176,9 @@ final class ZhiTabBarView: UIView {
             // 黑卡主题的选中态：图标保持素材里的深色实心，只把文字染成主题金色。
             if i == selected && !normal {
                 UIColor.white.setFill()
-                UIRectFill(CGRect(x: cx - iw / 2, y: imageY + ih * 0.62,
-                                  width: iw, height: ih * 0.38))
-                drawLabel(labels[i], cx: cx, h: h, color: labelColor)
+                UIRectFill(CGRect(x: cx - iw / 2, y: imageY + ih * 0.58,
+                                  width: iw, height: ih * 0.42))
+                drawLabel(labels[i], cx: cx, h: h, baseline: 184, color: labelColor)
             }
         }
         UIColor(white: 0.78, alpha: 1).setFill()
