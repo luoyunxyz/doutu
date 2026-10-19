@@ -38,3 +38,15 @@ done
 
 /usr/libexec/PlistBuddy -c "Print :CFBundleIcons" "$PLIST"
 say "--- icon keys written ---"
+
+# WKWebView 的本地服务器是 http://localhost:<port>；iOS ATS 默认会拒绝明文，
+# 真机表现为“微信页整页白屏”，crash.log 里是 didFailProvisional/ATS。
+set_key NSAppTransportSecurity dict
+set_key NSAppTransportSecurity:NSAllowsLocalNetworking bool true
+set_key NSAppTransportSecurity:NSExceptionDomains dict
+set_key NSAppTransportSecurity:NSExceptionDomains:localhost dict
+set_key NSAppTransportSecurity:NSExceptionDomains:localhost:NSExceptionAllowsInsecureHTTPLoads bool true
+set_key NSAppTransportSecurity:NSExceptionDomains:localhost:NSIncludesSubdomains bool true
+
+/usr/libexec/PlistBuddy -c "Print :NSAppTransportSecurity" "$PLIST"
+say "--- icon + ATS keys written ---"
