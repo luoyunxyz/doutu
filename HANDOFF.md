@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 2.4.65：来电联系人改为完整列表选择器`  
-> 最新代码版本：`2.4.65 / 20105`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 2.4.66：模拟收款声音复用 Android 音素拼接`  
+> 最新代码版本：`2.4.66 / 20106`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.51 / 20091`（已通过 USB 查询确认）
 
 ---
@@ -807,6 +807,16 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
     - 2.4.65 新增 `ContactPickerViewController`：UITableView + 搜索框，列出全部联系人，逐个显示头像/首字；
     - 点「来电人（从通讯录选择）」改为 present 这个列表，不再限制 60 条；
     - `WeChatContactStore` 读取上限从 40 提到 300，前 80 个加载头像，其余先用首字，保证所有名字都能选。
+
+82. **模拟收款声音只响“叮咚”，不是 Android 的播报**
+    - 2.4.65 及以前 `Player` 只找 `account_sound_zhi.mp3` / `account_sound_wei.mp3`，包里没有就退回合成的双音 chime，所以听到的不是人声；
+    - 从 APK 反编译确认 Android `p.g.b / b.d.q` 的方式：把一条播报拆成 **diaoluo_da + success + 数字音素 + tts_dot + 小数音素 + tts_yuan**，逐个 MediaPlayer 顺序播放；
+    - 2.4.66 iOS 复用同一批素材（`web/assets/audio/account_sound/tts_*.mp3`）：
+      - 新增 `sequence(amount:wechat:)` 按万/千/百/十/个生成音素序列；
+      - `Player` 改成 AVAudioPlayer 队列，一条播完自动播下一条；
+      - 金额小数按 `tts_dot` + 每位数字播放，最后 `tts_yuan`；
+      - 设置 `.playback` 音频会话，保证静音键之外能正常出声；
+      - 素材缺失时才退回原来的 chime。
 
 ---
 

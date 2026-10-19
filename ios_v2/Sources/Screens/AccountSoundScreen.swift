@@ -936,7 +936,7 @@ final class AccountSoundScreen: Screen {
         s.playing = true
         playbackToken += 1
         let token = playbackToken
-        player.play(speed: s.speed, wechat: nextStyle(s)) { [weak self] in
+        player.play(amount: amount, speed: s.speed, wechat: nextStyle(s)) { [weak self] in
             guard self?.playbackToken == token else { return }
             s.playing = false
             if !s.busy { s.status = "设置成功，播报一下看看吧" }          // Java:691
@@ -954,7 +954,7 @@ final class AccountSoundScreen: Screen {
         }
         s.error = ""
         s.playing = true
-        player.play(speed: s.speed, wechat: nextStyle(s)) { [weak self] in
+        player.play(amount: amount, speed: s.speed, wechat: nextStyle(s)) { [weak self] in
             guard let self, token == self.playbackToken else { return }
             s.playing = false
             guard s.busy else {                                          // Java:711
@@ -1091,49 +1091,154 @@ final class AccountSoundScreen: Screen {
     ///   3. 连生成都失败（理论上不会）就立刻回调，让循环继续 —— 不崩、不卡死。
     private final class Player: NSObject, AVAudioPlayerDelegate {
         private var audio: AVAudioPlayer?
+        private var queue: [AVAudioPlayer] = []
+        private var index = 0
         private var onFinish: (() -> Void)?
         private static var chimeCache: Data?
 
-        func play(speed: CGFloat, wechat: Bool, completion: @escaping () -> Void) {
+        /// 和 Android AccountSoundPlayer 一样：把一条播报拆成多个音素，按顺序播放。
+        func play(amount: String, speed: CGFloat, wechat: Bool,
+                  completion: @escaping () -> Void) {
             stop()
             onFinish = completion
-
-            let asset = wechat ? "account_sound_wei" : "account_sound_zhi"
-            var payload: Data?
-            if let url = Bundle.main.url(forResource: asset, withExtension: "mp3"),
-               let data = try? Data(contentsOf: url) {
-                payload = data
-            } else {
-                payload = Self.chime()
+            try? AVAudioSession.sharedInstance().setCategory(.playback, options: [.mixWithOthers])
+            try? AVAudioSession.sharedInstance().setActive(true)
+            queue = Self.sequence(amount: amount, wechat: wechat).compactMap {
+                Self.makePlayer($0, speed: speed)
             }
-            guard let payload, let prepared = try? AVAudioPlayer(data: payload) else {
-                finish()
-                return
+            if queue.isEmpty {
+                if let payload = Self.chime(), let fallback = try? AVAudioPlayer(data: payload) {
+                    queue = [fallback]
+                }
             }
-            prepared.delegate = self
-            prepared.enableRate = true
-            _ = prepared.prepareToPlay()
-            // 倍速：Java 用 PlaybackParams.setSpeed（AccountSoundPlayer.java:169-173），音高不变
-            prepared.rate = Float(max(0.5, min(2.0, speed)))
-            audio = prepared
-            _ = prepared.play()
+            index = 0
+            playNext()
         }
 
         func stop() {
             audio?.stop()
             audio = nil
+            queue.forEach { $0.stop() }
+            queue.removeAll()
+            index = 0
             onFinish = nil
+        }
+
+        private func playNext() {
+            guard index < queue.count else {
+                finish()
+                return
+            }
+            let next = queue[index]
+            index += 1
+            next.delegate = self
+            _ = next.prepareToPlay()
+            _ = next.play()
+            audio = next
         }
 
         private func finish() {
             let done = onFinish
             onFinish = nil
             audio = nil
+            queue.removeAll()
             done?()
         }
 
         func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
-            finish()
+            playNext()
+        }
+
+        // MARK: 音素序列（对应 Android p.g.b / b.d.q）
+
+        private static func sequence(amount: String, wechat: Bool) -> [String] {
+            var out = ["diaoluo_da.mp3",
+                       wechat ? "tts_wxsuccess.mp3" : "tts_success.mp3"]
+            let cleaned = amount
+                .replacingOccurrences(of: "￥", with: "")
+                .replacingOccurrences(of: "¥", with: "")
+                .replacingOccurrences(of: ",", with: "")
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            let parts = cleaned.split(separator: ".", omittingEmptySubsequences: false)
+            guard let first = parts.first, let integer = Int(first) else {
+                out.append("tts_0.mp3")
+                out.append("tts_yuan.mp3")
+                return out
+            }
+            appendInteger(integer, to: &out)
+            if parts.count > 1, !parts[1].isEmpty {
+                out.append("tts_dot.mp3")
+                for ch in parts[1].prefix(2) {
+                    if let digit = ch.wholeNumberValue, (0...9).contains(digit) {
+                        out.append("tts_\(digit).mp3")
+                    }
+                }
+            }
+            out.append("tts_yuan.mp3")
+            return out
+        }
+
+        private static func appendInteger(_ value: Int, to out: inout [String]) {
+            guard value > 0 else {
+                out.append("tts_0.mp3")
+                return
+            }
+            // 亿位（Android 用 tts_ten_million 这个音素名）
+            let yi = value / 100_000_000
+            if yi > 0 {
+                appendGroup(yi, leadingTen: true, to: &out)
+                out.append("tts_ten_million.mp3")
+            }
+            let wan = (value / 10_000) % 10_000
+            let rest = value % 10_000
+            if wan > 0 {
+                if yi > 0 && wan < 1000 { out.append("tts_0.mp3") }
+                appendGroup(wan, leadingTen: yi > 0, to: &out)
+                out.append("tts_ten_thousand.mp3")
+            }
+            if rest > 0 || (wan == 0 && yi == 0) {
+                if (wan > 0 || yi > 0) && rest < 1000 { out.append("tts_0.mp3") }
+                appendGroup(rest, leadingTen: wan > 0 || yi > 0, to: &out)
+            }
+        }
+
+        private static func appendGroup(_ value: Int, leadingTen: Bool,
+                                        to out: inout [String]) {
+            let units = [1000, 100, 10, 1]
+            let names: [String?] = ["tts_thousand.mp3", "tts_hundred.mp3",
+                                    "tts_ten.mp3", nil]
+            var pendingZero = false
+            var seen = false
+            for i in 0..<4 {
+                let digit = (value / units[i]) % 10
+                if digit == 0 {
+                    if seen { pendingZero = true }
+                    continue
+                }
+                if pendingZero {
+                    out.append("tts_0.mp3")
+                    pendingZero = false
+                }
+                // 十、十一、十二……前面不加「一」；但整万/整亿的前导组保留。
+                if !(i == 2 && digit == 1 && !seen && !leadingTen) {
+                    out.append("tts_\(digit).mp3")
+                }
+                if let name = names[i] { out.append(name) }
+                seen = true
+            }
+        }
+
+        private static func makePlayer(_ name: String, speed: CGFloat) -> AVAudioPlayer? {
+            let ns = name as NSString
+            let resource = ns.deletingPathExtension
+            let ext = ns.pathExtension
+            let url = Bundle.main.url(forResource: resource, withExtension: ext,
+                                      subdirectory: "web/assets/audio/account_sound")
+                ?? Bundle.main.url(forResource: resource, withExtension: ext)
+            guard let url, let player = try? AVAudioPlayer(contentsOf: url) else { return nil }
+            player.enableRate = true
+            player.rate = Float(max(0.5, min(2.0, speed)))
+            return player
         }
 
         /// 合成一段「叮—咚」（880Hz + 1318.5Hz），返回 WAV 字节；全部用安全运算，失败返回 nil。
