@@ -855,10 +855,20 @@ final class Router {
             if let state = self.host?.state as? LicaiV2Screen.State {
                 state.expand = state.expand > 0.5 ? 0 : 1
                 self.host?.setNeedsDisplay()
+                return
+            }
+            if let state = self.host?.state as? GrowthV2Screen.State {
+                state.expand = state.expand > 0.5 ? 0 : 1
+                self.host?.setNeedsDisplay()
             }
         case "toggleHide":
             if let state = self.host?.state as? LicaiV2Screen.State {
                 state.hidden.toggle()
+                self.host?.setNeedsDisplay()
+                return
+            }
+            if self.host?.screen is GrowthV2Screen {
+                GrowthStore.shared.hidden.toggle()
                 self.host?.setNeedsDisplay()
             }
         case "version":

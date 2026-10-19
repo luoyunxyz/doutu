@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 2.4.36：上拉优先收起资产面板，再滚页面`  
-> 最新代码版本：`2.4.36 / 20076`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 2.4.37：财富页眼睛图标切换资产显示`  
+> 最新代码版本：`2.4.37 / 20077`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.32 / 20072`（已通过 USB 查询确认）
 
 ---
@@ -624,6 +624,12 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
     - 2.4.35 的 `verticalDrag` 只在按下点位于面板区域时接管；上拉经常从下面内容区开始，于是页面先滚、面板不关；
     - 2.4.36 规则改成：**只要面板还开着，上拉一律先收起面板**（不论按下点），收到 0 后下一次移动才 return false，把后续上拉交给页面滚动；
     - 面板吃掉位移时重置 `dragStartY/dragStartScroll`，避免收完面板后页面突然跳一段。
+
+53. **财富页眼睛图标切换资产显示**
+    - 成长版资产默认 `GrowthStore.shared.hidden = true`，总资产显示 `****`；眼睛的 hitTest 返回 `toggleHide`，但 Router 的 `toggleHide` 只处理 `LicaiV2Screen.State`，Growth 分支完全没接；
+    - 2.4.37 在 Router 里补：
+      - `screen is GrowthV2Screen` → `GrowthStore.shared.hidden.toggle()` + 重绘；
+      - 同时补 `toggleExpand` 的 `GrowthV2Screen.State` 分支，点箭头也能展开/收起。
 
 ---
 
