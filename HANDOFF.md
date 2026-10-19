@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 2.4.26：理财选中态 / 消息与我的底栏 / 主题背景`  
-> 最新代码版本：`2.4.26 / 20066`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 2.4.27：宿主统一绘制支模块五格底栏`  
+> 最新代码版本：`2.4.27 / 20067`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.18 / 20058`（已通过 USB 查询确认）
 
 ---
@@ -571,6 +571,11 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
     - `LicaiV2Screen.drawNav` 直接画 `lci_nav_licai`（未选中深灰），底栏一直像没选中；2.4.26 用 `withTintColor` 把选中理财图标和文字染成 `#1677ff`；
     - Router 原来只给 ZhiHome/Licai/Growth 处理 `nav:`；2.4.26 补 `MessageScreen`（0 返回、1 理财、4 我）和 `MeScreen`（0 返回、1 理财、3 消息），进消息后能点回首页/我的；
     - Licai 的 V1/V2/V3 只改了 `LicaiVersion`，页面绘制完全不读主题；2.4.26 在顶部按 `theme.backgroundRes` 画各自的背景切图，普通版仍用渐变 plate。
+
+43. **财富页底部导航消失（深层修复）**
+    - 根因是每个页面自己画底栏：`GrowthV2Screen.drawNav` 只画 `art["nav"]`，资产缺失/被内容盖住时整根消失；页面之间选中态也各画各的，Router 还要逐屏补 `nav:`；
+    - 2.4.27 改成 **宿主统一底栏**：`Screen` 新增 `zhiTabIndex`，ZhiHome=0、Licai/Growth=1、Message=3、Me=4；`ScreenHostView.draw` 在页面绘制后统一覆盖一根 1280×256 的底栏（白底、五格、选中项染 #1677ff、home indicator）；
+    - 命中也在宿主层优先拦截 `y>=2560`，不再依赖各页面自己的 `hitTest`；这样财富页、消息页、我的页、支首页都共用同一根底栏，选中态和切换都一致。
 
 ---
 

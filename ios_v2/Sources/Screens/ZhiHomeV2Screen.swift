@@ -9,6 +9,7 @@ import UIKit
 ///
 /// 黑卡皮肤（`LicaiVersion`）会换掉四个快捷动作与宫格里几张图标 —— 与 Android 同一套分支。
 final class ZhiHomeV2Screen: Screen {
+    var zhiTabIndex: Int? { 0 }
     let canvasSize = CGSize(width: 1280, height: 2816)
     static let W: CGFloat = 1280
     static let H: CGFloat = 2816

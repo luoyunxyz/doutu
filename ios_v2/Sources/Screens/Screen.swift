@@ -77,6 +77,13 @@ extension Screen {
     /// 页面只画自己的浮层（边框、扫描线、按钮）—— 与 Android 的
     /// `TextureView` + `ScanOverlayScreen` 叠放关系一致。
     var usesCameraBackground: Bool { false }
+
+    /// 支模块五格底栏的当前选中项（0 首页 / 1 理财 / 2 视频 / 3 消息 / 4 我的）。
+    ///
+    /// 每个页面自己画底栏的移植版本经常漏画、被内容盖住、或者选中态不刷新；
+    /// 这里由 `ScreenHostView` 统一盖一根底栏，页面只声明自己是第几格。
+    /// 返回 nil 表示不是支模块页面，不显示底栏。
+    var zhiTabIndex: Int? { nil }
 }
 
 /// 页面可变状态基类（滚动偏移等）。子类按需扩展。
@@ -259,6 +266,45 @@ final class ScreenHostView: UIView, UIScrollViewDelegate {
         }
         screen.draw(Draw(ctx: ctx, canvas: canvas), state: state)
         ctx.restoreGState()
+
+        // 2026-10-19: 支模块底栏统一由宿主绘制，页面只声明自己是哪一格。
+        // 页面自己的底栏会被这根覆盖，所以再也不会出现“财富页没有底栏”。
+        if let selected = screen.zhiTabIndex {
+            ctx.saveGState()
+            Draw.flip(ctx, canvas: canvas)
+            drawZhiTabBar(Draw(ctx: ctx, canvas: canvas), selected: selected)
+            ctx.restoreGState()
+        }
+    }
+
+    private let zhiNavCenters: [CGFloat] = [128, 382, 639, 898, 1151]
+    private let zhiNavBlue = UIColor(red: 0x16 / 255.0, green: 0x77 / 255.0, blue: 0xff / 255.0, alpha: 1)
+
+    private func drawZhiTabBar(_ d: Draw, selected: Int) {
+        d.rect(CGRect(x: 0, y: 2560, width: 1280, height: 256), .white)
+        d.rect(CGRect(x: 0, y: 2560, width: 1280, height: 0.5),
+               UIColor(white: 0.93, alpha: 1))
+        let names = ["lci_nav_home", "lci_nav_licai", "lci_nav_video", "lci_nav_msg", "lci_nav_me"]
+        for (i, cx) in zhiNavCenters.enumerated() {
+            if i == 0 && selected == 0 {
+                // 选中「首页」时，图标是实心蓝色支字标，文字单独画。
+                d.art(UIImage(named: "lci_nav_zhi"),
+                      CGRect(x: cx - 35, y: 2576, width: 70, height: 70))
+                d.centerText("首页", cx: cx, baseline: 2706, size: 26, zhiNavBlue)
+                continue
+            }
+            let base = UIImage(named: names[i])
+            let image: UIImage?
+            if i == selected {
+                image = base?.withTintColor(zhiNavBlue, renderingMode: .alwaysOriginal)
+            } else {
+                image = base
+            }
+            d.art(image, CGRect(x: cx - 43, y: 2604, width: 86, height: 148))
+        }
+        // 底部 home indicator
+        d.round(CGRect(x: 430, y: 2782, width: 420, height: 8), radius: 4,
+                UIColor(white: 0.78, alpha: 1))
     }
 
     // MARK: - 触摸（对照 Android 的 onTouchEvent：横向拖动轮播、纵向滚动、抬起时命中）
@@ -341,6 +387,18 @@ final class ScreenHostView: UIView, UIScrollViewDelegate {
         // 否则命中坐标会整体上移，表现就是「点击没反应 / 点错位置」。
         var design = canvas.design(p)
         design.y += state.scroll
+
+        // 支模块统一底栏：命中优先于页面自己的 hitTest，保证任何支页都能切 tab。
+        if !dragging, screen.zhiTabIndex != nil, design.y >= 2560 {
+            var best = 0
+            var bestD = CGFloat.greatestFiniteMagnitude
+            for (i, cx) in zhiNavCenters.enumerated() where abs(cx - design.x) < bestD {
+                bestD = abs(cx - design.x)
+                best = i
+            }
+            onAction?("nav:\(best)", design)
+            return
+        }
 
         // 横向拖动松手 → 吸附到最近一页（Android 的 snapCarousel）
         if draggingCarousel {

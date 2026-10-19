@@ -1,18 +1,19 @@
 import UIKit
 import CoreText
 
-/// 「成长版」理财页 —— `features/zhi/ui/GrowthScreen.java` 的 1:1 移植（1280×2816）。
+/// 銆屾垚闀跨増銆嶇悊璐㈤〉 鈥斺€?`features/zhi/ui/GrowthScreen.java` 鐨?1:1 绉绘锛?280脳2816锛夈€?
 ///
-/// 与普通版（`LicaiScreen`）共用状态 `LicaiScreen.State`，但整页是**黑卡皮肤**：
-/// 顶部三段参考图横切条（状态栏 / 头栏 / 卡底），中间可展开的保障面板，
-/// 下面是一张巨大的白色「sheet」，里面分「市场 / 服务」两个页签。
+/// 涓庢櫘閫氱増锛坄LicaiScreen`锛夊叡鐢ㄧ姸鎬?`LicaiScreen.State`锛屼絾鏁撮〉鏄?*榛戝崱鐨偆**锛?
+/// 椤堕儴涓夋鍙傝€冨浘妯垏鏉★紙鐘舵€佹爮 / 澶存爮 / 鍗″簳锛夛紝涓棿鍙睍寮€鐨勪繚闅滈潰鏉匡紝
+/// 涓嬮潰鏄竴寮犲法澶х殑鐧借壊銆宻heet銆嶏紝閲岄潰鍒嗐€屽競鍦?/ 鏈嶅姟銆嶄袱涓〉绛俱€?
 ///
-/// 三个要照抄的细节：
-///   · **面板两端用条带混合**（`panelTop` / `panelBottom` / `panelFoot`）—— 从参考图取一行像素
-///     与面板底色拼成 2 行小位图，拉伸后逐列过渡，这样展开时不会出现横线
-///   · **`fitText`**：参考图的中文字比系统字窄，所以按给定宽度再压一次
-///   · **市场页签的所有内容整体下移 `MARKET_INSERT`(250)** —— 因为理财师卡是额外加的
+/// 涓変釜瑕佺収鎶勭殑缁嗚妭锛?
+///   路 **闈㈡澘涓ょ鐢ㄦ潯甯︽贩鍚?*锛坄panelTop` / `panelBottom` / `panelFoot`锛夆€斺€?浠庡弬鑰冨浘鍙栦竴琛屽儚绱?
+///     涓庨潰鏉垮簳鑹叉嫾鎴?2 琛屽皬浣嶅浘锛屾媺浼稿悗閫愬垪杩囨浮锛岃繖鏍峰睍寮€鏃朵笉浼氬嚭鐜版í绾?
+///   路 **`fitText`**锛氬弬鑰冨浘鐨勪腑鏂囧瓧姣旂郴缁熷瓧绐勶紝鎵€浠ユ寜缁欏畾瀹藉害鍐嶅帇涓€娆?
+///   路 **甯傚満椤电鐨勬墍鏈夊唴瀹规暣浣撲笅绉?`MARKET_INSERT`(250)** 鈥斺€?鍥犱负鐞嗚储甯堝崱鏄澶栧姞鐨?
 final class GrowthScreen: Screen {
+    var zhiTabIndex: Int? { 1 }
     let canvasSize = CGSize(width: 1280, height: 2816)
     static let W: CGFloat = 1280
     static let H: CGFloat = 2816
@@ -23,7 +24,7 @@ final class GrowthScreen: Screen {
     static let contentHeight: CGFloat = 2816
     static let marketInsert: CGFloat = 250
 
-    /// 与普通版共用状态
+    /// 涓庢櫘閫氱増鍏辩敤鐘舵€?
     final class State: ScreenState {
         var expand: CGFloat = 0
         var selectedTab = 0
@@ -31,7 +32,7 @@ final class GrowthScreen: Screen {
 
     private let sx: CGFloat = 0.93
 
-    // MARK: - 调色板（Java:149-173）
+    // MARK: - 璋冭壊鏉匡紙Java:149-173锛?
     private let pageBg = Draw.color(0xfff2f3f7)
     private let cardWhite = Draw.color(0xffffffff)
     private let sheetLow = Draw.color(0xfff2f3f8)
@@ -52,7 +53,7 @@ final class GrowthScreen: Screen {
     private let panelBlend: CGFloat = 96
     private let panelFoot: CGFloat = 4
 
-    // MARK: - 几何（Java:84-289）
+    // MARK: - 鍑犱綍锛圝ava:84-289锛?
     private let topPlate = CGRect(x: 0, y: 0, width: 1280, height: 134)
     private let headerPlate = CGRect(x: 0, y: 128, width: 1280, height: 592 - 128)
     private let backPlate = CGRect(x: 0, y: 592, width: 1280, height: 920 - 592)
@@ -67,7 +68,7 @@ final class GrowthScreen: Screen {
     private let advisorAvatar = CGRect(x: 70, y: 1391, width: 223 - 70, height: 1544 - 1391)
     private let advisorTalk = CGRect(x: 921, y: 1427, width: 999 - 921, height: 1502 - 1427)
     private let advisorBook = CGRect(x: 1087, y: 1428, width: 1163 - 1087, height: 1502 - 1428)
-    private let advisorRole = "财富黑卡理财师"
+    private let advisorRole = "璐㈠瘜榛戝崱鐞嗚储甯?
     private let advisorNameX: CGFloat = 252
     private let advisorNameBase: CGFloat = 1451
     private let advisorNameSize: CGFloat = 58
@@ -149,21 +150,21 @@ final class GrowthScreen: Screen {
     private let allocSize: CGFloat = 36
     private let marketKeys = ["idx2", "move2", "idxp2"]
 
-    private let gridLabel = ["余额宝", "稳健理财", "基金", "黄金", "股票",
-                             "定期", "保险", "高端理财", "全球投资", "更多"]
+    private let gridLabel = ["浣欓瀹?, "绋冲仴鐞嗚储", "鍩洪噾", "榛勯噾", "鑲＄エ",
+                             "瀹氭湡", "淇濋櫓", "楂樼鐞嗚储", "鍏ㄧ悆鎶曡祫", "鏇村"]
     private let gridCx: [CGFloat] = [155, 396, 636, 877, 1130]
     private let gridBase: [CGFloat] = [1093, 1323]
 
-    private let serviceTitles = ["财富规划", "黑卡理财", "财富私享会", "专属专家团队",
-                                 "资产配置", "高端保险", "税务筹划", "财富传承"]
-    private let serviceMarks = ["规", "卡", "享", "专", "配", "保", "税", "传"]
+    private let serviceTitles = ["璐㈠瘜瑙勫垝", "榛戝崱鐞嗚储", "璐㈠瘜绉佷韩浼?, "涓撳睘涓撳鍥㈤槦",
+                                 "璧勪骇閰嶇疆", "楂樼淇濋櫓", "绋庡姟绛瑰垝", "璐㈠瘜浼犳壙"]
+    private let serviceMarks = ["瑙?, "鍗?, "浜?, "涓?, "閰?, "淇?, "绋?, "浼?]
     private let serviceColors: [UInt32] = [0xffc69b70, 0xff6c82a8, 0xffc98669, 0xff718c83,
                                            0xffa98a6f, 0xff8b9bb8, 0xffbfa07e, 0xff93a89b]
     private let serviceCx: [CGFloat] = [185, 490, 795, 1100]
     private let serviceRowCy: [CGFloat] = [1008, 1260]
     private let serviceLabelBase: [CGFloat] = [1114, 1366]
     private let serviceCaptionBase: [CGFloat] = [1162, 1414]
-    private let marketNames = ["纳斯达克", "上证指数", "深证成指", "创业板指"]
+    private let marketNames = ["绾虫柉杈惧厠", "涓婅瘉鎸囨暟", "娣辫瘉鎴愭寚", "鍒涗笟鏉挎寚"]
     private let marketPoints = ["idx2", "bidx0", "bidx1", "bidx2"]
     private let marketChanges = ["idxp2", "bpct0", "bpct1", "bpct2"]
     private let marketRowBase: CGFloat = 2190
@@ -185,7 +186,7 @@ final class GrowthScreen: Screen {
         for (key, res) in mapping {
             if let image = UIImage(named: res) { art[key] = image }
         }
-        // 五档主题的铭牌 / 卡片 / 持卡条
+        // 浜旀。涓婚鐨勯摥鐗?/ 鍗＄墖 / 鎸佸崱鏉?
         for (key, res) in [(1, "licai_badge_growth"), (2, "licai_badge_v1"),
                            (3, "licai_badge_v2"), (4, "licai_badge_v3")] {
             if let image = UIImage(named: res) { art["theme_badge_\(key)"] = image }
@@ -198,7 +199,7 @@ final class GrowthScreen: Screen {
                            (3, "licai_holder_v2"), (4, "licai_holder_v3")] {
             if let image = UIImage(named: res) { art["theme_holder_\(key)"] = image }
         }
-        // 面板两端的过渡条（Java load() 末尾）
+        // 闈㈡澘涓ょ鐨勮繃娓℃潯锛圝ava load() 鏈熬锛?
         if let header = art["header"] {
             art["panelTop"] = Self.blendStrip(header, row: Int(header.size.height * header.scale) - 1,
                                               plateAbove: true)
@@ -209,14 +210,14 @@ final class GrowthScreen: Screen {
         }
     }
 
-    /// 取参考图的一行做成 1 像素高的小图（Java:340-347）
+    /// 鍙栧弬鑰冨浘鐨勪竴琛屽仛鎴?1 鍍忕礌楂樼殑灏忓浘锛圝ava:340-347锛?
     private static func rowStrip(_ plate: UIImage, row: Int) -> UIImage? {
         guard let cg = plate.cgImage else { return nil }
         let rect = CGRect(x: 0, y: row, width: cg.width, height: 1)
         return cg.cropping(to: rect).map { UIImage(cgImage: $0) }
     }
 
-    /// 参考图的一行 + 面板底色各一行，拼成 2 像素高的过渡条（Java:350-360）
+    /// 鍙傝€冨浘鐨勪竴琛?+ 闈㈡澘搴曡壊鍚勪竴琛岋紝鎷兼垚 2 鍍忕礌楂樼殑杩囨浮鏉★紙Java:350-360锛?
     private static func blendStrip(_ plate: UIImage, row: Int, plateAbove: Bool) -> UIImage? {
         guard let cg = plate.cgImage, let strip = cg.cropping(to: CGRect(x: 0, y: row,
                                                                         width: cg.width, height: 1))
@@ -249,7 +250,7 @@ final class GrowthScreen: Screen {
         return max(0, content + Self.panelHeight * s.expand - Self.H)
     }
 
-    // MARK: - 绘制（Java:387-426）
+    // MARK: - 缁樺埗锛圝ava:387-426锛?
 
     func draw(_ d: Draw, state: ScreenState) {
         let s = (state as? State) ?? State()
@@ -288,7 +289,7 @@ final class GrowthScreen: Screen {
         }
     }
 
-    /// 三个数字或四颗星（Java:437-450）
+    /// 涓変釜鏁板瓧鎴栧洓棰楁槦锛圝ava:437-450锛?
     private func drawLiveHeader(_ d: Draw) {
         if GrowthStore.shared.hidden {
             for group in stars {
@@ -303,10 +304,10 @@ final class GrowthScreen: Screen {
                     size: valueSize, gold)
         d.rightText(GrowthStore.shared.value("family"), right: 1215, baseline: valueBase,
                     size: valueSize, gold)
-        d.text("份", x: 1230, baseline: valueBase - 10, size: labelSize, labelInk)
+        d.text("浠?, x: 1230, baseline: valueBase - 10, size: labelSize, labelInk)
     }
 
-    /// 面板底色与两端过渡（Java:459-480）
+    /// 闈㈡澘搴曡壊涓庝袱绔繃娓★紙Java:459-480锛?
     private func drawPanelWash(_ d: Draw, off: CGFloat) {
         let bottom = 592 + max(off, 8)
         d.rect(CGRect(x: 0, y: 592, width: Self.W, height: bottom - 592), panelWash)
@@ -321,39 +322,39 @@ final class GrowthScreen: Screen {
                                        height: panelFoot * 2 + 2))
     }
 
-    /// 面板里的七行（Java:488-516）
+    /// 闈㈡澘閲岀殑涓冭锛圝ava:488-516锛?
     private func drawPanel(_ d: Draw, off: CGFloat) {
         let store = GrowthStore.shared
-        d.text("余额宝", x: panelA, baseline: panelBase[0], size: panelSize, panelLabel)
+        d.text("浣欓瀹?, x: panelA, baseline: panelBase[0], size: panelSize, panelLabel)
         d.text(store.value("reserve"), x: panelB, baseline: panelBase[0], size: panelSize, panelValue)
         d.text(store.value("reserveProfit"), x: 506, baseline: panelBase[0], size: panelSize, panelValue)
-        d.text("基金", x: panelC, baseline: panelBase[0], size: panelSize, panelLabel)
+        d.text("鍩洪噾", x: panelC, baseline: panelBase[0], size: panelSize, panelLabel)
         d.text(store.value("fund"), x: panelD, baseline: panelBase[0], size: panelSize, panelValue)
         d.text(store.value("fundProfit"), x: 1002, baseline: panelBase[0], size: panelSize, panelValue)
 
-        d.text("更多资产服务", x: panelA, baseline: panelBase[1], size: panelSize, panelLabel)
-        d.text("去看看", x: 487, baseline: panelBase[1], size: panelSize, panelLabel)
-        d.text("我的保障资产", x: panelA, baseline: panelBase[2], size: panelSize, panelCaption)
+        d.text("鏇村璧勪骇鏈嶅姟", x: panelA, baseline: panelBase[1], size: panelSize, panelLabel)
+        d.text("鍘荤湅鐪?, x: 487, baseline: panelBase[1], size: panelSize, panelLabel)
+        d.text("鎴戠殑淇濋殰璧勪骇", x: panelA, baseline: panelBase[2], size: panelSize, panelCaption)
 
-        d.text("保险", x: panelA, baseline: panelBase[3], size: panelSize, panelLabel)
-        d.text("1份保单保障中", x: 221, baseline: panelBase[3], size: panelSize, panelValue)
-        d.text("储蓄|养老", x: panelC, baseline: panelBase[3], size: panelSize, panelLabel)
+        d.text("淇濋櫓", x: panelA, baseline: panelBase[3], size: panelSize, panelLabel)
+        d.text("1浠戒繚鍗曚繚闅滀腑", x: 221, baseline: panelBase[3], size: panelSize, panelValue)
+        d.text("鍌ㄨ搫|鍏昏€?, x: panelC, baseline: panelBase[3], size: panelSize, panelLabel)
         d.text(store.value("savings"), x: 857, baseline: panelBase[3], size: panelSize, panelValue)
 
-        d.text("我的额度", x: panelA, baseline: panelBase[4], size: panelSize, panelCaption)
-        d.text("花呗", x: panelA, baseline: panelBase[5], size: panelSize, panelLabel)
+        d.text("鎴戠殑棰濆害", x: panelA, baseline: panelBase[4], size: panelSize, panelCaption)
+        d.text("鑺卞憲", x: panelA, baseline: panelBase[5], size: panelSize, panelLabel)
         d.text(store.value("huabei"), x: 218, baseline: panelBase[5], size: panelSize, panelValue)
-        d.text("借呗", x: 657, baseline: panelBase[5], size: panelSize, panelLabel)
-        d.text("秒到账，随时还", x: 755, baseline: panelBase[5], size: panelSize, panelValue)
+        d.text("鍊熷憲", x: 657, baseline: panelBase[5], size: panelSize, panelLabel)
+        d.text("绉掑埌璐︼紝闅忔椂杩?, x: 755, baseline: panelBase[5], size: panelSize, panelValue)
 
-        d.text("备用金", x: 120, baseline: panelBase[6], size: panelSize, panelLabel)
-        d.text("去使用", x: 255, baseline: panelBase[6], size: panelSize, panelValue)
-        d.text("网商贷", x: panelC, baseline: panelBase[6], size: panelSize, panelLabel)
-        d.text("更新额度", x: 792, baseline: panelBase[6], size: panelSize, panelValue)
+        d.text("澶囩敤閲?, x: 120, baseline: panelBase[6], size: panelSize, panelLabel)
+        d.text("鍘讳娇鐢?, x: 255, baseline: panelBase[6], size: panelSize, panelValue)
+        d.text("缃戝晢璐?, x: panelC, baseline: panelBase[6], size: panelSize, panelLabel)
+        d.text("鏇存柊棰濆害", x: 792, baseline: panelBase[6], size: panelSize, panelValue)
         caret(d, cx: 639, off: off)
     }
 
-    /// 白色 sheet（Java:519-534）
+    /// 鐧借壊 sheet锛圝ava:519-534锛?
     private func drawSheet(_ d: Draw) {
         let sheetBottom = Self.contentHeight + Self.marketInsert
         let sheet = CGRect(x: 0, y: Self.sheetTop - 1, width: Self.W, height: sheetBottom - (Self.sheetTop - 1))
@@ -369,19 +370,19 @@ final class GrowthScreen: Screen {
         drawTabLabels(d)
     }
 
-    /// 「市场 / 服务」两个页签（Java:536-547）
+    /// 銆屽競鍦?/ 鏈嶅姟銆嶄袱涓〉绛撅紙Java:536-547锛?
     private func drawTabLabels(_ d: Draw) {
         let market = selectedTab == 0
-        label(d, "市场", cx: tabCx[0], baseline: tabBase, size: tabSize,
+        label(d, "甯傚満", cx: tabCx[0], baseline: tabBase, size: tabSize,
               color: market ? tabOn : tabOff)
-        label(d, "服务", cx: tabCx[1], baseline: tabBase, size: tabSize,
+        label(d, "鏈嶅姟", cx: tabCx[1], baseline: tabBase, size: tabSize,
               color: market ? tabOff : tabOn)
         let cx = tabCx[market ? 0 : 1]
         d.round(CGRect(x: cx - tabUnderline / 2, y: 838, width: tabUnderline, height: 7),
                 radius: 4, Draw.color(0xff94705e))
     }
 
-    /// 按参考图给定宽度压一次再画（Java:554-568）
+    /// 鎸夊弬鑰冨浘缁欏畾瀹藉害鍘嬩竴娆″啀鐢伙紙Java:554-568锛?
     private func fitText(_ d: Draw, _ value: String, x: CGFloat, baseline: CGFloat, size: CGFloat,
                          color: UIColor, bold: Bool, width: CGFloat) {
         let natural = Draw.width(value, size: size, bold: bold) * sx
@@ -390,7 +391,7 @@ final class GrowthScreen: Screen {
                        squeeze: sx * squeeze)
     }
 
-    /// 页签文字：居中且压到参考框宽（Java:571-584）
+    /// 椤电鏂囧瓧锛氬眳涓笖鍘嬪埌鍙傝€冩瀹斤紙Java:571-584锛?
     private func label(_ d: Draw, _ value: String, cx: CGFloat, baseline: CGFloat, size: CGFloat,
                        color: UIColor) {
         let natural = Draw.width(value, size: size) * sx
@@ -399,7 +400,7 @@ final class GrowthScreen: Screen {
                              squeeze: sx * squeeze)
     }
 
-    /// 市场页签的内容（Java:586-609）
+    /// 甯傚満椤电鐨勫唴瀹癸紙Java:586-609锛?
     private func drawMarketContent(_ d: Draw) {
         drawAdvisor(d)
         d.ctx.saveGState()
@@ -411,18 +412,18 @@ final class GrowthScreen: Screen {
         drawDiscoverFigures(d)
         d.art(art["banner"], CGRect(x: 0, y: bannerTop, width: Self.W, height: bannerH))
         d.art(art["black"], CGRect(x: 0, y: blackTop, width: Self.W, height: blackH))
-        // 黑卡专区的最后一行要铺到页面底部（Java 的 drawTail）
+        // 榛戝崱涓撳尯鐨勬渶鍚庝竴琛岃閾哄埌椤甸潰搴曢儴锛圝ava 鐨?drawTail锛?
         if let black = art["black"], let cg = black.cgImage,
            let lastRow = cg.cropping(to: CGRect(x: 0, y: cg.height - 1, width: cg.width, height: 1)) {
             d.art(UIImage(cgImage: lastRow), CGRect(x: 0, y: blackTop + blackH, width: Self.W,
                                                    height: Self.H - (blackTop + blackH)))
         }
-        d.text("黑卡专区", x: blackLabelX, baseline: blackLabelBase, size: blackLabelSize,
+        d.text("榛戝崱涓撳尯", x: blackLabelX, baseline: blackLabelBase, size: blackLabelSize,
                blackInk, bold: true)
         d.ctx.restoreGState()
     }
 
-    /// 理财师卡（Java:612-645）
+    /// 鐞嗚储甯堝崱锛圝ava:612-645锛?
     private func drawAdvisor(_ d: Draw) {
         d.round(advisor, radius: advisorRadius, cardWhite)
         if let picture = AdvisorStore.shared.avatar ?? art["advisor"] {
@@ -434,7 +435,7 @@ final class GrowthScreen: Screen {
                 size: advisorNameSize, color: advisorNameInk, bold: true, width: advisorNameW)
         fitText(d, advisorRole, x: advisorRoleX, baseline: advisorRoleBase,
                 size: advisorRoleSize, color: advisorRoleInk, bold: false, width: advisorRoleW)
-        // 两个按钮是参考图的字形，按 alpha 涂成一种墨色
+        // 涓や釜鎸夐挳鏄弬鑰冨浘鐨勫瓧褰紝鎸?alpha 娑傛垚涓€绉嶅ⅷ鑹?
         for (name, box) in [("advisorTalk", advisorTalk), ("advisorBook", advisorBook)] {
             guard let glyph = art[name] else { continue }
             d.clipped(to: box, radius: 0) {
@@ -443,7 +444,7 @@ final class GrowthScreen: Screen {
         }
     }
 
-    /// 基金自选 / 基金排行 的数字（Java:654-664）
+    /// 鍩洪噾鑷€?/ 鍩洪噾鎺掕 鐨勬暟瀛楋紙Java:654-664锛?
     private func drawFundFigures(_ d: Draw) {
         let store = GrowthStore.shared
         d.text(store.value("fundSelfPct"), x: fundSelfX, baseline: fundSelfBase,
@@ -459,7 +460,7 @@ final class GrowthScreen: Screen {
 
     private var pageRedInk: UIColor { Draw.color(0xffc43942) }
 
-    /// 选好品…盘友圈 那两个数字（Java:667-670）
+    /// 閫夊ソ鍝佲€︾洏鍙嬪湀 閭ｄ袱涓暟瀛楋紙Java:667-670锛?
     private func drawDiscoverFigures(_ d: Draw) {
         let store = GrowthStore.shared
         d.text(store.value("windMove"), x: mktX, baseline: mktBase, size: mktSize,
@@ -468,7 +469,7 @@ final class GrowthScreen: Screen {
                allocInk, bold: true)
     }
 
-    /// 服务页签（Java:672-714）
+    /// 鏈嶅姟椤电锛圝ava:672-714锛?
     private func drawServiceContent(_ d: Draw) {
         d.rect(CGRect(x: 0, y: Self.sheetTop + gridTop, width: Self.W, height: 72 - gridTop), cardWhite)
         d.rect(CGRect(x: 0, y: Self.sheetTop + 72, width: Self.W,
@@ -485,31 +486,31 @@ final class GrowthScreen: Screen {
                 d.centerText(serviceMarks[i], cx: cx, baseline: cy + 19, size: 48, .white)
                 d.centerText(serviceTitles[i], cx: cx, baseline: serviceLabelBase[row],
                              size: 40, Draw.color(0xff292a2d))
-                d.centerText("专属服务", cx: cx, baseline: serviceCaptionBase[row],
+                d.centerText("涓撳睘鏈嶅姟", cx: cx, baseline: serviceCaptionBase[row],
                              size: 28, Draw.color(0xff92969d))
             }
         }
         d.rect(CGRect(x: 65, y: 1451, width: 1215 - 65, height: 2), Draw.color(0xffeff0f2))
-        d.text("为黑卡用户提供专属权益与财富管理服务", x: 82, baseline: 1516, size: 34,
+        d.text("涓洪粦鍗＄敤鎴锋彁渚涗笓灞炴潈鐩婁笌璐㈠瘜绠＄悊鏈嶅姟", x: 82, baseline: 1516, size: 34,
                Draw.color(0xff777c84))
-        d.text("查看全部", x: 1040, baseline: 1516, size: 30, Draw.color(0xff9b7257))
+        d.text("鏌ョ湅鍏ㄩ儴", x: 1040, baseline: 1516, size: 30, Draw.color(0xff9b7257))
 
         d.round(CGRect(x: 36, y: 1575, width: 1244 - 36, height: 1975 - 1575), radius: 34, cardWhite)
         d.round(CGRect(x: 84, y: 1615, width: 200, height: 200), radius: 100,
                 Draw.color(0xffe9edf4))
-        d.centerText("理", cx: 184, baseline: 1743, size: 96, Draw.color(0xff8b725e))
-        d.text("专属理财师", x: 330, baseline: 1685, size: 48, Draw.color(0xff25262a))
-        d.text("为你提供一对一财富规划服务", x: 330, baseline: 1756, size: 34,
+        d.centerText("鐞?, cx: 184, baseline: 1743, size: 96, Draw.color(0xff8b725e))
+        d.text("涓撳睘鐞嗚储甯?, x: 330, baseline: 1685, size: 48, Draw.color(0xff25262a))
+        d.text("涓轰綘鎻愪緵涓€瀵逛竴璐㈠瘜瑙勫垝鏈嶅姟", x: 330, baseline: 1756, size: 34,
                Draw.color(0xff858990))
         d.round(CGRect(x: 330, y: 1815, width: 245, height: 75), radius: 38,
                 Draw.color(0xfff3eee9))
-        d.centerText("在线咨询", cx: 452, baseline: 1866, size: 34, Draw.color(0xff9b7257))
+        d.centerText("鍦ㄧ嚎鍜ㄨ", cx: 452, baseline: 1866, size: 34, Draw.color(0xff9b7257))
         d.round(CGRect(x: 800, y: 1815, width: 245, height: 75), radius: 38,
                 Draw.color(0xffedf3fb))
-        d.centerText("电话联系", cx: 922, baseline: 1866, size: 34, Draw.color(0xff567aab))
+        d.centerText("鐢佃瘽鑱旂郴", cx: 922, baseline: 1866, size: 34, Draw.color(0xff567aab))
 
         d.round(CGRect(x: 36, y: 2005, width: 1244 - 36, height: 2530 - 2005), radius: 34, cardWhite)
-        d.text("市场行情", x: 82, baseline: 2088, size: 46, Draw.color(0xff28292d))
+        d.text("甯傚満琛屾儏", x: 82, baseline: 2088, size: 46, Draw.color(0xff28292d))
         for i in 0..<marketNames.count {
             let base = marketRowBase + CGFloat(i) * marketRowStep
             d.text(marketNames[i], x: 82, baseline: base, size: 42, Draw.color(0xff55585e))
@@ -521,11 +522,11 @@ final class GrowthScreen: Screen {
         }
     }
 
-    /// 纳斯达克那一行（Java:717-727）
+    /// 绾虫柉杈惧厠閭ｄ竴琛岋紙Java:717-727锛?
     private func drawMarketRow(_ d: Draw) {
         d.round(CGRect(x: marketCard.minX, y: Self.sheetTop + marketCard.minY,
                        width: marketCard.width, height: marketCard.height), radius: 30, cardWhite)
-        d.text("纳斯达克", x: marketNameX, baseline: Self.sheetTop + marketBase,
+        d.text("绾虫柉杈惧厠", x: marketNameX, baseline: Self.sheetTop + marketBase,
                size: marketSize, Draw.color(0xff26262a))
         for (i, key) in marketKeys.enumerated() {
             d.text(GrowthStore.shared.value(key), x: marketValueX[i],
@@ -535,10 +536,10 @@ final class GrowthScreen: Screen {
                                    width: marketArrow.width, height: marketArrow.height))
     }
 
-    /// 持卡人签名（Java:736-751）：手写体 + 超宽时压缩
+    /// 鎸佸崱浜虹鍚嶏紙Java:736-751锛夛細鎵嬪啓浣?+ 瓒呭鏃跺帇缂?
     ///
-    /// Android 用 `Typeface.create("cursive")`；iOS 没有同名族，用**斜体系统字**替代，
-    /// 再按 `HOLDER_MAX` 压缩。这里直接走 `CoreText`，因为 `Draw` 的接口不带字体族参数。
+    /// Android 鐢?`Typeface.create("cursive")`锛沬OS 娌℃湁鍚屽悕鏃忥紝鐢?*鏂滀綋绯荤粺瀛?*鏇夸唬锛?
+    /// 鍐嶆寜 `HOLDER_MAX` 鍘嬬缉銆傝繖閲岀洿鎺ヨ蛋 `CoreText`锛屽洜涓?`Draw` 鐨勬帴鍙ｄ笉甯﹀瓧浣撴棌鍙傛暟銆?
     private func drawHolder(_ d: Draw) {
         let name = GrowthStore.shared.value("holder")
         guard !name.isEmpty else { return }
@@ -559,7 +560,7 @@ final class GrowthScreen: Screen {
         d.ctx.restoreGState()
     }
 
-    /// 面板底边的箭头（Java:757-763）
+    /// 闈㈡澘搴曡竟鐨勭澶达紙Java:757-763锛?
     private func caret(_ d: Draw, cx: CGFloat, off: CGFloat) {
         let open = max(0, min(1, off / Self.panelHeight))
         let cy = 572.5 + off
@@ -575,7 +576,7 @@ final class GrowthScreen: Screen {
         d.ctx.restoreGState()
     }
 
-    /// 底部导航（Java:902-917）
+    /// 搴曢儴瀵艰埅锛圝ava:902-917锛?
     private func drawNav(_ d: Draw) {
         guard let nav = art["nav"] else { return }
         d.rect(CGRect(x: 0, y: Self.navTop, width: Self.W, height: Self.H - Self.navTop), .white)
@@ -586,12 +587,12 @@ final class GrowthScreen: Screen {
         hits.append(Hit(rect: rect, token: token))
     }
 
-    // MARK: - 命中（Java:767-900）
+    // MARK: - 鍛戒腑锛圝ava:767-900锛?
 
     func hitTest(_ state: ScreenState, x: CGFloat, y: CGFloat) -> ActionToken {
         let s = (state as? State) ?? State()
         hits.removeAll()
-        // 命中会改页签，所以要能在测试里生效
+        // 鍛戒腑浼氭敼椤电锛屾墍浠ヨ鑳藉湪娴嬭瘯閲岀敓鏁?
         let token = resolve(s, x: x, y: y)
         return token
     }
@@ -707,7 +708,7 @@ final class GrowthScreen: Screen {
 }
 
 private extension UIImage {
-    /// 按 alpha 涂成一种颜色（Android 的 `PorterDuff.Mode.SRC_IN`）
+    /// 鎸?alpha 娑傛垚涓€绉嶉鑹诧紙Android 鐨?`PorterDuff.Mode.SRC_IN`锛?
     func tinted(_ color: UIColor) -> UIImage {
         let renderer = UIGraphicsImageRenderer(size: size)
         return renderer.image { _ in
