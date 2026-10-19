@@ -4842,6 +4842,9 @@ body.fw-moments-open .wechat-bottom-navbar { display:none !important; }
 /* 2026-10-19: iOS 14.3 不支持 flex gap，朋友圈头像和正文之间只剩 0px。
    用头像 margin 拉开，跟聊天消息保持一致。 */
 .fw-tl-item__avatar { margin-right: 12px !important; }
+/* 2026-10-19: 好友资料页同样受 iOS 14.3 不支持 flex gap 的影响，
+   头像和昵称/微信号之间实际是 0px。用头像 margin 补回设计稿的 22px。 */
+.fw-friend-profile__hero .fw-friend-profile__avatar-button { margin-right: 22px !important; }
 
 /* iOS 14 WKWebView: number 输入在自定义弹层里会偶发无法聚焦，用文本输入 + 数字键盘兜底 */
 .fw-batch-friend-count, .fw-batch-per { -webkit-user-select:text !important; user-select:text !important; pointer-events:auto !important; }
