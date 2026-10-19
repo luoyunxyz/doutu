@@ -4841,7 +4841,6 @@ body.fw-subpage-open .wechat-bottom-navbar { display:none !important; }
 /* 微信列表/会话再拉开：头像与名字、头像与气泡 */
 .wechat-dialogue-list > * { column-gap: 24px !important; gap: 24px !important; }
 .wechat-dialogue-list > * > img:first-child,
-.wechat-dialogue-list > * > [class*="avatar"]:first-child { margin-right: 4px !important; }
 .fw-local-friend-row--fallback { gap: 24px !important; }
 .fw-chat-message { gap: 32px !important; }
 .fw-chat-message__bubble { max-width: calc(100% - 96px) !important; }
@@ -4880,3 +4879,12 @@ body.fw-subpage-open .wechat-bottom-navbar { display:none !important; }
 .fw-local-conversation__messages { overflow-x: hidden !important; touch-action: pan-y !important; }
 .fw-chat-message { touch-action: pan-y !important; }
 .fw-local-conversation__header { height: 88px !important; flex: 0 0 88px !important; padding-top: 12px !important; }
+
+/* 高优先级覆盖微信列表行头像间距（原生行有 :first-child 规则） */
+.wechat-dialogue-list > button.fw-local-friend-row.fw-local-friend-row--fallback > img {
+  margin-right: 32px !important;
+}
+.wechat-dialogue-list > button.fw-local-friend-row.fw-local-friend-row--fallback {
+  column-gap: 40px !important;
+  gap: 40px !important;
+}
