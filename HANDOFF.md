@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 2.4.37：财富页眼睛图标切换资产显示`  
-> 最新代码版本：`2.4.37 / 20077`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 2.4.38：修复底栏首页图标被压扁`  
+> 最新代码版本：`2.4.38 / 20078`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.32 / 20072`（已通过 USB 查询确认）
 
 ---
@@ -630,6 +630,10 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
     - 2.4.37 在 Router 里补：
       - `screen is GrowthV2Screen` → `GrowthStore.shared.hidden.toggle()` + 重绘；
       - 同时补 `toggleExpand` 的 `GrowthV2Screen.State` 分支，点箭头也能展开/收起。
+
+54. **财富页底栏「首页」图标被压扁**
+    - 底栏其它格按 `86×148` 拉伸，但 `lci_nav_home` 是 `225×256` 的宽图（图标+首页文字），按 86×148 画会严重变形；
+    - 2.4.38 单独处理第 0 格：未选中时按 `225/1280 * w` 宽、`h` 高画 `lci_nav_home`，保持原始比例；选中时仍用蓝色支字标 + 单独画「首页」。
 
 ---
 

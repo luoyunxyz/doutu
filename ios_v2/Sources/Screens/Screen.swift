@@ -135,16 +135,24 @@ final class ZhiTabBarView: UIView {
         let names = ["lci_nav_home", "lci_nav_licai", "lci_nav_video", "lci_nav_msg", "lci_nav_me"]
         for (i, refX) in centers.enumerated() {
             let cx = w * refX / 1280
-            if i == 0 && selected == 0 {
-                let side = h * 70 / 256
-                UIImage(named: "lci_nav_zhi")?.draw(in: CGRect(x: cx - side / 2,
-                                                               y: h * 16 / 256,
-                                                               width: side, height: side))
-                let font = UIFont.systemFont(ofSize: max(8, h * 26 / 256))
-                let text = "首页" as NSString
-                let tw = text.size(withAttributes: [.font: font]).width
-                text.draw(at: CGPoint(x: cx - tw / 2, y: h * 146 / 256 - font.lineHeight),
-                          withAttributes: [.font: font, .foregroundColor: tint])
+            if i == 0 {
+                if selected == 0 {
+                    let side = h * 70 / 256
+                    UIImage(named: "lci_nav_zhi")?.draw(in: CGRect(x: cx - side / 2,
+                                                                   y: h * 16 / 256,
+                                                                   width: side, height: side))
+                    let font = UIFont.systemFont(ofSize: max(8, h * 26 / 256))
+                    let text = "首页" as NSString
+                    let tw = text.size(withAttributes: [.font: font]).width
+                    text.draw(at: CGPoint(x: cx - tw / 2, y: h * 146 / 256 - font.lineHeight),
+                              withAttributes: [.font: font, .foregroundColor: tint])
+                } else {
+                    // lci_nav_home 是 225×256 的宽图（含图标+首页文字），不能按其它格的
+                    // 86×148 拉伸，否则首页图标会被压扁变形。
+                    let iw = w * 225 / 1280
+                    UIImage(named: "lci_nav_home")?.draw(
+                        in: CGRect(x: cx - iw / 2, y: 0, width: iw, height: h))
+                }
                 continue
             }
             var image = UIImage(named: names[i])
