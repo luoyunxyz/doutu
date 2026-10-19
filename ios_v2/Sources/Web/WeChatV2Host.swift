@@ -251,14 +251,18 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler, UIGestureRec
         let point = gesture.location(in: webView)
         CrashLog.append("WEBTAP blank y=\(point.y)")
         guard point.y >= 0, point.y <= 140 else { return }
-        // 加号菜单开着时，不能把点击转成 7 项工具菜单。
+        // 只有“微信主页面”才允许触发 7 项工具菜单；添加朋友/群聊/扫码/
+        // 批量添加等任何子页、任何浮层里都绝不能抢点击。
         webView.evaluateJavaScript(
-            "(function(){var p=document.querySelector('.fw-plus-panel');" +
-            "if(!p)return 0;var s=getComputedStyle(p);" +
-            "return (s.display!=='none'&&s.visibility!=='hidden'&&p.getClientRects().length>0)?1:0})()"
+            "(function(){try{" +
+            "var h=location.hash||'';" +
+            "var sub=document.querySelector('.fw-overlay, .fw-add-friend, .fw-group-chat, .fw-scanpay, .fw-receive-pay, .fw-local-conversation, .fw-chat-pay');" +
+            "if(sub)return 0;" +
+            "var home=(h===''||h==='#'||h.indexOf('#/wechat')===0);" +
+            "return home?1:0}catch(e){return 0}})()"
         ) { [weak self] value, _ in
             guard let self else { return }
-            if let open = value as? Int, open == 1 { return }
+            if let home = value as? Int, home == 0 { return }
             CrashLog.append("WEBTOOLS native tap y=\(point.y)")
             self.webView.evaluateJavaScript(
                 "window.__fwOpenToolsSheet ? window.__fwOpenToolsSheet() : 0") { result, error in
