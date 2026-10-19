@@ -920,6 +920,17 @@ final class Router {
             push(LicaiV2Screen(), state: LicaiV2Screen.State())
 
         // 提现页：金额输入 / 键盘 / 支付密码
+        case "avail":
+            if self.host?.screen is WithdrawV2Screen {
+                EditPrompt.present(title: "修改可用余额",
+                                   current: ReceiptStore.money(WithdrawStore.shared.avail),
+                                   numeric: true) { text in
+                    let cleaned = text.filter { $0.isNumber || $0 == "." }
+                    let value = Double(cleaned) ?? 0
+                    WithdrawStore.shared.setAvail(value)
+                    self.host?.setNeedsDisplay()
+                }
+            }
         case "amount":
             if let state = self.host?.state as? WithdrawV2Screen.State {
                 state.keypad = true

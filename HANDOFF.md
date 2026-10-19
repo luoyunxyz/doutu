@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 2.4.48：个人信息默认随机号码并隐藏中间四位`  
-> 最新代码版本：`2.4.48 / 20088`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 2.4.49：余额提现的可用余额可点击修改`  
+> 最新代码版本：`2.4.49 / 20089`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.44 / 20084`（已通过 USB 查询确认）
 
 ---
@@ -698,6 +698,11 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
       - 不读 `profile.phone`，所以不会显示当前登录号码；
       - 用户手动编辑手机号后，`displayPhoneRaw` 同步更新；
     - 我的页、个人信息页、账号设置页都改用 `displayPhone`。
+
+65. **余额提现页可用余额不可点**
+    - `WithdrawV2Screen.drawAmountCard` 只在金额为空时显示「可用余额 ¥…」，但那一行没有 hitTest；`WithdrawStore` 已有 `setAvail` 却没有入口；
+    - 2.4.49 在可用余额文字区域加 `hit(..., "avail")`；
+    - Router 新增 `case "avail"`：弹数字输入框，当前值 `WithdrawStore.avail`，保存后 `setAvail` 并重绘；金额、校验、提现按钮都读同一个 avail。
 
 ---
 

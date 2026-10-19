@@ -422,6 +422,8 @@ final class WithdrawV2Screen: Screen {
         } else {
             d.rightText("可用余额 ¥" + ReceiptStore.money(avail), right: availRight,
                         baseline: availBase, size: availSize, caption)
+            // 可用余额本身可点：点开数字键盘修改 WithdrawStore.avail。
+            hit(CGRect(x: 650, y: availBase - 62, width: availRight - 640, height: 92), "avail")
         }
 
         rule(d, y: divider1Y, l: dividerL, r: dividerR)
