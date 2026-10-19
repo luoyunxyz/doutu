@@ -21,6 +21,8 @@
     // 提现也没有 bundled 路由，直接跳 /wechat/wallet/withdraw 会 404；
     // 用已知钱包路由 + query，App 正常渲染钱包，自绘提现页覆盖上去。
     if (/[?&]withdraw=1(?:&|$)/.test(value)) return routes.withdraw;
+    if (/[?&]card-add=1(?:&|$)/.test(value)) return routes.cardAdd;
+    if (/[?&]cards=1(?:&|$)/.test(value)) return routes.cards;
     return value.endsWith('/wechat/service') ? routes.service
       : /\/wechat\/wallet\/bills(\/|$)/.test(value) ? routes.bills
       : /\/wechat\/wallet\/cards\/add(\/|$)/.test(value) ? routes.cardAdd
@@ -82,6 +84,8 @@
     // 自绘子页没有 bundled 路由，统一走已知钱包路由 + query，避免 React 404。
     const hashTarget = target === routes.withdraw ? '/wechat/wallet?withdraw=1'
       : target === routes.bills ? '/wechat/wallet?bills=1'
+      : target === routes.cards ? '/wechat/wallet?cards=1'
+      : target === routes.cardAdd ? '/wechat/wallet?card-add=1'
       : target;
     location.hash = '#' + hashTarget;
     // hashchange owns rendering; avoid a second synchronous render.
@@ -103,7 +107,7 @@
   }  const walletRow = (name, sub, iconName, color, action) => `<button class="fw-wallet-row" type="button" ${action ? `data-go="${action}"` : ''}><span class="fw-wallet-row-icon">${icon(iconName,color)}</span><span class="fw-wallet-row-copy"><b>${name}</b>${name === '零钱通' ? '<small>收益率1.02%</small>' : ''}</span>${name === '零钱' ? '<strong>¥' + getBalanceAmount() + '</strong>' : ''}${icon('arrow','#b2b2b2')}</button>`;
   function walletPage() {
     return `<main class="fw-pay-page fw-pay-wallet">${header('钱包','<button class="fw-wallet-bill" type="button" data-go="' + routes.bills + '">账单</button>','#/wechat/service')}
-      <div class="fw-pay-scroll wallet-scroll"><section class="fw-wallet-list">${walletRow('零钱','','yuan','#efc43b','#/wechat/wallet/balance')}${walletRow('零钱通','','diamond','#efbd23')}${walletRow('银行卡','添加银行卡','card','#2a7fcb')}${walletRow('亲属卡','','people','#efa43b')}</section><section class="fw-wallet-list">${walletRow('数字人民币','','yuan','#e94b54')}${walletRow('支付分','','shield','#58c17e')}${walletRow('客服中心','','service','#58c17e')}</section><div class="fw-wallet-bottom"><button>身份信息</button><i></i><button>支付设置</button></div></div></main>`;
+      <div class="fw-pay-scroll wallet-scroll"><section class="fw-wallet-list">${walletRow('零钱','','yuan','#efc43b','#/wechat/wallet/balance')}${walletRow('零钱通','','diamond','#efbd23')}${walletRow('银行卡','添加银行卡','card','#2a7fcb', routes.cards)}${walletRow('亲属卡','','people','#efa43b')}</section><section class="fw-wallet-list">${walletRow('数字人民币','','yuan','#e94b54')}${walletRow('支付分','','shield','#58c17e')}${walletRow('客服中心','','service','#58c17e')}</section><div class="fw-wallet-bottom"><button>身份信息</button><i></i><button>支付设置</button></div></div></main>`;
   }
   function getBalanceAmount() {
     const value = Number(localStorage.getItem('fw-balance-amount'));
@@ -1736,7 +1740,7 @@
      }     old.style.cssText = 'position:fixed;inset:0;z-index:2147483647;display:block;visibility:visible;opacity:1;pointer-events:auto;box-sizing:border-box;width:100vw;height:100vh;transform:none';
     // 2026-10-19: 这份 CSS 在真机上丢了 `inset:0`，fixed 元素按静态位置落到屏幕下方，
     // 自绘页一直不可见。账单页没有 bundled 版本，必须由自绘层显示：单独把它钉到视口。
-    if (kind === 'bills' || kind === 'withdraw') {
+    if (kind === 'bills' || kind === 'withdraw' || kind === 'cards' || kind === 'cardAdd') {
       old.style.setProperty('top', '0', 'important');
       old.style.setProperty('left', '0', 'important');
       old.style.setProperty('right', '0', 'important');
@@ -2822,6 +2826,21 @@
       event.stopImmediatePropagation();
     }
   }, true);
+  // 2026-10-19: bundled 钱包页的「银行卡」同样会直接跳 /wechat/wallet/cards，
+  // React Router 不认这个子路由会 404。capture 掉它，改走钱包路由 + query。
+  window.addEventListener('click', (event) => {
+    if (currentRoute() !== routes.wallet) return;
+    const target = event.target instanceof Element ? event.target : null;
+    if (!target || target.closest('#fw-pay-pages-host')) return;
+    const label = target.closest('.flex-1');
+    const row = target.closest('.cursor-pointer') || (label && label.parentElement);
+    if (!row || !String(row.textContent || '').includes('银行卡')) return;
+    if (row.getBoundingClientRect().height > 120) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    location.hash = '/wechat/wallet?cards=1';
+  }, true);
+
   // 2026-10-19: bundled 零钱页的「提现」按钮会直接跳到 /wechat/wallet/withdraw，
   // React Router 不认这个子路由会 404。capture 掉它，改走钱包路由 + query。
   window.addEventListener('click', (event) => {
