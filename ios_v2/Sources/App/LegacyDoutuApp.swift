@@ -705,6 +705,9 @@ final class Router {
         }
         switch token {
         case "noop":
+            // 很多页面（收款风格、随机金额档位、声音开关等）在 hitTest 里已经改完 State，
+            // 只吐 noop 表示“不需要 Router 再做别的”，但仍然需要重绘，否则看起来像没反应。
+            self.host?.setNeedsDisplay()
             return
 
         // 调试用：验证备选图标是否真的可用（正式界面走 AppIconChooser 弹窗）

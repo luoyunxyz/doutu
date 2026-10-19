@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 2.4.66：模拟收款声音复用 Android 音素拼接`  
-> 最新代码版本：`2.4.66 / 20106`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 2.4.67：noop 也重绘，修复收款风格点击无反应`  
+> 最新代码版本：`2.4.67 / 20107`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.51 / 20091`（已通过 USB 查询确认）
 
 ---
@@ -817,6 +817,11 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
       - 金额小数按 `tts_dot` + 每位数字播放，最后 `tts_yuan`；
       - 设置 `.playback` 音频会话，保证静音键之外能正常出声；
       - 素材缺失时才退回原来的 chime。
+
+83. **收款风格点击没反应**
+    - `AccountSoundScreen.hitTest` 在 style chip 里已经改完 `s.style / s.randomStyle`，但返回的是 `"noop"`；
+    - Router 的 `case "noop": return` 直接返回，不调用 `setNeedsDisplay`，所以状态变了、画面没重绘，看起来像没反应；
+    - 2.4.67 改成 `case "noop"` 也 `host?.setNeedsDisplay()`，所有“就地改 State、只吐 noop”的设置项（收款风格、随机金额档位、声音开关等）都会立即刷新。
 
 ---
 
