@@ -2710,11 +2710,12 @@
       const img = row.querySelector('img');
       if (!img || img.dataset.fwStableAvatar === '1') continue;
       const src = String(img.getAttribute('src') || '');
-      if (src && src !== PLACEHOLDER_AVATAR && !src.startsWith('data:image/svg+xml')) continue;
+      if (src && src !== PLACEHOLDER_AVATAR && !src.startsWith('data:image/svg+xml') && !/\/assets\/user-avatar-/.test(src)) continue;
       const info = getChatInfo(row);
       const name = String(info?.name || row.textContent || '').trim().slice(0, 12) || '微信好友';
       img.src = apiAvatarFor(name);
       img.style.marginRight = '20px';
+      img.onerror = () => { img.onerror = null; img.src = bundledAvatarFor(name); };
       img.dataset.fwStableAvatar = '1';
     }
   }
