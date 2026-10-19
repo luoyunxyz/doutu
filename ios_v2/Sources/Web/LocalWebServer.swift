@@ -12,13 +12,16 @@ import Network
 /// HTTPS origin；iOS 这边用回环 HTTP origin 达到同样效果。`NSAllowsLocalNetworking`
 /// 已放开 localhost 明文。
 final class LocalWebServer {
+    /// 全 App 复用一个本地服务器：端口固定，WKWebView origin 才能稳定，
+    /// 否则重复打开微信页会抢 18080 失败并退回 app://，localStorage 又换了 origin。
+    static let shared = LocalWebServer()
     private let listener: NWListener
     private let queue = DispatchQueue(label: "com.luoyun.doutu.localweb")
     private let root: String
     private(set) var port: UInt16 = 0
     private var started = false
 
-    init?() {
+    private init?() {
         // localStorage 按 origin（含端口）隔离。以前每次启动都随机端口，导致
         // 重启 App 后微信好友/朋友圈/聊天记录全部“消失”。固定端口后 origin
         // 稳定为 http://localhost:18080，WKWebView 才能复用同一份 localStorage。

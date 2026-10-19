@@ -107,7 +107,7 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler, UIGestureRec
         // 真正的 origin：Android 用 `https://fake-world.local` + shouldInterceptRequest，
         // iOS 这边用 127.0.0.1 回环 HTTP。自定义 scheme 下 ES module 会被 CORS 拒绝，
         // 页面只剩经典脚本渲染的外壳（微信标题栏 + “Windows 微信已登录”，下面全白）。
-        let local = LocalWebServer()
+        let local = LocalWebServer.shared
         guard let local else {
             CrashLog.append("WebHost local server init failed, fallback app://")
             if let url = URL(string: Self.entry) {
@@ -475,7 +475,6 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler, UIGestureRec
     }
 
     deinit {
-        server?.stop()
         if Self.current === self { Self.current = nil }
     }
 

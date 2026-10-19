@@ -843,6 +843,30 @@
   const AVATAR_POOL_SIZE = 400;
   // 远程随机头像接口每次请求都可能换脸，且 iOS 原生层没有实现头像缓存桥。
   // 这里改成随包内的固定头像池：同一个 seed 永远同一张脸，重启不变。
+  // aa1 头像 API 的固定 CDN 图片池：同一个 seed 永远同一张头像，
+  // 图片本身仍由 api.aa1.cn 提供，不再每次打开随机换脸。
+  const AVATAR_API_POOL = [
+    'https://api.aa1.cn/api/avatar-emj/em/6401a9addda0d.png',
+    'https://api.aa1.cn/api/avatar-emj/em/87f8d75003dde.png',
+    'https://api.aa1.cn/api/avatar-emj/em/6401a9b4437b6.png',
+    'https://api.aa1.cn/api/avatar-emj/em/6401a9ad4dc41.png',
+    'https://api.aa1.cn/api/avatar-emj/em/6401a9b0cf81a.png',
+    'https://api.aa1.cn/api/avatar-emj/em/31adf24d04bff.png',
+    'https://api.aa1.cn/api/avatar-emj/em/6401a9b7c4523.png',
+    'https://api.aa1.cn/api/avatar-emj/em/680f8f18a553d.png',
+    'https://api.aa1.cn/api/avatar-emj/em/6401a9afde869.png',
+    'https://api.aa1.cn/api/avatar-emj/em/8d97824770a27.png',
+    'https://api.aa1.cn/api/avatar-emj/em/6401a9b8cf8c9.png',
+    'https://api.aa1.cn/api/avatar-emj/em/6401a9b9b8628.png',
+    'https://api.aa1.cn/api/avatar-emj/em/667bf1aeb3291.png',
+    'https://api.aa1.cn/api/avatar-emj/em/2c76f1faf66ca.png',
+    'https://api.aa1.cn/api/avatar-emj/em/6401a9b88800c.png',
+    'https://api.aa1.cn/api/avatar-emj/em/41eeb7915285b.png',
+    'https://api.aa1.cn/api/avatar-emj/em/779da70211331.png',
+    'https://api.aa1.cn/api/avatar-emj/em/6401a9b10af18.png',
+    'https://api.aa1.cn/api/avatar-emj/em/5899fa8e38f6e.png',
+    'https://api.aa1.cn/api/avatar-emj/em/1a0bf068843c0.png',
+  ];
   const BUNDLED_AVATAR_FILES = [
     './assets/user-avatar-1-CKPDcH57.jpg',
     './assets/user-avatar-4-Cmbgep_s.jpg',
@@ -871,6 +895,11 @@
       + text + '</text></svg>';
     return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
   }
+  function apiAvatarFor(seed) {
+    const hash = avatarSeedHash(seed);
+    return AVATAR_API_POOL[hash % AVATAR_API_POOL.length];
+  }
+
   function makeAvatarUrl() { return remoteAvatarUrl(); }
   const AVATAR_API = 'https://v2.xxapi.cn/api/head';
   const AVATAR_API_JSON = AVATAR_API + '?return=json';
@@ -885,7 +914,7 @@
   // (https://xxapi.cn/doc/head). The nonce is derived from the member's name, so the
   // same person keeps the same face across renders; the app's avatar cache freezes the
   // 302 redirect into a local file so it stays put on later opens.
-  function apiAvatarFor(seed) {
+  function apiAvatarForLegacy(seed) {
     return bundledAvatarFor(seed);
     const key = 'fake-world.wechat.head-avatar.' + avatarSeedHash(seed);
     try {
@@ -907,7 +936,7 @@
     return url;
   }
   function makeBatchAvatarUrl() {
-    return bundledAvatarFor('batch-' + Date.now() + Math.random().toString(36).slice(2));
+    return apiAvatarFor('batch-' + Date.now() + Math.random().toString(36).slice(2));
   }
 
     function migrateGeneratedProfiles() {
@@ -932,10 +961,12 @@
   // 老版本把远程随机头像 URL 存进了 state，启动时统一迁回本地固定头像。
   (function normalizeRemoteAvatars() {
     let changed = false;
-    const local = value => typeof value === 'string' && /^https?:\/\//i.test(value);
+    const legacyRemote = value => typeof value === 'string'
+      && /^https?:\/\//i.test(value)
+      && !/api\.dicebear\.com/i.test(value);
     (Array.isArray(state.contacts) ? state.contacts : []).forEach(friend => {
-      if (friend && (!friend.avatar || local(friend.avatar))) {
-        friend.avatar = bundledAvatarFor(String(friend.id || friend.name || 'contact'));
+      if (friend && (!friend.avatar || legacyRemote(friend.avatar))) {
+        friend.avatar = apiAvatarFor(String(friend.name || friend.id || 'contact'));
         changed = true;
       }
     });
@@ -2679,7 +2710,8 @@
       if (src && src !== PLACEHOLDER_AVATAR && !src.startsWith('data:image/svg+xml')) continue;
       const info = getChatInfo(row);
       const name = String(info?.name || row.textContent || '').trim().slice(0, 12) || '微信好友';
-      img.src = bundledAvatarFor(name);
+      img.src = apiAvatarFor(name);
+      img.style.marginRight = '14px';
       img.dataset.fwStableAvatar = '1';
     }
   }

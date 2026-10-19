@@ -4845,3 +4845,9 @@ body.fw-subpage-open .wechat-bottom-navbar { display:none !important; }
 .fw-local-friend-row--fallback { gap: 24px !important; }
 .fw-chat-message { gap: 32px !important; }
 .fw-chat-message__bubble { max-width: calc(100% - 96px) !important; }
+
+
+/* 列表头像 API 图片与名字间距；会话气泡与头像间距 */
+.wechat-dialogue-list > * > img { margin-right: 14px !important; }
+.fw-chat-message { gap: 36px !important; }
+.fw-chat-message__bubble { max-width: calc(100% - 100px) !important; }
