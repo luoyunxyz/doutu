@@ -3,9 +3,9 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 2.4.9：零钱 / 零钱通金额可点击修改`  
-> 最新代码版本：`2.4.9 / 20049`（已推送，待 Codemagic 构建）  
-> 设备当前安装：`2.4.7 / 20047`（已通过 USB 查询确认）
+> 最新提交：`本轮 2.4.10：金额编辑改到 window capture，绕过聊天 onClick`  
+> 最新代码版本：`2.4.10 / 20050`（已推送，待 Codemagic 构建）  
+> 设备当前安装：`2.4.9 / 20049`（已通过 USB 查询确认）
 
 ---
 
@@ -508,7 +508,8 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
     - 点击弹出 `openAmountEditor`（复用 `.fw-bill-editor` 样式），保存后：
       - 零钱：写 `fw-balance-amount` + `fw-balance-user-set=1`，同时更新零钱页数字、钱包页「零钱」行、服务页钱包预览；
       - 零钱通：写 `fw-lingqiantong-amount`，更新钱包页「零钱通」金额；
-    - `syncEditableAmounts` 每 300ms + MutationObserver 重新标记，React 重渲染后仍可点。
+    - `syncEditableAmounts` 每 300ms + MutationObserver 重新标记，React 重渲染后仍可点；
+    - 2.4.10 把金额点击从 document capture 改到 **window capture**：`wechat-chat-actions` 的 `document` capture `onClick` 会把这些钱包行当聊天行先消费掉（实测 document 监听收不到，window 能收到）。
 
 ---
 

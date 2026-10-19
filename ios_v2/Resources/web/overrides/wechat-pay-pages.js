@@ -2666,7 +2666,9 @@
       }
     }
   }
-  document.addEventListener('click', (event) => {
+  // 用 window 的 capture：wechat-chat-actions 的 document capture onClick 会先把
+  // 钱包行当聊天行消费掉，document 上再绑就永远收不到这次点击。
+  window.addEventListener('click', (event) => {
     const target = event.target instanceof Element ? event.target : null;
     if (!target || target.closest('#fw-pay-pages-host')) return;
     const route = currentRoute();
