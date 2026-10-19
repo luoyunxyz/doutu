@@ -146,7 +146,7 @@ final class MeScreen: Screen {
                 d.art(art[key], rect)
             }
             // 最后用白色细边压住图片边缘插值产生的 1px 灰线。
-            d.roundStroke(rect.insetBy(dx: 1, dy: 1), radius: 9, .white, width: 2)
+            d.roundStroke(rect, radius: 10, .white, width: 2)
         }
         d.ctx.restoreGState()
 
