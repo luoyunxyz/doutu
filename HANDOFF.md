@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 2.4.15：支付成功页盖住底部 tab bar`  
-> 最新代码版本：`2.4.15 / 20055`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 2.4.16：零钱提现改 query 路由，去掉 404`  
+> 最新代码版本：`2.4.16 / 20056`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.9 / 20049`（已通过 USB 查询确认）
 
 ---
@@ -522,6 +522,11 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
 33. **支付成功页同样露出底部 tab bar**
     - `.fw-pay-success` 原来 `z-index:100300`，低于底部 tab bar 的 2147483000；
     - 2.4.15 把它也提到 **2147483001**，支付成功页完整覆盖，底部「完成」按钮不被 tab bar 压住。
+
+34. **零钱提现页顶部 404**
+    - bundled 零钱页的「提现」直接跳 `#/wechat/wallet/withdraw`，React Router 不认这个子路由，渲染 404 错误页；
+    - 2.4.16 在 window capture 拦截零钱页的「提现」按钮，改跳 `#/wechat/wallet?withdraw=1`；`currentRoute()` 识别 `withdraw=1` 后让自绘提现页覆盖钱包；
+    - `kind === 'withdraw'` 时把自绘 host 钉到视口；返回零钱页时 host 自动收回，显示 bundled 零钱页。
 
 ---
 
