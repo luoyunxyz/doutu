@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 2.2.6：修复通讯录行重叠`  
-> 最新代码版本：`2.2.6 / 20026`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 2.2.7：修复收款后会话页叠加`  
+> 最新代码版本：`2.2.7 / 20027`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.2.5 / 20025`（已通过 USB 查询确认）
 
 ---
@@ -408,6 +408,11 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
     - 通讯录滚动区是 `wechat-scroll-area flex flex-col`，每个「新的朋友 / 星标 / 字母分组」都是 flex item；
     - 内容超高时默认 `flex-shrink:1` 会把分组压扁（实测 4 行只分到 41px，行内 48px 的布局互相重叠）；
     - 2.2.6 起按路由给 `body` 加 `fw-contacts-tab`，只对通讯录把滚动区直接子项设为 `flex:0 0 auto`，恢复分组高度并让滚动区真正滚动；其它 tab 不受影响。
+
+13. **收款后会话页叠成三层**
+    - 收款/转账流程会再次打开同一个会话，而 `openLocalFriendConversation` 之前只 `remove` 第一个 `.fw-local-conversation`；
+    - 旧会话页留在 DOM 里，同一个「打招呼 + 两张转账卡片」被重复画 2～3 层，视觉上行与行重叠；
+    - 2.2.7 起打开会话先清掉所有旧会话页，`closeLocalConversation` 也一次关闭所有会话页，不再留下残影。
 
 ---
 

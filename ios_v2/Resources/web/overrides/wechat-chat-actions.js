@@ -1033,20 +1033,30 @@
     });
   }
   function closeLocalConversation() {
-    const page = document.querySelector('.fw-local-conversation');
-    if (!page || page.dataset.fwClosing === '1') return;
-    page.dataset.fwClosing = '1';
-    page.classList.add('fw-local-conversation--exit');
+    // 2026-10-19: 收款/转账流程会再次打开同一个会话。以前只 remove 第一个页面，
+    // 旧的会话页留在 DOM 里，叠出两三层「打招呼 + 转账卡片」的残影。
+    // 这里一次关掉所有会话页，保证返回后页面干净。
+    const pages = Array.from(document.querySelectorAll('.fw-local-conversation'));
+    if (!pages.length) return;
+    const page = pages[pages.length - 1];
+    if (page.dataset.fwClosing === '1') return;
+    let finished = false;
+    pages.forEach(item => {
+      item.dataset.fwClosing = '1';
+      item.classList.add('fw-local-conversation--exit');
+    });
     const finish = () => {
+      if (finished) return;
+      finished = true;
       if (selfAvatarSyncTimer) { clearInterval(selfAvatarSyncTimer); selfAvatarSyncTimer = null; }
       openMessageMenuForRow = null;
-      page.remove();
+      pages.forEach(item => item.remove());
       document.body.classList.remove('fw-local-conversation-open');
       applyConversationFontScale();
       syncChatSystemBars();
     };
     page.addEventListener('animationend', finish, { once: true });
-    setTimeout(() => { if (page.isConnected) finish(); }, 150);
+    setTimeout(finish, 150);
   }
   window.__fwCloseConversation = function () { const open = !!document.querySelector('.fw-local-conversation'); if (open) closeLocalConversation(); return open; };
   /**
@@ -1087,7 +1097,8 @@
     getStableFriendAvatar(friend, friend.avatar || CONTACT_FALLBACKS[0].avatar);
     // Defer contact-list serialization until the chat entrance animation is underway.
     setTimeout(saveState, 180);
-    document.querySelector('.fw-local-conversation')?.remove();
+    // 打开会话前清掉所有旧会话页，避免收款/转账后重复打开时页面叠在一起。
+    document.querySelectorAll('.fw-local-conversation').forEach(page => page.remove());
 
     const page = document.createElement('section');
     page.className = 'fw-local-conversation';
