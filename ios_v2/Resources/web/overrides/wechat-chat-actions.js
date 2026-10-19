@@ -1592,7 +1592,7 @@
         if (item.type === 'greeting') return false;
         if (item.type === 'notice' && item.text === '以上是打招呼的消息') return false;
         // 旧数据里没有 type 的副本，只删跟打招呼完全同文案的项。
-        if (!item.type && greetingTexts.has(String(item.text || ''))) return false;
+        if (greetingTexts.has(String(item.text || ''))) return false;
         return true;
       });
       const notice = { type: 'notice', text: '以上是打招呼的消息' };
