@@ -1714,7 +1714,17 @@
       if(cancelled||Math.abs(dx)<SWIPE_TRIGGER)return;
       const target=dx<0?'incoming':'outgoing';
       if(!setMessageSide(swipe.message,target))return;
-      drawMessages(true);
+      // 原地只改这一条：不重绘整个消息列表，不可能多出副本。
+      const row=swipe.row;
+      row.classList.toggle('fw-chat-message--incoming', target==='incoming');
+      row.classList.toggle('fw-chat-message--outgoing', target==='outgoing');
+      const avatar=row.querySelector('.fw-chat-message__avatar');
+      const content=[...row.children].find(el=>el!==avatar);
+      if(avatar&&content){
+        if(target==='incoming'){ row.prepend(avatar); avatar.after(content); }
+        else { row.append(content,avatar); }
+        avatar.src=target==='incoming'?friendAvatar:getSelfAvatar();
+      }
       showToast(target==='incoming'?'已改为对方发送':'已改为我发送');
     };
     messages.addEventListener('pointerup',event=>finishSwipe(event,false));
