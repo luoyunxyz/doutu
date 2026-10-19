@@ -297,7 +297,7 @@ final class TaobaoOrderScreen: Screen {
             Rec(title: "【预售开始-立即付】", price: "598", tag: "券后价", sold: "已售5000+"),
         ]
 
-        init() {
+        override init() {
             // 隐私信息不使用真实姓名/手机号/地址，每次进入订单详情都随机一套。
             name = Self.randomName()
             phone = Self.randomPhone()

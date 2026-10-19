@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 2.4.56：修复 TaobaoOrderScreen.State 初始化未调 super`  
-> 最新代码版本：`2.4.56 / 20096`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 2.4.57：State.init() 补 override`  
+> 最新代码版本：`2.4.57 / 20097`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.51 / 20091`（已通过 USB 查询确认）
 
 ---
@@ -749,6 +749,10 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
     - `TaobaoOrderScreen.State.init()` 是 `ScreenState` 子类的自定义初始化器，但没有调用 `super.init()`；Swift 要求所有路径先完成父类初始化，导致 `SwiftEmitModule` 失败；
     - 2.4.56 在 `State.init()` 末尾补 `super.init()`；
     - 同时把 `PurseAvatarAPI` 的 `try? JSONSerialization... as?` 拆成 `try?` + `as?` 两步，避免可选绑定推断歧义。
+
+73. **2.4.56 仍未编译过：init() 要 override**
+    - 无参数的 `init()` 与 `ScreenState` 隐式的 `init()` 同签名，Swift 要求写成 `override init()`；只补 `super.init()` 不够，仍会报 overriding declaration requires an 'override' keyword；
+    - 2.4.57 改成 `override init()` 并保留 `super.init()`。
 
 ---
 
