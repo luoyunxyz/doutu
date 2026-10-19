@@ -560,6 +560,32 @@
     document.body.appendChild(layer);
     setTimeout(() => { input.focus(); input.select(); }, 30);
   }
+  // 2026-10-19: 金额编辑弹层。bundled 钱包/零钱页没有自己的编辑入口，
+  // 这里复用账单编辑器的外观，只负责输入和保存，不触发 bills 重绘。
+  function openAmountEditor(title, value, onSave) {
+    const layer = document.createElement('div');
+    layer.className = 'fw-bill-editor';
+    layer.innerHTML = `<section class="fw-bill-editor__panel" role="dialog" aria-modal="true"><header><button type="button" data-amount-cancel>取消</button><strong>${esc(title)}</strong><button type="button" data-amount-save>保存</button></header><input class="fw-bill-editor__input" type="text" inputmode="decimal" value="${esc(value)}"></section>`;
+    const input = layer.querySelector('.fw-bill-editor__input');
+    const close = () => layer.remove();
+    const save = () => {
+      const num = Number(String(input.value || '').replace(/[^0-9.]/g, ''));
+      if (!Number.isFinite(num) || num < 0) { input.focus(); return; }
+      onSave(num.toFixed(2));
+      close();
+    };
+    layer.querySelector('[data-amount-cancel]').addEventListener('click', close);
+    layer.querySelector('[data-amount-save]').addEventListener('click', save);
+    input.addEventListener('keydown', event => {
+      if (event.key === 'Enter') save();
+      if (event.key === 'Escape') close();
+    });
+    ['pointerdown', 'click'].forEach(type => layer.addEventListener(type, e => e.stopPropagation()));
+    layer.addEventListener('pointerdown', event => { if (event.target === layer) close(); });
+    document.body.appendChild(layer);
+    setTimeout(() => { input.focus(); input.select(); }, 30);
+  }
+
   // Avatar sources: random heads from the xxapi.cn interface, avatars already used
   // by the chat contacts, and photos uploaded from the device gallery.
   function openAvatarPicker(onPick) {
@@ -2564,5 +2590,112 @@
       break;
     }
   }, true);
+
+  // 2026-10-19: make the bundled 零钱 amount and the 零钱通 amount editable.
+  // The bundled pages have no edit entry, and the custom pay host is hidden on iOS 14.3.
+  const LQT_KEY = 'fw-lingqiantong-amount';
+  const readLqtAmount = () => {
+    const value = Number(localStorage.getItem(LQT_KEY));
+    return Number.isFinite(value) && value >= 0 ? value.toFixed(2) : '1314.00';
+  };
+  function bundledLeaf(text) {
+    return Array.from(document.querySelectorAll('body *')).find(el =>
+      el.children.length === 0
+      && !el.closest('#fw-pay-pages-host, .fw-receive-pay')
+      && String(el.textContent || '').trim() === text);
+  }
+  function bundledWalletRowAmountNode(name) {
+    const label = bundledLeaf(name);
+    if (!label) return null;
+    let row = label;
+    for (let i = 0; row && i < 6; i += 1, row = row.parentElement) {
+      const amount = Array.from(row.querySelectorAll('*')).find(el =>
+        el.children.length === 0
+        && /^[¥￥]\s*[\d,.]+$/.test(String(el.textContent || '').trim()));
+      if (amount) return amount;
+    }
+    return null;
+  }
+  function bundledBalanceAmountNode() {
+    return Array.from(document.querySelectorAll('.font-bold.text-4xl'))
+      .find(el => !el.closest('#fw-pay-pages-host')
+        && /^[\d,.]+$/.test(String(el.textContent || '').trim()));
+  }
+  function updateBundledBalance(value) {
+    const node = bundledBalanceAmountNode();
+    if (node) node.textContent = value;
+    document.querySelectorAll('.fw-balance-amount').forEach(el => { el.textContent = value; });
+    const zero = bundledWalletRowAmountNode('零钱');
+    if (zero) zero.textContent = '¥' + value;
+    try { syncBundledWalletPreview(); } catch (_) { /* service preview is optional */ }
+  }
+  function syncEditableAmounts() {
+    const route = currentRoute();
+    if (route === routes.balance) {
+      const node = bundledBalanceAmountNode();
+      if (node) {
+        node.dataset.fwEditBalance = '1';
+        node.title = '点击修改零钱金额';
+        node.style.cursor = 'pointer';
+        const shown = parseMoneyText(node.textContent);
+        if (shown && !readBalanceRaw()) storeBalanceAmount(shown);
+        const target = getBalanceAmount();
+        if (shown !== target) node.textContent = target;
+      }
+      return;
+    }
+    if (route === routes.wallet) {
+      const zero = bundledWalletRowAmountNode('零钱');
+      if (zero) {
+        const shown = parseMoneyText(zero.textContent);
+        if (shown && !readBalanceRaw()) storeBalanceAmount(shown);
+        const target = getBalanceAmount();
+        if (shown !== target) zero.textContent = '¥' + target;
+      }
+      const lqt = bundledWalletRowAmountNode('零钱通');
+      if (lqt) {
+        lqt.dataset.fwEditLqt = '1';
+        lqt.title = '点击修改零钱通金额';
+        lqt.style.cursor = 'pointer';
+        const shown = parseMoneyText(lqt.textContent);
+        try {
+          if (shown && !localStorage.getItem(LQT_KEY)) localStorage.setItem(LQT_KEY, shown);
+        } catch (_) { /* storage may be unavailable */ }
+        const target = readLqtAmount();
+        if (shown !== target) lqt.textContent = '¥' + target;
+      }
+    }
+  }
+  document.addEventListener('click', (event) => {
+    const target = event.target instanceof Element ? event.target : null;
+    if (!target || target.closest('#fw-pay-pages-host')) return;
+    const route = currentRoute();
+    if (route === routes.balance) {
+      const node = target.closest('[data-fw-edit-balance="1"]');
+      if (!node) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      const shown = parseMoneyText(node.textContent) || getBalanceAmount();
+      openAmountEditor('修改零钱金额', shown, value => {
+        storeBalanceAmount(value, true);
+        updateBundledBalance(value);
+      });
+      return;
+    }
+    if (route === routes.wallet) {
+      const node = target.closest('[data-fw-edit-lqt="1"]');
+      if (!node) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      const shown = parseMoneyText(node.textContent) || readLqtAmount();
+      openAmountEditor('修改零钱通金额', shown, value => {
+        try { localStorage.setItem(LQT_KEY, value); } catch (_) { /* no-op */ }
+        node.textContent = '¥' + value;
+      });
+    }
+  }, true);
+  setInterval(syncEditableAmounts, 300);
+  new MutationObserver(syncEditableAmounts).observe(document.body, { childList: true, subtree: true });
+  setTimeout(syncEditableAmounts, 0);
 })();
 })();
