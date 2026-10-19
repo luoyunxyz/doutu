@@ -310,6 +310,13 @@ final class ZhimaCreditV2Screen: Screen {
     private func drawCarousel(_ d: Draw, _ s: State) {
         let x = carouselX - s.carousel
         d.art(art["personal"], CGRect(x: x, y: carouselY, width: personalW, height: cardH))
+        // 信用名片头像默认同步「个人信息」头像；有设置头像时盖掉素材里的默认头像。
+        if let avatar = ProfileStore.shared.avatar {
+            let avatarRect = CGRect(x: x + 450, y: carouselY + 96, width: 140, height: 140)
+            d.clipped(to: avatarRect, radius: avatarRect.width / 2) {
+                d.art(avatar, avatarRect)
+            }
+        }
         drawPersonalText(d, s, x)
 
         let ex = x + personalW + cardGap
@@ -518,5 +525,59 @@ final class ZhimaCreditV2Screen: Screen {
         if inside(328, 392, 504, 458) { return "p.discount" }
         if inside(614, 392, 692, 458) { return "p.privilege" }
         return nil
+    }
+}
+
+// MARK: - 信用名片可编辑
+extension ZhimaCreditV2Screen.State: EditableState {
+    func editTitle(_ key: String) -> String {
+        switch key {
+        case "p.label": return "修改信用描述"
+        case "p.score": return "修改芝麻分"
+        case "p.quota": return "修改可用额度"
+        case "p.discount": return "修改可享优惠"
+        case "p.privilege": return "修改可用特权"
+        case "e.label": return "修改企业信用描述"
+        case "e.score": return "修改企业信用分"
+        case "e.company": return "修改企业名称"
+        case "e.go": return "修改企业认证"
+        case "e.quota": return "修改企业额度"
+        case "e.privilege": return "修改企业特权"
+        default: return "修改信用名片"
+        }
+    }
+
+    func editValue(_ key: String) -> String {
+        switch key {
+        case "p.label": return pLabel
+        case "p.score": return pScore
+        case "p.quota": return pQuota
+        case "p.discount": return pDiscount
+        case "p.privilege": return pPrivilege
+        case "e.label": return eLabel
+        case "e.score": return eScore
+        case "e.company": return eCompany
+        case "e.go": return eGo
+        case "e.quota": return eQuota
+        case "e.privilege": return ePrivilege
+        default: return ""
+        }
+    }
+
+    func applyEdit(_ key: String, _ text: String) {
+        switch key {
+        case "p.label": pLabel = text
+        case "p.score": pScore = text
+        case "p.quota": pQuota = text
+        case "p.discount": pDiscount = text
+        case "p.privilege": pPrivilege = text
+        case "e.label": eLabel = text
+        case "e.score": eScore = text
+        case "e.company": eCompany = text
+        case "e.go": eGo = text
+        case "e.quota": eQuota = text
+        case "e.privilege": ePrivilege = text
+        default: break
+        }
     }
 }

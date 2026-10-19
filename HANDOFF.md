@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 2.4.50：可用余额热区移到 amount 之后，避免被吃掉`  
-> 最新代码版本：`2.4.50 / 20090`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 2.4.51：芝麻信用名片字段可编辑，头像同步个人信息`  
+> 最新代码版本：`2.4.51 / 20091`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.49 / 20089`（已通过 USB 查询确认）
 
 ---
@@ -707,6 +707,11 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
 66. **2.4.49 点可用余额仍打不开输入**
     - `WithdrawV2Screen.hitTest` 用 `hits.reversed()`，后加入的热区优先；`"amount"` 整块热区 `y 1000…1150` 覆盖了可用余额，且在 `avail` 之后加入，所以永远返回 `"amount"` 打开数字键盘；
     - 2.4.50 把 `avail` 热区移到 `amount/quota/info` 之后加入，reversed 时先命中 `"avail"`，才能弹修改可用余额的输入框。
+
+67. **芝麻信用名片可编辑 + 头像同步**
+    - `ZhimaCreditV2Screen.hitTest` 早就返回 `edit:p.label/p.score/...`，但 `State` 没实现 `EditableState`，Router 的通用 `edit:` 分支直接跳过，所以点名片没反应；
+    - 2.4.51 给 `ZhimaCreditV2Screen.State` 补 `EditableState`：个人卡 5 个字段 + 企业卡 6 个字段都有标题、当前值、写回；
+    - 个人卡原来素材里自带一个默认头像；现在有 `ProfileStore.shared.avatar` 时，按卡片头像位置 `(x+450, y+96, 140, 140)` 圆形裁剪覆盖，默认与个人信息头像同步。
 
 ---
 
