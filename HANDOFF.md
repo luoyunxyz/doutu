@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 2.4.59：修复 CAGradientLayer autoresizingMask 编译错误`  
-> 最新代码版本：`2.4.59 / 20099`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 2.4.60：模拟来电选微信联系人、复刻微信来电页`  
+> 最新代码版本：`2.4.60 / 20100`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.51 / 20091`（已通过 USB 查询确认）
 
 ---
@@ -767,6 +767,16 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
 75. **2.4.58 构建报错：CAGradientLayer.autoresizingMask**
     - `CAGradientLayer` 的 `autoresizingMask` 是 `CAAutoresizingMask`，没有 `.flexibleWidth/.flexibleHeight`；
     - 2.4.59 去掉该行，改成持有 `gradientLayer` 并在 `viewDidLayoutSubviews()` 里同步 `frame = view.bounds`。
+
+76. **模拟来电按微信效果重做**
+    - 新增 `WeChatContactStore`：隐藏 WKWebView 打开 `http://localhost:18080/`，读 `allProfiles` / chat-actions contacts，取 `remark || nickname` 和头像，下载成 UIImage；
+    - 进入模拟来电页时自动把微信通讯录填进 `CallSetupScreen.State.contacts`；点「来电人（从通讯录选择）」标题弹完整列表，点横向头像也可以直接选；
+    - 选中联系人同步 `name + avatarImage`；用户仍可改名字；不选人时点头像从相册上传；
+    - `SimulatedCallViewController` 按「微」的来电页重做：
+      - 对方头像铺满 + 深色虚化背景；
+      - 76×76 圆角头像、白色姓名、「邀请你语音通话...」；
+      - 底部 67 圆按钮：挂断/接听；接通后变成麦克风/挂断/扬声器，带文字标签；
+      - 铃声循环 + 震动保留。
 
 ---
 

@@ -143,7 +143,18 @@ final class Router {
         case "call":
             let screen = CallSetupScreen()
             callSetupScreen = screen
-            push(screen, state: CallSetupScreen.State())
+            let state = CallSetupScreen.State()
+            push(screen, state: state)
+            // 从「微」的通讯录同步备注名和头像；失败时保留页面自带的兜底联系人。
+            WeChatContactStore.shared.load { [weak self, weak state] contacts in
+                guard let state, !contacts.isEmpty else { return }
+                state.contacts = contacts
+                if state.name.isEmpty, let first = contacts.first {
+                    state.name = first.name
+                    state.avatarImage = first.avatar
+                }
+                self?.host?.setNeedsDisplay()
+            }
         case "shutdown":
             push(ShutdownScreen(), state: ShutdownScreen.State())
         case "sound":
@@ -1627,10 +1638,30 @@ final class Router {
                     state.name = text
                     self.host?.setNeedsDisplay()
                 }
+            case "call:contacts":
+                guard let vc = EditPrompt.topViewController() else { return }
+                let sheet = UIAlertController(title: "选择微信联系人", message: nil,
+                                              preferredStyle: .actionSheet)
+                for contact in state.contacts.prefix(60) {
+                    sheet.addAction(UIAlertAction(title: contact.name, style: .default) { _ in
+                        state.name = contact.name
+                        state.avatarImage = contact.avatar
+                        self.host?.setNeedsDisplay()
+                    })
+                }
+                sheet.addAction(UIAlertAction(title: "取消", style: .cancel))
+                if let popover = sheet.popoverPresentationController {
+                    popover.sourceView = vc.view
+                    popover.sourceRect = CGRect(x: vc.view.bounds.midX, y: vc.view.bounds.midY,
+                                                width: 1, height: 1)
+                    popover.permittedArrowDirections = []
+                }
+                vc.present(sheet, animated: true)
             case let value where value.hasPrefix("call:contact:"):
                 let id = String(value.dropFirst("call:contact:".count))
                 if let contact = state.contacts.first(where: { $0.id == id }) {
                     state.name = contact.name
+                    state.avatarImage = contact.avatar
                 }
             default:
                 break

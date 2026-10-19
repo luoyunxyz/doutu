@@ -59,6 +59,8 @@ final class CallSetupScreen: Screen {
         /// 头像图片名。Android 用 assets 里那 7 张 `user-avatar-*` 切图（CallImages.AVATAR_POOL），
         /// iOS 端没有这批图：为空时退化成「圆 + 首字」占位，布局与命中都不受影响。
         var imageName: String? = nil
+        /// 从微信通讯录同步来的头像；有值时优先于 imageName。
+        var avatar: UIImage? = nil
     }
 
     /// 兜底通讯录（CallContacts.java:32-38 的 DEFAULTS）：一次都没从页面同步过就用这五位
@@ -529,6 +531,12 @@ final class CallSetupScreen: Screen {
         d.circle(cx: slot.avatar.midX, cy: slot.avatar.midY, r: slot.avatar.width / 2,
                  selected ? brand : card)                                    // Java:542 底色
         circleStroke(d, slot.avatar, color: selected ? brand : line, width: dp(2))
+        if let avatar = slot.contact.avatar {
+            d.clipped(to: slot.avatar, radius: slot.avatar.width / 2) {
+                d.artFill(avatar, in: slot.avatar)
+            }
+            return
+        }
         if let imageName = slot.contact.imageName, let image = UIImage(named: imageName) {
             // 与 Java 一致：ImageView 不裁剪，圆只是背景（Java:542-544）
             d.artFill(image, in: slot.avatar)
@@ -571,6 +579,9 @@ final class CallSetupScreen: Screen {
             if m.pendingCancel.contains(p) { return "call:cancel" }          // Java:178-182
             if m.pending.contains(p) { return "noop" }
         }
+
+        // 点「来电人（从通讯录选择）」标题：弹出完整微信通讯录列表。
+        if m.callerTitle.contains(p) { return "call:contacts" }
 
         // 联系人：只认裁到内容宽度以内的那些（超出的部分在 Android 要横滑才看得到）
         if m.contactClip.contains(p) {

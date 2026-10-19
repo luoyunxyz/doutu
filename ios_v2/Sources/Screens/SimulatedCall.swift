@@ -2,8 +2,9 @@ import UIKit
 import AVFoundation
 import AudioToolbox
 
-/// 模拟来电：到点后真正弹出全屏来电界面并响铃，而不是只弹一条 toast。
-/// 设置页只负责把联系人/时间传进来；计时器、铃声、接听/挂断都在这里。
+/// 模拟来电：到点后真正弹出全屏来电界面并响铃。
+/// 界面按「微」首页的来电页复刻：头像虚化铺满、方形圆角头像、姓名、
+/// 「邀请你语音通话...」、底部挂断/接听；接通后是麦克风/挂断/扬声器。
 final class SimulatedCall: NSObject {
     static let shared = SimulatedCall()
 
@@ -49,18 +50,19 @@ final class SimulatedCall: NSObject {
         pendingAvatar = nil
     }
 
-    /// App 从后台回来时 Timer 可能没走，补一次“是否已经到点”。
-    @objc private func appDidBecomeActive() {
-        guard let date = pendingDate, date <= Date() else { return }
-        fire(name: pendingName, avatar: pendingAvatar)
-    }
-
     func preview() {
         guard let url = Self.ringtoneURL else { return }
+        try? AVAudioSession.sharedInstance().setCategory(.playback, options: [.mixWithOthers])
+        try? AVAudioSession.sharedInstance().setActive(true)
         let player = try? AVAudioPlayer(contentsOf: url)
         player?.numberOfLoops = 0
         player?.play()
         DispatchQueue.main.asyncAfter(deadline: .now() + 3) { player?.stop() }
+    }
+
+    @objc private func appDidBecomeActive() {
+        guard let date = pendingDate, date <= Date() else { return }
+        fire(name: pendingName, avatar: pendingAvatar)
     }
 
     private func fire(name: String, avatar: UIImage?) {
@@ -90,13 +92,12 @@ final class SimulatedCallViewController: UIViewController {
     private var vibrateTimer: Timer?
     private var durationTimer: Timer?
     private var seconds = 0
-    private let gradientLayer = CAGradientLayer()
+    private var micOn = true
+    private var speakerOn = false
 
-    private let subtitleLabel = UILabel()
-    private let durationLabel = UILabel()
-    private let acceptButton = UIButton(type: .system)
-    private let declineButton = UIButton(type: .system)
-    private let hangupButton = UIButton(type: .system)
+    private let statusLabel = UILabel()
+    private let actionsStack = UIStackView()
+    private let avatarView = UIImageView()
 
     init(name: String, avatar: UIImage?) {
         self.callerName = name
@@ -109,9 +110,9 @@ final class SimulatedCallViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = Draw.color(0xff111827)
         buildBackground()
         buildContent()
+        renderRinging()
         startRinging()
     }
 
@@ -120,116 +121,139 @@ final class SimulatedCallViewController: UIViewController {
         stopAll()
     }
 
-    override func viewDidLayoutSubviews() {
-        super.viewDidLayoutSubviews()
-        gradientLayer.frame = view.bounds
-    }
-
     private func buildBackground() {
-        gradientLayer.frame = view.bounds
-        gradientLayer.colors = [Draw.color(0xff1f2937).cgColor,
-                                Draw.color(0xff0b1020).cgColor,
-                                UIColor.black.cgColor]
-        gradientLayer.locations = [0, 0.45, 1]
-        view.layer.insertSublayer(gradientLayer, at: 0)
+        view.backgroundColor = .black
+        if let avatar {
+            let background = UIImageView(image: avatar)
+            background.contentMode = .scaleAspectFill
+            background.frame = view.bounds
+            background.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+            background.transform = CGAffineTransform(scaleX: 1.25, y: 1.25)
+            view.addSubview(background)
+
+            let blur = UIVisualEffectView(effect: UIBlurEffect(style: .dark))
+            blur.frame = view.bounds
+            blur.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+            view.addSubview(blur)
+        }
+        let dim = UIView(frame: view.bounds)
+        dim.backgroundColor = UIColor(white: 0, alpha: 0.35)
+        dim.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        view.addSubview(dim)
     }
 
     private func buildContent() {
-        let avatarView = UIImageView()
         avatarView.contentMode = .scaleAspectFill
-        avatarView.layer.cornerRadius = 62
+        avatarView.layer.cornerRadius = 9
         avatarView.layer.masksToBounds = true
-        avatarView.backgroundColor = Draw.color(0xff374151)
+        avatarView.backgroundColor = UIColor(white: 0.22, alpha: 1)
         if let avatar {
             avatarView.image = avatar
         } else {
             let initial = UILabel()
             initial.text = String(callerName.prefix(1))
-            initial.font = .systemFont(ofSize: 48, weight: .semibold)
+            initial.font = .systemFont(ofSize: 34, weight: .regular)
             initial.textColor = .white
             initial.textAlignment = .center
-            initial.frame = CGRect(x: 0, y: 0, width: 124, height: 124)
+            initial.frame = CGRect(x: 0, y: 0, width: 76, height: 76)
             avatarView.addSubview(initial)
         }
 
         let nameLabel = UILabel()
         nameLabel.text = callerName
-        nameLabel.font = .systemFont(ofSize: 32, weight: .semibold)
+        nameLabel.font = .systemFont(ofSize: 20, weight: .regular)
         nameLabel.textColor = .white
         nameLabel.textAlignment = .center
 
-        subtitleLabel.text = "邀请你语音通话"
-        subtitleLabel.font = .systemFont(ofSize: 16)
-        subtitleLabel.textColor = UIColor(white: 1, alpha: 0.62)
-        subtitleLabel.textAlignment = .center
+        statusLabel.text = "邀请你语音通话..."
+        statusLabel.font = .systemFont(ofSize: 15)
+        statusLabel.textColor = UIColor(white: 0.72, alpha: 1)
+        statusLabel.textAlignment = .center
 
-        durationLabel.font = .monospacedDigitSystemFont(ofSize: 16, weight: .regular)
-        durationLabel.textColor = UIColor(white: 1, alpha: 0.62)
-        durationLabel.textAlignment = .center
-        durationLabel.isHidden = true
+        actionsStack.axis = .horizontal
+        actionsStack.alignment = .top
+        actionsStack.distribution = .equalSpacing
+        actionsStack.spacing = 34
 
-        for item in [avatarView, nameLabel, subtitleLabel, durationLabel] {
+        for item in [avatarView, nameLabel, statusLabel, actionsStack] {
             item.translatesAutoresizingMaskIntoConstraints = false
             view.addSubview(item)
         }
 
-        configureRound(acceptButton, background: Draw.color(0xff22c55e),
-                       symbol: "phone.fill", label: "接听")
-        configureRound(declineButton, background: Draw.color(0xffef4444),
-                       symbol: "phone.down.fill", label: "拒绝")
-        configureRound(hangupButton, background: Draw.color(0xffef4444),
-                       symbol: "phone.down.fill", label: "挂断")
-        hangupButton.isHidden = true
-        acceptButton.addTarget(self, action: #selector(acceptCall), for: .touchUpInside)
-        declineButton.addTarget(self, action: #selector(declineCall), for: .touchUpInside)
-        hangupButton.addTarget(self, action: #selector(declineCall), for: .touchUpInside)
-
         NSLayoutConstraint.activate([
-            avatarView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 150),
+            avatarView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor,
+                                            constant: 140),
             avatarView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            avatarView.widthAnchor.constraint(equalToConstant: 124),
-            avatarView.heightAnchor.constraint(equalToConstant: 124),
+            avatarView.widthAnchor.constraint(equalToConstant: 76),
+            avatarView.heightAnchor.constraint(equalToConstant: 76),
 
-            nameLabel.topAnchor.constraint(equalTo: avatarView.bottomAnchor, constant: 28),
-            nameLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 32),
-            nameLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -32),
+            nameLabel.topAnchor.constraint(equalTo: avatarView.bottomAnchor, constant: 18),
+            nameLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 24),
+            nameLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -24),
 
-            subtitleLabel.topAnchor.constraint(equalTo: nameLabel.bottomAnchor, constant: 10),
-            subtitleLabel.leadingAnchor.constraint(equalTo: nameLabel.leadingAnchor),
-            subtitleLabel.trailingAnchor.constraint(equalTo: nameLabel.trailingAnchor),
+            statusLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 24),
+            statusLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -24),
+            statusLabel.bottomAnchor.constraint(equalTo: actionsStack.topAnchor, constant: -54),
 
-            durationLabel.topAnchor.constraint(equalTo: subtitleLabel.bottomAnchor, constant: 6),
-            durationLabel.leadingAnchor.constraint(equalTo: nameLabel.leadingAnchor),
-            durationLabel.trailingAnchor.constraint(equalTo: nameLabel.trailingAnchor),
-
-            declineButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 54),
-            declineButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor,
-                                                  constant: -86),
-            declineButton.widthAnchor.constraint(equalToConstant: 78),
-            declineButton.heightAnchor.constraint(equalToConstant: 78),
-
-            acceptButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -54),
-            acceptButton.bottomAnchor.constraint(equalTo: declineButton.bottomAnchor),
-            acceptButton.widthAnchor.constraint(equalToConstant: 78),
-            acceptButton.heightAnchor.constraint(equalToConstant: 78),
-
-            hangupButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            hangupButton.bottomAnchor.constraint(equalTo: declineButton.bottomAnchor),
-            hangupButton.widthAnchor.constraint(equalToConstant: 78),
-            hangupButton.heightAnchor.constraint(equalToConstant: 78),
+            actionsStack.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            actionsStack.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor,
+                                                 constant: -54),
+            actionsStack.heightAnchor.constraint(equalToConstant: 96),
         ])
     }
 
-    private func configureRound(_ button: UIButton, background: UIColor,
-                                symbol: String, label: String) {
+    private func actionItem(title: String, symbol: String, background: UIColor,
+                            selector: Selector) -> UIView {
+        let button = UIButton(type: .system)
         button.backgroundColor = background
         button.tintColor = .white
-        button.layer.cornerRadius = 39
+        button.layer.cornerRadius = 33.5
         button.setImage(UIImage(systemName: symbol), for: .normal)
         button.imageView?.contentMode = .scaleAspectFit
+        button.addTarget(self, action: selector, for: .touchUpInside)
         button.translatesAutoresizingMaskIntoConstraints = false
-        button.accessibilityLabel = label
-        view.addSubview(button)
+        NSLayoutConstraint.activate([
+            button.widthAnchor.constraint(equalToConstant: 67),
+            button.heightAnchor.constraint(equalToConstant: 67),
+        ])
+        button.accessibilityLabel = title
+
+        let label = UILabel()
+        label.text = title
+        label.font = .systemFont(ofSize: 12)
+        label.textColor = UIColor(white: 0.78, alpha: 1)
+        label.textAlignment = .center
+
+        let stack = UIStackView(arrangedSubviews: [button, label])
+        stack.axis = .vertical
+        stack.alignment = .center
+        stack.spacing = 9
+        return stack
+    }
+
+    private func renderRinging() {
+        actionsStack.arrangedSubviews.forEach { $0.removeFromSuperview() }
+        actionsStack.addArrangedSubview(actionItem(title: "挂断", symbol: "phone.down.fill",
+                                                   background: Draw.color(0xffd54241),
+                                                   selector: #selector(declineCall)))
+        actionsStack.addArrangedSubview(actionItem(title: "接听", symbol: "phone.fill",
+                                                   background: Draw.color(0xff1bc911),
+                                                   selector: #selector(acceptCall)))
+    }
+
+    private func renderActive() {
+        actionsStack.arrangedSubviews.forEach { $0.removeFromSuperview() }
+        actionsStack.addArrangedSubview(actionItem(title: micOn ? "麦克风已开" : "麦克风已关",
+                                                   symbol: micOn ? "mic.fill" : "mic.slash.fill",
+                                                   background: UIColor(white: 0.24, alpha: 1),
+                                                   selector: #selector(toggleMic)))
+        actionsStack.addArrangedSubview(actionItem(title: "挂断", symbol: "phone.down.fill",
+                                                   background: Draw.color(0xffd54241),
+                                                   selector: #selector(declineCall)))
+        actionsStack.addArrangedSubview(actionItem(title: speakerOn ? "扬声器已开" : "扬声器已关",
+                                                   symbol: speakerOn ? "speaker.wave.2.fill" : "speaker.slash.fill",
+                                                   background: UIColor(white: 0.24, alpha: 1),
+                                                   selector: #selector(toggleSpeaker)))
     }
 
     private func startRinging() {
@@ -253,19 +277,26 @@ final class SimulatedCallViewController: UIViewController {
 
     @objc private func acceptCall() {
         stopRinging()
-        acceptButton.isHidden = true
-        declineButton.isHidden = true
-        hangupButton.isHidden = false
-        subtitleLabel.text = "通话中"
-        durationLabel.isHidden = false
-        durationLabel.text = "00:00"
+        renderActive()
+        statusLabel.text = "00:00"
         seconds = 0
         durationTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
             guard let self else { return }
             self.seconds += 1
-            self.durationLabel.text = String(format: "%02d:%02d",
-                                             self.seconds / 60, self.seconds % 60)
+            self.statusLabel.text = String(format: "%02d:%02d",
+                                           self.seconds / 60, self.seconds % 60)
         }
+    }
+
+    @objc private func toggleMic() {
+        micOn.toggle()
+        renderActive()
+    }
+
+    @objc private func toggleSpeaker() {
+        speakerOn.toggle()
+        try? AVAudioSession.sharedInstance().overrideOutputAudioPort(speakerOn ? .speaker : .none)
+        renderActive()
     }
 
     @objc private func declineCall() {
