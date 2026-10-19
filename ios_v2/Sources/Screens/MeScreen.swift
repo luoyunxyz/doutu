@@ -128,10 +128,18 @@ final class MeScreen: Screen {
         if s.banner {
             d.art(art["banner"], bannerRect)
         }
-        // Java:163-165 八张服务卡
+        // Java:163-165 八张服务卡。
+        // 素材边缘自带 1~2px 边框；iOS 3x 屏上会变成很明显的细线。裁掉最外圈再画。
         for (i, card) in cards.enumerated() {
-            d.art(art["card\(i + 1)"], CGRect(x: cardLeft, y: card.0,
-                                              width: cardRight - cardLeft, height: card.1 - card.0))
+            let key = "card\(i + 1)"
+            let rect = CGRect(x: cardLeft, y: card.0,
+                              width: cardRight - cardLeft, height: card.1 - card.0)
+            if let image = art[key], let cg = image.cgImage, cg.width > 4, cg.height > 4 {
+                let crop = CGRect(x: 2, y: 2, width: cg.width - 4, height: cg.height - 4)
+                d.art(image, src: crop, rect)
+            } else {
+                d.art(art[key], rect)
+            }
         }
         d.ctx.restoreGState()
 
@@ -141,14 +149,8 @@ final class MeScreen: Screen {
     /// Java:175-190
     private func headerPlate(_ d: Draw, _ name: String, artHeight: CGFloat, bottom: CGFloat) {
         guard let bitmap = art[name] else { return }
-        let height = min(bottom, artHeight)
-        d.art(bitmap, CGRect(x: 0, y: 0, width: Self.W, height: height + 2))
-        if height + 1 >= bottom { return }
-        // 位图最后一行延伸到卡片顶部，盖住过滤残留的浅色接缝（Java:187-189）
-        let srcW = bitmap.size.width * bitmap.scale
-        let srcH = bitmap.size.height * bitmap.scale
-        _ = (srcW, srcH)
-        d.art(bitmap, src: nil, CGRect(x: 0, y: height + 1, width: Self.W, height: bottom - (height + 1)))
+        // 一次画满到 bottom，避免上下两段拼接在 3x 屏上出现一条明显的接缝线。
+        d.art(bitmap, CGRect(x: 0, y: 0, width: Self.W, height: bottom))
     }
 
     /// Java:192-218
