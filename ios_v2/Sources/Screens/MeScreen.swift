@@ -131,23 +131,11 @@ final class MeScreen: Screen {
             d.art(art["banner"], bannerRect)
         }
         // Java:163-165 八张服务卡。
-        // 素材边缘自带 1~2px 边框；iOS 3x 屏上会变成很明显的细线。裁掉最外圈再画。
+        // 和 Android 一样直接按原尺寸画素材：不裁边、不垫白底、不描边。
+        // 附加的裁剪/描边会在 3x 屏上自己产生灰边，反而比素材本身更明显。
         for (i, card) in cards.enumerated() {
-            let key = "card\(i + 1)"
-            let rect = CGRect(x: cardLeft, y: card.0,
-                              width: cardRight - cardLeft, height: card.1 - card.0)
-            // 卡片素材外圈是半透明白边，直接叠在灰底上会形成一条浅紫/灰色描边。
-            // 先用同尺寸白圆角垫底，让半透明边缘融进白色，再画卡片。
-            d.round(rect, radius: 10, .white)
-            if let image = art[key], let cg = image.cgImage, cg.width > 4, cg.height > 4 {
-                let crop = CGRect(x: 6, y: 6, width: cg.width - 12, height: cg.height - 12)
-                d.art(image, src: crop, rect)
-            } else {
-                d.art(art[key], rect)
-            }
-            // 最后用白色细边压住图片边缘插值产生的 1px 灰线。
-            d.roundStroke(rect, radius: 10, .white, width: 2)
-            d.roundStroke(rect.insetBy(dx: -1, dy: -1), radius: 11, .white, width: 2)
+            d.art(art["card\(i + 1)"], CGRect(x: cardLeft, y: card.0,
+                                              width: cardRight - cardLeft, height: card.1 - card.0))
         }
         d.ctx.restoreGState()
 
