@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 2.3.2：好友资料页头像/昵称间距`  
-> 最新代码版本：`2.3.2 / 20032`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 2.3.3：好友资料页顶部留白`  
+> 最新代码版本：`2.3.3 / 20033`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.3.1 / 20031`（已通过 USB 查询确认）
 
 ---
@@ -447,6 +447,10 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
 20. **好友资料页头像离昵称太近**
     - `.fw-friend-profile__hero { gap: 22px }` 在 iOS 14.3 的 WKWebView 里同样不生效，实测头像右缘和昵称左缘间距是 0；
     - 2.3.2 用 `.fw-friend-profile__avatar-button { margin-right: 22px }` 补回间距。
+
+21. **好友资料页顶到屏幕最上沿**
+    - 真机隐藏状态栏后 `env(safe-area-inset-top)` 实测为 0，`.fw-friend-profile-page` 的 `padding-top` 也就是 0，返回箭头和页头贴顶；
+    - 2.3.3 改成 `calc(env(safe-area-inset-top, 0px) + 12px)`，整个资料页下移 12px，顶部留出呼吸空间。
 
 ---
 
