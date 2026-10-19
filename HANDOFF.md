@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 2.4.6：原生加号/搜索热区只在微信主页生效`  
-> 最新代码版本：`2.4.6 / 20046`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 2.4.7：账单页钉到视口 + 钱包顶部间距按 DOM 判断`  
+> 最新代码版本：`2.4.7 / 20047`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.5 / 20045`（已通过 USB 查询确认）
 
 ---
@@ -491,6 +491,11 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
     - 「账单」div 在 `x 255…374, y 48…72`，右侧正好被这两个原生热区盖住，真实触摸根本到不了网页；
     - 2.4.6 让原生只在这些路由显示热区：`''` / `#/wechat` / `#/wechat/index`；其它路由（钱包/账单/服务等）隐藏；
     - 实现：WKUserScript 监听 hashchange，向 `DoutuApp` 桥发 `headerTargets: [home]`，原生按钮默认隐藏，只在主页显示。
+
+29. **账单页仍不可见 / 钱包又贴顶**
+    - 真机加载的 `wechat-pay-pages.css` 里 `#fw-pay-pages-host` 的 `inset:0` 丢了，fixed 元素按静态位置落到屏幕下方（实测 host top=845），自绘账单页一直在屏幕外；
+    - 2.4.7 只在 `kind === 'bills'` 时给 host 显式 `top/left/right/bottom:0`，账单页钉到视口；钱包仍用 bundled 页面，不改变其 UI；
+    - `applyBundledPaySpacing` 不再按 hash 判断，只要可见的钱包 root 在 DOM 里就加 40px —— 即使 hash 还残留 `?bills=1`，钱包也不会再贴顶。
 
 ---
 

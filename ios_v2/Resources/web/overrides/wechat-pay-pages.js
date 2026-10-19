@@ -1701,6 +1701,14 @@
        page.style.setProperty('height', '100%', 'important');
        page.style.setProperty('min-height', '100%', 'important');
      }     old.style.cssText = 'position:fixed;inset:0;z-index:2147483647;display:block;visibility:visible;opacity:1;pointer-events:auto;box-sizing:border-box;width:100vw;height:100vh;transform:none';
+    // 2026-10-19: 这份 CSS 在真机上丢了 `inset:0`，fixed 元素按静态位置落到屏幕下方，
+    // 自绘页一直不可见。账单页没有 bundled 版本，必须由自绘层显示：单独把它钉到视口。
+    if (kind === 'bills') {
+      old.style.setProperty('top', '0', 'important');
+      old.style.setProperty('left', '0', 'important');
+      old.style.setProperty('right', '0', 'important');
+      old.style.setProperty('bottom', '0', 'important');
+    }
     old.scrollTop = 0;
     old.querySelectorAll('.fw-pay-scroll').forEach(el => { el.scrollTop = 0; });
     old.dataset.fwRoute = h;
@@ -2509,20 +2517,19 @@
       return;
     }
     // 2026-10-19: 钱包 / 零钱页是 bundled React 页面，顶部没有 safe-area，
-    // 返回箭头和标题直接贴屏幕最上沿。给整页 root 加 16px 顶部间距。
-    if (route === routes.wallet || route === routes.balance) {
-      const page = Array.from(document.querySelectorAll('.relative.flex.flex-col.overflow-hidden'))
-        .find((el) => {
-          const r = el.getBoundingClientRect();
-          return r.width >= innerWidth * 0.85 && r.height >= innerHeight * 0.8
-            && (el.innerText.includes('零钱') || el.innerText.includes('钱包'));
-        });
-      if (page) {
-        page.style.setProperty('padding-top', '40px', 'important');
-        page.style.setProperty('box-sizing', 'border-box', 'important');
-        page.dataset.fwTopSpacing = '1';
-        return;
-      }
+    // 返回箭头和标题直接贴屏幕最上沿。这里不按 hash 判断：即使 hash 还停在上次
+    // 的 ?bills=1，只要可见的钱包页 root 在 DOM 里，就补上顶部间距。
+    const walletPage = Array.from(document.querySelectorAll('.relative.flex.flex-col.overflow-hidden'))
+      .find((el) => {
+        const r = el.getBoundingClientRect();
+        return r.width >= innerWidth * 0.85 && r.height >= innerHeight * 0.8
+          && (el.innerText.includes('零钱') || el.innerText.includes('钱包'));
+      });
+    if (walletPage) {
+      walletPage.style.setProperty('padding-top', '40px', 'important');
+      walletPage.style.setProperty('box-sizing', 'border-box', 'important');
+      walletPage.dataset.fwTopSpacing = '1';
+      return;
     }
     // 离开服务/钱包页：把之前加的顶部间距收回去（元素本身通常已经被 React 换掉了）。
     document.querySelectorAll('[data-fw-top-spacing="1"]').forEach((el) => {
