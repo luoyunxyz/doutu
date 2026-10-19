@@ -1777,6 +1777,49 @@
       swipeState.row.style.transform='translateX('+Math.max(-72,Math.min(72,dx*0.55)).toFixed(1)+'px)';
       if(event.cancelable)event.preventDefault();
     },{passive:false});
+    // 2026-10-19: 滑动只改一行时，CSS 尾巴会跟着 row class 变，但转账/红包/通话
+    // 卡片的方向是创建时写死的（背景图、状态 class、图标顺序）。这里在改边之后
+    // 把卡片自己的方向也同步过来，避免「人已经到左边了，箭头还朝右」。
+    const syncMessageRowSide = (row, side) => {
+      const incoming = side === 'incoming';
+      const message = row.__fwMessage || {};
+      const transferArt = row.querySelector('.fw-transfer-chat-card__artwork');
+      if (transferArt) {
+        transferArt.src = incoming
+          ? './assets/wechat-transfer-card-bg-incoming.png'
+          : './assets/wechat-transfer-card-bg.png';
+        const desc = row.querySelector('.fw-transfer-chat-card__content span');
+        if (desc && !String(message.note || '').trim()) {
+          desc.textContent = incoming ? '转账给你' : '你发起了一笔转账';
+        }
+      }
+      const stateCard = row.querySelector('.fw-tf-state');
+      if (stateCard) {
+        stateCard.classList.toggle('fw-tf-state--in', incoming);
+        const status = String(message.status || 'accepted');
+        const em = stateCard.querySelector('em');
+        if (em) em.textContent = status === 'returned'
+          ? (incoming ? '已退还' : '已被退还')
+          : (incoming ? '已收款' : '已被接收');
+      }
+      const redPacketArt = row.querySelector('.fw-hb-card__artwork');
+      if (redPacketArt) {
+        const claimed = !!message.claim;
+        redPacketArt.src = './assets/' + (claimed
+          ? (incoming ? 'wechat-redpacket-card-bg-light-incoming.png' : 'wechat-redpacket-card-bg-light.png')
+          : (incoming ? 'wechat-redpacket-card-bg-incoming.png' : 'wechat-redpacket-card-bg.png'));
+        const stateText = row.querySelector('.fw-hb-card__state');
+        if (stateText) stateText.textContent = incoming ? '已领取' : '已被领完';
+      }
+      const call = row.querySelector('.fw-call-msg');
+      if (call) {
+        const icon = call.querySelector('.fw-call-msg__icon');
+        const text = call.querySelector('.fw-call-msg__text');
+        if (icon && text) {
+          if (incoming) call.insertBefore(icon, text); else call.appendChild(icon);
+        }
+      }
+    };
     const finishSwipe=(event,cancelled)=>{
       cancelPress();
       const swipe=swipeState;
@@ -1798,6 +1841,7 @@
         else { row.append(content,avatar); }
         paintMessageAvatar(avatar, target);
       }
+      syncMessageRowSide(row, target);
       showToast(target==='incoming'?'已改为对方发送':'已改为我发送');
     };
     messages.addEventListener('pointerup',event=>finishSwipe(event,false));

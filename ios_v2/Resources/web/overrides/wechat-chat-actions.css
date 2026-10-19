@@ -4921,6 +4921,12 @@ body.fw-subpage-open .wechat-bottom-navbar { display:none !important; }
 .fw-local-friend-row--fallback { gap: 18px !important; }
 .fw-chat-message { gap: 56px !important; }
 
+/* 2026-10-19: iOS 14.3 的 WKWebView 不支持 flex gap，上面所有 .fw-chat-message 的
+   gap 在这台真机上实际等于 0，气泡和头像之间只剩 6px margin。改用头像 margin
+   做真实间距：气泡 6px + 头像 12px = 18px，尾巴 6px 后仍有 12px 可见距离。 */
+.fw-chat-message--outgoing .fw-chat-message__avatar { margin-left: 12px !important; }
+.fw-chat-message--incoming .fw-chat-message__avatar { margin-right: 12px !important; }
+
 /* 微信主页列表保持纵向滚动 */
 .wechat-dialogue-list {
   overflow-y: auto !important;
