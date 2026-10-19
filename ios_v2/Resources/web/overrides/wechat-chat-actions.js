@@ -1572,20 +1572,36 @@
       if (incoming) line.append(avatar, bubble); else line.append(bubble, avatar);
       messages.appendChild(line);
     };
+    // 唯一数据源：打招呼消息也存进 friend.messages，不再由 greeting 单独渲染。
+    // 这样滑动只改数组里的那一条，重新绘制时不可能多出副本。
+    const normalizeGreetingMessages = () => {
+      if (friend.isGroup) return;
+      if (!greeting.mine.text) greeting.mine.text = '我是' + getSelfName();
+      if (!greeting.friend.text) greeting.friend.text = '我通过了你的朋友验证请求，现在我们可以开始聊天了';
+      greeting.mine.type = 'greeting';
+      greeting.friend.type = 'greeting';
+      greeting.mine.id = greeting.mine.id || '__greeting_mine';
+      greeting.friend.id = greeting.friend.id || '__greeting_friend';
+      greeting.mine.timeLabel = '9月16日 14:11';
+      greeting.friend.timeLabel = '9月16日 14:23';
+
+      const greetingTexts = new Set([String(greeting.mine.text), String(greeting.friend.text)]);
+      friend.messages = friend.messages.filter(item => {
+        if (!item) return false;
+        if (item === greeting.mine || item === greeting.friend) return false;
+        if (item.type === 'greeting') return false;
+        if (item.type === 'notice' && item.text === '以上是打招呼的消息') return false;
+        // 旧数据里没有 type 的副本，只删跟打招呼完全同文案的项。
+        if (!item.type && greetingTexts.has(String(item.text || ''))) return false;
+        return true;
+      });
+      const notice = { type: 'notice', text: '以上是打招呼的消息' };
+      friend.messages.unshift(greeting.mine, notice, greeting.friend);
+    };
+
     const drawMessages = (keepScrollTop=false) => {
+      normalizeGreetingMessages();
       const previousScrollTop=messages.scrollTop;
-      // 打招呼的两条由 greeting.mine/friend 单独渲染；如果历史数据把它们
-      // 又复制进了 friend.messages，滑动后就会重复出现。这里按对象和文案
-      // 去重，确保一次只渲染一份。
-      const greetingTexts = new Set([
-        String(greeting.mine.text || ('我是' + getSelfName())),
-        String(greeting.friend.text || '我通过了你的朋友验证请求，现在我们可以开始聊天了'),
-      ]);
-      friend.messages = friend.messages.filter((item, index, arr) =>
-        item !== greeting.mine && item !== greeting.friend
-        && !(item && (item.type === 'greeting' || greetingTexts.has(String(item.text || ''))))
-        && arr.indexOf(item) === index
-      );
       messages.replaceChildren();
       // 两条消息之间的最小间隔：不足这个时间就不插新的时间（微信的做法）。
       // 想改成 5 分钟只动这一个数字。
@@ -1595,24 +1611,15 @@
         const notice=document.createElement('div'); notice.className='fw-chat-notice';
         notice.textContent='你邀请 '+(Array.isArray(friend.members)?friend.members.join('、'):'')+' 加入了群聊';
         messages.appendChild(notice);
-      } else {
-        if (!greeting.mine.deleted) {
-          makeTime('9月16日 14:11');
-          // Once edited the opening lines carry their own text.
-          makeBubble(greeting.mine.text || ('我是' + getSelfName()), messageSide(greeting.mine), friendAvatar, greeting.mine);
-        }
-        if (!greeting.friend.deleted) {
-          makeTime('9月16日 14:23');
-          const notice=document.createElement('div'); notice.className='fw-chat-notice'; notice.textContent='以上是打招呼的消息'; messages.appendChild(notice);
-          makeBubble(greeting.friend.text || '我通过了你的朋友验证请求，现在我们可以开始聊天了', messageSide(greeting.friend), friendAvatar, greeting.friend);
-        }
       }
       // 2026-10-17：时间分割线改成微信那套 —— **跟上一条消息隔得够久才插一条**。
       // 以前是「分钟数一变就插一条」，连着聊十句能插出七八个时间，看着很吵；
       // 现在的规则：距上一条消息在 TIME_GAP_MS（3 分钟）之内就不再显示时间。
       let lastMessageAt = 0;
       for (const message of friend.messages) {
-        if (message.createdAt) {
+        if (message.timeLabel) {
+          makeTime(message.timeLabel);
+        } else if (message.createdAt) {
           const at = new Date(message.createdAt).getTime();
           if (Number.isFinite(at)) {
             // lastMessageAt=0 表示这是第一条（没有任何可比较的对象）→ 照常显示时间。
@@ -1623,6 +1630,13 @@
             }
             lastMessageAt = at;
           }
+        }
+        if (message.type === 'notice') {
+          const notice = document.createElement('div');
+          notice.className = 'fw-chat-notice';
+          notice.textContent = message.text || '';
+          messages.appendChild(notice);
+          continue;
         }
         const side=messageSide(message);
         if(message.type==='transfer')makeTransferBubble(message,side);
