@@ -2531,5 +2531,26 @@
   apply();
   new MutationObserver(apply).observe(document.documentElement, { childList: true, subtree: true });
   setInterval(apply, 300);
+
+  // 2026-10-19: bundled 钱包页右上角的「账单」只是一个 div，没有点击处理。
+  // 在 capture 阶段命中顶部右侧的「账单」，直接进我们自己的账单页。
+  document.addEventListener('click', (event) => {
+    const route = currentRoute();
+    if (route !== routes.wallet && route !== routes.balance) return;
+    const target = event.target instanceof Element ? event.target : null;
+    if (!target) return;
+    let node = target;
+    for (let i = 0; node && i < 4; i += 1, node = node.parentElement) {
+      if (String(node.textContent || '').trim() !== '账单') continue;
+      const r = node.getBoundingClientRect();
+      if (r.top <= 120 && r.left >= innerWidth * 0.55) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        location.hash = routes.bills;
+        return;
+      }
+      break;
+    }
+  }, true);
 })();
 })();

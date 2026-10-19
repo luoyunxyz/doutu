@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 2.4.3：钱包/零钱页顶部留白微调到 40px`  
-> 最新代码版本：`2.4.3 / 20043`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 2.4.4：钱包右上角「账单」可点击`  
+> 最新代码版本：`2.4.4 / 20044`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.3.7 / 20037`（已通过 USB 查询确认）
 
 ---
@@ -478,6 +478,11 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
     - 2.3.9 在 `applyBundledPaySpacing` 里按路由找到整页 root，加 `padding-top:16px !important` + `box-sizing:border-box`；
     - 用户反馈 16px、32px 偏短，2.4.1 加到 56px；又反馈太宽，2.4.2 回调到 44px；再反馈短一点，2.4.3 微调到 **40px**，离开钱包/零钱页时自动收回；
     - 自绘的 `.fw-pay-page` 本身已有 31px 顶部 padding，不受影响。
+
+27. **钱包右上角「账单」点不动**
+    - bundled 钱包页右上角的「账单」只是一个 `<div class="flex items-center justify-end">账单</div>`，没有 onClick；自绘页的 `.fw-wallet-bill` 在另一个 host 上，用户点不到；
+    - 2.4.4 在 document capture 阶段按路由 + 顶部右侧位置 + 精确「账单」文本命中它，直接 `location.hash = '/wechat/wallet/bills'` 进入账单页；
+    - 判断条件：`rect.top <= 120 && rect.left >= innerWidth * 0.55`，不会误伤页面中间的「账单」文字。
 
 ---
 
