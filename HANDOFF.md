@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 2.3.8：点设备登录横条不再被 7 项工具菜单抢走`  
-> 最新代码版本：`2.3.8 / 20038`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 2.3.9：钱包/零钱页顶部留白`  
+> 最新代码版本：`2.3.9 / 20039`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.3.7 / 20037`（已通过 USB 查询确认）
 
 ---
@@ -472,6 +472,11 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
     - 设备登录横条位于 CSS y 82~125，正好落在原生 `blankTapped` 的 y<=140 工具菜单热区里；
     - 原生先弹 7 项工具菜单，网页的 click 虽然打开了设备弹层，也被工具菜单盖住/关掉；
     - 2.3.8 在原生 blankTapped 里用 `document.elementFromPoint(x,y).closest('.wechat-device-row')` 命中判断，点横条时直接 return 0，只让网页打开设备切换弹层；点横条上方的真正空白才弹工具菜单。
+
+26. **钱包 / 零钱页顶部贴屏幕**
+    - 这两个路由实际显示的是 bundled React 页面（`.relative.flex.flex-col.overflow-hidden`），顶部没有 safe-area，返回箭头和标题贴屏幕最上沿；
+    - 2.3.9 在 `applyBundledPaySpacing` 里按路由找到整页 root，加 `padding-top:16px !important` + `box-sizing:border-box`，离开钱包/零钱页时自动收回；
+    - 自绘的 `.fw-pay-page` 本身已有 31px 顶部 padding，不受影响。
 
 ---
 

@@ -2504,7 +2504,23 @@
       alignBundledServiceCard();
       return;
     }
-    // 离开服务页：把之前加的顶部间距收回去（元素本身通常已经被 React 换掉了）。
+    // 2026-10-19: 钱包 / 零钱页是 bundled React 页面，顶部没有 safe-area，
+    // 返回箭头和标题直接贴屏幕最上沿。给整页 root 加 16px 顶部间距。
+    if (route === routes.wallet || route === routes.balance) {
+      const page = Array.from(document.querySelectorAll('.relative.flex.flex-col.overflow-hidden'))
+        .find((el) => {
+          const r = el.getBoundingClientRect();
+          return r.width >= innerWidth * 0.85 && r.height >= innerHeight * 0.8
+            && (el.innerText.includes('零钱') || el.innerText.includes('钱包'));
+        });
+      if (page) {
+        page.style.setProperty('padding-top', '16px', 'important');
+        page.style.setProperty('box-sizing', 'border-box', 'important');
+        page.dataset.fwTopSpacing = '1';
+        return;
+      }
+    }
+    // 离开服务/钱包页：把之前加的顶部间距收回去（元素本身通常已经被 React 换掉了）。
     document.querySelectorAll('[data-fw-top-spacing="1"]').forEach((el) => {
       el.style.removeProperty('margin-top');
       el.style.removeProperty('padding-top');
