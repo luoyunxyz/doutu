@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 1.0.0(41)：黑色支付宝图标去 alpha 重打包`  
-> 最新代码版本：`1.0.0 / 41`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 1.0.0(42)：钱包/余额页面按屏幕宽动态缩放，铺满 Max`  
+> 最新代码版本：`1.0.0 / 42`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -1214,6 +1214,15 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
     - iOS IconServices 对 alternate icon 的 alpha 通道比较敏感，可能出现切换失败/图标空白；
     - 1.0.0(41) 用 PIL 把黑金支付宝图标全部转成无 alpha 的 RGB PNG（黑底合成），保留原尺寸；
     - 其他 `AppIconAlipay` / `AppIconWechat` 未改。
+
+137. **钱包/余额在 Max 上有明显边框**
+    - 微信 WebView 的 viewport 固定为 `width=360, initial-scale=1`；在 430pt 宽的 Pro Max 上，360 排版没有按屏宽放大，右侧/两侧会留下边；
+    - `wechat-pay-pages.css` 又用 `100vw/100vh`，与缩放后的视口不一致，白卡和灰色背景没有铺满；
+    - 1.0.0(42)：
+      - `viewportShim` 用 `screen.width / 360` 计算 `initial-scale`/`maximum-scale`，让 360 基准在 390/430/440 宽屏都铺满；
+      - 加 `viewport-fit=cover`；
+      - 追加 CSS：`html,body,#root` 高度 100%，`#fw-pay-pages-host` 宽高 100% + inset 0，`.fw-pay-page` min-height 100%；
+      - 顶部/底部用 `env(safe-area-inset-top/bottom)` 适配刘海和 Home 指示条。
 
 ---
 

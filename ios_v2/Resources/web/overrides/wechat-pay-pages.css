@@ -723,3 +723,26 @@
    两张卡会贴在一起。这里用 margin-bottom 补出参考图里的中间缝。 */
 #fw-pay-pages-host .fw-bc__card { margin-bottom: 7.25px; }
 
+
+/* 适配 iPhone Max / Plus 等宽屏：360 排版基准按屏幕宽缩放后，页面必须铺满视口。 */
+html, body, #root {
+  height: 100%;
+  min-height: 100%;
+}
+#fw-pay-pages-host {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 100% !important;
+  inset: 0 !important;
+}
+#fw-pay-pages-host .fw-pay-page {
+  min-height: 100% !important;
+}
+@supports (padding: env(safe-area-inset-top)) {
+  #fw-pay-pages-host .fw-pay-page {
+    padding-top: calc(31px + env(safe-area-inset-top, 0px)) !important;
+  }
+  #fw-pay-pages-host .fw-pay-page .fw-pay-scroll {
+    padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+}

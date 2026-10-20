@@ -995,7 +995,14 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
         m.setAttribute('name', 'viewport');
         (document.head || document.documentElement).appendChild(m);
       }
-      m.setAttribute('content', 'width=360, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
+      // 360 是 Android 的排版基准；按实际屏幕宽度算 initial-scale，
+      // 让 iPhone 14/15/16 Pro Max 这种 430pt 宽屏也铺满，不出现两侧留边。
+      var screenWidth = Number((window.screen && screen.width) || 360);
+      if (!isFinite(screenWidth) || screenWidth <= 0) screenWidth = 360;
+      var scale = screenWidth / 360;
+      m.setAttribute('content',
+        'width=360, initial-scale=' + scale +
+        ', maximum-scale=' + scale + ', user-scalable=no, viewport-fit=cover');
     })();
     """
 
