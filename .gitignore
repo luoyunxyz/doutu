@@ -54,3 +54,7 @@ server/.env.*
 
 # 批量真机截图（比对用，不入库）
 _ios/shots/
+
+# iOS v2 资源图片（Assets.xcassets / 我的页截图）
+!ios_v2/Resources/Assets.xcassets/**/*.png
+!ios_v2/Resources/me_content.png
