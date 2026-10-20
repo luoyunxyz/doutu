@@ -211,10 +211,19 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
     /// Android 那边用系统返回键/手势；iOS 这个模态没有导航栏，页面本身也没有返回按钮。
     /// 早期版本在左上角叠了一个「‹ 返回」胶囊，但它不属于 Android 的界面，
     /// 会盖住微信标题栏 —— 与「UI 一模一样」冲突，所以去掉，只保留边缘手势。
+    private var tabSwipeStartX: CGFloat = 0
+
     private func installBackAffordance() {
         let edge = UIScreenEdgePanGestureRecognizer(target: self, action: #selector(handleEdgePan(_:)))
         edge.edges = .left
+        edge.delegate = self
         view.addGestureRecognizer(edge)
+
+        // 微主页四个根 tab 左右滑切换：微信 / 通讯录 / 发现 / 我。
+        let tabPan = UIPanGestureRecognizer(target: self, action: #selector(handleTabSwipe(_:)))
+        tabPan.delegate = self
+        tabPan.cancelsTouchesInView = false
+        view.addGestureRecognizer(tabPan)
     }
 
     /// iOS 没有 Android 的系统返回键；只留边缘滑动的话很多用户会卡在微主页里。
@@ -390,8 +399,30 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
         performEdgeBack()
     }
 
-    @objc func handleEdgeBack() {
-        performEdgeBack()
+
+    @objc private func handleTabSwipe(_ gesture: UIPanGestureRecognizer) {
+        if gesture.state == .began {
+            tabSwipeStartX = gesture.location(in: view).x
+            return
+        }
+        guard gesture.state == .ended else { return }
+        let translation = gesture.translation(in: view)
+        guard abs(translation.x) > 60, abs(translation.y) < 60,
+              tabSwipeStartX > 40 else { return }
+
+        let tabs = ["#/wechat", "#/wechat/contacts", "#/wechat/discover", "#/wechat/my"]
+        webView.evaluateJavaScript("String(location.hash || '')") { [weak self] result, _ in
+            guard let self else { return }
+            let hash = (result as? String) ?? ""
+            let normalized = hash.hasSuffix("/") ? String(hash.dropLast()) : hash
+            guard let index = tabs.firstIndex(of: normalized) else { return }
+            let next = translation.x < 0
+                ? min(index + 1, tabs.count - 1)
+                : max(index - 1, 0)
+            guard next != index else { return }
+            self.webView.evaluateJavaScript("location.hash = '\(tabs[next])'",
+                                             completionHandler: nil)
+        }
     }
 
     private func performEdgeBack() {
@@ -410,9 +441,12 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
           try {
             if (window.__fwHandleChatPayBack && window.__fwHandleChatPayBack()) return true;
           } catch (e) {}
+          // 四个根 tab 页面再滑就是退出微主页，不能 history.back 又回到服务页。
+          var h = String(location.hash || '').replace(/\/$/, '');
+          var roots = {'#/wechat':1, '#/wechat/contacts':1, '#/wechat/discover':1, '#/wechat/my':1};
+          if (roots[h]) return false;
           // 其他深层 hash 路由：逐级 history.back。
-          var h = String(location.hash || '');
-          if (h && h !== '#/wechat' && h !== '#/wechat/' && history.length > 1) {
+          if (h && history.length > 1) {
             try { history.back(); return true; } catch (e) {}
           }
           return false;

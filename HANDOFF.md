@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 1.0.0(31)：移除 UIApplicationDelegateAdaptor；CI 打印 error 行`  
-> 最新代码版本：`1.0.0 / 31`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 1.0.0(32)：微主页四 tab 左右滑；钱包逐级返回`  
+> 最新代码版本：`1.0.0 / 32`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -1133,6 +1133,15 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
       `grep -nE "error:|fatal error:" build.log | tail -40`
       这样用户贴的最后 50 行一定能看到真正的 error 行；
     - 如果仍失败，下一步直接按日志里的 file:line 修，不再猜。
+
+128. **微信钱包逐级返回 + 四个 tab 左右滑**
+    - `wechat-pay-pages.js` 已有 `window.__fwHandleBack`：balance→wallet→service，service→#/wechat/my；
+    - 1.0.0(32) 原生脚本先调 `__fwHandleBack()`，再调 `__fwHandleChatPayBack()`，最后才 history.back；
+    - 四个根 tab（#/wechat、contacts、discover、my）不再 history.back，再滑直接关闭微主页；
+    - `WeChatV2Host` 增加 `UIPanGestureRecognizer`：仅在根 tab 页、水平位移 >60、垂直 <60、起点 x>40 时切换：
+      - 左滑 → 下一个 tab；
+      - 右滑 → 上一个 tab；
+      - 顺序：微信 → 通讯录 → 发现 → 我。
 
 ---
 

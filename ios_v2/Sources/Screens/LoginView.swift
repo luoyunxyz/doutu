@@ -334,12 +334,9 @@ final class LoginHostingController: UIHostingController<LoginView> {
     @objc private func edgeBack(_ gesture: UIScreenEdgePanGestureRecognizer) {
         guard gesture.state == .ended,
               gesture.translation(in: view).x > 60 else { return }
-        handleEdgeBack()
-    }
-
-    @objc func handleEdgeBack() {
         onEdgeBack?()
     }
+
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)

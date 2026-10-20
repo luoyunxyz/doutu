@@ -274,12 +274,9 @@ final class AppIconChooser: UIViewController {
     @objc private func edgeBack(_ gesture: UIScreenEdgePanGestureRecognizer) {
         guard gesture.state == .ended,
               gesture.translation(in: view).x > 60 else { return }
-        handleEdgeBack()
-    }
-
-    @objc func handleEdgeBack() {
         close()
     }
+
 
     @objc private func addWebClipTapped() {
         AppIconChooser.installWebClip(from: self)
