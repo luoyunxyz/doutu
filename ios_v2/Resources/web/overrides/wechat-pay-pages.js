@@ -125,8 +125,8 @@
   /* 2026-10-20: 钱包页按 Android 参考图重排：零钱 / 经营账户 / 零钱通 / 银行卡 /
      亲属卡 一组，分付 单独一组，支付分 / 支付设置 / 身份信息 / 客服中心 一组。
      图标是从参考图里逐个抠出来的透明 PNG（data URI），与 Android 版一致。 */
-  const walletRow = ({ name, iconKey, action, amount, small, note }) =>
-    `<button class="fw-wallet-row" type="button" ${action ? `data-go="${action}"` : ''}>` +
+  const walletRow = ({ key, name, iconKey, action, amount, small, note }) =>
+    `<button class="fw-wallet-row" type="button" data-wallet-key="${key}" ${action ? `data-go="${action}"` : ''}>` +
     `<span class="fw-wallet-row-icon">${walletIcon(iconKey)}</span>` +
     `<span class="fw-wallet-row-copy"><b>${name}</b>` +
     `${small ? `<small>${small}</small>` : ''}` +
@@ -135,19 +135,19 @@
     `${icon('arrow', '#c7c7c7')}</button>`;
   function walletPage() {
     const rows = [
-      walletRow({ name: '零钱', iconKey: 'change', action: '#/wechat/wallet/balance', amount: getBalanceAmount() }),
-      walletRow({ name: '经营账户', iconKey: 'business', amount: '1.93' }),
-      walletRow({ name: '零钱通', iconKey: 'diamond', small: '收益率0.89%', amount: '0.00' }),
-      walletRow({ name: '银行卡', iconKey: 'bank', action: routes.cards }),
-      walletRow({ name: '亲属卡', iconKey: 'relative' }),
-      walletRow({ name: '分付', iconKey: 'fenfu', note: '查看可用额度' }),
-      walletRow({ name: '支付分', iconKey: 'score' }),
-      walletRow({ name: '支付设置', iconKey: 'settings' }),
-      walletRow({ name: '身份信息', iconKey: 'identity' }),
-      walletRow({ name: '客服中心', iconKey: 'service' })
+      walletRow({ key: 'change', name: '零钱', iconKey: 'change', action: '#/wechat/wallet/balance', amount: getBalanceAmount() }),
+      walletRow({ key: 'business', name: '经营账户', iconKey: 'business', amount: '1.93' }),
+      walletRow({ key: 'diamond', name: '零钱通', iconKey: 'diamond', small: '收益率0.89%', amount: '0.00' }),
+      walletRow({ key: 'bank', name: '银行卡', iconKey: 'bank', action: routes.cards }),
+      walletRow({ key: 'relative', name: '亲属卡', iconKey: 'relative' }),
+      walletRow({ key: 'fenfu', name: '分付', iconKey: 'fenfu', note: '查看可用额度' }),
+      walletRow({ key: 'score', name: '支付分', iconKey: 'score' }),
+      walletRow({ key: 'settings', name: '支付设置', iconKey: 'settings' }),
+      walletRow({ key: 'identity', name: '身份信息', iconKey: 'identity' }),
+      walletRow({ key: 'service', name: '客服中心', iconKey: 'service' })
     ];
     return `<main class="fw-pay-page fw-pay-wallet">${header('钱包', '<button class="fw-wallet-bill" type="button" data-go="' + routes.bills + '">账单</button>', '#/wechat/service')}
-      <div class="fw-pay-scroll wallet-scroll"><section class="fw-wallet-list">${rows.slice(0, 5).join('')}</section><section class="fw-wallet-list">${rows[5]}</section><section class="fw-wallet-list">${rows.slice(6).join('')}</section></div></main>`;
+      <div class="fw-pay-scroll wallet-scroll"><section class="fw-wallet-list" data-wallet-group="main">${rows.slice(0, 5).join('')}</section><section class="fw-wallet-list" data-wallet-group="fenfu">${rows[5]}</section><section class="fw-wallet-list" data-wallet-group="more">${rows.slice(6).join('')}</section></div></main>`;
   }
   function getBalanceAmount() {
     const value = Number(localStorage.getItem('fw-balance-amount'));
@@ -1823,11 +1823,88 @@
     old.querySelectorAll('[data-receive-pay]').forEach(el => el.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); openReceivePayScreen(); }));
     bindBalanceEditor(old);
     bindPaymentPage(old);
+    if (kind === 'wallet') bindWalletPage(old);
     if (kind === 'bills') { bindBills(old); ensureApiBillAvatars(); }
     if (kind === 'withdraw') bindWithdraw(old);
     if (kind === 'cards') bindBankCardsPage(old.querySelector('.fw-bc') || old);
     if (kind === 'cardAdd') bindBankAddPage(old.querySelector('.fw-bc') || old);
     console.info('[pay-pages] rendered', kind, h, old.getBoundingClientRect().width, old.getBoundingClientRect().height);
+  }
+  /* 2026-10-20: 钱包页「点标题行空白处 → 勾选要显示的功能」，默认全部显示，
+     选择写入 localStorage，重开保持。 */
+  const WALLET_ROWS = [
+    { key: 'change', name: '零钱' },
+    { key: 'business', name: '经营账户' },
+    { key: 'diamond', name: '零钱通' },
+    { key: 'bank', name: '银行卡' },
+    { key: 'relative', name: '亲属卡' },
+    { key: 'fenfu', name: '分付' },
+    { key: 'score', name: '支付分' },
+    { key: 'settings', name: '支付设置' },
+    { key: 'identity', name: '身份信息' },
+    { key: 'service', name: '客服中心' }
+  ];
+  const WALLET_HIDDEN_KEY = 'fw-wallet-hidden';
+  function readWalletHidden() {
+    try {
+      const value = JSON.parse(localStorage.getItem(WALLET_HIDDEN_KEY) || '[]');
+      return new Set(Array.isArray(value) ? value.filter(v => typeof v === 'string') : []);
+    } catch (_) {
+      return new Set();
+    }
+  }
+  function writeWalletHidden(hidden) {
+    try {
+      localStorage.setItem(WALLET_HIDDEN_KEY, JSON.stringify(Array.from(hidden)));
+    } catch (_) { /* 存不下就只影响本次 */ }
+  }
+  function applyWalletVisibility(root, hidden) {
+    root.querySelectorAll('[data-wallet-key]').forEach(row => {
+      row.classList.toggle('is-hidden', hidden.has(row.dataset.walletKey));
+    });
+    root.querySelectorAll('[data-wallet-group]').forEach(group => {
+      const rows = Array.from(group.querySelectorAll('[data-wallet-key]'));
+      group.classList.toggle('is-hidden', rows.length > 0 && rows.every(row => row.classList.contains('is-hidden')));
+    });
+  }
+  function bindWalletPage(root) {
+    const hidden = readWalletHidden();
+    applyWalletVisibility(root, hidden);
+    const sheet = document.createElement('div');
+    sheet.className = 'fw-wallet-sheet';
+    sheet.innerHTML = `<div class="fw-wallet-sheet-mask"></div>
+      <section class="fw-wallet-sheet-panel" role="dialog" aria-modal="true" aria-label="选择要显示的功能">
+        <header class="fw-wallet-sheet-head"><h2>选择要显示的功能</h2><button type="button" class="fw-wallet-sheet-done" data-sheet-close>完成</button></header>
+        <div class="fw-wallet-sheet-list">${WALLET_ROWS.map(({ key, name }) => `<button type="button" class="fw-wallet-sheet-row" data-sheet-key="${key}" aria-checked="true"><span class="fw-wallet-sheet-icon">${walletIcon(key)}</span><b>${name}</b><span class="fw-wallet-sheet-check"></span></button>`).join('')}</div>
+      </section>`;
+    root.appendChild(sheet);
+    const syncChecks = () => {
+      sheet.querySelectorAll('[data-sheet-key]').forEach(row => {
+        const on = !hidden.has(row.dataset.sheetKey);
+        row.classList.toggle('is-on', on);
+        row.setAttribute('aria-checked', on ? 'true' : 'false');
+      });
+    };
+    const open = () => { syncChecks(); sheet.classList.add('is-open'); };
+    const close = () => sheet.classList.remove('is-open');
+    const header = root.querySelector('.fw-pay-header');
+    if (header) {
+      header.addEventListener('click', e => {
+        if (e.target.closest('.fw-pay-back, .fw-wallet-bill')) return;
+        open();
+      });
+    }
+    sheet.querySelector('.fw-wallet-sheet-mask').addEventListener('click', close);
+    sheet.querySelector('[data-sheet-close]').addEventListener('click', close);
+    sheet.querySelectorAll('[data-sheet-key]').forEach(row => {
+      row.addEventListener('click', () => {
+        const key = row.dataset.sheetKey;
+        if (hidden.has(key)) hidden.delete(key); else hidden.add(key);
+        writeWalletHidden(hidden);
+        applyWalletVisibility(root, hidden);
+        syncChecks();
+      });
+    });
   }
   function bindBalanceEditor(root) {
     const trigger = root.querySelector('.fw-balance-amount-button');

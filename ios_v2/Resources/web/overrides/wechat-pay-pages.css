@@ -130,6 +130,23 @@
 #fw-pay-pages-host .fw-wallet-row-icon .fw-pay-icon{stroke:currentColor!important;fill:none!important;stroke-linecap:round;stroke-linejoin:round}
 #fw-pay-pages-host .fw-wallet-row-copy small{display:inline-block;color:#e99b37!important;margin-left:6px!important;font-size:11px!important}
 #fw-pay-pages-host .fw-wallet-row-copy .fw-wallet-note{font-style:normal;display:inline-block;color:#e99b37!important;margin-left:6px!important;font-size:11px!important}
+#fw-pay-pages-host .fw-wallet-row.is-hidden,#fw-pay-pages-host .fw-wallet-list.is-hidden{display:none!important}
+#fw-pay-pages-host .fw-wallet-sheet{position:fixed;inset:0;z-index:40;display:none}
+#fw-pay-pages-host .fw-wallet-sheet.is-open{display:block}
+#fw-pay-pages-host .fw-wallet-sheet-mask{position:absolute;inset:0;background:rgba(0,0,0,.42)}
+#fw-pay-pages-host .fw-wallet-sheet-panel{position:absolute;left:0;right:0;bottom:0;max-height:72vh;background:#fff;border-radius:12px 12px 0 0;display:flex;flex-direction:column;overflow:hidden;padding-bottom:calc(10px + env(safe-area-inset-bottom))}
+#fw-pay-pages-host .fw-wallet-sheet-head{height:50px;min-height:50px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;border-bottom:1px solid #f2f2f2}
+#fw-pay-pages-host .fw-wallet-sheet-head h2{font-size:16px;font-weight:500;margin:0;color:#191919}
+#fw-pay-pages-host .fw-wallet-sheet-done{font-size:15px;color:#07c160;background:none;border:0;padding:0;cursor:pointer}
+#fw-pay-pages-host .fw-wallet-sheet-list{overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 16px}
+#fw-pay-pages-host .fw-wallet-sheet-row{height:49px;width:100%;display:flex;align-items:center;gap:12px;border:0;border-bottom:1px solid #f5f5f5;background:#fff;padding:0;text-align:left;cursor:pointer}
+#fw-pay-pages-host .fw-wallet-sheet-row:last-child{border-bottom:0}
+#fw-pay-pages-host .fw-wallet-sheet-icon{width:22px;height:22px;flex:none;display:grid;place-items:center}
+#fw-pay-pages-host .fw-wallet-sheet-icon .fw-wallet-row-img{width:22px;height:22px;display:block;object-fit:contain}
+#fw-pay-pages-host .fw-wallet-sheet-row b{flex:1;font-size:15px;font-weight:400;color:#191919}
+#fw-pay-pages-host .fw-wallet-sheet-check{width:20px;height:20px;border-radius:50%;border:1px solid #cfcfcf;box-sizing:border-box;position:relative;flex:none}
+#fw-pay-pages-host .fw-wallet-sheet-row.is-on .fw-wallet-sheet-check{background:#07c160;border-color:#07c160}
+#fw-pay-pages-host .fw-wallet-sheet-row.is-on .fw-wallet-sheet-check::after{content:'';position:absolute;left:6px;top:3px;width:5px;height:9px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg)}
 #fw-pay-pages-host .fw-wallet-row-copy b{font-size:15px!important}
 #fw-pay-pages-host .fw-wallet-row strong{font-size:15px!important}
 #fw-pay-pages-host .fw-wallet-row>.fw-pay-icon{stroke:#aaa!important;fill:none!important;stroke-linecap:round;stroke-linejoin:round}
