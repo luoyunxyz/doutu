@@ -508,7 +508,8 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
                 // 快路径：上一页快照在 touchstart 时就已经预加载好，并锁定成一张静态图。
                 // 整个手势只移动 top/preview 两个 UIView，不调用 JS、不抓图、不重排版。
                 fastEdgeBack = true
-                setSwipeFreeze(true)
+                // 快路径连 JS 都不调：手势期间只有两个 UIView 的 transform。
+                // CSS 冻结推迟到提交时，在预览图下面做。
                 makeSwipeSnapshot(waitForBottom: false)
                 if let top = swipeSnapshot {
                     let width = max(view.bounds.width, 1)
@@ -599,6 +600,7 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
                     if self.fastEdgeBack {
                         // 预加载的上一页已经跟着手指走完了；现在才让网页真正返回。
                         // 网页在快照下面重排，用户看不到，也不参与手势帧。
+                        self.setSwipeFreeze(true)
                         self.suppressPreviewCapture = true
                         if let target = self.backPreviews.popLast() {
                             // 返回后的目标页 = 新的当前页；它的快照可以继续给下一次返回用。
