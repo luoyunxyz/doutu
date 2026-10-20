@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 1.0.0(35)：微信滑动时先渲染下一层再拉开`  
-> 最新代码版本：`1.0.0 / 35`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 1.0.0(36)：微信滑动预渲染下一层，竖直滚动不误切 tab`  
+> 最新代码版本：`1.0.0 / 36`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -1169,6 +1169,7 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
       - tab：`tabOriginalHash` 记录当前 tab；`updateTabPreview()` 在 changed 时按方向提前 `location.hash` 到相邻 tab；取消时恢复原 tab；
       - 边缘返回：`prepareEdgePreview()` 判断不是根 tab 后，先执行 `performEdgeBack()` 把网页切到上一层，再让快照跟手滑出；取消时 `history.forward()` 恢复；
       - 根 tab（微信/通讯录/发现/我）不预切，滑出后直接关闭微主页。
+    - 1.0.0(36) `updateTabPreview` 增加 `abs(dx) > 20` 门槛，避免竖直滚动时轻微横移就预切 tab。
 
 ---
 

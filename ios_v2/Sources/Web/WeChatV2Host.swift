@@ -510,6 +510,7 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
 
     /// 快照盖住页面时先把下一页 tab 渲染到下面，拖动时露出的就是下一层。
     private func updateTabPreview(_ dx: CGFloat) {
+        guard abs(dx) > 20 else { return }
         let tabs = ["#/wechat", "#/wechat/contacts", "#/wechat/discover", "#/wechat/my"]
         guard let original = tabOriginalHash,
               let index = tabs.firstIndex(of: original) else { return }
