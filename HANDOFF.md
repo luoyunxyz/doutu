@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 1.0.0(14)：登录页关闭改为直接 dismiss 控制器`  
-> 最新代码版本：`1.0.0 / 14`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 1.0.0(15)：关闭登录页时先移除自定义转场`  
+> 最新代码版本：`1.0.0 / 15`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -1001,7 +1001,8 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
     - 三个动作都依赖 SwiftUI `presentationMode.dismiss()`；在 `.fullScreen` + 自定义 `transitioningDelegate` 下它可能没有真正 dismiss 宿主控制器；
     - 1.0.0(14) 新增 `LoginCloseBox`，持有弱引用 `LoginHostingController`，`LoginView` 通过 `onClose` 直接调用 `controller.dismiss(animated:true)`；
     - × 改为一个 44×44 的 `Text("×")` 按钮，避免 SF Symbol 尺寸/裁剪变形；
-    - 登录成功、邀请码重置都走 `closeLogin()`，不再依赖 `presentationMode`。
+    - 登录成功、邀请码重置都走 `closeLogin()`，不再依赖 `presentationMode`；
+    - 1.0.0(15) 关闭前先把 `transitioningDelegate` 置 nil，避免自定义 dismiss animator 卡住；present 仍是自定义从右进入。
 
 ---
 

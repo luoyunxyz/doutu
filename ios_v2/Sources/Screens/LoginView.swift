@@ -349,7 +349,11 @@ final class LoginHostingController: UIHostingController<LoginView> {
 private final class LoginCloseBox {
     weak var controller: UIViewController?
     func close() {
-        controller?.dismiss(animated: true)
+        guard let controller else { return }
+        // 关闭时不再走自定义转场：自定义 animator 在部分系统上会让 dismiss
+        // 卡住，出现“点了 × 完全没反应”。present 仍从右侧进入，关闭用系统动画。
+        controller.transitioningDelegate = nil
+        controller.dismiss(animated: true)
     }
 }
 
