@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 1.0.0(60)：钱包路由隐藏 bundled #root，自绘页终于可见`  
-> 最新代码版本：`1.0.0 / 60`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 1.0.0(61)：自绘宿主挂到 <html>，脱离 body transform`  
+> 最新代码版本：`1.0.0 / 61`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -1528,6 +1528,36 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
     - 现在自绘钱包页是唯一可见层，10 行/分付/支付设置/客服中心、顶部红框
       和底部勾选面板都能看到；
     - 版本 1.0.0(60)。改动文件：`wechat-pay-pages.js`、`index.html`、
+      `WeChatV2Host.swift`、`project.yml`。
+
+153. **1.0.0(61)：白屏的真正原因——宿主被 body 的 transform 推到视口外**
+    - 60 装完后爱思助手实时屏幕是**全白**；60 日志：
+      ```
+      WALLET page mounted 10 | block | 2147483647 |
+      WALLET sheet state fw-wallet-sheet is-open | block | 1688 | true |
+        block | visible | 2147483647 | 390 |
+        flex items-center justify-center font-medium
+      ```
+      - 宿主 `display=block / zIndex=max`，但**面板 top=1688**（视口只有 844）；
+      - 打开前顶部 `elementFromPoint` 是 React 的 class
+        `flex items-center justify-center font-medium`，不是我们的 `.fw-pay-header`；
+    - 结论：bundled React 的页面过渡会给 **`<body>` 加 transform**。
+      自绘宿主之前 `document.body.appendChild`，于是 `position:fixed` 变成
+      **相对被 transform 的 body** 定位，整页落到 top≈1688 的视口外；
+      用户看到的是 React 页/白屏，面板也在视口外，所以怎么点都没反应；
+    - 61：
+      1. 自绘宿主改挂 **`document.documentElement`（`<html>`）**，
+         在 body 的 transform 之外，`position:fixed` 回到视口；
+         创建、挂载、原生 force 三处都改；
+      2. 自绘路由（钱包/零钱/支付/pinned）把 `#root` 设为 **`display:none`**
+         （不只是 visibility:hidden，避免 React 子层 visibility:visible 留下白层）；
+         服务页/普通微信页恢复 `display=''`；
+      3. 缓存版本统一 `?v=61`；
+    - 预期 61：
+      - 宿主 top≈0、面板 top≈0；
+      - 打开前 `elementFromPoint(195,50)` 是 `.fw-pay-header`/`h1`（我们的页）；
+      - 钱包页直接显示 10 行，红框空白处弹面板；
+    - 版本 1.0.0(61)。改动文件：`wechat-pay-pages.js`、`index.html`、
       `WeChatV2Host.swift`、`project.yml`。
 
 ---

@@ -1763,7 +1763,7 @@
     if (!kind) {
       if (old) old.remove();
       const root = document.getElementById('root');
-      if (root) root.style.visibility = '';
+      if (root) { root.style.display = ''; root.style.visibility = ''; }
       document.documentElement.classList.remove('fw-pay-route-active');
       if (typeof window.__fwSyncSystemBars === 'function') window.__fwSyncSystemBars(); else if (window.DoutuApp && window.DoutuApp.setPayPageSystemBars) window.DoutuApp.setPayPageSystemBars(false);
       return;
@@ -1774,7 +1774,7 @@
     if (kind === 'service') {
       if (old) old.remove();
       const root = document.getElementById('root');
-      if (root) root.style.visibility = '';
+      if (root) { root.style.display = ''; root.style.visibility = ''; }
       document.documentElement.classList.add('fw-pay-route-active');
       if (typeof window.__fwSyncSystemBars === 'function') window.__fwSyncSystemBars();
       else if (window.DoutuApp && window.DoutuApp.setPayPageSystemBars) window.DoutuApp.setPayPageSystemBars(true);
@@ -1786,9 +1786,19 @@
     // 之前只藏了 pinned 页，钱包路由下 React 的钱包页（数字人民币/消费者保护）
     // 还在，且它的模态层会把 z-index 同样是 max 的自绘宿主压在下面，用户看到的
     // 一直是 bundled 钱包页，点顶部自然没反应。
+    const hideBundled = pinnedPage || kind === 'wallet' || kind === 'balance' || kind === 'payment';
     const appRoot = document.getElementById('root');
-    if (appRoot) appRoot.style.visibility = (pinnedPage || kind === 'wallet' || kind === 'balance' || kind === 'payment') ? 'hidden' : '';
-    if (!old) { old = document.createElement('div'); old.id = HOST_ID; document.body.appendChild(old); }
+    if (appRoot) {
+      // display:none 才能把 React 页里自行 visibility:visible 的浮层一起藏掉；
+      // 只 visibility:hidden 时会留下一个白色 React 层盖住自绘页。
+      appRoot.style.display = hideBundled ? 'none' : '';
+      appRoot.style.visibility = '';
+    }
+    // 注意：挂到 <html> 而不是 <body>。bundled React 的页面过渡会给 body 加 transform，
+    // 自绘宿主如果在 body 里，position:fixed 会相对被 transform 的 body 定位，
+    // 真机上整页跑到 top≈1688 的视口外（用户看到 bundled 页/白屏），
+    // 点顶部打开的面板也在视口外。挂到 documentElement 可脱离 body 的 transform。
+    if (!old) { old = document.createElement('div'); old.id = HOST_ID; document.documentElement.appendChild(old); }
     old.innerHTML = kind === 'wallet' ? walletPage() : kind === 'balance' ? balancePage() : kind === 'bills' ? (billDetailId() ? billDetailPage(billDetailId()) : billsPage()) : kind === 'withdraw' ? withdrawPage() : kind === 'cards' ? bankCardsPage() : kind === 'cardAdd' ? bankAddPage() : paymentPage();
          // Apply the reference top safe area inline as a last-resort guard against host stylesheet order.
      const page = old.querySelector('.fw-pay-page');
@@ -1912,8 +1922,8 @@
     root.style.visibility = 'visible';
     root.style.zIndex = '2147483647';
     root.style.pointerEvents = 'auto';
-    if (root.parentElement !== document.body || root.nextElementSibling) {
-      document.body.appendChild(root);
+    if (root.parentElement !== document.documentElement || root.nextElementSibling) {
+      document.documentElement.appendChild(root);
     }
     try {
       window.webkit.messageHandlers.DoutuApp.postMessage({
@@ -2781,8 +2791,8 @@
       existing.style.zIndex = '2147483647';
       existing.style.pointerEvents = 'auto';
       // 如果 React 后续又往 body 尾部挂了浮层，把自绘钱包页重新提到最后。
-      if (existing.parentElement !== document.body || existing.nextElementSibling) {
-        document.body.appendChild(existing);
+      if (existing.parentElement !== document.documentElement || existing.nextElementSibling) {
+        document.documentElement.appendChild(existing);
       }
       if (existing.dataset.fwRoute !== h) render();
       return 1;
