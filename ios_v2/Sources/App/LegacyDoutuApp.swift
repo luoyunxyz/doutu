@@ -1317,11 +1317,13 @@ final class Router {
             }
         case "key:del":
             if let state = self.host?.state as? WithdrawV2Screen.State, !state.amount.isEmpty {
+                Haptics.impact(.light)
                 state.amount = String(state.amount.dropLast())
                 self.host?.setNeedsDisplay()
             }
         case "key:dot":
             if let state = self.host?.state as? WithdrawV2Screen.State, !state.amount.contains(".") {
+                Haptics.impact(.light)
                 state.amount = state.amount.isEmpty ? "0." : state.amount + "."
                 self.host?.setNeedsDisplay()
             }
@@ -1333,6 +1335,7 @@ final class Router {
             }
         case "pin:del":
             if let state = self.host?.state as? WithdrawV2Screen.State, !state.pin.isEmpty {
+                Haptics.impact(.light)
                 state.pin = String(state.pin.dropLast())
                 self.host?.setNeedsDisplay()
             }
@@ -1395,6 +1398,8 @@ final class Router {
             if let state = self.host?.state as? WithdrawV2Screen.State,
                state.pin.count < 6, let digit = t.last, digit.isNumber {
                 state.pin.append(digit)
+                // 假键盘也要有按键反馈；第六位留给下面的成功触觉，避免连震两下。
+                if state.pin.count < 6 { Haptics.impact(.light) }
                 // 六位齐了 → 进「提现成功」页（Android `WithdrawActivity` 262-271）
                 if state.pin.count == 6 {
                     let amount = WithdrawV2Screen.value(state)
@@ -1418,6 +1423,7 @@ final class Router {
             // key:0 … key:9
             if let state = self.host?.state as? WithdrawV2Screen.State, let digit = t.last,
                digit.isNumber {
+                Haptics.impact(.light)
                 state.amount += String(digit)
                 self.host?.setNeedsDisplay()
             }
