@@ -1232,6 +1232,8 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
             handlePageHash(old: oldHash, new: newHash)
         case "pageScroll":
             invalidateCurrentSnapshot(hash: args.first as? String ?? "")
+        case "walletCustomize":
+            CrashLog.append("WALLET customize tap")
         default:
             // 其余方法（相册保存、来电音频、键盘、系统栏…）先按成功/空值应答，
             // 让页面逻辑不至于卡住；逐个补齐记在 README 的待办里。

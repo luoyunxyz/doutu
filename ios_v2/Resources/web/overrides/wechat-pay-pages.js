@@ -147,6 +147,7 @@
       walletRow({ key: 'service', name: '客服中心', iconKey: 'service' })
     ];
     return `<main class="fw-pay-page fw-pay-wallet">${header('钱包', '<button class="fw-wallet-bill" type="button" data-go="' + routes.bills + '">账单</button>', '#/wechat/service')}
+      <button type="button" class="fw-wallet-customize-hit" aria-label="选择要显示的功能"></button>
       <div class="fw-pay-scroll wallet-scroll"><section class="fw-wallet-list" data-wallet-group="main">${rows.slice(0, 5).join('')}</section><section class="fw-wallet-list" data-wallet-group="fenfu">${rows[5]}</section><section class="fw-wallet-list" data-wallet-group="more">${rows.slice(6).join('')}</section></div></main>`;
   }
   function getBalanceAmount() {
@@ -1891,6 +1892,17 @@
     if (header) {
       header.addEventListener('click', e => {
         if (e.target.closest('.fw-pay-back, .fw-wallet-bill')) return;
+        open();
+      });
+    }
+    // 顶部 31px 安全区 + 47px 标题栏都是“空白处”：用一层透明热区盖住，
+    // 避免用户点到状态栏下方的灰条时没有反应。
+    const hit = root.querySelector('.fw-wallet-customize-hit');
+    if (hit) {
+      hit.addEventListener('click', e => {
+        e.preventDefault();
+        e.stopPropagation();
+        try { window.webkit.messageHandlers.DoutuApp.postMessage({ method: 'walletCustomize', args: [], callbackId: null }); } catch (_) {}
         open();
       });
     }

@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 1.0.0(55)：钱包行显隐勾选（点标题行空白处，默认全选）`  
-> 最新代码版本：`1.0.0 / 55`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 1.0.0(56)：钱包顶部空白热区（含 31px 安全区）`  
+> 最新代码版本：`1.0.0 / 56`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -1429,6 +1429,23 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
       勾选圆点 iOS 绿（#07c160）；CSS 追加 `.fw-wallet-sheet*` 系列；
     - 版本 1.0.0(55)。改动文件：`wechat-pay-pages.js`、`wechat-pay-pages.css`、
       `project.yml`。
+
+148. **1.0.0(56)：钱包顶部空白热区**
+    - 用户反馈「点钱包顶部空白处没反应」；真机 55 日志里顶部点按是
+      `WEBTAP blank y=18.66` / `y=47.33`——y=18 落在页面顶部 31px 安全区，
+      **在 `.fw-pay-header` 之外**，标题栏的 click 监听收不到；
+    - 加一层透明热区 `.fw-wallet-customize-hit`：
+      - `position:absolute;top:0;left:56px;right:64px;height:78px;z-index:6`，
+        覆盖「31px 顶部安全区 + 47px 标题栏」的中间区域；
+      - 左 56px 避开返回、右 64px 避开「账单」，两者仍可正常点；
+      - 点热区 → 打开同一个 `.fw-wallet-sheet`；
+      - JS 同时 `postMessage({method:'walletCustomize'})`，原生记
+        `WALLET customize tap`，下次日志可以确认点击有没有到 JS；
+    - 浏览器实测热区命中：
+      `top(195,18) → BUTTON.fw-wallet-customize-hit`、
+      `title(195,54) → 同`、`back(30,54) → 返回`、`bill(360,54) → 账单`；
+    - 版本 1.0.0(56)。改动文件：`wechat-pay-pages.js`、`wechat-pay-pages.css`、
+      `WeChatV2Host.swift`、`project.yml`。
 
 ---
 

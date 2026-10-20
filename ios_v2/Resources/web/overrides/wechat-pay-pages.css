@@ -131,6 +131,8 @@
 #fw-pay-pages-host .fw-wallet-row-copy small{display:inline-block;color:#e99b37!important;margin-left:6px!important;font-size:11px!important}
 #fw-pay-pages-host .fw-wallet-row-copy .fw-wallet-note{font-style:normal;display:inline-block;color:#e99b37!important;margin-left:6px!important;font-size:11px!important}
 #fw-pay-pages-host .fw-wallet-row.is-hidden,#fw-pay-pages-host .fw-wallet-list.is-hidden{display:none!important}
+#fw-pay-pages-host .fw-pay-wallet{position:relative}
+#fw-pay-pages-host .fw-wallet-customize-hit{position:absolute;top:0;left:56px;right:64px;height:78px;z-index:6;background:transparent;border:0;padding:0;margin:0;cursor:pointer;-webkit-appearance:none;appearance:none;outline:none;-webkit-tap-highlight-color:transparent}
 #fw-pay-pages-host .fw-wallet-sheet{position:fixed;inset:0;z-index:40;display:none}
 #fw-pay-pages-host .fw-wallet-sheet.is-open{display:block}
 #fw-pay-pages-host .fw-wallet-sheet-mask{position:absolute;inset:0;background:rgba(0,0,0,.42)}
