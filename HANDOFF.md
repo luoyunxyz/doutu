@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 1.0.0(15)：关闭登录页时先移除自定义转场`  
-> 最新代码版本：`1.0.0 / 15`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 1.0.0(16)：登录页改用系统导航 push，彻底移除自定义转场`  
+> 最新代码版本：`1.0.0 / 16`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -1003,6 +1003,15 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
     - × 改为一个 44×44 的 `Text("×")` 按钮，避免 SF Symbol 尺寸/裁剪变形；
     - 登录成功、邀请码重置都走 `closeLogin()`，不再依赖 `presentationMode`；
     - 1.0.0(15) 关闭前先把 `transitioningDelegate` 置 nil，避免自定义 dismiss animator 卡住；present 仍是自定义从右进入。
+
+112. **登录页仍无法关闭 / 变形**
+    - 自定义 `UIViewControllerAnimatedTransitioning` 在部分系统上会让 present/dismiss 卡住；
+    - 1.0.0(16) 彻底删除 `LoginSlideTransition`，改用系统 `UINavigationController`：
+      - 先 present 一个空导航控制器（无动画）；
+      - 再 `pushViewController(LoginHostingController, animated:true)`，系统标准从右向左；
+      - 关闭直接 `navigation.dismiss(animated:true)`；
+    - `LoginCloseBox` 改为弱引用导航控制器，× / 登录成功 / 重置跳转都走同一条 dismiss；
+    - 登录布局继续用 maxWidth 撑满，× 用文字按钮。
 
 ---
 

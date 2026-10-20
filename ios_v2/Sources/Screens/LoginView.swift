@@ -347,13 +347,9 @@ final class LoginHostingController: UIHostingController<LoginView> {
 /// 用当前最上层控制器把登录表单弹出来（UIKit 世界里调用 SwiftUI 视图的标准做法）。
 @MainActor
 private final class LoginCloseBox {
-    weak var controller: UIViewController?
+    weak var navigation: UINavigationController?
     func close() {
-        guard let controller else { return }
-        // 关闭时不再走自定义转场：自定义 animator 在部分系统上会让 dismiss
-        // 卡住，出现“点了 × 完全没反应”。present 仍从右侧进入，关闭用系统动画。
-        controller.transitioningDelegate = nil
-        controller.dismiss(animated: true)
+        navigation?.dismiss(animated: true)
     }
 }
 
@@ -364,9 +360,14 @@ enum LoginPresenter {
         let box = LoginCloseBox()
         let controller = LoginHostingController(
             rootView: LoginView(onDone: onDone, onClose: { box.close() }))
-        box.controller = controller
-        controller.modalPresentationStyle = .fullScreen
-        controller.transitioningDelegate = LoginSlideTransition.shared
+
+        // 用一个空导航控制器承载：present 时无动画，再 push 登录页，
+        // 得到和 Android 一样的“从右向左进入”，也避免自定义转场导致 dismiss 卡死。
+        let nav = UINavigationController(rootViewController: UIViewController())
+        nav.setNavigationBarHidden(true, animated: false)
+        nav.modalPresentationStyle = .fullScreen
+        box.navigation = nav
+
         // 登录/注册页不铺水印（会盖住输入框；Android 侧同样跳过登录页）
         WatermarkOverlay.beginSuppress()
         controller.onDismiss = {
@@ -376,6 +377,8 @@ enum LoginPresenter {
             // 登录页完全消失后再执行 resetInvite 等挂起跳转。
             Router.shared?.runPendingAfterLoginDismiss()
         }
-        host.present(controller, animated: true)
+        host.present(nav, animated: false) {
+            nav.pushViewController(controller, animated: true)
+        }
     }
 }
