@@ -1256,8 +1256,9 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
         不再用子视图：UIView 的子视图永远盖在自身绘制内容之上，放子视图会把扫描线/按钮全遮住。
         相机页宿主变透明，z 序为「相机 → 页面浮层 → 底栏/转场快照」；
         相机不可用时 `CameraPreviewView` 自己是黑底 + 提示，白色控件仍可见；
-      - `carouselDrag/Snap` 仍留在扩展里：Zhima 的实现没有拿到按下点 y，启用后会在任何横向拖动上
-        误移轮播，需要先给协议加 `startY` 再做；
+      - `carouselDrag/Snap` 也已提升，并给协议加 `startY`：只有按下点确实落在轮播带里才接管，
+        芝麻信用页的信用卡横向拖动/松手吸附现在真正可用；
+      - 宿主里「第一次调用既判断又应用 dx、随后又应用一次」的双倍位移也一并修掉；
     - **`selfScrolls` 也提升为 protocol 要求**：
       - 之前宿主恒读到扩展默认的 `true`，依赖宿主滚动的页面（模拟来电 / 意见反馈 / 去水印 / 邀请码重置…）
         永远滚不动；这些页的背景本来就画到了 `max(H, contentH)`，注释写着「滚到底不会露白底」，
