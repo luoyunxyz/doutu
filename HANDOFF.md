@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 1.0.0(58)：顶部 tap 原生兜底 + 标题/箭头/账单外全可点`  
-> 最新代码版本：`1.0.0 / 58`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 1.0.0(59)：HTML/CSS/JS 全量 cache-bust + 面板样式内联`  
+> 最新代码版本：`1.0.0 / 59`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -1486,6 +1486,30 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
         下一次日志能直接看到“当前 URL”和“自绘钱包页在不在”；
     - 原生返回码 2 时记 `WALLET native tap`；
     - 版本 1.0.0(58)。改动文件：`wechat-pay-pages.js`、`wechat-pay-pages.css`、
+      `WeChatV2Host.swift`、`project.yml`。
+
+151. **1.0.0(59)：为什么“安装了没生效”——缓存/样式没跟上**
+    - 真机 58 日志证明代码其实在跑：
+      ```
+      WALLET page mounted rows=10
+      WALLET tap probe hash=#/wechat/wallet page=1
+      WALLET native tap y=48.33
+      ```
+      自绘页已挂载、顶部 tap 已到原生、`__fwOpenWalletCustomize()` 已调用；
+      问题只剩「面板看不到」——最可能是 **WKWebView 缓存了旧的
+      wechat-pay-pages.css**（JS 已经是新的，CSS 没有 `.fw-wallet-sheet` 规则，
+      面板被当成普通 div 追加在 100% 高的主页面后面，直接落到视口外）；
+    - 59 三件事一起做：
+      1. **HTML 本身 cache-bust**：`index.html?v=59#/wechat`；
+      2. index 里的引用带版本：`wechat-pay-pages.css?v=59`、`.js?v=59`；
+      3. **把面板 + 新行图标/隐藏状态的关键 CSS 直接内联进 JS**
+         （`#fw-wallet-inline-style`），即使外部 CSS 是旧缓存，面板也一定是
+         `position:fixed` + 遮罩 + 底部白色面板 + 勾选圆点；
+    - 面板 `z-index` 提到 `2147483647`；自绘页挂载时重新 append 到 body 末尾，
+      避免被 React 后挂的浮层盖住；
+    - 新增 `WALLET sheet state ...` 日志：记录 `is-open`、`display`、面板 top、
+      宿主 `display/visibility/zIndex/width`、打开前顶部 `elementFromPoint`；
+    - 版本 1.0.0(59)。改动文件：`wechat-pay-pages.js`、`index.html`、
       `WeChatV2Host.swift`、`project.yml`。
 
 ---

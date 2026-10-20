@@ -169,7 +169,8 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
                 }
                 return
             }
-            let raw = "http://localhost:\(port)/index.html#/wechat"
+            // v=59：给 HTML 本身做 cache-bust，确保 index 里引用的新 CSS/JS 一定会重新拉取。
+        let raw = "http://localhost:\(port)/index.html?v=59#/wechat"
             CrashLog.append("WebHost loading \(raw)")
             if let url = URL(string: raw) {
                 self.webView.load(URLRequest(url: url))
@@ -1272,8 +1273,12 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
             let probeHash = args.count > 0 ? (args[0] as? String ?? "") : ""
             let probePage = args.count > 1 ? (args[1] as? String ?? "") : ""
             CrashLog.append("WALLET tap probe hash=\(probeHash) page=\(probePage)")
+        case "walletSheetState":
+            let parts = args.map { $0 as? String ?? "" }
+            CrashLog.append("WALLET sheet state \(parts.joined(separator: " | "))")
         case "walletPageMounted":
-            CrashLog.append("WALLET page mounted rows=\(args.first as? String ?? "?")")
+            let mounted = args.map { $0 as? String ?? "" }
+            CrashLog.append("WALLET page mounted \(mounted.joined(separator: " | "))")
         case "walletCustomize":
             CrashLog.append("WALLET customize tap")
         default:

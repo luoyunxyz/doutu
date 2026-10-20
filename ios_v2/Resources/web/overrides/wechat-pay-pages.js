@@ -1871,13 +1871,55 @@
       group.classList.toggle('is-hidden', rows.length > 0 && rows.every(row => row.classList.contains('is-hidden')));
     });
   }
+  function ensureWalletInlineStyles() {
+    if (document.getElementById('fw-wallet-inline-style')) return;
+    const style = document.createElement('style');
+    style.id = 'fw-wallet-inline-style';
+    style.textContent = `
+#fw-pay-pages-host .fw-wallet-row-icon{left:-37px;width:22px;height:22px}
+#fw-pay-pages-host .fw-wallet-row-icon .fw-wallet-row-img{width:22px;height:22px;display:block;object-fit:contain}
+#fw-pay-pages-host .fw-wallet-row-copy .fw-wallet-note{font-style:normal;display:inline-block;color:#e99b37!important;margin-left:6px!important;font-size:11px!important}
+#fw-pay-pages-host .fw-wallet-row.is-hidden,#fw-pay-pages-host .fw-wallet-list.is-hidden{display:none!important}
+#fw-pay-pages-host .fw-wallet-sheet{position:fixed;inset:0;z-index:2147483647;display:none}
+#fw-pay-pages-host .fw-wallet-sheet.is-open{display:block}
+#fw-pay-pages-host .fw-wallet-sheet-mask{position:absolute;inset:0;background:rgba(0,0,0,.42)}
+#fw-pay-pages-host .fw-wallet-sheet-panel{position:absolute;left:0;right:0;bottom:0;max-height:72vh;background:#fff;border-radius:12px 12px 0 0;display:flex;flex-direction:column;overflow:hidden;padding-bottom:calc(10px + env(safe-area-inset-bottom))}
+#fw-pay-pages-host .fw-wallet-sheet-head{height:50px;min-height:50px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;border-bottom:1px solid #f2f2f2}
+#fw-pay-pages-host .fw-wallet-sheet-head h2{font-size:16px;font-weight:500;margin:0;color:#191919}
+#fw-pay-pages-host .fw-wallet-sheet-done{font-size:15px;color:#07c160;background:none;border:0;padding:0;cursor:pointer}
+#fw-pay-pages-host .fw-wallet-sheet-list{overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 16px}
+#fw-pay-pages-host .fw-wallet-sheet-row{height:49px;width:100%;display:flex;align-items:center;gap:12px;border:0;border-bottom:1px solid #f5f5f5;background:#fff;padding:0;text-align:left;cursor:pointer}
+#fw-pay-pages-host .fw-wallet-sheet-row:last-child{border-bottom:0}
+#fw-pay-pages-host .fw-wallet-sheet-icon{width:22px;height:22px;flex:none;display:grid;place-items:center}
+#fw-pay-pages-host .fw-wallet-sheet-icon .fw-wallet-row-img{width:22px;height:22px;display:block;object-fit:contain}
+#fw-pay-pages-host .fw-wallet-sheet-row b{flex:1;font-size:15px;font-weight:400;color:#191919}
+#fw-pay-pages-host .fw-wallet-sheet-check{width:20px;height:20px;border-radius:50%;border:1px solid #cfcfcf;box-sizing:border-box;position:relative;flex:none}
+#fw-pay-pages-host .fw-wallet-sheet-row.is-on .fw-wallet-sheet-check{background:#07c160;border-color:#07c160}
+#fw-pay-pages-host .fw-wallet-sheet-row.is-on .fw-wallet-sheet-check::after{content:'';position:absolute;left:6px;top:3px;width:5px;height:9px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg)}
+`;
+    document.head.appendChild(style);
+  }
   function bindWalletPage(root) {
+    ensureWalletInlineStyles();
     const hidden = readWalletHidden();
     applyWalletVisibility(root, hidden);
+    // 确保自绘钱包页在最上面：React 可能后挂浮层或在路由切换时把它盖住。
+    root.style.display = 'block';
+    root.style.visibility = 'visible';
+    root.style.zIndex = '2147483647';
+    root.style.pointerEvents = 'auto';
+    if (root.parentElement !== document.body || root.nextElementSibling) {
+      document.body.appendChild(root);
+    }
     try {
       window.webkit.messageHandlers.DoutuApp.postMessage({
         method: 'walletPageMounted',
-        args: [String(root.querySelectorAll('[data-wallet-key]').length)],
+        args: [
+          String(root.querySelectorAll('[data-wallet-key]').length),
+          getComputedStyle(root).display,
+          getComputedStyle(root).zIndex,
+          root.nextElementSibling ? (root.nextElementSibling.id || root.nextElementSibling.tagName || '?') : ''
+        ],
         callbackId: null
       });
     } catch (_) {}
@@ -1896,7 +1938,30 @@
         row.setAttribute('aria-checked', on ? 'true' : 'false');
       });
     };
-    const open = () => { syncChecks(); sheet.classList.add('is-open'); };
+    const open = () => {
+      // 打开前记录“顶部现在盖的是谁”，用来判断自绘页是不是被 bundled 页压住了。
+      let topEl = null;
+      try { topEl = document.elementFromPoint(195, 50); } catch (_) {}
+      syncChecks();
+      sheet.classList.add('is-open');
+      try {
+        window.webkit.messageHandlers.DoutuApp.postMessage({
+          method: 'walletSheetState',
+          args: [
+            sheet.className,
+            getComputedStyle(sheet).display,
+            String(Math.round(sheet.getBoundingClientRect().top)),
+            String(root.isConnected),
+            getComputedStyle(root).display,
+            getComputedStyle(root).visibility,
+            getComputedStyle(root).zIndex,
+            String(Math.round(root.getBoundingClientRect().width)),
+            topEl ? (topEl.className || topEl.tagName || '') : ''
+          ],
+          callbackId: null
+        });
+      } catch (_) {}
+    };
     const close = () => sheet.classList.remove('is-open');
     const header = root.querySelector('.fw-pay-header');
     if (header) {
@@ -2711,6 +2776,10 @@
       existing.style.visibility = 'visible';
       existing.style.zIndex = '2147483647';
       existing.style.pointerEvents = 'auto';
+      // 如果 React 后续又往 body 尾部挂了浮层，把自绘钱包页重新提到最后。
+      if (existing.parentElement !== document.body || existing.nextElementSibling) {
+        document.body.appendChild(existing);
+      }
       if (existing.dataset.fwRoute !== h) render();
       return 1;
     } catch (_) { return 0; }
