@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 1.0.0(22)：交互式边缘返回（跟手/回弹/上一页快照）`  
-> 最新代码版本：`1.0.0 / 22`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 1.0.0(23)：修复边缘返回闭包的 MainActor 编译错误`  
+> 最新代码版本：`1.0.0 / 23`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -1059,6 +1059,11 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
       - 完成时轻触觉反馈，再 `Router.pop()`；
     - Router 增加 `historySnapshots`，push 时抓当前页快照，pop 时恢复上一层快照；
     - `canGoBack` / `onBackGesture` 由 Router 注入，根页面不响应。
+
+119. **1.0.0(22) 编译失败：LegacyDoutuApp**
+    - 新增的 `host.canGoBack = { [weak self] in ... }` / `onBackGesture` 是普通闭包，却访问 `@MainActor` 的 `Router.stack` / `pop`，Xcode 26 下报主线程隔离错误；
+    - 1.0.0(23) 改成简单 Bool 属性 `host.canGoBack = false/true`，边缘返回触发原有 `onAction("back")`，不再在闭包里访问 Router；
+    - `historySnapshots` 从 `[UIView?]` 改成 `[UIView]`，nil 时用空 UIView 占位，避免可选数组的类型推断问题。
 
 ---
 

@@ -252,8 +252,7 @@ final class ScreenHostView: UIView, UIScrollViewDelegate {
     /// 按下时刻（长按判定用）
     private var downAt: Date?
     /// 左边缘交互式返回
-    var canGoBack: (() -> Bool)?
-    var onBackGesture: (() -> Void)?
+    var canGoBack = false
     /// 上一页的快照，由 Router 在 push 前抓取
     var previousSnapshot: UIView?
     private var edgePreviousContainer: UIView?
@@ -460,7 +459,7 @@ final class ScreenHostView: UIView, UIScrollViewDelegate {
     }
 
     private func beginEdgeBack() {
-        guard canGoBack?() == true else { return }
+        guard canGoBack else { return }
         edgeProgress = 0
         if let snapshot = previousSnapshot {
             let container = UIView(frame: bounds)
@@ -478,7 +477,7 @@ final class ScreenHostView: UIView, UIScrollViewDelegate {
     }
 
     private func updateEdgeBack(_ gesture: UIScreenEdgePanGestureRecognizer) {
-        guard canGoBack?() == true else { return }
+        guard canGoBack else { return }
         let width = max(bounds.width, 1)
         let x = max(0, min(width, gesture.translation(in: superview).x))
         edgeProgress = x / width
@@ -486,7 +485,7 @@ final class ScreenHostView: UIView, UIScrollViewDelegate {
     }
 
     private func finishEdgeBack(_ gesture: UIScreenEdgePanGestureRecognizer) {
-        guard canGoBack?() == true else { resetEdgeBack(); return }
+        guard canGoBack else { resetEdgeBack(); return }
         let width = max(bounds.width, 1)
         let velocity = gesture.velocity(in: self).x
         let shouldComplete = edgeProgress > 0.33 || velocity > 650
@@ -499,7 +498,7 @@ final class ScreenHostView: UIView, UIScrollViewDelegate {
             } completion: { _ in
                 self.resetEdgeBack()
                 UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                self.onBackGesture?()
+                self.onAction?("back", .zero)
             }
         } else {
             UIView.animate(withDuration: duration, delay: 0,
