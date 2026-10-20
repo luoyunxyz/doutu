@@ -235,6 +235,8 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
     private var edgeActive = false
     private var edgePreNavigated = false
     private var edgeOriginalHash: String?
+    /// 四个根 tab 的左右滑手势（用于按方向决定要不要接手）
+    private weak var tabPanGesture: UIPanGestureRecognizer?
     /// 根 tab 上边缘右滑：整个微主页跟手右移，露出下面的首页
     private var edgeRootDismiss = false
     /// 网页里的浮层/子页是否打开（由 `headerTargets` 消息同步）。
@@ -263,6 +265,7 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
         tabPan.delegate = self
         tabPan.cancelsTouchesInView = false
         view.addGestureRecognizer(tabPan)
+        tabPanGesture = tabPan
     }
 
     /// iOS 没有 Android 的系统返回键；只留边缘滑动的话很多用户会卡在微主页里。
@@ -381,6 +384,18 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
     func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer,
                            shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
         true
+    }
+
+    func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
+        // tab 左右滑必须真的是横向动作才接手。
+        // 之前没有方向判断：竖着滚微信主页时这个 pan 也会 begin，把 WKWebView 藏进快照里，
+        // 表现的「手感」就是滚动被冻住、松手 0.2s 后才跳一下。
+        guard gestureRecognizer === tabPanGesture else { return true }
+        // 只有四个根 tab 才支持左右滑切换。聊天页的「左右滑改发送人」是网页自己
+        // 处理的，原生手势在这里必须让路，否则会被快照盖住、看起来像卡死。
+        guard isRootRoute(currentHash), !overlayOpen else { return false }
+        let velocity = gestureRecognizer.velocity(in: view)
+        return abs(velocity.x) > abs(velocity.y) * 1.4
     }
 
     private func handleBlankAction(_ action: String) {
