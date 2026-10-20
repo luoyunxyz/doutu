@@ -353,6 +353,7 @@ final class Router {
     private func startParse(screen: ParseScreen, state: ParseScreen.State) {
         let link = state.link.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !link.isEmpty else { showToast("请先粘贴视频链接", ok: false); return }
+        guard !state.polling else { return }
         screen.beginParse(state)
         host?.setNeedsDisplay()
         Task { @MainActor in
@@ -366,14 +367,16 @@ final class Router {
             screen.attachTask(state, taskNo: taskNo, status: 0)
             self.host?.setNeedsDisplay()
             if !taskNo.isEmpty {
-                self.pollParse(screen: screen, state: state, taskNo: taskNo, left: 40)
+                // 第一次立刻查，之后 0.7s 一次；之前固定等 1.5s，体感会慢一倍。
+                self.pollParse(screen: screen, state: state, taskNo: taskNo, left: 60, delay: 0.15)
             }
         }
     }
 
-    private func pollParse(screen: ParseScreen, state: ParseScreen.State, taskNo: String, left: Int) {
+    private func pollParse(screen: ParseScreen, state: ParseScreen.State, taskNo: String,
+                           left: Int, delay: TimeInterval = 0.7) {
         guard left > 0 else { return }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
             guard let self else { return }
             Task { @MainActor in
                 let env = await ApiClient.shared.call("GET", "/api/v1/dw/task/\(taskNo)")
@@ -386,7 +389,8 @@ final class Router {
                     if let data { screen.showResult(state, data) }
                     self.host?.setNeedsDisplay()
                 } else {
-                    self.pollParse(screen: screen, state: state, taskNo: taskNo, left: left - 1)
+                    self.pollParse(screen: screen, state: state, taskNo: taskNo,
+                                   left: left - 1, delay: 0.7)
                 }
             }
         }

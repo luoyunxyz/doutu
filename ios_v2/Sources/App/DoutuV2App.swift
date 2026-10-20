@@ -4,6 +4,10 @@ import SwiftUI
 struct DoutuV2App: App {
     @Environment(\.scenePhase) private var scenePhase
 
+    init() {
+        Session.shared.prepareFreshInstall()
+    }
+
     var body: some Scene {
         WindowGroup {
             ScreenHostContainer(screen: UserDefaults.standard.bool(forKey: "terms.accepted")

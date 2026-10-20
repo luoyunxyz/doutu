@@ -71,7 +71,10 @@ struct LoginView: View {
                 }
 
                 Section {
-                    if mode != .reset || !resetTicket.isEmpty {
+                    if mode == .login {
+                        // 登录只验证一遍密码，不再让用户重复输入确认密码。
+                        SecureField("密码", text: $password)
+                    } else if mode == .register || !resetTicket.isEmpty {
                         SecureField("密码", text: $password)
                         SecureField("确认密码", text: $confirm)
                     }
@@ -172,20 +175,37 @@ struct LoginView: View {
     }
 }
 
+/// 登录表单的宿主控制器：只在真正消失时解除水印抑制。
+/// 之前把 endSuppress 放在 present 的 completion 里，而那个 completion 是“弹出完成后”
+/// 立刻执行，不是关闭后执行，所以登录页刚出现水印就被重新挂上来了。
+final class LoginHostingController: UIHostingController<LoginView> {
+    var onDismiss: (() -> Void)?
+    private var didNotify = false
+
+    override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+        guard !didNotify,
+              isBeingDismissed || presentingViewController == nil
+                || navigationController?.isBeingDismissed == true else { return }
+        didNotify = true
+        onDismiss?()
+    }
+}
+
 /// 用当前最上层控制器把登录表单弹出来（UIKit 世界里调用 SwiftUI 视图的标准做法）。
 enum LoginPresenter {
     @MainActor
     static func present(onDone: (() -> Void)? = nil) {
         guard let host = UpdatePrompt.topViewController() else { return }
-        let controller = UIHostingController(rootView: LoginView(onDone: onDone))
+        let controller = LoginHostingController(rootView: LoginView(onDone: onDone))
         controller.modalPresentationStyle = .pageSheet
         // 登录/注册页不铺水印（会盖住输入框；Android 侧同样跳过登录页）
         WatermarkOverlay.beginSuppress()
-        host.present(controller, animated: true) {
-            // 关闭后恢复：这段时间会员状态可能已经变了，重新评估一次
+        controller.onDismiss = {
             WatermarkOverlay.endSuppress()
             WatermarkOverlay.attachIfNeeded()
             onDone?()
         }
+        host.present(controller, animated: true)
     }
 }

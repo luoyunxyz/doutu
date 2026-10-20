@@ -69,6 +69,17 @@ final class Session {
 
     var isLoggedIn: Bool { !token.isEmpty }
 
+    /// 新安装默认必须是未登录。
+    /// iOS 的 Keychain 在删除 App 后仍会保留，所以「新装」可能继承上一次安装的
+    /// x-token，启动后看起来像已经登录。UserDefaults 会随卸载清空，用
+    /// `terms.accepted` 判断是否首次启动；首次启动时清掉 Keychain 里的会话。
+    func prepareFreshInstall() {
+        if !UserDefaults.standard.bool(forKey: "terms.accepted") {
+            token = ""
+            signKey = ""
+        }
+    }
+
     /// 昵称（Android 的 `Session.displayName()`）：优先昵称，其次用户名，都没有就空
     var displayName: String {
         let nick = UserDefaults.standard.string(forKey: "profile.nickname") ?? ""

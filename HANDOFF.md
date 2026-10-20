@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 2.4.69：撩妹加 V 联动扫一扫摄像头损坏提示`  
-> 最新代码版本：`2.4.69 / 20109`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 2.4.70：新装默认登出、登录单密码、去水印提速`  
+> 最新代码版本：`2.4.70 / 20110`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.67 / 20107`（已通过 USB 查询确认）
 
 ---
@@ -836,6 +836,12 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
     - 原生 `isScanDisabled` 分支也改为返回 `TeaseStore.enabled`；
     - 弹窗文案改为「扫一扫不可用 / 摄像头物理损坏，无法使用扫一扫功能。」；
     - 关闭「撩妹加 V」后 flag 为 false，扫一扫恢复正常进入付款页。
+
+86. **新装默认登录 / 登录密码两遍 / 登录页有水印 / 去水印慢**
+    - Keychain 在卸载后仍保留，新安装会继承上一次的 `x-token`；2.4.70 在 `DoutuV2App.init()` 调 `Session.prepareFreshInstall()`，首次启动（`terms.accepted == false`）清空 token/signKey，默认未登录；
+    - `LoginView` 登录模式只显示一个密码框；确认密码只在注册/重置新密码时出现；
+    - `LoginPresenter` 原来把 `endSuppress` 放在 `present` 的 completion 里，而该 completion 是弹出完成就执行，登录页刚出现水印又被挂回来；改为 `LoginHostingController.viewDidDisappear` 真正关闭时再解除；
+    - 去水印解析轮询从固定 1.5s 改为首次 0.15s、之后 0.7s，并防止重复点解析按钮重复起任务。
 
 ---
 
