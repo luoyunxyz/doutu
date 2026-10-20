@@ -707,7 +707,12 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
             return
         }
         guard !new.isEmpty else { return }
-        if previousHashByRoute[new] == nil, !old.isEmpty {
+        // 判断这是不是一次「网页自己返回」：old 的上一页正好是 new。
+        // 根 tab（我/微信…）不算：从「我」点进服务页是前进，不能因为「我」的上一页
+        // 恰好是服务页就当成返回。
+        let looksBack = !old.isEmpty && !isRootRoute(old)
+            && previousHashByRoute[old] == new
+        if !looksBack, !old.isEmpty {
             previousHashByRoute[new] = old
         }
         scheduleCurrentSnapshot(hash: new)
