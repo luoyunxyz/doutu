@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 1.0.0(50)：连当前页也预加载，手势第一帧不再抓 WKWebView`  
-> 最新代码版本：`1.0.0 / 50`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 1.0.0(51)：下层锁死、只移上层 —— 独立页面的揭盖效果`  
+> 最新代码版本：`1.0.0 / 51`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -1322,7 +1322,7 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
         返回时直接 `previousHashByRoute[current]` → `pageSnapshots[prev]`，不依赖栈；
       - **不在 touchstart 抓图**，点按/滚动路径完全没有额外快照开销；
       - 边缘手势 `.began` 直接用查表得到的上一页快照作为底层（静态图，永不重绘），
-        整个拖动只有 `top.transform = x` / `bottom.transform = x - width` 两个 UIView 变换；
+        整个拖动**只有上层 `top.transform = x`**；下层是独立的一层，锁死在 0 不动；
       - 提交后（0.22s 动画结束）才让网页真正返回；`suppressPreviewCapture` 挡住这次 hashchange；
       - 网页自己返回时 `handlePageHash` 只刷新目标页快照，不破坏映射；
       - 没有预加载快照时才回退到旧路径（先返回再抓图）；
@@ -1348,6 +1348,16 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
       `EDGE begin fast=... topCache=... prev=... snaps=...` / `EDGE end commit=... fast=...`；
       出问题时拉 `Documents/crash.log` 就能确认走的是快路径还是旧路径；
     - 版本 1.0.0(50)。改动文件：`WeChatV2Host.swift`、`project.yml`。
+
+143. **1.0.0(51)：返回改成独立页面「揭盖」，下层完全静止**
+    - 用户明确：左右滑上层图片时，下层不要跟着滑；要的是“下层被遮挡、把上层移开”的独立层效果；
+    - 边缘返回（非根 dismiss）：
+      - 下层 `preview` 锁死在 `transform = .identity`，任何 `.changed` 都不改它；
+      - 只有上层 `top.transform = x`；提交 `top → width`，取消 `top → 0`；
+      - 上层加左下阴影（`shadowOpacity 0.16 / radius 10 / offset -4`），盖在下层上更像一张被抽走的卡片；
+      - 旧路径抓到的底图同样 `transform = .identity`，不再做 `x-width` 的并排平移；
+    - **根 tab 左右滑保持两页平移**（用户之前要的首页效果），不受影响；
+    - 版本 1.0.0(51)。改动文件：`WeChatV2Host.swift`、`project.yml`。
 
 ---
 

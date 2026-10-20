@@ -520,10 +520,10 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
                 let top = currentTopSnapshot
                 makeSwipeSnapshot(waitForBottom: false, top: top)
                 if let top = swipeSnapshot {
-                    let width = max(view.bounds.width, 1)
                     preview.frame = view.bounds
                     preview.isUserInteractionEnabled = false
-                    preview.transform = CGAffineTransform(translationX: -width, y: 0)
+                    // 下层锁死在原位，不参与任何 transform。
+                    preview.transform = .identity
                     view.insertSubview(preview, belowSubview: top)
                     swipeBottomSnapshot = preview
                     swipeReady = true
@@ -548,14 +548,8 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
             let x = max(0, translation.x)
             swipeLastTranslation = x
             if swipeReady {
+                // 只移动上层。下层是独立的一层，锁死在原位，被上层逐渐让出来。
                 snapshot.transform = CGAffineTransform(translationX: x, y: 0)
-                // 边缘返回：上一页从左侧屏幕外跟手滑入，和当前页始终相邻。
-                // 根 tab 切换的底图是「进入页」，由 handleTabSwipe 单独处理。
-                if let bottom = swipeBottomSnapshot, tabPreviewIndex == nil {
-                    let width = max(view.bounds.width, 1)
-                    bottom.transform = CGAffineTransform(
-                        translationX: -width + x, y: 0)
-                }
             }
         case .ended, .cancelled:
             edgeActive = false
@@ -593,19 +587,13 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
                 && translation.x > 60 && abs(translation.y) < 120
             CrashLog.append("EDGE end commit=\(commit) fast=\(fastEdgeBack)")
             let width = max(view.bounds.width, 1)
-            let edgeBottom = tabPreviewIndex == nil ? swipeBottomSnapshot : nil
+            // 下层保持完全静止：这里只做上层快照的位移。
             UIView.animate(withDuration: commit ? 0.22 : 0.2,
                            delay: 0,
                            options: [.curveEaseOut]) {
                 snapshot.transform = commit
                     ? CGAffineTransform(translationX: width, y: 0)
                     : .identity
-                if commit {
-                    edgeBottom?.transform = .identity
-                } else {
-                    edgeBottom?.transform = CGAffineTransform(
-                        translationX: -width, y: 0)
-                }
             } completion: { _ in
                 if commit {
                     if self.fastEdgeBack {
@@ -773,6 +761,12 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
         snapshot.frame = webView.frame
         snapshot.transform = .identity
         snapshot.isUserInteractionEnabled = false
+        // 上层像一张独立的卡片被移开：给左下方向一点阴影，落在下层页面上。
+        snapshot.layer.shadowColor = UIColor.black.cgColor
+        snapshot.layer.shadowOpacity = 0.16
+        snapshot.layer.shadowRadius = 10
+        snapshot.layer.shadowOffset = CGSize(width: -4, height: 0)
+        snapshot.layer.shadowPath = UIBezierPath(rect: snapshot.bounds).cgPath
 
         // 先放一张纯色占位在下面，然后立刻隐藏 WKWebView；
         // 这样从手势第一帧开始，底层就不可能是活的 WebView。
@@ -818,11 +812,8 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
                 bottom.transform = CGAffineTransform(
                     translationX: self.tabIncomingSign * width, y: 0)
             } else {
-                // 边缘返回也做「左右平移」：上一页从左侧屏幕外一起滑进来，
-                // 与当前页始终相邻（top 在 x，bottom 在 x-width），中间没有露白。
-                let width = max(self.view.bounds.width, 1)
-                bottom.transform = CGAffineTransform(
-                    translationX: -width + self.swipeLastTranslation, y: 0)
+                // 边缘返回：下层是独立的一层，锁死在原位，只让上层移开。
+                bottom.transform = .identity
             }
             self.view.insertSubview(bottom, belowSubview: top)
             self.swipeBottomSnapshot = bottom
