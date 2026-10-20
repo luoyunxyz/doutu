@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 1.0.0(25)：微信深层路由边缘返回逐级回退`  
-> 最新代码版本：`1.0.0 / 25`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 1.0.0(26)：左右两侧边缘都可滑动返回`  
+> 最新代码版本：`1.0.0 / 26`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -1079,6 +1079,15 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
       2. 没处理且 hash 不是 `#/wechat` 时执行 `history.back()`，逐级回退；
       3. 只有根路由且无浮层时才 `closeHost()`；
     - 这样微信零钱 → 钱包 → 微主页，每次边缘右滑只退一层。
+
+122. **右侧边缘向左滑也返回**
+    - 用户实际习惯是从屏幕**右边缘向左**滑；
+    - `ScreenHostView` 同时注册 `.left` 和 `.right` 两个 `UIScreenEdgePanGestureRecognizer`：
+      - 左边缘向右：`edgeSign=1`，当前页右移；
+      - 右边缘向左：`edgeSign=-1`，当前页左移；
+      - 速度/进度都乘 `edgeSign`；
+    - `WeChatV2Host`、`LoginHostingController`、`ContactPickerViewController`、`AppIconChooser` 都补了右边缘手势；
+    - 微信深层路由仍走 `__fwHandleChatPayBack` + `history.back()` 逐级返回。
 
 ---
 

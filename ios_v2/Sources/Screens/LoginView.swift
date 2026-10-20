@@ -325,15 +325,20 @@ final class LoginHostingController: UIHostingController<LoginView> {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        let edge = UIScreenEdgePanGestureRecognizer(target: self,
-                                                     action: #selector(edgeBack(_:)))
-        edge.edges = .left
-        view.addGestureRecognizer(edge)
+        let leftEdge = UIScreenEdgePanGestureRecognizer(target: self,
+                                                        action: #selector(edgeBack(_:)))
+        leftEdge.edges = .left
+        view.addGestureRecognizer(leftEdge)
+        let rightEdge = UIScreenEdgePanGestureRecognizer(target: self,
+                                                         action: #selector(edgeBack(_:)))
+        rightEdge.edges = .right
+        view.addGestureRecognizer(rightEdge)
     }
 
     @objc private func edgeBack(_ gesture: UIScreenEdgePanGestureRecognizer) {
-        guard gesture.state == .ended,
-              gesture.translation(in: view).x > 60 else { return }
+        guard gesture.state == .ended else { return }
+        let sign: CGFloat = gesture.edges.contains(.right) ? -1 : 1
+        guard gesture.translation(in: view).x * sign > 60 else { return }
         onEdgeBack?()
     }
 

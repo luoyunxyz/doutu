@@ -257,6 +257,8 @@ final class ScreenHostView: UIView, UIScrollViewDelegate {
     var previousSnapshot: UIView?
     private var edgePreviousContainer: UIView?
     private var edgeProgress: CGFloat = 0
+    /// 1 = 左边缘向右滑；-1 = 右边缘向左滑
+    private var edgeSign: CGFloat = 1
     /// 扫码页底下那层相机预览
     private var cameraView: CameraPreviewView?
     /// 《用户须知》专用原生 ScrollView：宿主的 touchesMoved 在这台真机上收不到，
@@ -271,11 +273,18 @@ final class ScreenHostView: UIView, UIScrollViewDelegate {
         isMultipleTouchEnabled = false
         contentMode = .redraw
         // 系统级左边缘右滑返回：比 touchesMoved 可靠，子视图（UIScrollView/WKWebView）也能触发。
-        let edgePan = UIScreenEdgePanGestureRecognizer(target: self,
+        let leftEdge = UIScreenEdgePanGestureRecognizer(target: self,
                                                         action: #selector(handleEdgePan(_:)))
-        edgePan.edges = .left
-        edgePan.cancelsTouchesInView = true
-        addGestureRecognizer(edgePan)
+        leftEdge.edges = .left
+        leftEdge.cancelsTouchesInView = true
+        addGestureRecognizer(leftEdge)
+
+        // 也支持从右边缘向左滑返回（用户习惯右手操作）。
+        let rightEdge = UIScreenEdgePanGestureRecognizer(target: self,
+                                                         action: #selector(handleEdgePan(_:)))
+        rightEdge.edges = .right
+        rightEdge.cancelsTouchesInView = true
+        addGestureRecognizer(rightEdge)
         // 理财主题一变就重绘：黑卡主题会换掉「我的」页 / 消息页 / 支首页的配色与图标
         NotificationCenter.default.addObserver(
             self, selector: #selector(themeChanged),
@@ -448,7 +457,7 @@ final class ScreenHostView: UIView, UIScrollViewDelegate {
     @objc private func handleEdgePan(_ gesture: UIScreenEdgePanGestureRecognizer) {
         switch gesture.state {
         case .began:
-            beginEdgeBack()
+            beginEdgeBack(gesture)
         case .changed:
             updateEdgeBack(gesture)
         case .ended, .cancelled:
@@ -458,8 +467,9 @@ final class ScreenHostView: UIView, UIScrollViewDelegate {
         }
     }
 
-    private func beginEdgeBack() {
+    private func beginEdgeBack(_ gesture: UIScreenEdgePanGestureRecognizer) {
         guard canGoBack else { return }
+        edgeSign = gesture.edges.contains(.right) ? -1 : 1
         edgeProgress = 0
         if let snapshot = previousSnapshot {
             let container = UIView(frame: bounds)
@@ -479,22 +489,23 @@ final class ScreenHostView: UIView, UIScrollViewDelegate {
     private func updateEdgeBack(_ gesture: UIScreenEdgePanGestureRecognizer) {
         guard canGoBack else { return }
         let width = max(bounds.width, 1)
-        let x = max(0, min(width, gesture.translation(in: superview).x))
-        edgeProgress = x / width
-        transform = CGAffineTransform(translationX: x, y: 0)
+        let raw = gesture.translation(in: superview).x * edgeSign
+        let distance = max(0, min(width, raw))
+        edgeProgress = distance / width
+        transform = CGAffineTransform(translationX: distance * edgeSign, y: 0)
     }
 
     private func finishEdgeBack(_ gesture: UIScreenEdgePanGestureRecognizer) {
         guard canGoBack else { resetEdgeBack(); return }
         let width = max(bounds.width, 1)
-        let velocity = gesture.velocity(in: self).x
+        let velocity = gesture.velocity(in: self).x * edgeSign
         let shouldComplete = edgeProgress > 0.33 || velocity > 650
         let duration = shouldComplete ? 0.22 : 0.28
 
         if shouldComplete {
             UIView.animate(withDuration: duration, delay: 0,
                            options: [.curveEaseOut]) {
-                self.transform = CGAffineTransform(translationX: width, y: 0)
+                self.transform = CGAffineTransform(translationX: width * self.edgeSign, y: 0)
             } completion: { _ in
                 self.resetEdgeBack()
                 UIImpactFeedbackGenerator(style: .light).impactOccurred()
