@@ -387,12 +387,10 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
         guard gesture.state == .ended else { return }
         let translation = gesture.translation(in: view)
         guard translation.x > 60, abs(translation.y) < 120 else { return }
-        guard EdgeBackCenter.shouldHandle() else { return }
         performEdgeBack()
     }
 
     @objc func handleEdgeBack() {
-        guard EdgeBackCenter.shouldHandle() else { return }
         performEdgeBack()
     }
 

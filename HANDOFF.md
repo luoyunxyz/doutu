@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 1.0.0(29)：EdgeBack 改用 @objc selector，避开协议隔离`  
-> 最新代码版本：`1.0.0 / 29`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 1.0.0(30)：移除 EdgeBackCenter，避免 module emit 崩溃`  
+> 最新代码版本：`1.0.0 / 30`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -1116,6 +1116,16 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
       - `EdgeBackCenter` 对最上层控制器做 `responds(to:)`，命中就 `perform`；
       - 未命中才 `dismiss`；
     - 不引入跨协议 MainActor 约束，规避 EmitSwiftModule 失败。
+
+126. **1.0.0(29) 仍 EmitSwiftModule 失败**
+    - 去掉协议后仍失败，说明问题不在协议，而在新增的 `EdgeBackCenter` / window 手势文件本身或它引起的类型推断；
+    - 1.0.0(30) 直接删除 `EdgeBackCenter.swift` 及全部引用，回到每个页面自己的左边缘手势：
+      - `ScreenHostView`：原生页面交互式返回；
+      - `WeChatV2Host`：微信深层返回；
+      - `LoginHostingController`：关闭登录；
+      - `ContactPickerViewController`：关闭联系人；
+      - `AppIconChooser`：关闭图标选择；
+    - 不再有 window 级手势，避免 EmitSwiftModule 失败。
 
 ---
 
