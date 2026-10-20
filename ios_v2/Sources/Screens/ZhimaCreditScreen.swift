@@ -205,10 +205,10 @@ final class ZhimaCreditScreen: Screen {
         return true
     }
 
-    func carouselDrag(_ state: ScreenState, dx: CGFloat) -> Bool {
+    func carouselDrag(_ state: ScreenState, dx: CGFloat, startY: CGFloat) -> Bool {
         guard let s = state as? State else { return false }
-        // 拖动过程中用「手指当前位置」判断是否在轮播带里；宿主传的是增量，这里只需管范围
-        guard inCarouselBand(s, designY: carouselY + cardH / 2) else { return false }
+        // 只有手指按下时确实落在轮播带里才接管。
+        guard inCarouselBand(s, designY: startY) else { return false }
         let limit = maxCarousel(state)
         guard limit > 0 else { return false }
         s.carousel = min(max(0, s.carousel - dx), limit)

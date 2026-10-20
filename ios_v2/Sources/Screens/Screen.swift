@@ -59,6 +59,9 @@ protocol Screen: AnyObject {
     func verticalDragEnd(_ state: ScreenState)
     /// 长按。必须写在 protocol 里，否则通过 `Screen` 存在类型调用时永远拿到扩展默认的 nil。
     func longPress(_ state: ScreenState, x: CGFloat, y: CGFloat) -> ActionToken?
+    /// 横向拖动 / 松手吸附。同上；`startY` 是按下时的内容坐标，用来判断是否落在轮播带里。
+    func carouselDrag(_ state: ScreenState, dx: CGFloat, startY: CGFloat) -> Bool
+    func carouselSnap(_ state: ScreenState, totalDx: CGFloat)
     /// 这一屏的 draw 是否自己做了 `translate(0, -scroll)`。同上。
     var selfScrolls: Bool { get }
     /// 是否在页面底下垫相机预览（扫码页）。同上。
@@ -103,8 +106,9 @@ extension Screen {
     /// 横向拖动（对应 Android 的 `draggingCarousel` 分支）。
     ///
     /// 宿主会先把「横向位移明显大于纵向」的手势交给这里；返回 `true` 表示这一屏接管了这次手势
-    /// （于是宿主不再拿它当纵向滚动）。`dx` 是相对上一次移动的增量。
-    func carouselDrag(_ state: ScreenState, dx: CGFloat) -> Bool { false }
+    /// （于是宿主不再拿它当纵向滚动）。`dx` 是相对上一次移动的增量，
+    /// `startY` 是按下时的内容坐标（用来判断手指是否落在轮播带里）。
+    func carouselDrag(_ state: ScreenState, dx: CGFloat, startY: CGFloat) -> Bool { false }
 
     /// 纵向拖动（对应 Android 财富页下拉展开资产面板）。
     /// `dy` 是相对上一次移动的增量，`startY` 是按下时的参考画布 y。
@@ -789,7 +793,7 @@ final class ScreenHostView: UIView, UIScrollViewDelegate {
         if !draggingCarousel, abs(totalDx) > abs(totalDy) * 1.2 {
             // 第一次调用既做「这一屏要不要接管」的判断，也已经在页面里应用了 dx。
             // 之前这里再调一次会把首帧位移算两遍，横向拖动会突然跳一下。
-            if screen.carouselDrag(state, dx: dxDesign) {
+            if screen.carouselDrag(state, dx: dxDesign, startY: touchStartDesignY) {
                 draggingCarousel = true
                 lastPoint = p
                 lastMoveAt = 0
@@ -798,7 +802,7 @@ final class ScreenHostView: UIView, UIScrollViewDelegate {
             }
         }
         if draggingCarousel {
-            _ = screen.carouselDrag(state, dx: dxDesign)
+            _ = screen.carouselDrag(state, dx: dxDesign, startY: touchStartDesignY)
             lastPoint = p
             lastMoveAt = 0
             setNeedsDisplay()
