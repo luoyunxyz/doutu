@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 2.4.72：去水印提交超时保护 + 日志`  
-> 最新代码版本：`2.4.72 / 20112`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 2.4.73：去水印请求字段改成 Android 的 share_text`  
+> 最新代码版本：`2.4.73 / 20113`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.71 / 20111`（已通过 USB 查询确认）
 
 ---
@@ -856,6 +856,11 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
       - `PARSE response code=... msg=...`
       - `PARSE request timeout`
       下一次若仍慢，可直接从 crash.log 判断是请求没回来、服务端返回错误，还是已回来但轮询慢。
+
+89. **去水印请求字段名和 Android 不一致**
+    - 反编译 Android `DoutuApi.parse`：body 用的是 `{"share_text": link}`；
+    - iOS 之前发的是 `{"link": link}`，服务端拿不到分享文本，任务不会正常建立，表现就是一直“提交中”；
+    - 2.4.73 改成 `body: ["share_text": link]`，与 Android 完全一致。
 
 ---
 

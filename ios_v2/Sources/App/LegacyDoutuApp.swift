@@ -368,7 +368,9 @@ final class Router {
             // 关键：DTW 握手（PBKDF2 + 同步网络）不能跑在 MainActor 上，
             // 否则解析一开始主线程就被占住，界面看起来像卡死。
             let env = await Task.detached(priority: .userInitiated) {
-                await ApiClient.shared.call("POST", "/api/v1/dw/parse", body: ["link": link])
+                // Android DoutuApi.parse 的字段名是 share_text，不是 link。
+                await ApiClient.shared.call("POST", "/api/v1/dw/parse",
+                                            body: ["share_text": link])
             }.value
             await MainActor.run {
                 timeout.cancel()
