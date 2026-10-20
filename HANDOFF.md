@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 1.0.0(40)：手势第一帧就藏 WKWebView，取消延迟揭盖`  
-> 最新代码版本：`1.0.0 / 40`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 1.0.0(41)：黑色支付宝图标去 alpha 重打包`  
+> 最新代码版本：`1.0.0 / 41`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -1208,6 +1208,12 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
       - began 立刻加一张纯白占位，再隐藏 WKWebView、禁用 scrollView 滚动；从第一帧起底层只能是占位，不可能是活页面；
       - 抓下一层快照时临时取消隐藏，`layoutIfNeeded()` 后用 `snapshotView(afterScreenUpdates:true)` 抓图，马上再隐藏；顶层快照+占位盖着，这一帧不可见；
       - 取消时先把原路由恢复，顶层快照继续盖住，延迟 0.18~0.2s 再 `clearSwipeLayers()`，避免揭盖时看到路由重绘闪屏。
+
+136. **黑色支付宝图标切换异常**
+    - `AppIconAlipayHK.appiconset` 的 5 张 PNG 原始都是 RGBA（alpha 全 255）；
+    - iOS IconServices 对 alternate icon 的 alpha 通道比较敏感，可能出现切换失败/图标空白；
+    - 1.0.0(41) 用 PIL 把黑金支付宝图标全部转成无 alpha 的 RGB PNG（黑底合成），保留原尺寸；
+    - 其他 `AppIconAlipay` / `AppIconWechat` 未改。
 
 ---
 
