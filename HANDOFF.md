@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 1.0.0(13)：登录页布局撑满；重置跳转双保险`  
-> 最新代码版本：`1.0.0 / 13`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 1.0.0(14)：登录页关闭改为直接 dismiss 控制器`  
+> 最新代码版本：`1.0.0 / 14`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -996,6 +996,12 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
     - 登录页的 header / panel / 输入框之前没有显式 `maxWidth`，SwiftUI 按内容 intrinsic 宽度算，白色面板会缩成一条、头图不铺满，看起来变形；
     - 1.0.0(13) 给 VStack、header、panel、输入框都加 `.frame(maxWidth: .infinity)`，面板固定撑满屏幕宽度；
     - 邀请码重置加双保险：除了 `viewDidDisappear` 的 `runPendingAfterLoginDismiss`，dismiss 后 0.6 秒再调用一次；token 执行后会被清空，不会重复 push。
+
+111. **关闭 ×、登录成功、重置跳转都无反应**
+    - 三个动作都依赖 SwiftUI `presentationMode.dismiss()`；在 `.fullScreen` + 自定义 `transitioningDelegate` 下它可能没有真正 dismiss 宿主控制器；
+    - 1.0.0(14) 新增 `LoginCloseBox`，持有弱引用 `LoginHostingController`，`LoginView` 通过 `onClose` 直接调用 `controller.dismiss(animated:true)`；
+    - × 改为一个 44×44 的 `Text("×")` 按钮，避免 SF Symbol 尺寸/裁剪变形；
+    - 登录成功、邀请码重置都走 `closeLogin()`，不再依赖 `presentationMode`。
 
 ---
 

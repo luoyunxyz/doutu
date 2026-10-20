@@ -9,6 +9,8 @@ import SwiftUI
 struct LoginView: View {
     /// 关闭时回调（登录成功后应刷新界面）
     var onDone: (() -> Void)?
+    /// 由 LoginPresenter 注入：直接 dismiss UIHostingController，避免 presentationMode 在自定义转场下失效。
+    var onClose: (() -> Void)? = nil
 
     private enum Mode: String, CaseIterable {
         case login = "登录"
@@ -75,12 +77,12 @@ struct LoginView: View {
             .padding(.top, 48)
 
             Button {
-                presentationMode.wrappedValue.dismiss()
+                closeLogin()
             } label: {
-                Image(systemName: "xmark")
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.9))
-                    .padding(10)
+                Text("×")
+                    .font(.system(size: 30, weight: .light))
+                    .foregroundColor(.white.opacity(0.92))
+                    .frame(width: 44, height: 44)
             }
         }
         .frame(maxWidth: .infinity)
@@ -230,11 +232,19 @@ struct LoginView: View {
         .padding(.top, 8)
     }
 
+    private func closeLogin() {
+        if let onClose {
+            onClose()
+        } else {
+            presentationMode.wrappedValue.dismiss()
+        }
+    }
+
     private func dismissThen(_ token: String) {
         // 等 LoginHostingController 真正 viewDidDisappear 后再执行，
         // 避免跳转页被推到登录模态下面。
         Router.shared?.pendingAfterLoginDismiss = token
-        presentationMode.wrappedValue.dismiss()
+        closeLogin()
         // 兜底：万一 viewDidDisappear 没有触发 onDismiss，0.6 秒后也执行一次。
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
             Router.shared?.runPendingAfterLoginDismiss()
@@ -306,7 +316,7 @@ struct LoginView: View {
                     onDone?()
                     // 登录/注册成功回到「我」页；写 State 后关闭登录页即可看到。
                     Router.shared?.selectProfileTab()
-                    presentationMode.wrappedValue.dismiss()
+                    closeLogin()
                 }
                 if outcome.ok && mode == .reset && !resetTicket.isEmpty {
                     // 第一步通过：留在本页继续填新密码
@@ -335,11 +345,22 @@ final class LoginHostingController: UIHostingController<LoginView> {
 }
 
 /// 用当前最上层控制器把登录表单弹出来（UIKit 世界里调用 SwiftUI 视图的标准做法）。
+@MainActor
+private final class LoginCloseBox {
+    weak var controller: UIViewController?
+    func close() {
+        controller?.dismiss(animated: true)
+    }
+}
+
 enum LoginPresenter {
     @MainActor
     static func present(onDone: (() -> Void)? = nil) {
         guard let host = UpdatePrompt.topViewController() else { return }
-        let controller = LoginHostingController(rootView: LoginView(onDone: onDone))
+        let box = LoginCloseBox()
+        let controller = LoginHostingController(
+            rootView: LoginView(onDone: onDone, onClose: { box.close() }))
+        box.controller = controller
         controller.modalPresentationStyle = .fullScreen
         controller.transitioningDelegate = LoginSlideTransition.shared
         // 登录/注册页不铺水印（会盖住输入框；Android 侧同样跳过登录页）
