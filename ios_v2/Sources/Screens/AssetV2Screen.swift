@@ -541,8 +541,8 @@ final class AssetV2Screen: Screen {
     // MARK: - 命中（Java:451-458：后登记优先）
 
     func hitTest(_ state: ScreenState, x: CGFloat, y: CGFloat) -> ActionToken {
-        let s = (state as? State) ?? State()
-        let cy = y + s.scroll
+        // 宿主传入的 y 已经是内容坐标（touchesEnded 里加过 scroll），这里不能再加一次。
+        let cy = y
         for hit in hits.reversed() where hit.rect.contains(CGPoint(x: x, y: cy)) {
             return hit.token
         }

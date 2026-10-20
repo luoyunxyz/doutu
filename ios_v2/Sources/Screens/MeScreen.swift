@@ -197,8 +197,8 @@ final class MeScreen: Screen {
     func hitTest(_ state: ScreenState, x: CGFloat, y: CGFloat) -> ActionToken {
         let s = (state as? State) ?? State()
 
-        // 底部导航：5 格，取最近的列心（Java:243）
-        if y >= Self.NAV_TOP {
+        // 底部导航：5 格，取最近的列心（Java:243）。固定层，用屏幕坐标。
+        if y - s.scroll >= Self.NAV_TOP {
             let centers: [CGFloat] = [128, 382, 639, 898, 1151]
             var best = 0
             var bestD = CGFloat.greatestFiniteMagnitude
@@ -210,7 +210,8 @@ final class MeScreen: Screen {
             return "nav:\(best)"
         }
 
-        let cy = y + s.scroll
+        // 内容层：宿主已经加过 scroll
+        let cy = y
 
         // 顶部身份区（Java:246-255）
         if cy < 540 {

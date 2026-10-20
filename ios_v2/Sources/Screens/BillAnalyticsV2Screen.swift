@@ -1342,13 +1342,17 @@ final class BillAnalyticsV2Screen: Screen {
 
     func hitTest(_ state: ScreenState, x: CGFloat, y: CGFloat) -> ActionToken {
         let s = (state as? State) ?? State()
+        let rawY = y - s.scroll          // 固定顶栏用屏幕坐标
+        let cy = y                       // 内容用宿主传入的内容坐标
         // 顶部固定栏先算（它不随滚动移动）
         for hot in hots.reversed()
-        where hot.rect.contains(CGPoint(x: x, y: y + (hot.rect.minY < Self.navHeight ? s.scroll : 0))) {
+        where hot.rect.minY < Self.navHeight
+            && hot.rect.contains(CGPoint(x: x, y: rawY)) {
             return hot.token
         }
         for hot in hots.reversed()
-        where hot.rect.contains(CGPoint(x: x, y: y + s.scroll)) {
+        where hot.rect.minY >= Self.navHeight
+            && hot.rect.contains(CGPoint(x: x, y: cy)) {
             return hot.token
         }
         return "noop"

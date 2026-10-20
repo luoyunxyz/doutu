@@ -389,9 +389,9 @@ final class ReceiptV2Screen: Screen {
     // MARK: - 命中（Java:376-412）
 
     func hitTest(_ state: ScreenState, x: CGFloat, y: CGFloat) -> ActionToken {
-        let s = (state as? State) ?? State()
         layout(ReceiptStore.shared.records)
-        let cy = y + s.scroll
+        // 整页（含顶栏）都随着滚动移动，宿主传入的 y 已是内容坐标。
+        let cy = y
 
         if cy < 300 {
             if x < 130 { return "back" }

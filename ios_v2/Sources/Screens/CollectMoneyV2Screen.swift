@@ -491,12 +491,14 @@ final class CollectMoneyV2Screen: Screen {
 
     func hitTest(_ state: ScreenState, x: CGFloat, y: CGFloat) -> ActionToken {
         let s = (state as? State) ?? State()
-        if y < 320 {
+        // 顶栏固定（屏幕坐标）；二维码/卡片用宿主传入的内容坐标。
+        let rawY = y - s.scroll
+        if rawY < 320 {
             if x < 150 { return "back" }
             if x > 1100 { return "more" }
             return "noop"
         }
-        let cy = y + s.scroll
+        let cy = y
         if x > qrL - 10 && x < qrL + qrSize + 10 && cy > qrT - 10 && cy < qrT + qrSize + 10 {
             return "qr"
         }

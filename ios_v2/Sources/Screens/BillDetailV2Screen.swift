@@ -309,8 +309,10 @@ final class BillDetailV2Screen: Screen {
     func hitTest(_ state: ScreenState, x: CGFloat, y: CGFloat) -> ActionToken {
         let s = (state as? State) ?? State()
         layout(s.bill)
-        let cy = y + s.scroll
-        if y < Self.barH { return x < 130 ? "back" : "noop" }
+        // 顶栏固定（屏幕坐标）；卡片内容用宿主传入的内容坐标。
+        let rawY = y - s.scroll
+        let cy = y
+        if rawY < Self.barH { return x < 130 ? "back" : "noop" }
         guard let bill = s.bill else { return "noop" }
 
         if cy >= c1Top && cy <= card1Bottom {

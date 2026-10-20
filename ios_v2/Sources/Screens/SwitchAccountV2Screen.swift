@@ -196,12 +196,14 @@ final class SwitchAccountV2Screen: Screen {
 
     func hitTest(_ state: ScreenState, x: CGFloat, y: CGFloat) -> ActionToken {
         let s = (state as? State) ?? State()
-        if y < headY + 30 { return "noop" }
-        if y >= 160 && y <= 290 {
+        // 顶部返回/管理是固定层，用屏幕坐标；账号卡是内容层。
+        let rawY = y - s.scroll
+        if rawY < headY + 30 { return "noop" }
+        if rawY >= 160 && rawY <= 290 {
             if x < 150 { return "back" }
             if x >= 1040 { return "manage" }
         }
-        let cy = y + s.scroll
+        let cy = y
         for (i, account) in shown.enumerated() {
             let top = cardTop(i)
             if cy >= top && cy <= top + cardH {

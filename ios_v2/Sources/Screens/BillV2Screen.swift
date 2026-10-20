@@ -369,8 +369,10 @@ final class BillV2Screen: Screen {
 
     func hitTest(_ state: ScreenState, x: CGFloat, y: CGFloat) -> ActionToken {
         let s = (state as? State) ?? State()
-        if y < Self.headH {
-            if y < 310 {
+        // 顶部条固定（屏幕坐标），月卡内容用宿主传入的内容坐标。
+        let rawY = y - s.scroll
+        if rawY < Self.headH {
+            if rawY < 310 {
                 return x < 125 ? "back" : (x < 1120 ? "search" : "more")
             }
             for (i, chip) in chips.enumerated() {
@@ -380,7 +382,7 @@ final class BillV2Screen: Screen {
             return "filter"
         }
         layout(s)
-        let cy = y - Self.headH + s.scroll
+        let cy = y - Self.headH
         for (i, month) in laid.enumerated() {
             let local = cy - tops[i]
             if local < 0 { continue }

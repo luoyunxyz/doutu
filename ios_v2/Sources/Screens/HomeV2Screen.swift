@@ -233,8 +233,10 @@ final class HomeV2Screen: Screen {
 
     func hitTest(_ state: ScreenState, x: CGFloat, y: CGFloat) -> ActionToken {
         let s = (state as? State) ?? State()
+        // 底栏是固定层，用屏幕坐标；娱乐/我页的内容用宿主传入的内容坐标。
+        let rawY = y - s.scroll
         // 底部标签栏永远优先响应（Java:1619-1635）
-        if y >= Self.navTop {
+        if rawY >= Self.navTop {
             if x < 360 { return "tab:0" }
             if x < 720 { return "tab:1" }
             return "tab:2"
@@ -263,8 +265,8 @@ final class HomeV2Screen: Screen {
             for i in 0..<4 where y < rowBounds[i + 1] { row = i; break }
             return s.servicePage == 0 ? "weiCell:\(row):\(col)" : "zhiCell:\(row * 4 + col)"
         case .entertainment:
-            // 落在哪一行就读画出来那份坐标（y 加上滚动量，Java:1912-1917）
-            let cy = y + s.scroll
+            // 宿主传入的 y 已经是内容坐标
+            let cy = y
             for box in s.entertainmentRows where cy >= box.top && cy < box.bottom {
                 return "play:\(box.row.key)"
             }
@@ -272,7 +274,8 @@ final class HomeV2Screen: Screen {
         case .profile:
             // 这一页画在 1280×2560 空间里，热点也要换到那个空间（Java:1657-1660）
             let px = x * Self.profileDesign.width / Self.W
-            let py = y * Self.profileDesign.height / Self.H + s.scroll
+            // y 已是 2388 空间的内容坐标，直接缩放到 2560 空间
+            let py = y * Self.profileDesign.height / Self.H
 
             // 右上角「···」：账号菜单（Java:1662-1665）
             if py >= 90 && py < 190 && px >= 1090 { return "menu" }

@@ -330,11 +330,13 @@ final class PayMsgV2Screen: Screen {
 
     func hitTest(_ state: ScreenState, x: CGFloat, y: CGFloat) -> ActionToken {
         let s = (state as? State) ?? State()
-        if y < Self.headBottom {
+        // 头部固定（屏幕坐标）；字段/卡片用宿主传入的内容坐标。
+        let rawY = y - s.scroll
+        if rawY < Self.headBottom {
             if x < 140 { return "back" }
             return "noop"
         }
-        let cy = y + s.scroll
+        let cy = y
         for f in fields.reversed() where f.rect.contains(CGPoint(x: x, y: cy)) {
             return "edit:" + f.key
         }

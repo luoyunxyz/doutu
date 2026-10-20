@@ -402,16 +402,19 @@ final class ZhiHomeV2Screen: Screen {
 
     func hitTest(_ state: ScreenState, x: CGFloat, y: CGFloat) -> ActionToken {
         let s = (state as? State) ?? State()
+        // 加号浮层、底栏、顶部搜索/地址都是固定层，用屏幕坐标；宫格/卡片用内容坐标。
+        let rawY = y - s.scroll
         if s.plusMenu {
-            if x < plusL || x > plusR || y < plusT || y > plusB { return "plusClose" }
-            var row = Int((y - plusT) / plusRowH)
+            if x < plusL || x > plusR || rawY < plusT || rawY > plusB { return "plusClose" }
+            var row = Int((rawY - plusT) / plusRowH)
             row = max(0, min(plusItems.count - 1, row))
             return "plus:" + plusItems[row]
         }
-        if y >= Self.navTop { return "nav:\(nearest(navX, x))" }
+        if rawY >= Self.navTop { return "nav:\(nearest(navX, x))" }
 
-        let cy = y + s.scroll
-        if y < 300 {
+        let cy = y
+        // 头栏是内容的一部分（drawHeader 在 translate 里），所以用内容坐标。
+        if cy < 300 {
             if x > 1120 { return "plus" }
             if x > 330 && x < 1120 { return "search" }
             return "edit:address"

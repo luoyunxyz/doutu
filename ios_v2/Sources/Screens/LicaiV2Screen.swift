@@ -458,8 +458,10 @@ final class LicaiV2Screen: Screen {
 
     func hitTest(_ state: ScreenState, x: CGFloat, y: CGFloat) -> ActionToken {
         let s = (state as? State) ?? State()
-        if y >= Self.navTop { return "nav:\(nearest(navX, x))" }
-        var cy = y + s.scroll
+        // 底部导航是固定层（draw 里在 restore 之后画），用屏幕坐标；
+        // 其余内容用宿主传进来的内容坐标（已含 scroll）。
+        if y - s.scroll >= Self.navTop { return "nav:\(nearest(navX, x))" }
+        var cy = y
 
         let caret = caretY + Self.panelH * s.expand
         if x > 569 && x < 709 && cy > caret - 40 && cy < caret + 45 { return "toggleExpand" }

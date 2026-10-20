@@ -619,9 +619,10 @@ final class GrowthV2Screen: Screen {
     }
 
     private func resolve(_ s: State, x: CGFloat, y: CGFloat) -> ActionToken {
-        if y >= Self.navTop { return "nav:\(nearest(navX, x))" }
+        // 底部导航固定（屏幕坐标）；内容用宿主传入的内容坐标。
+        if y - s.scroll >= Self.navTop { return "nav:\(nearest(navX, x))" }
         let off = unfold(s)
-        let cy = y + s.scroll
+        let cy = y
         let panelBottom = Self.headerBottom + off
 
         if x >= eyeRect.minX - 20 && x <= eyeRect.maxX + 10

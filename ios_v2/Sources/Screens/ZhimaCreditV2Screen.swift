@@ -461,15 +461,17 @@ final class ZhimaCreditV2Screen: Screen {
 
     func hitTest(_ state: ScreenState, x: CGFloat, y: CGFloat) -> ActionToken {
         let s = (state as? State) ?? State()
-        if y >= Self.navTop {
+        // 底栏 / 顶部返回固定，用屏幕坐标；轮播与瀑布流用内容坐标。
+        let rawY = y - s.scroll
+        if rawY >= Self.navTop {
             if x < 426 { return "nav:0" }
             if x < 853 { return "nav:1" }
             return "nav:2"
         }
-        if y < Self.headerH {
+        if rawY < Self.headerH {
             return x < 140 ? "back" : "noop"
         }
-        let cy = y + s.scroll
+        let cy = y
         if cy >= carouselY && cy <= carouselY + cardH {
             let ox = carouselX - s.carousel
             let ex = ox + personalW + cardGap
