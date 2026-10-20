@@ -25,9 +25,18 @@ enum CrashLog {
         return dir.appendingPathComponent("crash.log")
     }
 
+    /// 复用 formatter + 串行化写文件。
+    ///
+    /// 之前每次 append 都 `ISO8601DateFormatter()` 新建一个，再开/写/关文件；
+    /// 一旦调用方在 layout/滚动等高频路径里记日志，主线程会被直接拖慢（掉帧）。
+    private static let formatter = ISO8601DateFormatter()
+    private static let lock = NSLock()
+
     /// 追加一行（失败也不抛，绝不能因为记日志把 App 搞崩）
     static func append(_ text: String) {
-        let stamp = ISO8601DateFormatter().string(from: Date())
+        lock.lock()
+        defer { lock.unlock() }
+        let stamp = formatter.string(from: Date())
         guard let data = "\(stamp) \(text)\n".data(using: .utf8) else { return }
         if let handle = try? FileHandle(forWritingTo: fileURL) {
             handle.seekToEndOfFile()

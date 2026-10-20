@@ -204,9 +204,8 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
         let right = view.bounds.width
         headerPlusButton?.frame = CGRect(x: right - 42, y: 8, width: 40, height: 50)
         headerSearchButton?.frame = CGRect(x: right - 68, y: 8, width: 26, height: 50)
-        if let b = headerPlusButton {
-            CrashLog.append("WEBHDR frame \(b.frame) bounds=\(view.bounds) hidden=\(b.isHidden) alpha=\(b.alpha)")
-        }
+        // 注意：这里不能写日志。viewDidLayoutSubviews 在滑动/动画期间会被高频调用，
+        // CrashLog 每次都会创建 ISO8601 formatter 并开关文件，直接卡主线程。
     }
 
     /// 与 Android `WeiHomeActivity` 的沉浸式一致：本页不显示状态栏。
@@ -498,13 +497,12 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
             swipeLastTranslation = x
             if swipeReady {
                 snapshot.transform = CGAffineTransform(translationX: x, y: 0)
-                // 边缘返回：上一页从 -25% 慢慢回到 0，做出纵深；
+                // 边缘返回：上一页从左侧屏幕外跟手滑入，和当前页始终相邻。
                 // 根 tab 切换的底图是「进入页」，由 handleTabSwipe 单独处理。
                 if let bottom = swipeBottomSnapshot, tabPreviewIndex == nil {
                     let width = max(view.bounds.width, 1)
-                    let progress = min(1, max(0, x / width))
                     bottom.transform = CGAffineTransform(
-                        translationX: -width * 0.25 * (1 - progress), y: 0)
+                        translationX: -width + x, y: 0)
                 }
             }
         case .ended, .cancelled:
@@ -553,7 +551,7 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
                     edgeBottom?.transform = .identity
                 } else {
                     edgeBottom?.transform = CGAffineTransform(
-                        translationX: -width * 0.25, y: 0)
+                        translationX: -width, y: 0)
                 }
             } completion: { _ in
                 if commit {
@@ -664,11 +662,11 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
                 bottom.transform = CGAffineTransform(
                     translationX: self.tabIncomingSign * width, y: 0)
             } else {
-                // 边缘返回：上一页先退 25%，跟手时再回到 0（与原生页的视差一致）。
+                // 边缘返回也做「左右平移」：上一页从左侧屏幕外一起滑进来，
+                // 与当前页始终相邻（top 在 x，bottom 在 x-width），中间没有露白。
                 let width = max(self.view.bounds.width, 1)
-                let progress = min(1, max(0, self.swipeLastTranslation / width))
                 bottom.transform = CGAffineTransform(
-                    translationX: -width * 0.25 * (1 - progress), y: 0)
+                    translationX: -width + self.swipeLastTranslation, y: 0)
             }
             self.view.insertSubview(bottom, belowSubview: top)
             self.swipeBottomSnapshot = bottom

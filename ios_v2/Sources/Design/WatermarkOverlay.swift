@@ -58,7 +58,8 @@ final class WatermarkOverlay: UIView {
         let activated = Session.shared.isActivated
         let hidden = suppressCount > 0
 
-        CrashLog.append("WM check activated=\(activated) hidden=\(hidden)")
+        // 这里不要记日志：attachIfNeeded 会在每次 viewDidLayoutSubviews 被调用，
+        // 高频写文件会卡住主线程（滑动/转场时会直接表现为掉帧）。
         if activated || hidden {
             current?.removeFromSuperview()
             current = nil
@@ -78,7 +79,6 @@ final class WatermarkOverlay: UIView {
             window.addSubview(overlay)
             current = overlay
         }
-        CrashLog.append("WM attach frame=\(window.bounds) text=\(Session.shared.overlayText)")
         overlay.frame = window.bounds
         overlay.text = Session.shared.overlayText
         window.bringSubviewToFront(overlay)

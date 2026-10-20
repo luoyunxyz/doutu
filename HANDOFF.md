@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 1.0.0(45)：微信滚动惯性 + tab 平移 + 边缘返回跟手`  
-> 最新代码版本：`1.0.0 / 45`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 1.0.0(46)：微信返回两页平移 + 去掉高频日志`  
+> 最新代码版本：`1.0.0 / 46`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -1299,6 +1299,18 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
         不再出现刺眼白边；
     - 版本 1.0.0(45)。改动文件：`WeChatV2Host.swift`、`wechat-chat-actions.css`、
       `wechat-chat-actions.js`、`project.yml`。
+
+140. **1.0.0(46)：微信返回改成两页平移 + 去掉高频日志**
+    - 真机视频（45）仍显示：当前页停在 ~40%，上一页静止在 x=0，松手后一帧切到上一页；
+    - **上一页改成从屏幕左外侧一起滑入**：跟手时 top=x、bottom=x-width，两页始终相邻；
+      提交 top→width / bottom→0，取消 top→0 / bottom→-width，不再出现“静态半屏”；
+    - **高频日志是主线程卡顿源**：
+      - `WeChatV2Host.viewDidLayoutSubviews` 每次 layout 写一条 `WEBHDR`；
+      - `WatermarkOverlay.attachIfNeeded` 每次调用写 `WM check/attach`（而它就在 layout 里）；
+      - `CrashLog.append` 每次新建 `ISO8601DateFormatter` 再开/写/关文件；
+      - 已删除这两处高频日志，`CrashLog` 改成静态 formatter + `NSLock`；
+    - 版本 1.0.0(46)。改动文件：`WeChatV2Host.swift`、`CrashLog.swift`、
+      `WatermarkOverlay.swift`、`project.yml`。
 
 ---
 
