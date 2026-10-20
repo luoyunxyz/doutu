@@ -29,8 +29,36 @@ final class AppIconChooser: UIViewController {
 
     static func present() {
         guard let host = UpdatePrompt.topViewController() else { return }
-        // 修改图标不是会员功能：Android 端这一格不看 Session.isActivated。
-        // 之前这里加了会员判断，未开通会员的用户点进去只会看到“会员功能”提示。
+        if Session.shared.isActivated {
+            presentPicker(from: host)
+            return
+        }
+        guard Session.shared.isLoggedIn else {
+            let alert = UIAlertController(
+                title: "修改应用图标",
+                message: "修改应用图标是会员功能。\n\n请先在「我」页面登录并开通会员，之后才能切换图标。",
+                preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "知道了", style: .cancel))
+            host.present(alert, animated: true)
+            return
+        }
+        // 本地 activated 可能是旧值（续费/换账号/刚登录），先向服务端刷新一次再判断。
+        Router.shared?.refreshMemberStatus {
+            guard let current = UpdatePrompt.topViewController() else { return }
+            if Session.shared.isActivated {
+                presentPicker(from: current)
+            } else {
+                let alert = UIAlertController(
+                    title: "修改应用图标",
+                    message: "修改应用图标是会员功能。\n\n当前账号未开通或会员已到期，请联系客服开通后再来切换。",
+                    preferredStyle: .alert)
+                alert.addAction(UIAlertAction(title: "知道了", style: .cancel))
+                current.present(alert, animated: true)
+            }
+        }
+    }
+
+    private static func presentPicker(from host: UIViewController) {
         let picker = AppIconChooser()
         picker.modalPresentationStyle = .overFullScreen
         picker.modalTransitionStyle = .crossDissolve

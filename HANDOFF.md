@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 2.4.77：修改应用图标不再被会员门槛拦住`  
-> 最新代码版本：`2.4.77 / 20117`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 2.4.78：会员可换图标，进入前先刷新会员状态`  
+> 最新代码版本：`2.4.78 / 20118`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -892,6 +892,14 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
     - 设备当前未开通会员（首页仍显示“联系客服开通会员”）；`AppIconChooser.present()` 里有 `guard Session.shared.isActivated`，未开通会员直接弹“会员功能”提示，根本进不了图标选择页；
     - Android 这一格没有会员判断，2.4.77 删除这个门槛，所有用户都能打开选择器；
     - 增加 `ICON apply / ICON error` 日志：若 `setAlternateIconName` 在 unsigned/重签安装上返回 -54，可以直接从 crash.log 看到；这种情况下是 iOS 对签名安装的限制，需要正常签名重装。
+
+94. **会员账户也被挡在图标功能外**
+    - 用户是会员但本地 `profile.activated` 仍是旧值/空；`refreshMemberStatusIfNeeded` 只在 `status_text` 为空时刷新，导致一直误判；
+    - 2.4.78：
+      - 恢复「仅会员可换图标」；
+      - 点图标时若 `!isActivated` 且已登录，先调用 `refreshMemberStatus`，刷新完再判断是否打开选择器；
+      - `refreshMemberStatusIfNeeded` 每次启动/回前台都刷新，不再依赖 status_text；
+      - `Session.isActivated` 增加 `expire_at` 兜底：到期日在今天之后也算会员。
 
 ---
 

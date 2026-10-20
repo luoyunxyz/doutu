@@ -573,8 +573,9 @@ final class Router {
     /// 启动/回前台补一次会员状态（Android `refreshAccount(false)` 的等价时机）。
     func refreshMemberStatusIfNeeded() {
         guard Session.shared.isLoggedIn else { return }
-        let saved = UserDefaults.standard.string(forKey: "profile.status_text") ?? ""
-        if saved.isEmpty { refreshMemberStatus() }
+        // 不要只在 status_text 为空时刷新：会员到期/续费/换账号后本地 activated
+        // 可能还是旧值，图标等会员功能就会被误判为未开通。
+        refreshMemberStatus()
     }
 
     /// 收款码页「修改」姓名：Android CollectMoneyActivity.editName 的等价实现。
@@ -599,12 +600,13 @@ final class Router {
     }
 
     /// 对应 Android `MainActivity.refreshAccount(true)`：`GET /api/v1/auth/status`
-    private func refreshMemberStatus() {
+    func refreshMemberStatus(completion: (() -> Void)? = nil) {
         Task { @MainActor in
             // Android 用 GET；之前写成 POST 会被服务端回「请求方法不支持」，启动时还会弹 toast。
             let res = await ApiClient.shared.call("GET", "/api/v1/auth/status")
             guard res.ok, let data = res.data as? [String: Any] else {
                 self.showToast(res.msg.isEmpty ? "刷新失败" : res.msg, ok: false)
+                completion?()
                 return
             }
             // /auth/status 的用户字段平铺在 data 上；login/register 才是 data.user。
@@ -632,6 +634,7 @@ final class Router {
             WatermarkOverlay.attachIfNeeded()
             self.host?.setNeedsDisplay()
             self.showToast("已刷新", ok: true)
+            completion?()
         }
     }
 

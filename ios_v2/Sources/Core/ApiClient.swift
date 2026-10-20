@@ -86,9 +86,19 @@ final class Session {
         return nick.isEmpty ? (UserDefaults.standard.string(forKey: "profile.name") ?? "") : nick
     }
 
-    /// 是否已开通会员（决定界面水印与会员卡文案）
+    /// 是否已开通会员（决定界面水印与会员卡文案）。
+    /// 除了服务端的 activated 标记，再用 expire_at 兜底：续费后本地标记还没来得及刷新时，
+    /// 只要到期日还在今天之后，仍按会员处理。
     var isActivated: Bool {
-        UserDefaults.standard.bool(forKey: "profile.activated")
+        if UserDefaults.standard.bool(forKey: "profile.activated") { return true }
+        let expire = UserDefaults.standard.string(forKey: "profile.expire_at") ?? ""
+        guard expire.count >= 10 else { return false }
+        let day = String(expire.prefix(10))
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyy-MM-dd"
+        let today = formatter.string(from: Date())
+        return day >= today
     }
 
     /// 会员到期日（`yyyy-MM-dd`，未开通为空）
