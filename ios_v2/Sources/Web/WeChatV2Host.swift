@@ -251,8 +251,8 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
     /// 边缘返回时是否用「预加载的上一页快照」这条快路径。
     /// 快路径全程只做 UIView.transform，不碰 WKWebView / JS / 重新抓图。
     private var fastEdgeBack = false
-    /// touchstart 时抓下的候选快照（hash + 图）。等 hash 真的变了再进栈。
-    private var pendingPreview: (hash: String, snapshot: UIView, at: Date)?
+    /// 当前页稳定后抓下的快照（hash + 图）。下一次进入新页面时它就是“上一页”。
+    private var currentPageSnapshot: (hash: String, snapshot: UIView)?
     /// 已进入的页面栈（上一页快照），最多 8 层。
     private var backPreviews: [(hash: String, snapshot: UIView)] = []
     /// 我们自己触发的返回：hashchange 回调不要再入栈/出栈。
@@ -487,7 +487,6 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
             edgeActive = true
             edgePreNavigated = false
             fastEdgeBack = false
-            pendingPreview = nil
             edgeOriginalHash = currentHash
             // 在微主页的四个根 tab 上，按住边缘右滑 = 退出微主页回到首页。
             // 这种情况不需要快照：直接把整个微主页跟手右移，手指下面露出的就是首页
@@ -500,7 +499,7 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
                 view.layer.shadowRadius = 8
                 view.layer.shadowOffset = CGSize(width: -4, height: 0)
                 view.layer.shadowPath = UIBezierPath(rect: view.bounds).cgPath
-            } else if let preview = backPreviews.last?.snapshot {
+            } else if let preview = backPreviews.last?.snapshot, !overlayOpen {
                 // 快路径：上一页快照在 touchstart 时就已经预加载好，并锁定成一张静态图。
                 // 整个手势只移动 top/preview 两个 UIView，不调用 JS、不抓图、不重排版。
                 fastEdgeBack = true
@@ -596,7 +595,10 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
                         // 预加载的上一页已经跟着手指走完了；现在才让网页真正返回。
                         // 网页在快照下面重排，用户看不到，也不参与手势帧。
                         self.suppressPreviewCapture = true
-                        if !self.backPreviews.isEmpty { self.backPreviews.removeLast() }
+                        if let target = self.backPreviews.popLast() {
+                            // 返回后的目标页 = 新的当前页；它的快照可以继续给下一次返回用。
+                            self.currentPageSnapshot = target
+                        }
                         self.performEdgeBack()
                         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
                             self.suppressPreviewCapture = false
@@ -659,54 +661,58 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
     // MARK: - 返回预览（预加载上一页）
 
     /// touchstart 时抓一张当前页快照；等 hash 真的变了再把它当作“上一页”入栈。
-    /// 这是边缘返回能全程只做 transform 的关键：手势期间不再碰 WKWebView。
-    private func capturePendingPreview(hash: String) {
-        guard !edgeActive, !tabSwipeActive, !webView.isHidden else { return }
-        if let pending = pendingPreview, pending.hash == hash,
-           Date().timeIntervalSince(pending.at) < 0.12 { return }
-        guard let snap = webView.snapshotView(afterScreenUpdates: false) else { return }
-        snap.frame = webView.frame
-        snap.isUserInteractionEnabled = false
-        pendingPreview = (hash, snap, Date())
+    /// 页面稳定 300ms 后抓一张快照，作为下一次导航的“上一页”。
+    /// 和手指、点击完全解耦：只在页面静止时做一次，滑动期间不会碰 WKWebView。
+    private func scheduleCurrentSnapshot(hash: String) {
+        let expected = hash
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak self] in
+            guard let self else { return }
+            guard !self.webView.isHidden, !self.edgeActive, !self.tabSwipeActive else { return }
+            guard (self.currentHash ?? "") == expected else { return }
+            guard let snap = self.webView.snapshotView(afterScreenUpdates: false) else { return }
+            snap.frame = self.webView.frame
+            snap.isUserInteractionEnabled = false
+            self.currentPageSnapshot = (expected, snap)
+        }
     }
 
-    /// hash 变化：要么是进入下一层（把 pending 快照入栈），要么是返回（把栈里该页及以上移除）。
+    /// hash 变化：前进时把当前页快照入栈；网页自己返回时把目标页及以上移出栈。
     private func handlePageHash(_ hash: String) {
         if suppressPreviewCapture {
             suppressPreviewCapture = false
-            pendingPreview = nil
             return
         }
-        // 回到栈里已有的页面 = 网页自己触发的返回：目标页成为当前页，它上面的预览都作废。
+        // 回到栈里已有的页面 = 网页自己触发的返回：目标页成为新的当前页。
         if let idx = backPreviews.lastIndex(where: { $0.hash == hash }) {
+            let target = backPreviews[idx]
             for item in backPreviews[idx...] { item.snapshot.removeFromSuperview() }
             backPreviews.removeSubrange(idx..<backPreviews.count)
-            pendingPreview = nil
+            currentPageSnapshot = target
             return
         }
         // 根 tab：返回交给 closeHost / tab pager，页面栈清空。
         if isRootRoute(hash) {
             for item in backPreviews { item.snapshot.removeFromSuperview() }
             backPreviews.removeAll()
-            pendingPreview = nil
+            currentPageSnapshot = nil
+            scheduleCurrentSnapshot(hash: hash)
             return
         }
-        guard let pending = pendingPreview, pending.hash != hash,
-              Date().timeIntervalSince(pending.at) < 2.0 else {
-            pendingPreview = nil
-            return
+        // 前进：当前页快照就是新页面的“上一页”。
+        if let current = currentPageSnapshot, current.hash != hash {
+            backPreviews.append(current)
+            if backPreviews.count > 8 {
+                backPreviews.removeFirst().snapshot.removeFromSuperview()
+            }
         }
-        backPreviews.append((pending.hash, pending.snapshot))
-        if backPreviews.count > 8 {
-            backPreviews.removeFirst().snapshot.removeFromSuperview()
-        }
-        pendingPreview = nil
+        currentPageSnapshot = nil
+        scheduleCurrentSnapshot(hash: hash)
     }
 
     private func clearBackPreviews() {
         for item in backPreviews { item.snapshot.removeFromSuperview() }
         backPreviews.removeAll()
-        pendingPreview = nil
+        currentPageSnapshot = nil
     }
 
     /// `waitForBottom`：
@@ -1156,8 +1162,6 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
             headerSearchButton?.isHidden = !visible
             // 网页里的浮层/子页状态：边缘手势据此决定「退出一整层」还是「整页回首页」。
             overlayOpen = !visible
-        case "pageTouch":
-            capturePendingPreview(hash: args.first as? String ?? "")
         case "pageHash":
             handlePageHash(args.first as? String ?? "")
         default:
@@ -1367,8 +1371,9 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
     })();
     """
 
-    /// 返回预览预加载钩子。只做两件事：touchstart 报当前 hash，hashchange 报新 hash。
-    /// 原生在 touchstart 那一刻抓当前页快照；随后 hash 变了，这张快照就成了“上一页”。
+    /// 返回预览预加载钩子：只报 hash 变化。
+    /// 原生在每次 hash 变化后（页面稳定 300ms）抓一张当前页快照；
+    /// 下一次进入新页面时，这张快照自然就是“上一页”，不需要在触摸时做任何事。
     private static let previewHook = """
     (function(){
       function post(method, args){
@@ -1376,8 +1381,6 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
           {method: method, args: args || [], callbackId: null}); } catch (e) {}
       }
       function h(){ return String(location.hash || ''); }
-      document.addEventListener('touchstart', function(){ post('pageTouch', [h()]); },
-        {capture: true, passive: true});
       window.addEventListener('hashchange', function(){ post('pageHash', [h()]); });
     })();
     """
@@ -1544,6 +1547,10 @@ extension WeChatV2Host: WKNavigationDelegate {
             CrashLog.append("WebHost didFinish state=\(result as? String ?? "-") err=\(error?.localizedDescription ?? "-")")
         }
         deliverPendingRouteIfReady()
+        // 首次加载不会触发 hashchange（URL 自带 hash），这里补一张当前页快照。
+        if let hash = currentHash {
+            scheduleCurrentSnapshot(hash: hash)
+        }
     }
 
     func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
