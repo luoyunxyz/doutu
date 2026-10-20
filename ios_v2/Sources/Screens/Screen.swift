@@ -61,6 +61,8 @@ protocol Screen: AnyObject {
     func longPress(_ state: ScreenState, x: CGFloat, y: CGFloat) -> ActionToken?
     /// 这一屏的 draw 是否自己做了 `translate(0, -scroll)`。同上。
     var selfScrolls: Bool { get }
+    /// 是否在页面底下垫相机预览（扫码页）。同上。
+    var usesCameraBackground: Bool { get }
 }
 
 extension Screen {
@@ -360,6 +362,8 @@ final class ScreenHostView: UIView, UIScrollViewDelegate {
         let navH = bounds.height * 256 / 2816
         zhiTabBar.frame = CGRect(x: 0, y: bounds.height - navH,
                                  width: bounds.width, height: navH)
+        // 相机是同级视图，跟着宿主 frame 走
+        cameraView?.frame = frame
         // 转场快照必须始终盖在最上面，否则 layout 一跑，新页面的底栏就会从快照里穿出来。
         if let transitionSnapshot {
             bringSubviewToFront(transitionSnapshot)
@@ -515,18 +519,29 @@ final class ScreenHostView: UIView, UIScrollViewDelegate {
         return snapshot
     }
 
-    /// 按当前屏的需要装上 / 卸下相机预览
+    /// 按当前屏的需要装上 / 卸下相机预览。
+    ///
+    /// 相机必须放在**宿主同级的下面**，不能 `insertSubview(at:0)`：
+    /// UIView 的子视图永远盖在自身 draw 的内容之上，放子视图会把扫描线/按钮全遮住。
+    /// 宿主在相机页变成透明，页面绘制留在宿主的图层里，于是 z 序是：
+    /// 相机（同级，下）→ 页面浮层（宿主图层）→ 底栏/转场快照。
     private func syncCameraBackground() {
         if screen.usesCameraBackground {
-            guard cameraView == nil else { return }
-            let camera = CameraPreviewView(frame: bounds)
+            isOpaque = false
+            backgroundColor = .clear
+            guard cameraView == nil, let container = superview else { return }
+            let camera = CameraPreviewView(frame: frame)
             camera.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-            insertSubview(camera, at: 0)
+            container.insertSubview(camera, belowSubview: self)
             cameraView = camera
-        } else if let camera = cameraView {
-            camera.stop()
-            camera.removeFromSuperview()
-            cameraView = nil
+        } else {
+            isOpaque = true
+            backgroundColor = .black
+            if let camera = cameraView {
+                camera.stop()
+                camera.removeFromSuperview()
+                cameraView = nil
+            }
         }
     }
 

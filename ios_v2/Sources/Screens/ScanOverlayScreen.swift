@@ -66,9 +66,8 @@ final class ScanOverlayScreen: Screen {
 
     func draw(_ d: Draw, state: ScreenState) {
         let s = (state as? State) ?? State()
-        // 本页原本靠相机预览当底；相机图层的层级还没理顺（相机 subview 会盖住页面绘制），
-        // 所以先铺黑底，让白色返回箭头/扫描线/按钮在无相机时也看得见。
-        d.rect(CGRect(x: 0, y: 0, width: Self.W, height: Self.H), .black)
+        // 宿主在相机页是透明的，相机作为同级视图垫在下面；页面只画浮层。
+        // 相机不可用时 CameraPreviewView 自己是黑底 + 提示，白色控件仍然看得见。
         drawScanLine(d)
         drawTopBar(d)
         d.centerText("扫二维码/条码/小程序码", cx: 640, baseline: 2069, size: 49, UIColor.white)

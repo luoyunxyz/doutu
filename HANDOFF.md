@@ -1252,9 +1252,10 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
         永远拿到扩展默认值，页面里的实现根本不参与；
       - 已把它们提升为 `protocol Screen` 的要求（与 `zhiTabIndex` / `verticalDrag` 同一处理），
         这样**芝麻/设置页长按**、以及**模拟来电/意见反馈/去水印/邀请码重置的滚动**才真正生效；
-      - `usesCameraBackground` **暂不提升**：相机预览是 `insertSubview(at:0)`，而 UIView 的子视图
-        永远盖在自身绘制内容之上，开启后会遮住扫描线/按钮；要先给宿主加一层独立的内容视图再开；
-        扫码页先铺黑底保证白色控件可见；
+      - `usesCameraBackground` 已提升；相机的层级改成**宿主同级的下面**（`insertSubview(_:belowSubview:)`），
+        不再用子视图：UIView 的子视图永远盖在自身绘制内容之上，放子视图会把扫描线/按钮全遮住。
+        相机页宿主变透明，z 序为「相机 → 页面浮层 → 底栏/转场快照」；
+        相机不可用时 `CameraPreviewView` 自己是黑底 + 提示，白色控件仍可见；
       - `carouselDrag/Snap` 仍留在扩展里：Zhima 的实现没有拿到按下点 y，启用后会在任何横向拖动上
         误移轮播，需要先给协议加 `startY` 再做；
     - **`selfScrolls` 也提升为 protocol 要求**：
@@ -1263,12 +1264,14 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
         说明它们一直是按宿主滚动写的；
       - 修正 5 个「声明 false 但自己做了 translate」的页面（Bill / BillV2 / Conversation / HomeShell / HomeV2）
         为 `true`，保持它们原来的行为；其余 false 页面开始真正由宿主滚；
-    - **发现但本轮未动（需要单独一轮）**：
-      - 约 30 屏的 `hitTest` 仍按「未滚坐标」写 `+ s.scroll`，而宿主 `touchesEnded` 已经加过
-        `state.scroll` → 自滚页面滚动后点击会整体偏移（点到相邻行/下面的东西）；
-      - 需要统一「宿主传内容坐标」这一约定，再逐屏删掉多余的 `+ s.scroll`
-        （Conversation / CustomerService / TaobaoOrder 里固定顶栏需要 `- s.scroll` 的情况要保留）。
-        本轮不做，避免在无法真机验证时大面积改命中坐标；
+    - **命中坐标统一（同轮已修）**：
+      - 宿主 `touchesEnded` 一直会先加 `state.scroll` 再调 `hitTest`；但 18 个实际使用的页面
+        又在 `hitTest` 里加了一次 → 滚动后点击整体偏移一个 scroll；
+      - 已把全部**实际在用**的 V2 页面改成「内容坐标」：普通内容用宿主传入的 `y`，
+        固定顶栏/底栏用 `rawY = y - scroll`（Asset / Balance / Huabei / Yuebao / Licai / Growth /
+        Bill / BillDetail / BillAnalytics / CollectMoney / PayMsg / Receipt / SwitchAccount /
+        ZhiHome / Zhima / Me / HomeShell / HomeV2）；
+      - 只剩**未被 Router 使用的非 V2 旧文件**还保留 `+ s.scroll`，属于死代码，不要再从 Router 里引用它们；
     - 版本 1.0.0(43)。改动文件：`Screen.swift`、`BannerStore.swift`、`LegacyDoutuApp.swift`、
       `WeChatV2Host.swift`、`ZhimaCreditScreen.swift`、`ZhimaCreditV2Screen.swift`、`project.yml`。
 
