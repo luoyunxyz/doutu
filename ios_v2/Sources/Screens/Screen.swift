@@ -487,7 +487,9 @@ final class ScreenHostView: UIView, UIScrollViewDelegate {
         snapshot.layer.shadowColor = UIColor.black.cgColor
         snapshot.layer.shadowOpacity = 0.16
         snapshot.layer.shadowRadius = 10
-        snapshot.layer.shadowOffset = CGSize(width: backwards ? 4 : -4, height: 0)
+        // 阴影要落在「即将露出的那一页」上：push 时旧页向左走 → 阴影在右（+4），
+        // pop 时旧页向右走 → 阴影在左（-4）。
+        snapshot.layer.shadowOffset = CGSize(width: backwards ? -4 : 4, height: 0)
         snapshot.layer.shadowPath = UIBezierPath(rect: snapshot.bounds).cgPath
         UIView.animate(withDuration: 0.3, delay: 0, options: [.curveEaseInOut]) {
             snapshot.transform = CGAffineTransform(translationX: backwards ? width : -width, y: 0)
