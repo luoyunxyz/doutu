@@ -98,6 +98,13 @@ final class MeScreen: Screen {
         for (key, res) in Self.artNames {
             if let image = UIImage(named: res) { art[key] = image }
         }
+        // 兜底：即使 xcassets 里的 me_content 没被打进 Assets.car，
+        // 也从 bundle 里的同名 PNG 直接加载，保证内容区一定用截图。
+        if art["content"] == nil,
+           let path = Bundle.main.path(forResource: "me_content", ofType: "png"),
+           let image = UIImage(contentsOfFile: path) {
+            art["content"] = image
+        }
     }
 
     // MARK: - 滚动（Java:137-139）

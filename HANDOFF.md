@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 1.0.0(71)：我的页内容改用 Android 真机截图`  
-> 最新代码版本：`1.0.0 / 71`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 1.0.0(72)：我的页截图加 bundle 兜底，强制加载`  
+> 最新代码版本：`1.0.0 / 72`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -1745,6 +1745,19 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
     - 限制：截图来自 417px 宽的聊天图片，3x 屏上清晰度不如原生素材；
       有 1080×2400 原图可替换同一张 `me_content.png`；
     - 版本 1.0.0(71)。改动文件：`MeScreen.swift`、`me_content.imageset`、
+      iOS `project.yml`。
+
+165. **1.0.0(72)：我的页截图 bundle 兜底**
+    - 71 真机上用户仍看到卡片描边，判断 `me_content` 没进 Assets.car /
+      没被 `UIImage(named:)` 加载，`MeScreen` 走了 `me_card1..8` 的兜底；
+    - 72：
+      - 同一张截图再复制一份到 `Resources/me_content.png`（普通 bundle 资源，
+        不依赖 xcassets）；
+      - `MeScreen.init` 在 `UIImage(named: "me_content")` 失败时用
+        `Bundle.main.path(forResource: "me_content", ofType: "png")` 直接加载；
+      - 内容区仍然整块画这张图（698..2560），上方动态、底部导航原生；
+    - 构建 72 后，App 的 build 号应为 72；如果内容区还是卡片，说明装的是旧包；
+    - 版本 1.0.0(72)。改动文件：`MeScreen.swift`、`Resources/me_content.png`、
       iOS `project.yml`。
 
 ---
