@@ -1950,7 +1950,9 @@
 #fw-pay-pages-host .fw-wallet-sheet-check{width:20px;height:20px;border-radius:50%;border:1px solid #cfcfcf;box-sizing:border-box;position:relative;flex:none}
 #fw-pay-pages-host .fw-wallet-sheet-row.is-on .fw-wallet-sheet-check{background:#07c160;border-color:#07c160}
 #fw-pay-pages-host .fw-wallet-sheet-row.is-on .fw-wallet-sheet-check::after{content:'';position:absolute;left:6px;top:3px;width:5px;height:9px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg)}
-#fw-pay-pages-host .fw-wallet-amount-edit{font-size:15px;font-weight:700;color:#191919;margin-right:16px;display:inline-block;padding:8px 0;line-height:normal;outline:0;cursor:pointer}
+#fw-pay-pages-host .fw-wallet-row-copy b{font-weight:400!important}
+#fw-pay-pages-host .fw-wallet-row strong{font-weight:400!important}
+#fw-pay-pages-host .fw-wallet-amount-edit{font-size:15px;font-weight:400;color:#191919;margin-right:16px;display:inline-block;padding:8px 0;line-height:normal;outline:0;cursor:pointer}
 #fw-pay-pages-host .fw-wallet-amount-dialog{position:fixed;top:0;left:0;right:0;bottom:0;z-index:2147483647;display:none}
 #fw-pay-pages-host .fw-wallet-amount-dialog.is-open{display:block}
 #fw-pay-pages-host .fw-wallet-amount-mask{position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.42)}

@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 1.0.0(65)：经营账户/零钱通金额可点击修改并持久化`  
-> 最新代码版本：`1.0.0 / 65`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 1.0.0(66)：三个金额统一为参考图的常规字重`  
+> 最新代码版本：`1.0.0 / 66`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -1638,6 +1638,19 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
       - 默认 1.93 / 0.00；
     - 零钱金额和零钱通收益率保持原样，不可编辑；
     - 版本 1.0.0(65)。改动文件：`wechat-pay-pages.js`、`wechat-pay-pages.css`、
+      `index.html`、`WeChatV2Host.swift`、`project.yml`。
+
+159. **1.0.0(66)：三个金额统一字重**
+    - 65 真机截图：零钱 ¥520.00 是常规字重，经营账户 ¥5888.00 / 零钱通 ¥0.00
+      是粗体（新增的可编辑 span 写了 `font-weight:700`），所以三行看起来字体不一样；
+    - 参考图的金额/名称都是**常规字重**；
+    - 66：
+      - `.fw-wallet-amount-edit` 改 `font-weight:400`；
+      - `.fw-wallet-row-copy b`、`.fw-wallet-row strong` 强制 `400!important`，
+        避免被 bundled CSS/UA 的 `<b>/<strong>` 粗体覆盖；
+      - 三行名称、三个金额字重一致，和参考图一致；
+      - 金额宽度/位置/行高不变；
+    - 版本 1.0.0(66)。改动文件：`wechat-pay-pages.js`、`wechat-pay-pages.css`、
       `index.html`、`WeChatV2Host.swift`、`project.yml`。
 
 ---
