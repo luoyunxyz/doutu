@@ -263,6 +263,8 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
     private var previousHashByRoute: [String: String] = [:]
     /// 我们自己触发的返回：hashchange 回调不要再入栈/出栈。
     private var suppressPreviewCapture = false
+    /// 滚动停止后才抓图（滚动过程中抓 WKWebView 会卡列表）。
+    private var scrollIdleTimer: Timer?
     private var edgeActive = false
     private var edgePreNavigated = false
     private var edgeOriginalHash: String?
@@ -514,7 +516,9 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
                 fastEdgeBack = true
                 // 快路径连 JS 都不调：手势期间只有两个 UIView 的 transform。
                 // CSS 冻结推迟到提交时，在预览图下面做。
-                makeSwipeSnapshot(waitForBottom: false)
+                // 当前页也优先用预加载快照；没有才实时抓一张。
+                let top = currentTopSnapshot
+                makeSwipeSnapshot(waitForBottom: false, top: top)
                 if let top = swipeSnapshot {
                     let width = max(view.bounds.width, 1)
                     preview.frame = view.bounds
@@ -529,10 +533,12 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
                 }
             } else {
                 setSwipeFreeze(true)
-                // 没预加载到时才走旧路径：先让网页返回，再抓一张底图。
-                makeSwipeSnapshot(waitForBottom: false)
+                // 没预加载到上一页时才走旧路径；当前页仍然优先用预加载快照。
+                makeSwipeSnapshot(waitForBottom: false, top: currentTopSnapshot)
                 prepareEdgePreview()
             }
+            let cur = currentHash ?? "-"
+            CrashLog.append("EDGE begin fast=\(fastEdgeBack) topCache=\(currentTopSnapshot != nil) prev=\(previousHashByRoute[cur] ?? "-") snaps=\(pageSnapshots.count)")
         case .changed:
             if edgeRootDismiss {
                 view.transform = CGAffineTransform(translationX: max(0, outerTranslation.x), y: 0)
@@ -585,6 +591,7 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
             guard let snapshot = swipeSnapshot else { return }
             let commit = gesture.state != .cancelled
                 && translation.x > 60 && abs(translation.y) < 120
+            CrashLog.append("EDGE end commit=\(commit) fast=\(fastEdgeBack)")
             let width = max(view.bounds.width, 1)
             let edgeBottom = tabPreviewIndex == nil ? swipeBottomSnapshot : nil
             UIView.animate(withDuration: commit ? 0.22 : 0.2,
@@ -668,6 +675,12 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
         return fragment.hasPrefix("#") ? fragment : "#" + fragment
     }
 
+    /// 当前页预加载好的静态图（没有就返回 nil，调用方回退到实时截图）。
+    private var currentTopSnapshot: UIView? {
+        guard let hash = currentHash else { return nil }
+        return pageSnapshots[hash]
+    }
+
     // MARK: - 返回预览（预加载上一页）
 
     /// 页面稳定 300ms 后抓一张快照，作为下一次导航的“上一页”。
@@ -718,6 +731,21 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
         scheduleCurrentSnapshot(hash: new)
     }
 
+    /// 页面滚动了：当前页快照作废；等滚动真正停下（0.45s 没有新的 scroll 消息）
+    /// 再抓一张。滚动过程中抓图会直接把列表拖卡。
+    private func invalidateCurrentSnapshot(hash: String) {
+        guard !hash.isEmpty, !edgeActive, !tabSwipeActive else { return }
+        if let view = pageSnapshots.removeValue(forKey: hash) {
+            view.removeFromSuperview()
+        }
+        snapshotOrder.removeAll { $0 == hash }
+        scrollIdleTimer?.invalidate()
+        scrollIdleTimer = Timer.scheduledTimer(withTimeInterval: 0.45, repeats: false) {
+            [weak self] _ in
+            self?.scheduleCurrentSnapshot(hash: hash)
+        }
+    }
+
     private func clearBackPreviews() {
         for view in pageSnapshots.values { view.removeFromSuperview() }
         pageSnapshots.removeAll()
@@ -729,10 +757,21 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
     ///   · 根 tab 切换要等进入页静态图就绪，否则大面积露白 → true；
     ///   · 边缘返回从左边 20pt 开始拖，露出的缝隙很小，必须立刻跟手 → false。
     ///     之前一律等 250ms，页面会在手指移动 200px 后才突然跳过去，手感很硬。
-    private func makeSwipeSnapshot(waitForBottom: Bool = true) {
+    ///
+    /// `top`：当前页已经预加载好的静态图。传了就**不再在手指按下时抓 WKWebView**，
+    /// 手势第一帧只有 UIView 的 add/transform。
+    private func makeSwipeSnapshot(waitForBottom: Bool = true, top: UIView? = nil) {
         guard swipeSnapshot == nil else { return }
-        guard let snapshot = webView.snapshotView(afterScreenUpdates: false) else { return }
+        let snapshot: UIView
+        if let top {
+            snapshot = top
+            snapshot.removeFromSuperview()
+        } else {
+            guard let live = webView.snapshotView(afterScreenUpdates: false) else { return }
+            snapshot = live
+        }
         snapshot.frame = webView.frame
+        snapshot.transform = .identity
         snapshot.isUserInteractionEnabled = false
 
         // 先放一张纯色占位在下面，然后立刻隐藏 WKWebView；
@@ -824,7 +863,7 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
             tabPreviewIndex = nil
             if tabSwipeActive {
                 setSwipeFreeze(true)
-                makeSwipeSnapshot()
+                makeSwipeSnapshot(top: currentTopSnapshot)
                 if tabOriginalHash == nil {
                     webView.evaluateJavaScript("String(location.hash || '')") { [weak self] result, _ in
                         guard let self else { return }
@@ -1193,6 +1232,8 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
             let oldHash = args.count > 0 ? (args[0] as? String ?? "") : ""
             let newHash = args.count > 1 ? (args[1] as? String ?? "") : ""
             handlePageHash(old: oldHash, new: newHash)
+        case "pageScroll":
+            invalidateCurrentSnapshot(hash: args.first as? String ?? "")
         default:
             // 其余方法（相册保存、来电音频、键盘、系统栏…）先按成功/空值应答，
             // 让页面逻辑不至于卡住；逐个补齐记在 README 的待办里。
@@ -1415,6 +1456,15 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
       window.addEventListener('hashchange', function(e){
         post('pageHash', [h(e.oldURL), h(e.newURL)]);
       });
+      // 滚动会让“当前页快照”过期；节流后报一次，原生重新抓图。
+      var scrollTimer = 0;
+      document.addEventListener('scroll', function(){
+        if (scrollTimer) return;
+        scrollTimer = setTimeout(function(){
+          scrollTimer = 0;
+          post('pageScroll', [h(location.href)]);
+        }, 220);
+      }, {capture: true, passive: true});
     })();
     """
 

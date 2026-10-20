@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 1.0.0(49)：返回/root tab 全部用预加载快照，手势只做 transform`  
-> 最新代码版本：`1.0.0 / 49`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 1.0.0(50)：连当前页也预加载，手势第一帧不再抓 WKWebView`  
+> 最新代码版本：`1.0.0 / 50`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -1334,6 +1334,20 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
         不再等 250ms 抓下一张图；没访问过的 tab 才走旧路径；
     - 版本 1.0.0(49)。改动文件：`WeChatV2Host.swift`、`WatermarkOverlay.swift`、
       `project.yml`。
+
+142. **1.0.0(50)：手势第一帧也不再抓 WKWebView**
+    - 49 装到真机仍卡：`makeSwipeSnapshot` 在 `.began` 还会对 WKWebView 调一次
+      `snapshotView`；这一下在主线程上可能几十毫秒，正好卡在手指开始移动的第一帧；
+    - 现在**当前页也预加载**：
+      - `.began` 先用 `pageSnapshots[currentHash]` 作为顶层；有缓存就完全不碰 WKWebView；
+      - 只有缓存缺失（刚进入页面/正在滚动）才回退到实时截图；
+      - `scroll` 事件（220ms 节流）会把当前页快照作废；滚动停止 0.45s 后才重新抓图，
+        避免在列表滚动中抓图把滚动本身拖卡；
+      - 根 tab 左右滑同样用 `pageSnapshots[tab]` 作为顶层；
+    - 加了低频诊断（每次手势两行）：
+      `EDGE begin fast=... topCache=... prev=... snaps=...` / `EDGE end commit=... fast=...`；
+      出问题时拉 `Documents/crash.log` 就能确认走的是快路径还是旧路径；
+    - 版本 1.0.0(50)。改动文件：`WeChatV2Host.swift`、`project.yml`。
 
 ---
 
