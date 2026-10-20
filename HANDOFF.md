@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 1.0.0(6)：修复 onOpenURL 的 MainActor 编译错误`  
-> 最新代码版本：`1.0.0 / 6`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 1.0.0(7)：简化 deep link，移除可疑闭包/root 访问`  
+> 最新代码版本：`1.0.0 / 7`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -953,6 +953,15 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
     - `Router` 是 `@MainActor`，SwiftUI `.onOpenURL` 闭包不保证在主 actor 上，直接调用 `handleDeepLink` 会编译失败；
     - 1.0.0(6) 改成在闭包里 `Task { @MainActor in Router.shared?.handleDeepLink(url) }`；
     - 其余 WebClip 三项、深链、URL scheme 保持不变。
+
+104. **1.0.0(6) 仍编译失败：LegacyDoutuApp**
+    - `handleDeepLink` 里用了 `host?.window?.rootViewController` + `dismiss(completion:)` + 逃逸闭包，这是最可疑的编译点；
+    - 1.0.0(7) 简化成：
+      - `guard scheme == doutu, host != nil`
+      - `zhi` 直接 `push(ZhiHomeV2Screen())`
+      - `wechat` 直接 `presentWeb(route:"#/wechat")`
+      - 不再访问 `window/rootViewController`，不再用 dismiss 闭包；
+    - 去掉了 `pendingDeepLink` 和 init 里的深链处理，避免初始化顺序/主线程隔离问题。
 
 ---
 
