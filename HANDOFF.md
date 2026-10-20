@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 1.0.0(30)：移除 EdgeBackCenter，避免 module emit 崩溃`  
-> 最新代码版本：`1.0.0 / 30`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 1.0.0(31)：移除 UIApplicationDelegateAdaptor；CI 打印 error 行`  
+> 最新代码版本：`1.0.0 / 31`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -1126,6 +1126,13 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
       - `ContactPickerViewController`：关闭联系人；
       - `AppIconChooser`：关闭图标选择；
     - 不再有 window 级手势，避免 EmitSwiftModule 失败。
+
+127. **1.0.0(30) 仍 EmitSwiftModule；CI 日志看不到 error**
+    - 1.0.0(31) 移除 `@UIApplicationDelegateAdaptor`、`DoutuAppDelegate`、`DeepLinkCenter`，只保留 SwiftUI `.onOpenURL`；这是 module 生成阶段最后一个可疑的跨 actor 声明；
+    - `codemagic.yaml` 的 Build unsigned 改成先写完整 build.log，再在最后打印：
+      `grep -nE "error:|fatal error:" build.log | tail -40`
+      这样用户贴的最后 50 行一定能看到真正的 error 行；
+    - 如果仍失败，下一步直接按日志里的 file:line 修，不再猜。
 
 ---
 

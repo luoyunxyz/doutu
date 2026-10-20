@@ -44,7 +44,7 @@ workflows:
           set -euo pipefail
           ROOT="$(git rev-parse --show-toplevel)"
           cd "$ROOT/ios_v2"
-          set -o pipefail
+          set +e
           xcodebuild \
             -project DoutuV2.xcodeproj \
             -scheme DoutuV2 \
@@ -54,7 +54,13 @@ workflows:
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
-            build 2>&1 | tee build.log | tail -80
+            build > build.log 2>&1
+          STATUS=$?
+          echo "===== BUILD ERRORS ====="
+          grep -nE "error:|fatal error:" build.log | tail -40 || true
+          echo "===== BUILD TAIL ====="
+          tail -30 build.log || true
+          exit $STATUS
 
       - name: Package unsigned IPA
         script: |

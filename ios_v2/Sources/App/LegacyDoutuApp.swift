@@ -140,7 +140,6 @@ final class Router {
         self.host = host
         Router.shared = self
         host.canGoBack = false
-        DeepLinkCenter.flush(self)
     }
 
     /// 进入新页面（保留当前页面的状态，返回时恢复）
