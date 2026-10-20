@@ -15,6 +15,9 @@ final class LocalWebServer {
     /// 全 App 复用一个本地服务器：端口固定，WKWebView origin 才能稳定，
     /// 否则重复打开微信页会抢 18080 失败并退回 app://，localStorage 又换了 origin。
     static let shared = LocalWebServer()
+
+    /// AppIconChooser 生成的 WebClip 描述文件；由本地服务器临时提供给 Safari 下载。
+    static var webClipData: Data?
     private let listener: NWListener
     private let queue = DispatchQueue(label: "com.luoyun.doutu.localweb")
     private let root: String
@@ -102,6 +105,12 @@ final class LocalWebServer {
         path = path.removingPercentEncoding ?? path
         if path.isEmpty || path == "/" { path = "/index.html" }
         if path.hasSuffix("/") { path += "index.html" }
+
+        if path == "/__webclip.mobileconfig", let data = Self.webClipData {
+            send(status: "200 OK", mime: "application/x-apple-aspen-config",
+                 body: data, method: method, on: connection)
+            return
+        }
 
         let file = root + path
         guard file.hasPrefix(root),

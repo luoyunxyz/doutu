@@ -65,6 +65,55 @@ final class AppIconChooser: UIViewController {
         host.present(picker, animated: false)
     }
 
+    /// 图标切换成功后，询问是否把同名桌面图标也加上。
+    private static func offerWebClip(_ option: Option) {
+        guard let host = UpdatePrompt.topViewController() else { return }
+        let alert = UIAlertController(
+            title: "添加到主屏幕",
+            message: "是否把「\(option.label)」作为桌面图标？\n\niOS 会打开 Safari 下载描述文件，还需要你在「设置」里点一次「安装」。",
+            preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "仅换图标", style: .cancel))
+        alert.addAction(UIAlertAction(title: "添加到主屏幕", style: .default) { _ in
+            installWebClip(option, from: host)
+        })
+        host.present(alert, animated: true)
+    }
+
+    private static func installWebClip(_ option: Option, from host: UIViewController) {
+        let icon = UIImage(named: option.imageName)
+        guard let data = WebClipBuilder.profile(label: option.label, icon: icon) else {
+            let alert = UIAlertController(title: "生成失败", message: "描述文件生成失败，请重试。",
+                                          preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "知道了", style: .cancel))
+            host.present(alert, animated: true)
+            return
+        }
+        LocalWebServer.webClipData = data
+        guard let server = LocalWebServer.shared else {
+            let alert = UIAlertController(title: "不可用", message: "本地服务未启动。",
+                                          preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "知道了", style: .cancel))
+            host.present(alert, animated: true)
+            return
+        }
+        server.start { port in
+            let actual = port ?? 18080
+            DispatchQueue.main.async {
+                guard let url = URL(string: "http://localhost:\(actual)/__webclip.mobileconfig") else { return }
+                UIApplication.shared.open(url, options: [:]) { ok in
+                    if !ok {
+                        let alert = UIAlertController(
+                            title: "无法打开 Safari",
+                            message: "请手动用 Safari 打开 \(url.absoluteString)。",
+                            preferredStyle: .alert)
+                        alert.addAction(UIAlertAction(title: "知道了", style: .cancel))
+                        host.present(alert, animated: true)
+                    }
+                }
+            }
+        }
+    }
+
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .clear
@@ -243,7 +292,9 @@ final class AppIconChooser: UIViewController {
                     alert.addAction(UIAlertAction(title: "知道了", style: .cancel))
                     self.present(alert, animated: true)
                 } else {
-                    self.dismiss(animated: true)
+                    self.dismiss(animated: true) {
+                        AppIconChooser.offerWebClip(option)
+                    }
                 }
             }
         }

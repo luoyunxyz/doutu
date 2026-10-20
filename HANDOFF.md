@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 1.0.0：版本号重置为 1.0.0(1)`  
-> 最新代码版本：`1.0.0 / 1`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 1.0.0(2)：App 内生成 WebClip 桌面图标`  
+> 最新代码版本：`1.0.0 / 2`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -920,6 +920,14 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
     - `MARKETING_VERSION: "1.0.0"`；
     - `CURRENT_PROJECT_VERSION: "1"`；
     - `DtwConfig.appVersion` 本来就是 `1.0.0`，版本号现在完全一致。
+
+99. **App 内生成 WebClip 桌面图标**
+    - iOS 不允许 App 静默安装描述文件，所以只能 App 生成 profile → Safari 下载 → 用户在「设置」确认一次；
+    - 新增 `WebClipBuilder`：生成带 `Label`、自定义 `Icon`、`URL=doutu://` 的 `com.apple.webClip.managed` profile；
+    - `LocalWebServer` 增加 `/__webclip.mobileconfig` 动态路由，以 `application/x-apple-aspen-config` 返回；
+    - 图标切换成功后弹「添加到主屏幕」，选择后启动本地服务器并用 Safari 打开 profile；用户在设置里安装后桌面出现对应名称/图标；
+    - `project.yml` 加 `postBuildScripts`，构建后往 Info.plist 写 `CFBundleURLTypes`，注册 `doutu://`；
+    - 版本保持 `1.0.0`，build 升到 `2`。
 
 ---
 
