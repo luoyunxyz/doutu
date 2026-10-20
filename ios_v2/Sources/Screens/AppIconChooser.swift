@@ -123,6 +123,10 @@ final class AppIconChooser: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .clear
+        let edge = UIScreenEdgePanGestureRecognizer(target: self,
+                                                     action: #selector(edgeBack(_:)))
+        edge.edges = .left
+        view.addGestureRecognizer(edge)
 
         dim.backgroundColor = UIColor.black.withAlphaComponent(0.45)
         dim.addTarget(self, action: #selector(close), for: .touchUpInside)
@@ -265,6 +269,12 @@ final class AppIconChooser: UIViewController {
 
     @objc private func close() {
         dismiss(animated: true)
+    }
+
+    @objc private func edgeBack(_ gesture: UIScreenEdgePanGestureRecognizer) {
+        guard gesture.state == .ended,
+              gesture.translation(in: view).x > 60 else { return }
+        close()
     }
 
     @objc private func addWebClipTapped() {

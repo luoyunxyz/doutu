@@ -25,6 +25,10 @@ final class ContactPickerViewController: UIViewController, UITableViewDataSource
         super.viewDidLoad()
         view.backgroundColor = .white
         title = "选择微信联系人"
+        let edge = UIScreenEdgePanGestureRecognizer(target: self,
+                                                     action: #selector(edgeBack(_:)))
+        edge.edges = .left
+        view.addGestureRecognizer(edge)
 
         navigationItem.leftBarButtonItem = UIBarButtonItem(
             title: "取消", style: .plain, target: self, action: #selector(cancel))
@@ -55,7 +59,13 @@ final class ContactPickerViewController: UIViewController, UITableViewDataSource
     }
 
     @objc private func cancel() {
-        dismiss(animated: true)
+        (navigationController ?? self).dismiss(animated: true)
+    }
+
+    @objc private func edgeBack(_ gesture: UIScreenEdgePanGestureRecognizer) {
+        guard gesture.state == .ended,
+              gesture.translation(in: view).x > 60 else { return }
+        cancel()
     }
 
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {

@@ -320,7 +320,22 @@ struct LoginView: View {
 /// 立刻执行，不是关闭后执行，所以登录页刚出现水印就被重新挂上来了。
 final class LoginHostingController: UIHostingController<LoginView> {
     var onDismiss: (() -> Void)?
+    var onEdgeBack: (() -> Void)?
     private var didNotify = false
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        let edge = UIScreenEdgePanGestureRecognizer(target: self,
+                                                     action: #selector(edgeBack(_:)))
+        edge.edges = .left
+        view.addGestureRecognizer(edge)
+    }
+
+    @objc private func edgeBack(_ gesture: UIScreenEdgePanGestureRecognizer) {
+        guard gesture.state == .ended,
+              gesture.translation(in: view).x > 60 else { return }
+        onEdgeBack?()
+    }
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
@@ -368,6 +383,7 @@ enum LoginPresenter {
 
         // 登录/注册页不铺水印（会盖住输入框；Android 侧同样跳过登录页）
         WatermarkOverlay.beginSuppress()
+        controller.onEdgeBack = { box.close() }
         controller.onDismiss = {
             WatermarkOverlay.endSuppress()
             WatermarkOverlay.attachIfNeeded()

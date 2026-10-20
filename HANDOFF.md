@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 1.0.0(20)：去水印身份过期自动重新登录并重试`  
-> 最新代码版本：`1.0.0 / 20`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 1.0.0(21)：全局左边缘右滑返回`  
+> 最新代码版本：`1.0.0 / 21`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -1042,6 +1042,13 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
       - parse 返回「身份过期/重新登录」时清空 Session、显示登录，登录成功后自动重新提交同一个链接；
       - `LoginPresenter` 增加 `goProfile` 参数，从去水印触发的登录不会跳「我」页；
     - 客户端没有本地会员/次数限制，会员期内是否放行由服务端 token 与会员状态决定；这次修复的是过期 token 未触发重新登录。
+
+117. **全局左边缘右滑返回**
+    - `ScreenHostView` 增加 `UIScreenEdgePanGestureRecognizer(edges:.left)`，识别后 `onAction("back")` → `Router.pop()`；替换原来 touchesMoved 里的手写边缘判断，避免双触发，子视图/滚动页也能用；
+    - 登录页 `LoginHostingController` 增加左边缘手势，触发 `LoginCloseBox` 关闭；
+    - `ContactPickerViewController`、`AppIconChooser` 增加左边缘手势；
+    - 小微主页 `WeChatV2Host` 原本已有边缘返回，子页面仍由网页先处理；
+    - 根页面（首页/我的/娱乐）栈空时滑动手势不动作。
 
 ---
 

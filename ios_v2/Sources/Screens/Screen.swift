@@ -251,8 +251,6 @@ final class ScreenHostView: UIView, UIScrollViewDelegate {
     private var moved = false
     /// 按下时刻（长按判定用）
     private var downAt: Date?
-    /// 左边缘右滑返回：本次手势是否已经触发过（防止一次拖动连发多次）
-    private var edgeBackFired = false
     /// 扫码页底下那层相机预览
     private var cameraView: CameraPreviewView?
     /// 《用户须知》专用原生 ScrollView：宿主的 touchesMoved 在这台真机上收不到，
@@ -266,6 +264,12 @@ final class ScreenHostView: UIView, UIScrollViewDelegate {
         isOpaque = true
         isMultipleTouchEnabled = false
         contentMode = .redraw
+        // 系统级左边缘右滑返回：比 touchesMoved 可靠，子视图（UIScrollView/WKWebView）也能触发。
+        let edgePan = UIScreenEdgePanGestureRecognizer(target: self,
+                                                        action: #selector(handleEdgePan(_:)))
+        edgePan.edges = .left
+        edgePan.cancelsTouchesInView = true
+        addGestureRecognizer(edgePan)
         // 理财主题一变就重绘：黑卡主题会换掉「我的」页 / 消息页 / 支首页的配色与图标
         NotificationCenter.default.addObserver(
             self, selector: #selector(themeChanged),
@@ -435,6 +439,13 @@ final class ScreenHostView: UIView, UIScrollViewDelegate {
 
     // MARK: - 触摸（对照 Android 的 onTouchEvent：横向拖动轮播、纵向滚动、抬起时命中）
 
+    @objc private func handleEdgePan(_ gesture: UIScreenEdgePanGestureRecognizer) {
+        guard gesture.state == .ended else { return }
+        if gesture.translation(in: self).x > 60 {
+            onAction?("back", .zero)
+        }
+    }
+
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let t = touches.first else { return }
         let p = t.location(in: self)
@@ -448,7 +459,6 @@ final class ScreenHostView: UIView, UIScrollViewDelegate {
         draggingCarousel = false
         verticalDragged = false
         moved = false
-        edgeBackFired = false
         downAt = Date()
     }
 
@@ -457,21 +467,7 @@ final class ScreenHostView: UIView, UIScrollViewDelegate {
         let p = t.location(in: self)
         let canvas = Canvas(size: screen.canvasSize, bounds: bounds)
 
-        // 左边缘右滑 → 返回。
-        //
-        // 为什么需要：iOS 侧页面是**同一个 View 里换 Screen**（不是 UINavigationController），
-        // 所以没有系统自带的交互式返回手势；而 WebView 页、小支主页这类页面本身又不带返回热区，
-        // 结果就是「进去出不来」。这里给所有页面补一个统一的边缘手势。
-        if !edgeBackFired,
-           touchStart.x <= 30,
-           p.x - touchStart.x > 70,
-           abs(p.y - touchStart.y) < 90 {
-            edgeBackFired = true
-            dragging = false
-            draggingCarousel = false
-            onAction?("back", CGPoint(x: 0, y: 0))
-            return
-        }
+        // 左边缘右滑返回由上面的 UIScreenEdgePanGestureRecognizer 统一处理。
         // 《用户须知》由上面的 UIPanGestureRecognizer 负责滚动，避免两套位移叠加。
         if screen is TermsScreen {
             lastPoint = p
