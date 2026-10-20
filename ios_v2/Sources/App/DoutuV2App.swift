@@ -16,6 +16,9 @@ struct DoutuV2App: App {
                 .ignoresSafeArea()
                 .statusBarHidden(true)
                 .onAppear { UpdatePrompt.shared.maybeCheck() }
+                .onOpenURL { url in
+                    Router.shared?.handleDeepLink(url)
+                }
                 .onChange(of: scenePhase) { phase in
                     if phase == .active { UpdatePrompt.shared.maybeCheck() }
                 }

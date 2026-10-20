@@ -112,10 +112,15 @@ final class Router {
     private weak var customerServiceScreen: CustomerServiceScreen?
     /// 「撩妹加 V」开关（Android 存在配置里，没有独立页面）
     private var teaseEnabled = TeaseStore.enabled
+    private var pendingDeepLink: URL?
 
     init(host: ScreenHostView) {
         self.host = host
         Router.shared = self
+        if let pending = pendingDeepLink {
+            self.pendingDeepLink = nil
+            handleDeepLink(pending)
+        }
     }
 
     /// 进入新页面（保留当前页面的状态，返回时恢复）
@@ -728,6 +733,31 @@ final class Router {
             UIPasteboard.general.string = store.shareLink
         })
         host.present(alert, animated: true)
+    }
+
+    /// WebClip 使用的深链：doutu://zhi → 小支主页；doutu://wechat → 小微主页。
+    func handleDeepLink(_ url: URL) {
+        guard url.scheme?.lowercased() == "doutu" else { return }
+        guard host != nil else {
+            pendingDeepLink = url
+            return
+        }
+        switch (url.host ?? "").lowercased() {
+        case "zhi":
+            let open = { [weak self] in
+                self?.push(ZhiHomeV2Screen(), state: ZhiHomeV2Screen.State())
+            }
+            if let root = self.host?.window?.rootViewController,
+               root.presentedViewController != nil {
+                root.dismiss(animated: false, completion: open)
+            } else {
+                open()
+            }
+        case "wechat":
+            presentWeb(route: "#/wechat")
+        default:
+            break
+        }
     }
 
     /// 全屏弹出小微主页并把路由交过去

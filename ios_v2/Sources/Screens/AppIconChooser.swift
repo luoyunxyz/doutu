@@ -17,8 +17,8 @@ final class AppIconChooser: UIViewController {
     }
 
     private static let options: [Option] = [
-        Option(label: "支付宝", imageName: "PreviewAppIconAlipay", alternateName: "AppIconAlipay"),
-        Option(label: "支付宝HK", imageName: "PreviewAppIconAlipayHK", alternateName: "AppIconAlipayHK"),
+        // 黑色支付宝图标（AppIconAlipayHK）直接显示为「支付宝」，不再带 HK。
+        Option(label: "支付宝", imageName: "PreviewAppIconAlipayHK", alternateName: "AppIconAlipayHK"),
         Option(label: "微信", imageName: "PreviewAppIconWechat", alternateName: "AppIconWechat"),
         Option(label: "豆图", imageName: "PreviewAppIconDoutu", alternateName: nil),
     ]
@@ -70,19 +70,21 @@ final class AppIconChooser: UIViewController {
         guard let host = UpdatePrompt.topViewController() else { return }
         let alert = UIAlertController(
             title: "添加桌面图标",
-            message: "是否一次添加「支付宝 / 支付宝HK / 微信 / 豆图」四个桌面图标？\n\n添加后桌面名称和图标都会对应；原 App 图标可以长按选择「从主屏幕移除」。\n\niOS 会打开 Safari 下载描述文件，还需要你在「设置」里点一次「安装」。",
+            message: "是否一次添加「支付宝 / 微信 / 豆图」三个桌面图标？\n\n支付宝打开小支主页，微信打开小微主页，豆图打开应用首页。\n\niOS 会打开 Safari 下载描述文件，还需要你在「设置」里点一次「安装」。",
             preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "仅换图标", style: .cancel))
-        alert.addAction(UIAlertAction(title: "添加四个图标", style: .default) { _ in
+        alert.addAction(UIAlertAction(title: "添加三个图标", style: .default) { _ in
             installWebClip(from: host)
         })
         host.present(alert, animated: true)
     }
 
     private static func installWebClip(from host: UIViewController) {
-        let items = Self.options.map { option in
-            (option.label, UIImage(named: option.imageName))
-        }
+        let items: [(label: String, icon: UIImage?, url: String)] = [
+            ("支付宝", UIImage(named: "PreviewAppIconAlipayHK"), "doutu://zhi"),
+            ("微信", UIImage(named: "PreviewAppIconWechat"), "doutu://wechat"),
+            ("豆图", UIImage(named: "PreviewAppIconDoutu"), "doutu://"),
+        ]
         guard let data = WebClipBuilder.profile(items: items) else {
             let alert = UIAlertController(title: "生成失败", message: "描述文件生成失败，请重试。",
                                           preferredStyle: .alert)
@@ -241,7 +243,7 @@ final class AppIconChooser: UIViewController {
         sheet.viewWithTag(102)?.frame = CGRect(x: 20, y: 58, width: width - 40, height: 36)
 
         let listY: CGFloat = 108
-        let listH: CGFloat = 4 * 62
+        let listH: CGFloat = CGFloat(Self.options.count) * 62
         sheet.viewWithTag(103)?.frame = CGRect(x: 20, y: listY, width: width - 40, height: listH)
         sheet.viewWithTag(104)?.frame = CGRect(x: 20, y: listY + listH + 8,
                                                 width: width - 40, height: 40)

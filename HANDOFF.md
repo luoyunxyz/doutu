@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 1.0.0(4)：图标页增加 WebClip 按钮`  
-> 最新代码版本：`1.0.0 / 4`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 1.0.0(5)：黑色支付宝去 HK；WebClip 分别进小支/小微`  
+> 最新代码版本：`1.0.0 / 5`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -939,6 +939,15 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
     - 有些设备切换图标成功后没有弹「添加四个图标」，可能是系统提示/弹窗被盖住；
     - 1.0.0(4) 在图标选择页底部加一个常驻按钮「添加到主屏幕（WebClip）」；
     - 点它直接生成四个 WebClip 的描述文件并用 Safari 打开，不再依赖切换成功后的弹窗。
+
+102. **黑色支付宝去 HK；WebClip 分别进入小支/小微**
+    - 图标选择器去掉蓝色支付宝重复项，黑金 `PreviewAppIconAlipayHK` 直接显示为「支付宝」；
+    - WebClip 从四个改为三个：支付宝 / 微信 / 豆图；
+    - `WebClipBuilder` 支持每个 WebClip 独立 URL：
+      - 支付宝 → `doutu://zhi` → `ZhiHomeV2Screen` 小支主页；
+      - 微信 → `doutu://wechat` → `WeChatV2Host` 小微主页；
+      - 豆图 → `doutu://` → 应用首页；
+    - `DoutuV2App.onOpenURL` 调用 `Router.handleDeepLink`；加入 pending 深链，防止冷启动时 Router 还没挂好。
 
 ---
 

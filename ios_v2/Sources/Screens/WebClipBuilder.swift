@@ -5,11 +5,11 @@ import UIKit
 /// 这里只负责把 profile 生成好并通过本地服务器交给 Safari。
 enum WebClipBuilder {
     static func profile(label: String, icon: UIImage?) -> Data? {
-        profile(items: [(label, icon)])
+        profile(items: [(label, icon, "doutu://")])
     }
 
     /// 一个描述文件里可以放多个 WebClip；一次安装即可得到多个桌面图标。
-    static func profile(items: [(String, UIImage?)]) -> Data? {
+    static func profile(items: [(label: String, icon: UIImage?, url: String)]) -> Data? {
         let clips: [[String: Any]] = items.map { item in
             let uuid = UUID().uuidString
             var clip: [String: Any] = [
@@ -17,12 +17,12 @@ enum WebClipBuilder {
                 "PayloadIdentifier": "com.luoyun.doutu.webclip.\(uuid)",
                 "PayloadUUID": uuid,
                 "PayloadVersion": 1,
-                "Label": item.0,
-                "URL": "doutu://",
+                "Label": item.label,
+                "URL": item.url,
                 "FullScreen": true,
                 "IsRemovable": true,
             ]
-            if let data = item.1?.pngData() {
+            if let data = item.icon?.pngData() {
                 clip["Icon"] = data
             }
             return clip
