@@ -60,7 +60,9 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
         webView = WKWebView(frame: view.bounds, configuration: config)
         webView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         webView.navigationDelegate = self
-        webView.scrollView.bounces = false
+        // 恢复 WKWebView 默认的橡皮筋；之前关掉后，外层页面在到顶/到底时完全没有回弹。
+        // 内层列表的回弹由 CSS 的 `overscroll-behavior: auto` 负责，两者互不替代。
+        webView.scrollView.bounces = true
         webView.scrollView.isScrollEnabled = true
         webView.scrollView.panGestureRecognizer.isEnabled = true
         // 不要让 WKWebView 把安全区（刘海 47pt + 底部 34pt）加进内容 inset：

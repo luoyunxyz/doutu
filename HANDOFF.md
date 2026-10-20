@@ -1284,6 +1284,7 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
       - `document` 级的 `touchmove` 拦截从 non-passive 改成 **passive**：非 passive 的
         document touchmove 会让 WebKit 走慢速滚动路径，列表惯性明显变弱；
         Discover/Me 的锁滚动仍由 CSS 的 `overflow-y:hidden + overscroll-behavior:none` 保证；
+      - `webView.scrollView.bounces` 从 `false` 恢复为 `true`，外层页面到顶/到底也有回弹；
     - **根 tab 左右滑改成「两页一起平移」**（原来只有当前页快照在静态底图上滑过 = 覆盖效果）：
       - `WeChatV2Host` 新增 `tabIncomingSign`：左滑下一页从右进（+1），右滑上一页从左进（-1）；
       - 进入页快照的 transform = `sign * width + dx`，与当前页 `dx` 同步；
