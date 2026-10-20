@@ -112,6 +112,26 @@ final class Router {
     private weak var customerServiceScreen: CustomerServiceScreen?
     /// 「撩妹加 V」开关（Android 存在配置里，没有独立页面）
     private var teaseEnabled = TeaseStore.enabled
+    /// 登录页关闭后再执行的令牌（例如 resetInvite）
+    var pendingAfterLoginDismiss: ActionToken?
+
+    /// 登录成功后切到「我」页。
+    func selectProfileTab() {
+        if let state = host?.state as? HomeShellScreen.State {
+            state.tab = .profile
+            host?.setNeedsDisplay()
+        } else if let state = host?.state as? HomeV2Screen.State {
+            state.tab = .profile
+            host?.setNeedsDisplay()
+        }
+    }
+
+    /// 登录页真正 dismiss 后，再执行之前挂起的跳转。
+    func runPendingAfterLoginDismiss() {
+        guard let token = pendingAfterLoginDismiss else { return }
+        pendingAfterLoginDismiss = nil
+        handle(token, at: .zero)
+    }
 
     init(host: ScreenHostView) {
         self.host = host

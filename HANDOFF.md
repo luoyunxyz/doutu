@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 1.0.0(11)：抖/Q 可进入，功能点击提示待更新`  
-> 最新代码版本：`1.0.0 / 11`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 1.0.0(12)：邀请码重置延后到 dismiss 后；登录成功回「我」`  
+> 最新代码版本：`1.0.0 / 12`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -985,6 +985,12 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
     - 1.0.0(11) 恢复 `page:2/3` 切换，显示 `dou_reference` / `q_reference` 参考页；
     - 在 page 2/3 下任何内容点击返回 `pageUnavailable`，Router 仍 toast「该平台暂未开放，敬请期待」；
     - 切回微/支仍正常。
+
+109. **邀请码重置仍无反应；登录成功回「我」**
+    - 之前 `dismissThen` 用 0.32 秒延迟，模态还没真正消失就 push，ResetByInvite 被推到登录页后面；
+    - 新增 `Router.pendingAfterLoginDismiss`：按钮只记录 token 并 dismiss；`LoginHostingController.viewDidDisappear` 里再 `runPendingAfterLoginDismiss()`，保证真正关闭后再 push；
+    - 登录/注册成功时调用 `Router.selectProfileTab()`，把 HomeShell/HomeV2 的 `tab` 设成 `.profile`，关闭登录页后自动回到「我」；
+    - 客服入口也改为同样的延后执行。
 
 ---
 

@@ -227,10 +227,10 @@ struct LoginView: View {
     }
 
     private func dismissThen(_ token: String) {
+        // 等 LoginHostingController 真正 viewDidDisappear 后再执行，
+        // 避免跳转页被推到登录模态下面。
+        Router.shared?.pendingAfterLoginDismiss = token
         presentationMode.wrappedValue.dismiss()
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.32) {
-            Router.shared?.handle(token, at: .zero)
-        }
     }
 
     private var legal: some View {
@@ -296,6 +296,8 @@ struct LoginView: View {
                 // 登录/注册成功：直接关闭并用新会话刷新界面
                 if outcome.ok && mode != .reset {
                     onDone?()
+                    // 登录/注册成功回到「我」页；写 State 后关闭登录页即可看到。
+                    Router.shared?.selectProfileTab()
                     presentationMode.wrappedValue.dismiss()
                 }
                 if outcome.ok && mode == .reset && !resetTicket.isEmpty {
@@ -338,6 +340,8 @@ enum LoginPresenter {
             WatermarkOverlay.endSuppress()
             WatermarkOverlay.attachIfNeeded()
             onDone?()
+            // 登录页完全消失后再执行 resetInvite 等挂起跳转。
+            Router.shared?.runPendingAfterLoginDismiss()
         }
         host.present(controller, animated: true)
     }
