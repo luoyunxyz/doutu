@@ -131,19 +131,45 @@
   /* 2026-10-20: 钱包页按 Android 参考图重排：零钱 / 经营账户 / 零钱通 / 银行卡 /
      亲属卡 一组，分付 单独一组，支付分 / 支付设置 / 身份信息 / 客服中心 一组。
      图标是从参考图里逐个抠出来的透明 PNG（data URI），与 Android 版一致。 */
-  const walletRow = ({ key, name, iconKey, action, amount, small, note }) =>
+  /* 2026-10-20: 经营账户/零钱通的金额可以点开修改，改完写 localStorage。 */
+  const WALLET_AMOUNT_FIELDS = {
+    business: { name: '经营账户', storage: 'fw-wallet-business-amount', fallback: '1.93' },
+    diamond: { name: '零钱通', storage: 'fw-wallet-diamond-amount', fallback: '0.00' }
+  };
+  function readWalletAmount(key) {
+    const field = WALLET_AMOUNT_FIELDS[key];
+    if (!field) return '0.00';
+    try {
+      const raw = localStorage.getItem(field.storage);
+      if (raw != null) {
+        const n = Number(raw);
+        if (Number.isFinite(n) && n >= 0) return n.toFixed(2);
+      }
+    } catch (_) {}
+    return field.fallback;
+  }
+  function writeWalletAmount(key, value) {
+    const field = WALLET_AMOUNT_FIELDS[key];
+    if (!field) return;
+    try { localStorage.setItem(field.storage, Number(value).toFixed(2)); } catch (_) {}
+  }
+  const walletRow = ({ key, name, iconKey, action, amount, amountKey, small, note }) =>
     `<button class="fw-wallet-row" type="button" data-wallet-key="${key}" ${action ? `data-go="${action}"` : ''}>` +
     `<span class="fw-wallet-row-icon">${walletIcon(iconKey)}</span>` +
     `<span class="fw-wallet-row-copy"><b>${name}</b>` +
     `${small ? `<small>${small}</small>` : ''}` +
     `${note ? `<em class="fw-wallet-note">${note}</em>` : ''}</span>` +
-    `${amount != null ? `<strong>¥${amount}</strong>` : ''}` +
+    `${amount != null
+      ? (amountKey
+          ? `<span class="fw-wallet-amount-edit" role="button" tabindex="0" data-wallet-amount="${amountKey}">¥${amount}</span>`
+          : `<strong>¥${amount}</strong>`)
+      : ''}` +
     `<img class="fw-wallet-row-chevron" src="${WALLET_CHEVRON}" alt=""></button>`;
   function walletPage() {
     const rows = [
       walletRow({ key: 'change', name: '零钱', iconKey: 'change', action: '#/wechat/wallet/balance', amount: getBalanceAmount() }),
-      walletRow({ key: 'business', name: '经营账户', iconKey: 'business', amount: '1.93' }),
-      walletRow({ key: 'diamond', name: '零钱通', iconKey: 'diamond', small: '收益率0.89%', amount: '0.00' }),
+      walletRow({ key: 'business', name: '经营账户', iconKey: 'business', amount: readWalletAmount('business'), amountKey: 'business' }),
+      walletRow({ key: 'diamond', name: '零钱通', iconKey: 'diamond', small: '收益率0.89%', amount: readWalletAmount('diamond'), amountKey: 'diamond' }),
       walletRow({ key: 'bank', name: '银行卡', iconKey: 'bank', action: routes.cards }),
       walletRow({ key: 'relative', name: '亲属卡', iconKey: 'relative' }),
       walletRow({ key: 'fenfu', name: '分付', iconKey: 'fenfu', note: '查看可用额度' }),
@@ -1924,6 +1950,18 @@
 #fw-pay-pages-host .fw-wallet-sheet-check{width:20px;height:20px;border-radius:50%;border:1px solid #cfcfcf;box-sizing:border-box;position:relative;flex:none}
 #fw-pay-pages-host .fw-wallet-sheet-row.is-on .fw-wallet-sheet-check{background:#07c160;border-color:#07c160}
 #fw-pay-pages-host .fw-wallet-sheet-row.is-on .fw-wallet-sheet-check::after{content:'';position:absolute;left:6px;top:3px;width:5px;height:9px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg)}
+#fw-pay-pages-host .fw-wallet-amount-edit{font-size:15px;font-weight:700;color:#191919;margin-right:16px;display:inline-block;padding:8px 0;line-height:normal;outline:0;cursor:pointer}
+#fw-pay-pages-host .fw-wallet-amount-dialog{position:fixed;top:0;left:0;right:0;bottom:0;z-index:2147483647;display:none}
+#fw-pay-pages-host .fw-wallet-amount-dialog.is-open{display:block}
+#fw-pay-pages-host .fw-wallet-amount-mask{position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.42)}
+#fw-pay-pages-host .fw-wallet-amount-panel{position:fixed;left:50%;top:22%;transform:translateX(-50%);width:280px;background:#fff;border-radius:12px;padding:20px 18px 0;box-sizing:border-box;text-align:center;overflow:hidden}
+#fw-pay-pages-host .fw-wallet-amount-panel h2{font-size:16px;font-weight:500;margin:0 0 16px;color:#191919}
+#fw-pay-pages-host .fw-wallet-amount-input{display:flex;align-items:center;border-bottom:1px solid #ededed;padding:6px 0 10px;margin-bottom:18px}
+#fw-pay-pages-host .fw-wallet-amount-input span{font-size:24px;color:#191919;margin-right:6px}
+#fw-pay-pages-host .fw-wallet-amount-input input{flex:1;min-width:0;border:0;outline:0;background:transparent;font-size:24px;color:#191919;padding:0}
+#fw-pay-pages-host .fw-wallet-amount-actions{display:flex;border-top:1px solid #ededed;margin:0 -18px}
+#fw-pay-pages-host .fw-wallet-amount-actions button{flex:1;height:48px;border:0;background:#fff;font-size:16px;color:#191919}
+#fw-pay-pages-host .fw-wallet-amount-actions button+button{border-left:1px solid #ededed;color:#07c160;font-weight:500}
 `;
     document.head.appendChild(style);
   }
@@ -2044,6 +2082,69 @@
         writeWalletHidden(hidden);
         applyWalletVisibility(root, hidden);
         syncChecks();
+      });
+    });
+
+    // 经营账户 / 零钱通金额编辑器
+    const amountDialog = document.createElement('div');
+    amountDialog.className = 'fw-wallet-amount-dialog';
+    amountDialog.innerHTML = `<div class="fw-wallet-amount-mask"></div>
+      <section class="fw-wallet-amount-panel" role="dialog" aria-modal="true" aria-label="修改金额">
+        <h2>修改金额</h2>
+        <div class="fw-wallet-amount-input"><span>¥</span><input type="text" inputmode="decimal" maxlength="12" autocomplete="off" aria-label="金额"></div>
+        <div class="fw-wallet-amount-actions"><button type="button" data-amount-cancel>取消</button><button type="button" data-amount-ok>确定</button></div>
+      </section>`;
+    root.appendChild(amountDialog);
+    const amountInput = amountDialog.querySelector('input');
+    const amountTitle = amountDialog.querySelector('h2');
+    let amountEditKey = '';
+    const closeAmount = () => amountDialog.classList.remove('is-open');
+    const openAmount = key => {
+      const field = WALLET_AMOUNT_FIELDS[key];
+      if (!field) return;
+      amountEditKey = key;
+      amountTitle.textContent = '修改' + field.name + '金额';
+      amountInput.value = readWalletAmount(key);
+      amountDialog.classList.add('is-open');
+      setTimeout(() => {
+        try { amountInput.focus(); amountInput.select(); } catch (_) {}
+      }, 60);
+    };
+    const saveAmount = () => {
+      const field = WALLET_AMOUNT_FIELDS[amountEditKey];
+      if (!field) { closeAmount(); return; }
+      const raw = amountInput.value.replace(/[^\d.]/g, '');
+      const n = Number(raw);
+      if (!raw || !Number.isFinite(n) || n < 0) {
+        amountInput.value = readWalletAmount(amountEditKey);
+        amountInput.focus();
+        amountInput.select();
+        return;
+      }
+      writeWalletAmount(amountEditKey, n);
+      const display = root.querySelector(`[data-wallet-amount="${amountEditKey}"]`);
+      if (display) display.textContent = '¥' + n.toFixed(2);
+      closeAmount();
+    };
+    amountDialog.querySelector('.fw-wallet-amount-mask').addEventListener('click', closeAmount);
+    amountDialog.querySelector('[data-amount-cancel]').addEventListener('click', closeAmount);
+    amountDialog.querySelector('[data-amount-ok]').addEventListener('click', saveAmount);
+    amountInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); saveAmount(); }
+      else if (e.key === 'Escape') { e.preventDefault(); closeAmount(); }
+    });
+    root.querySelectorAll('[data-wallet-amount]').forEach(el => {
+      el.addEventListener('click', e => {
+        e.preventDefault();
+        e.stopPropagation();
+        openAmount(el.dataset.walletAmount);
+      });
+      el.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          e.stopPropagation();
+          openAmount(el.dataset.walletAmount);
+        }
       });
     });
   }

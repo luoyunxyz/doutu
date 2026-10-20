@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 1.0.0(64)：按参考图 1:1 调行高/图标/箭头`  
-> 最新代码版本：`1.0.0 / 64`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 1.0.0(65)：经营账户/零钱通金额可点击修改并持久化`  
+> 最新代码版本：`1.0.0 / 65`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -1621,6 +1621,23 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
       - 390×844 浏览器实测：首行 y≈78（参考 79）、行高 55、
         10 行结束 y≈652（参考 655）、组间距 12、图标 ink≈21；
     - 版本 1.0.0(64)。改动文件：`wechat-pay-pages.js`、`wechat-pay-pages.css`、
+      `index.html`、`WeChatV2Host.swift`、`project.yml`。
+
+157. **1.0.0(65)：经营账户 / 零钱通金额可点击修改并保存**
+    - 金额从 `<strong>` 换成可点击的 `<span data-wallet-amount>`，外观保持
+      `font-size:15 / font-weight:700 / margin-right:16`，与 64 的金额位置一致；
+      只增加上下 8px 的点击热区，不改变文字横向位置；
+    - 点击金额弹出 WeChat 风格居中编辑框：
+      - 标题「修改经营账户金额 / 修改零钱通金额」；
+      - `¥` + 数字输入框（`inputmode=decimal`，select 全选，Enter 确定 / Esc 取消）；
+      - 取消 / 确定；负数、空值、非数字不保存；
+    - 保存：
+      - 经营账户 → `localStorage['fw-wallet-business-amount']`
+      - 零钱通 → `localStorage['fw-wallet-diamond-amount']`
+      - 统一 `toFixed(2)`，重进钱包页/重启 App 读取；
+      - 默认 1.93 / 0.00；
+    - 零钱金额和零钱通收益率保持原样，不可编辑；
+    - 版本 1.0.0(65)。改动文件：`wechat-pay-pages.js`、`wechat-pay-pages.css`、
       `index.html`、`WeChatV2Host.swift`、`project.yml`。
 
 ---
