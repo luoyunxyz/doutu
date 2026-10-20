@@ -356,6 +356,14 @@ final class Router {
         guard !state.polling else { return }
         screen.beginParse(state)
         host?.setNeedsDisplay()
+        CrashLog.append("PARSE request start link=\(link.prefix(40))")
+        let timeout = DispatchWorkItem { [weak self, weak screen] in
+            guard let self, let screen, state.polling, state.taskNo.isEmpty else { return }
+            CrashLog.append("PARSE request timeout")
+            screen.failParse(state, message: "请求超时，请检查网络后重试")
+            self.host?.setNeedsDisplay()
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 15, execute: timeout)
         Task {
             // 关键：DTW 握手（PBKDF2 + 同步网络）不能跑在 MainActor 上，
             // 否则解析一开始主线程就被占住，界面看起来像卡死。
@@ -363,7 +371,10 @@ final class Router {
                 await ApiClient.shared.call("POST", "/api/v1/dw/parse", body: ["link": link])
             }.value
             await MainActor.run {
+                timeout.cancel()
+                CrashLog.append("PARSE response code=\(env.code) msg=\(env.msg)")
                 guard env.ok, let data = env.data as? [String: Any] else {
+                    screen.failParse(state, message: env.msg.isEmpty ? "解析失败，请稍后再试" : env.msg)
                     self.showToast(env.msg.isEmpty ? "解析失败，请稍后再试" : env.msg, ok: false)
                     self.host?.setNeedsDisplay()
                     return

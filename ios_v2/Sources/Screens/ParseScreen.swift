@@ -576,11 +576,21 @@ final class ParseScreen: Screen {
         setProgress(s, percent: 8, title: "提交中…", hint: "正在把链接发给服务端")
         s.parseEnabled = false
         s.parseAlpha = 0.6
+        s.polling = true
+    }
+
+    /// 提交请求超时/失败：不要一直停在 8% 的“提交中”。
+    func failParse(_ s: State, message: String) {
+        s.polling = false
+        s.parseEnabled = true
+        s.parseAlpha = 1
+        setProgress(s, percent: 0, title: "解析失败", hint: message)
     }
 
     /// 提交成功、拿到任务号（Java:478-481）
     func attachTask(_ s: State, taskNo: String, status: Int, now: Date = Date()) {
         s.taskNo = taskNo
+        s.polling = true
         s.pollFailures = 0
         s.pollStartedAt = now
         setProgress(s, percent: Self.percentOf(status),

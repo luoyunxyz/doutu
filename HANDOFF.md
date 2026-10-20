@@ -3,9 +3,9 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 2.4.71：去水印网络请求移出主线程`  
-> 最新代码版本：`2.4.71 / 20111`（已推送，待 Codemagic 构建）  
-> 设备当前安装：`2.4.67 / 20107`（已通过 USB 查询确认）
+> 最新提交：`本轮 2.4.72：去水印提交超时保护 + 日志`  
+> 最新代码版本：`2.4.72 / 20112`（已推送，待 Codemagic 构建）  
+> 设备当前安装：`2.4.71 / 20111`（已通过 USB 查询确认）
 
 ---
 
@@ -847,6 +847,15 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
     - `startParse` / `pollParse` 原来在 `Task { @MainActor in ... }` 里直接 `await ApiClient.call`；DTW 握手包含 PBKDF2 和同步网络，一旦开始就把主线程占住，界面无法响应；
     - 2.4.71 把 `/api/v1/dw/parse` 和 `/api/v1/dw/task/...` 都放进 `Task.detached` 执行，结果再 `await MainActor.run` 回主线程更新 State；
     - 这样握手/网络慢时界面仍可滚动、返回，状态也能及时刷新，不会看起来像整页卡死。
+
+88. **2.4.71 仍长时间停在提交中**
+    - 2.4.72 给提交请求加 15 秒超时：超时后 `ParseScreen.failParse` 把进度条改成「解析失败 / 请求超时，请检查网络后重试」，不会再无限停在 8%；
+    - `beginParse` / `attachTask` 补上 `polling = true`，防重复提交；
+    - 新增 `CrashLog`：
+      - `PARSE request start link=...`
+      - `PARSE response code=... msg=...`
+      - `PARSE request timeout`
+      下一次若仍慢，可直接从 crash.log 判断是请求没回来、服务端返回错误，还是已回来但轮询慢。
 
 ---
 
