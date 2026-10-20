@@ -236,6 +236,9 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
     private var swipeBottomSnapshot: UIView?
     private var swipeReady = true
     private var swipeLastTranslation: CGFloat = 0
+    /// 根 tab 滑动时「进入的那一页」从哪边来：1 = 从右（左滑/下一页），-1 = 从左（右滑/上一页）。
+    /// 0 表示不是 tab 滑动（例如边缘返回），底层保持静止。
+    private var tabIncomingSign: CGFloat = 0
     private var edgeActive = false
     private var edgePreNavigated = false
     private var edgeOriginalHash: String?
@@ -608,6 +611,7 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
         webView.scrollView.isScrollEnabled = false
         swipeReady = false
         swipeLastTranslation = 0
+        tabIncomingSign = 0
     }
 
     /// 下一层路由渲染完后，抓一张静态底图并隐藏 WKWebView；
@@ -629,6 +633,12 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
             }
             bottom.frame = self.webView.frame
             bottom.isUserInteractionEnabled = false
+            // 根 tab 切换：下一页从侧面一起平移进来，而不是盖在静态底图上。
+            if self.tabPreviewIndex != nil, self.tabIncomingSign != 0 {
+                let width = max(self.view.bounds.width, 1)
+                bottom.transform = CGAffineTransform(
+                    translationX: self.tabIncomingSign * width, y: 0)
+            }
             self.view.insertSubview(bottom, belowSubview: top)
             self.swipeBottomSnapshot = bottom
             self.swipeReady = true
@@ -647,6 +657,8 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
         webView.scrollView.isScrollEnabled = true
         swipeReady = true
         swipeLastTranslation = 0
+        tabIncomingSign = 0
+        tabPreviewIndex = nil
         setSwipeFreeze(false)
     }
 
@@ -677,10 +689,16 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
             swipeLastTranslation = translation.x
             if swipeReady {
                 snapshot.transform = CGAffineTransform(translationX: translation.x, y: 0)
+                // 两页一起平移：当前页走多少，进入页就从侧面补多少。
+                if let bottom = swipeBottomSnapshot, tabPreviewIndex != nil {
+                    let width = max(view.bounds.width, 1)
+                    bottom.transform = CGAffineTransform(
+                        translationX: tabIncomingSign * width + translation.x, y: 0)
+                }
             }
             if abs(translation.x) < 20, tabPreviewIndex != nil {
                 // 已经滑出去又回正：立刻恢复原 tab，避免停在新页面。
-                restoreTabAfterCancel()
+                restoreTabAfterCancel(discardPreview: true)
             } else {
                 updateTabPreview(translation.x)
             }
@@ -702,9 +720,12 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
         }
         let width = max(view.bounds.width, 1)
         let offset = translation.x < 0 ? -width : width
+        let bottom = swipeBottomSnapshot
         UIView.animate(withDuration: 0.22, delay: 0,
                        options: [.curveEaseOut]) {
             snapshot.transform = CGAffineTransform(translationX: offset, y: 0)
+            // 进入页同步归位，形成「左右平移」而不是「盖上去」。
+            bottom?.transform = .identity
         } completion: { _ in
             self.clearSwipeLayers()
         }
@@ -722,26 +743,40 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
         guard next != index else { return }
         guard tabPreviewIndex != next else { return }
         tabPreviewIndex = next
+        // 左滑（dx<0）下一页从右边进来；右滑上一页从左边进来。
+        tabIncomingSign = dx < 0 ? 1 : -1
         webView.evaluateJavaScript("location.hash = '\(tabs[next])'",
                                    completionHandler: nil)
         captureBottomSnapshot()
     }
 
-    private func restoreTabAfterCancel() {
+    private func restoreTabAfterCancel(discardPreview: Bool = false) {
         guard let original = tabOriginalHash,
               tabPreviewIndex != nil else { return }
         webView.evaluateJavaScript("location.hash = '\(original)'",
                                    completionHandler: nil)
         tabPreviewIndex = nil
+        guard discardPreview else { return }
+        // 手势没结束就回正：把旧底图丢掉，下一次反方向滑要重新抓一张。
+        tabIncomingSign = 0
+        swipeBottomSnapshot?.removeFromSuperview()
+        swipeBottomSnapshot = nil
+        swipeReady = false
     }
 
     private func springBackSwipeSnapshot() {
         guard let snapshot = swipeSnapshot else { return }
+        let bottom = swipeBottomSnapshot
+        let sign = tabIncomingSign
+        let width = max(view.bounds.width, 1)
         UIView.animate(withDuration: 0.2, delay: 0,
                        usingSpringWithDamping: 0.9,
                        initialSpringVelocity: 0.5,
                        options: [.curveEaseOut]) {
             snapshot.transform = .identity
+            if let bottom, sign != 0 {
+                bottom.transform = CGAffineTransform(translationX: sign * width, y: 0)
+            }
         } completion: { _ in
             // 取消时原路由刚恢复，多盖 0.2s 再揭开，避免闪屏。
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {

@@ -8967,7 +8967,10 @@
     document.addEventListener('contextmenu', onContextMenu, true);
     // Hard-block vertical scrolling on Discover and Me: CSS handles the layout,
     // but a capture-phase listener makes sure no swipe or wheel can move them.
-    document.addEventListener('touchmove', blockStaticTabVerticalScroll, { capture: true, passive: false });
+    // 注意：touchmove 必须是 passive。document 级的非 passive touchmove 会让
+    // WebKit 走慢速滚动路径，内层列表的惯性和回弹会被明显削弱；
+    // Discover/Me 的纵向滚动已经由 CSS 的 overflow-y:hidden + overscroll-behavior:none 锁死。
+    document.addEventListener('touchmove', blockStaticTabVerticalScroll, { capture: true, passive: true });
     document.addEventListener('wheel', blockStaticTabVerticalScroll, { capture: true, passive: false });
     window.addEventListener('hashchange', () => {
       syncStaticTabScrollPolicy();

@@ -4990,3 +4990,20 @@ html.fw-swipe-preview *::after {
   transition: none !important;
   animation: none !important;
 }
+
+/* 2026-10-20: iOS 16+ 对内部滚动容器的 `overscroll-behavior: contain` 会吞掉
+   顶部/底部的橡皮筋回弹（微信页原来就卡在这里）。统一放回 auto，
+   并确保每个滚动容器都有原生惯性。 */
+.wechat-scroll-area,
+.wechat-content,
+.wechat-dialogue-list,
+.fw-local-conversation__messages,
+.fw-group-select-scroll,
+.fw-new-friends-scroll,
+.fw-friend-profile__body,
+.fw-emoji-picker__grid,
+.fw-moments-feed,
+.fw-moments-page {
+  -webkit-overflow-scrolling: touch !important;
+  overscroll-behavior: auto !important;
+}

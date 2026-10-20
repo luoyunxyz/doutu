@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 1.0.0(43)：滑动返回 / 滚动惯性 / 页面转场 / 长按 / 触觉专项`  
-> 最新代码版本：`1.0.0 / 43`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 1.0.0(44)：微信滚动惯性 + 根 tab 平移切换`  
+> 最新代码版本：`1.0.0 / 44`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -1275,6 +1275,22 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
       - 只剩**未被 Router 使用的非 V2 旧文件**还保留 `+ s.scroll`，属于死代码，不要再从 Router 里引用它们；
     - 版本 1.0.0(43)。改动文件：`Screen.swift`、`BannerStore.swift`、`LegacyDoutuApp.swift`、
       `WeChatV2Host.swift`、`ZhimaCreditScreen.swift`、`ZhimaCreditV2Screen.swift`、`project.yml`。
+
+139. **1.0.0(44)：微信滚动惯性/回弹 + 根 tab 平移切换**
+    - **微信页惯性/回弹**（真机反馈「支付宝页有惯性，微信页没有」）：
+      - 内层滚动容器的 `overscroll-behavior: contain` 在 iOS 16+ 会抑制顶部/底部回弹；
+        `wechat-chat-actions.css` 统一覆盖回 `auto`，并把 `-webkit-overflow-scrolling: touch`
+        补到所有主要滚动容器；
+      - `document` 级的 `touchmove` 拦截从 non-passive 改成 **passive**：非 passive 的
+        document touchmove 会让 WebKit 走慢速滚动路径，列表惯性明显变弱；
+        Discover/Me 的锁滚动仍由 CSS 的 `overflow-y:hidden + overscroll-behavior:none` 保证；
+    - **根 tab 左右滑改成「两页一起平移」**（原来只有当前页快照在静态底图上滑过 = 覆盖效果）：
+      - `WeChatV2Host` 新增 `tabIncomingSign`：左滑下一页从右进（+1），右滑上一页从左进（-1）；
+      - 进入页快照的 transform = `sign * width + dx`，与当前页 `dx` 同步；
+      - 提交：当前页 → `±width`，进入页 → `0`；取消：当前页 → `0`，进入页 → `±width`；
+      - 手势中途回正会丢掉旧底图，反方向再滑时重新抓图，避免拿错页；
+    - 版本 1.0.0(44)。改动文件：`WeChatV2Host.swift`、`wechat-chat-actions.css`、
+      `wechat-chat-actions.js`、`project.yml`。
 
 ---
 
