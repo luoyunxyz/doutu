@@ -391,23 +391,59 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
         let point = gesture.location(in: webView)
         CrashLog.append("WEBTAP blank y=\(point.y)")
         guard point.y >= 0, point.y <= 140 else { return }
-        // 只有“微信主页面”才允许触发 7 项工具菜单；添加朋友/群聊/扫码/
-        // 批量添加等任何子页、任何浮层里都绝不能抢点击。
-        webView.evaluateJavaScript(
-            "(function(){try{" +
-            "var h=location.hash||'';" +
-            "var path=h.replace(/^#/,'').split(/[?#]/)[0].replace(/\\/+$/,'');" +
-            "var home=(path===''||path==='/wechat'||path==='/wechat/index');" +
-            "if(!home)return 0;" +
-            // 设备登录横条就在顶部，点它是打开设备切换弹层；不能同时再弹 7 项工具菜单。
-            "var hit=document.elementFromPoint(\(point.x),\(point.y));" +
-            "if(hit&&hit.closest('.wechat-device-row'))return 0;" +
-            "var sub=document.querySelector('.fw-overlay, .fw-add-friend, .fw-group-chat, .fw-scanpay, .fw-receive-pay, .fw-local-conversation, .fw-chat-pay, .fw-moments-feed, .fw-moments-page, .fw-friend-profile-page, .fw-my-profile-editor, .fw-my-avatar-picker');" +
-            "if(sub)return 0;" +
-            "return 1}catch(e){return 0}})()"
-        ) { [weak self] value, _ in
+        // 顶部 tap 兜底：网页 click 被手势/原生层吞掉时，钱包页直接从原生调
+        // window.__fwOpenWalletCustomize()。其余情况仍只允许“微信主页面”弹 7 项工具菜单。
+        let script = """
+        (function(){
+          try{
+            var x=\(point.x), y=\(point.y);
+            if(typeof window.__fwForceWalletPage==='function')window.__fwForceWalletPage();
+            var w=document.querySelector('.fw-pay-wallet');
+            if(y<=78){
+              try{
+                window.webkit.messageHandlers.DoutuApp.postMessage({
+                  method:'walletTapProbe',
+                  args:[String(location.hash||''),w?'1':'0'],
+                  callbackId:null
+                });
+              }catch(e){}
+            }
+            if(w){
+              if(y>78)return 0;
+              var t=w.querySelector('.fw-pay-header h1');
+              if(t){
+                var r=t.getBoundingClientRect();
+                if(x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom)return 0;
+              }
+              var el=document.elementFromPoint(x,y);
+              if(el&&el.closest('.fw-pay-back,.fw-wallet-bill,[data-go]'))return 0;
+              if(typeof window.__fwOpenWalletCustomize==='function'){
+                window.__fwOpenWalletCustomize();
+                return 2;
+              }
+              return 0;
+            }
+            var h=location.hash||'';
+            var path=h.replace(/^#/,'').split(/[?#]/)[0].replace(/\\/+$/,'');
+            var home=(path===''||path==='/wechat'||path==='/wechat/index');
+            if(!home)return 0;
+            var hit=document.elementFromPoint(x,y);
+            if(hit&&hit.closest('.wechat-device-row'))return 0;
+            var sub=document.querySelector('.fw-overlay, .fw-add-friend, .fw-group-chat, .fw-scanpay, .fw-receive-pay, .fw-local-conversation, .fw-chat-pay, .fw-moments-feed, .fw-moments-page, .fw-friend-profile-page, .fw-my-profile-editor, .fw-my-avatar-picker');
+            if(sub)return 0;
+            return 1;
+          }catch(e){return 0}
+        })()
+        """
+        webView.evaluateJavaScript(script) { [weak self] value, _ in
             guard let self else { return }
-            if let home = value as? Int, home == 0 { return }
+            if let code = value as? Int {
+                if code == 2 {
+                    CrashLog.append("WALLET native tap y=\(point.y)")
+                    return
+                }
+                if code == 0 { return }
+            }
             CrashLog.append("WEBTOOLS native tap y=\(point.y)")
             self.webView.evaluateJavaScript(
                 "window.__fwOpenToolsSheet ? window.__fwOpenToolsSheet() : 0") { result, error in
@@ -1232,6 +1268,10 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
             handlePageHash(old: oldHash, new: newHash)
         case "pageScroll":
             invalidateCurrentSnapshot(hash: args.first as? String ?? "")
+        case "walletTapProbe":
+            let probeHash = args.count > 0 ? (args[0] as? String ?? "") : ""
+            let probePage = args.count > 1 ? (args[1] as? String ?? "") : ""
+            CrashLog.append("WALLET tap probe hash=\(probeHash) page=\(probePage)")
         case "walletPageMounted":
             CrashLog.append("WALLET page mounted rows=\(args.first as? String ?? "?")")
         case "walletCustomize":

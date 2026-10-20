@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 1.0.0(57)：整个顶部 78px 都能点开勾选面板`  
-> 最新代码版本：`1.0.0 / 57`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 1.0.0(58)：顶部 tap 原生兜底 + 标题/箭头/账单外全可点`  
+> 最新代码版本：`1.0.0 / 58`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -1466,6 +1466,27 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
       用户看到 bundled 钱包页（数字人民币/消费者保护）；现在先剥 query 再匹配；
     - 版本 1.0.0(57)。改动文件：`wechat-pay-pages.js`、`WeChatV2Host.swift`、
       `project.yml`。
+
+150. **1.0.0(58)：顶部 tap 原生兜底**
+    - 57 的网页 click 仍然可能被原生 tap 手势/其它层吞掉，用户点红框没反应；
+    - 在已有的 `installBlankTap` 里加钱包分支：
+      - 原生 tap 落在钱包页顶部 `y<=78`；
+      - 用 JS 的 `document.elementFromPoint` 排除 `.fw-pay-back`、`.fw-wallet-bill`、
+        `[data-go]`，以及「钱包」标题 `h1` 的矩形（用户要求标题本身不触发）；
+      - 其余位置直接调 `window.__fwOpenWalletCustomize()`；
+      - 返回码 2 → 原生记 `WALLET native tap`，不再走主页面工具菜单；
+    - `bindWalletPage` 暴露 `window.__fwOpenWalletCustomize = open`，并给 `h1`
+      加 `stopPropagation`，标题点击不打开；
+    - 删除 56 的透明热区（已由「原生兜底 + root 顶部 click」覆盖，
+      且热区会盖住标题，违背“标题不触发”的要求）；
+    - 原生兜底先调 `window.__fwForceWalletPage()`：
+      - 如果 `currentRoute()` 是钱包但宿主不存在/被隐藏，强制 `render()` 并恢复
+        `display/visibility/zIndex`；
+      - 顶部 tap 同时上报 `WALLET tap probe hash=<当前hash> page=0/1`，
+        下一次日志能直接看到“当前 URL”和“自绘钱包页在不在”；
+    - 原生返回码 2 时记 `WALLET native tap`；
+    - 版本 1.0.0(58)。改动文件：`wechat-pay-pages.js`、`wechat-pay-pages.css`、
+      `WeChatV2Host.swift`、`project.yml`。
 
 ---
 

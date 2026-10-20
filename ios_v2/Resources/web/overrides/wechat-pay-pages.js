@@ -151,7 +151,6 @@
       walletRow({ key: 'service', name: '客服中心', iconKey: 'service' })
     ];
     return `<main class="fw-pay-page fw-pay-wallet">${header('钱包', '<button class="fw-wallet-bill" type="button" data-go="' + routes.bills + '">账单</button>', '#/wechat/service')}
-      <button type="button" class="fw-wallet-customize-hit" aria-label="选择要显示的功能"></button>
       <div class="fw-pay-scroll wallet-scroll"><section class="fw-wallet-list" data-wallet-group="main">${rows.slice(0, 5).join('')}</section><section class="fw-wallet-list" data-wallet-group="fenfu">${rows[5]}</section><section class="fw-wallet-list" data-wallet-group="more">${rows.slice(6).join('')}</section></div></main>`;
   }
   function getBalanceAmount() {
@@ -1906,17 +1905,11 @@
         open();
       });
     }
-    // 顶部 31px 安全区 + 47px 标题栏都是“空白处”：用一层透明热区盖住，
-    // 避免用户点到状态栏下方的灰条时没有反应。
-    const hit = root.querySelector('.fw-wallet-customize-hit');
-    if (hit) {
-      hit.addEventListener('click', e => {
-        e.preventDefault();
-        e.stopPropagation();
-        try { window.webkit.messageHandlers.DoutuApp.postMessage({ method: 'walletCustomize', args: [], callbackId: null }); } catch (_) {}
-        open();
-      });
-    }
+    // 标题「钱包」本身不触发，只有它周围的空白/顶部区域才打开设置。
+    const title = root.querySelector('.fw-pay-header h1');
+    if (title) title.addEventListener('click', e => e.stopPropagation());
+    // 原生顶部 tap 兜底：网页 click 被手势/原生层吞掉时，直接调这个函数。
+    window.__fwOpenWalletCustomize = open;
     // 整个顶部 78px（31px 安全区 + 47px 标题栏）都算“空白处”，
     // 左右两角也覆盖；只排除返回、账单和带 data-go 的按钮。
     root.addEventListener('click', e => {
@@ -2707,6 +2700,21 @@
   setTimeout(render, 0); setTimeout(render, 300); setTimeout(render, 1000);
   // 服务路由不再有宿主，别让这个巡检每 250ms 重跑一遍 render()。
   setInterval(() => { const h = currentRoute(); if (!h || h === routes.service) return; const existing = host(); if (!existing || existing.dataset.fwRoute !== h) render(); }, 250);
+  // 原生顶部 tap 兜底会先调这个：确保自绘钱包页已经挂载且可见。
+  window.__fwForceWalletPage = function () {
+    try {
+      const h = currentRoute();
+      if (h !== routes.wallet) return 0;
+      const existing = host();
+      if (!existing) { render(); return 1; }
+      existing.style.display = 'block';
+      existing.style.visibility = 'visible';
+      existing.style.zIndex = '2147483647';
+      existing.style.pointerEvents = 'auto';
+      if (existing.dataset.fwRoute !== h) render();
+      return 1;
+    } catch (_) { return 0; }
+  };
 
   // The bundled React pages render their own service/wallet DOM. Adjust that live DOM too.
   // 2026-10-10: this block used to sit *after* the module IIFE closed, so `currentRoute`
