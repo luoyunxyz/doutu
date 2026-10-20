@@ -82,7 +82,8 @@ struct LoginView: View {
                 Text("×")
                     .font(.system(size: 30, weight: .light))
                     .foregroundColor(.white.opacity(0.92))
-                    .frame(width: 44, height: 44)
+                    .frame(width: 52, height: 52)
+                    .contentShape(Rectangle())
             }
         }
         .frame(maxWidth: .infinity)
@@ -222,17 +223,20 @@ struct LoginView: View {
             }
             .font(.system(size: 16))
             .foregroundColor(Color(red: 0.29, green: 0.48, blue: 0.97))
+            .padding(.vertical, 6)
             Button("邀请码重置密码") {
                 dismissThen("resetInvite")
             }
             .font(.system(size: 16))
             .foregroundColor(Color(red: 0.29, green: 0.48, blue: 0.97))
+            .padding(.vertical, 6)
         }
         .frame(maxWidth: .infinity)
         .padding(.top, 8)
     }
 
     private func closeLogin() {
+        CrashLog.append("LOGIN close onClose=\(onClose != nil)")
         if let onClose {
             onClose()
         } else {
@@ -347,9 +351,12 @@ final class LoginHostingController: UIHostingController<LoginView> {
 /// 用当前最上层控制器把登录表单弹出来（UIKit 世界里调用 SwiftUI 视图的标准做法）。
 @MainActor
 private final class LoginCloseBox {
-    weak var navigation: UINavigationController?
+    var navigation: UINavigationController?
     func close() {
-        navigation?.dismiss(animated: true)
+        CrashLog.append("LOGIN CloseBox nav=\(navigation != nil)")
+        guard let nav = navigation else { return }
+        navigation = nil
+        nav.dismiss(animated: true)
     }
 }
 
@@ -378,6 +385,7 @@ enum LoginPresenter {
             Router.shared?.runPendingAfterLoginDismiss()
         }
         host.present(nav, animated: false) {
+            CrashLog.append("LOGIN push host=\(type(of: host))")
             nav.pushViewController(controller, animated: true)
         }
     }

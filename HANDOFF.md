@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 1.0.0(16)：登录页改用系统导航 push，彻底移除自定义转场`  
-> 最新代码版本：`1.0.0 / 16`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 1.0.0(17)：LoginCloseBox 强引用导航 + 关闭日志`  
+> 最新代码版本：`1.0.0 / 17`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -1012,6 +1012,15 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
       - 关闭直接 `navigation.dismiss(animated:true)`；
     - `LoginCloseBox` 改为弱引用导航控制器，× / 登录成功 / 重置跳转都走同一条 dismiss；
     - 登录布局继续用 maxWidth 撑满，× 用文字按钮。
+
+113. **1.0.0(16) 关闭仍无反应**
+    - `LoginCloseBox.navigation` 是 weak，理论上被 present 的 nav 强持有，但为避免它变 nil，改成强引用，close 时先取出 nav 再置 nil；
+    - × 按钮扩大到 52×52 并加 `.contentShape(Rectangle())`，避免只有文字可点；
+    - 底部两个链接加 `.padding(.vertical, 6)`，扩大点击区域；
+    - 加日志：
+      - `LOGIN push host=...`
+      - `LOGIN close onClose=...`
+      - `LOGIN CloseBox nav=...`
 
 ---
 
