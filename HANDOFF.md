@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 2.4.76：去水印成品直接保存到系统相册`  
-> 最新代码版本：`2.4.76 / 20116`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 2.4.77：修改应用图标不再被会员门槛拦住`  
+> 最新代码版本：`2.4.77 / 20117`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -887,6 +887,11 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
     - Router `download` 分支调用 `downloadParse`，开始/完成/失败都会更新按钮与进度文案；
     - `project.yml` 增加 `NSPhotoLibraryAddUsageDescription`，避免写入相册被系统拒绝；
     - 保存成功后按钮变「打开」，再次点击提示成品已在系统相册。
+
+93. **修改应用图标无法切换**
+    - 设备当前未开通会员（首页仍显示“联系客服开通会员”）；`AppIconChooser.present()` 里有 `guard Session.shared.isActivated`，未开通会员直接弹“会员功能”提示，根本进不了图标选择页；
+    - Android 这一格没有会员判断，2.4.77 删除这个门槛，所有用户都能打开选择器；
+    - 增加 `ICON apply / ICON error` 日志：若 `setAlternateIconName` 在 unsigned/重签安装上返回 -54，可以直接从 crash.log 看到；这种情况下是 iOS 对签名安装的限制，需要正常签名重装。
 
 ---
 

@@ -29,16 +29,8 @@ final class AppIconChooser: UIViewController {
 
     static func present() {
         guard let host = UpdatePrompt.topViewController() else { return }
-        if !Session.shared.isActivated {
-            let message = Session.shared.isLoggedIn
-                ? "修改应用图标是会员功能。\n\n未开通会员时只能使用默认图标，请联系客服开通会员后再来切换。"
-                : "修改应用图标是会员功能。\n\n请先在「我」页面登录并开通会员，之后才能切换图标。"
-            let alert = UIAlertController(title: "修改应用图标", message: message,
-                                          preferredStyle: .alert)
-            alert.addAction(UIAlertAction(title: "知道了", style: .cancel))
-            host.present(alert, animated: true)
-            return
-        }
+        // 修改图标不是会员功能：Android 端这一格不看 Session.isActivated。
+        // 之前这里加了会员判断，未开通会员的用户点进去只会看到“会员功能”提示。
         let picker = AppIconChooser()
         picker.modalPresentationStyle = .overFullScreen
         picker.modalTransitionStyle = .crossDissolve
@@ -197,6 +189,7 @@ final class AppIconChooser: UIViewController {
     }
 
     private func apply(_ option: Option) {
+        CrashLog.append("ICON apply name=\(option.alternateName ?? "primary") support=\(UIApplication.shared.supportsAlternateIcons)")
         guard UIApplication.shared.supportsAlternateIcons else {
             let alert = UIAlertController(title: "无法切换",
                                           message: "当前系统/安装方式不支持备选图标。",
@@ -209,6 +202,7 @@ final class AppIconChooser: UIViewController {
             DispatchQueue.main.async {
                 guard let self else { return }
                 if let error {
+                    CrashLog.append("ICON error \((error as NSError).code) \(error.localizedDescription)")
                     // 真机（ad-hoc / ldid 重签）上 IconServices 会返回 OSStatus -54；
                     // 正常签名的安装包才会成功，这里把原因说清楚，别只甩一串错误码。
                     let ns = error as NSError
