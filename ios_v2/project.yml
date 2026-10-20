@@ -10,8 +10,8 @@ options:
 settings:
   base:
     SWIFT_VERSION: "5.9"
-    MARKETING_VERSION: "2.4.78"
-    CURRENT_PROJECT_VERSION: "20118"
+    MARKETING_VERSION: "2.4.79"
+    CURRENT_PROJECT_VERSION: "20119"
     TARGETED_DEVICE_FAMILY: "1"
     ENABLE_USER_SCRIPT_SANDBOXING: NO
     SWIFT_STRICT_CONCURRENCY: minimal
@@ -35,6 +35,12 @@ targets:
           - "web"
       - path: Resources/web
         type: folder
+      - path: Resources/AltIcons/AppIconAlipay@2x.png
+      - path: Resources/AltIcons/AppIconAlipay@3x.png
+      - path: Resources/AltIcons/AppIconAlipayHK@2x.png
+      - path: Resources/AltIcons/AppIconAlipayHK@3x.png
+      - path: Resources/AltIcons/AppIconWechat@2x.png
+      - path: Resources/AltIcons/AppIconWechat@3x.png
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.luoyun.doutu

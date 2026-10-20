@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 2.4.78：会员可换图标，进入前先刷新会员状态`  
-> 最新代码版本：`2.4.78 / 20118`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 2.4.79：补备选图标散装 PNG，修复 -54`  
+> 最新代码版本：`2.4.79 / 20119`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -900,6 +900,12 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
       - 点图标时若 `!isActivated` 且已登录，先调用 `refreshMemberStatus`，刷新完再判断是否打开选择器；
       - `refreshMemberStatusIfNeeded` 每次启动/回前台都刷新，不再依赖 status_text；
       - `Session.isActivated` 增加 `expire_at` 兜底：到期日在今天之后也算会员。
+
+95. **切换图标弹「当前安装方式不允许」**
+    - 设备日志确认 `ICON error -54`；这是 IconServices 的 -54（找不到备选图标文件），不是会员问题；
+    - 旧版 IPA 里备选图标除了 Assets.car，还有散装的 `AppIconAlipay@2x.png` 等文件；当前 XcodeGen 只把图标放在 Assets.car 里，部分安装方式/系统版本解析不到；
+    - 2.4.79 从 `.appiconset` 复制 `@2x/@3x` PNG 到 `Resources/AltIcons`，并在 `project.yml` 中作为独立资源加入，确保包根目录同时存在这些文件；
+    - 如果仍返回 -54，说明当前 unsigned/重签安装本身被 IconServices 拒绝，需要正常签名安装。
 
 ---
 
