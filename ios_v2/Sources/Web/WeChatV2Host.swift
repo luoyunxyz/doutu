@@ -394,7 +394,9 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
         // 只有四个根 tab 才支持左右滑切换。聊天页的「左右滑改发送人」是网页自己
         // 处理的，原生手势在这里必须让路，否则会被快照盖住、看起来像卡死。
         guard isRootRoute(currentHash), !overlayOpen else { return false }
-        let velocity = gestureRecognizer.velocity(in: view)
+        // 注意：velocity(in:) 在 UIPanGestureRecognizer 上，基类 UIGestureRecognizer 没有。
+        guard let pan = gestureRecognizer as? UIPanGestureRecognizer else { return false }
+        let velocity = pan.velocity(in: view)
         return abs(velocity.x) > abs(velocity.y) * 1.4
     }
 
