@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 1.0.0(59)：HTML/CSS/JS 全量 cache-bust + 面板样式内联`  
-> 最新代码版本：`1.0.0 / 59`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 1.0.0(60)：钱包路由隐藏 bundled #root，自绘页终于可见`  
+> 最新代码版本：`1.0.0 / 60`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -1510,6 +1510,24 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
     - 新增 `WALLET sheet state ...` 日志：记录 `is-open`、`display`、面板 top、
       宿主 `display/visibility/zIndex/width`、打开前顶部 `elementFromPoint`；
     - 版本 1.0.0(59)。改动文件：`wechat-pay-pages.js`、`index.html`、
+      `WeChatV2Host.swift`、`project.yml`。
+
+152. **1.0.0(60)：爱思助手实时屏幕确认——用户看到的一直是 bundled 钱包页**
+    - 用户打开爱思助手实时屏幕，桌面截图显示手机当前钱包页是：
+      零钱 ¥520.00 / 零钱通 1.75% ¥1314.00 / 银行卡 / 亲属卡 /
+      数字人民币 / 支付分 / 消费者保护 / 底部身份信息|支付设置
+      —— 这是 **bundled React 钱包页**，不是我们自绘的 10 行页；
+    - 而 58 日志明确：`WALLET page mounted rows=10`、`WALLET tap probe page=1`、
+      `WALLET native tap` —— 自绘页在 DOM 里、tap 到了原生、面板也 open 了，
+      但整页被 bundled React 钱包页盖住，所以用户既看不到自绘页，也看不到面板；
+    - 根因：`render()` 只对 pinned 页（账单/提现/银行卡）把 `#root` 设为 hidden，
+      钱包/零钱/支付路由仍然显示 bundled React 页；它的定位层和自绘宿主同为
+      `z-index:2147483647`，后渲染的 React 页/模态层把宿主压在下面；
+    - 60：钱包/零钱/支付和 pinned 页一样，`#root` 一律 `visibility:hidden`；
+      服务页和未知路由已经显式 `visibility=''`，返回不受影响；
+    - 现在自绘钱包页是唯一可见层，10 行/分付/支付设置/客服中心、顶部红框
+      和底部勾选面板都能看到；
+    - 版本 1.0.0(60)。改动文件：`wechat-pay-pages.js`、`index.html`、
       `WeChatV2Host.swift`、`project.yml`。
 
 ---

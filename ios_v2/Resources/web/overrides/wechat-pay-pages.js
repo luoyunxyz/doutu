@@ -1782,8 +1782,12 @@
     }
     ensurePayLayoutStyles();
     const pinnedPage = kind === 'bills' || kind === 'withdraw' || kind === 'cards' || kind === 'cardAdd';
+    // 自绘页（钱包/零钱/支付/账单…）必须把 bundled React 的 #root 藏掉：
+    // 之前只藏了 pinned 页，钱包路由下 React 的钱包页（数字人民币/消费者保护）
+    // 还在，且它的模态层会把 z-index 同样是 max 的自绘宿主压在下面，用户看到的
+    // 一直是 bundled 钱包页，点顶部自然没反应。
     const appRoot = document.getElementById('root');
-    if (appRoot) appRoot.style.visibility = pinnedPage ? 'hidden' : '';
+    if (appRoot) appRoot.style.visibility = (pinnedPage || kind === 'wallet' || kind === 'balance' || kind === 'payment') ? 'hidden' : '';
     if (!old) { old = document.createElement('div'); old.id = HOST_ID; document.body.appendChild(old); }
     old.innerHTML = kind === 'wallet' ? walletPage() : kind === 'balance' ? balancePage() : kind === 'bills' ? (billDetailId() ? billDetailPage(billDetailId()) : billsPage()) : kind === 'withdraw' ? withdrawPage() : kind === 'cards' ? bankCardsPage() : kind === 'cardAdd' ? bankAddPage() : paymentPage();
          // Apply the reference top safe area inline as a last-resort guard against host stylesheet order.
