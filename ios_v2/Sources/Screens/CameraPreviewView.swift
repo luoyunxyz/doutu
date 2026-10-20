@@ -74,11 +74,11 @@ final class CameraPreviewView: UIView {
                 if granted {
                     self.configureAndStart()
                 } else {
-                    self.showHint("已拒绝相机权限\n可在「设置 → 抖音图 → 相机」里打开")
+                    self.showHint("已拒绝相机权限\n可在「设置 → 豆图 → 相机」里打开")
                 }
             }
         default:
-            showHint("已拒绝相机权限\n可在「设置 → 抖音图 → 相机」里打开")
+            showHint("已拒绝相机权限\n可在「设置 → 豆图 → 相机」里打开")
         }
     }
 
