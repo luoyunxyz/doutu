@@ -230,8 +230,11 @@ final class ZhimaCreditV2Screen: Screen {
     /// 长按落在哪个模块上 → 返回 `feed:<列>:<行>` 或 `empty:<列>:<行>`，与 Router 的既有分支对齐
     func longPress(_ state: ScreenState, x: CGFloat, y: CGFloat) -> ActionToken? {
         guard let s = state as? State else { return nil }
-        guard y >= Self.headerH, y < Self.navTop else { return nil }
-        let cy = y + s.scroll
+        // 宿主传进来的 y 已经叠加过滚动量（与 hitTest 的约定一致），这里不能再加一次，
+        // 否则滑过再长按会多偏移一个 scroll，点到别的模块。
+        // 可见区域换算回内容坐标就是 [scroll + headerH, scroll + navTop)。
+        guard y >= s.scroll + Self.headerH, y < s.scroll + Self.navTop else { return nil }
+        let cy = y
         let feedTop = Self.columnTop(s, 0, 0)
         guard cy >= feedTop else { return nil }
         let split = colX[0] + colW + (colX[1] - colX[0] - colW) / 2
