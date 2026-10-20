@@ -1921,7 +1921,7 @@
     // 左右两角也覆盖；只排除返回、账单和带 data-go 的按钮。
     root.addEventListener('click', e => {
       if (e.clientY >= 78) return;
-      if (e.target.closest('.fw-pay-back, .fw-wallet-bill, [data-go]')) return;
+      if (e.target.closest('.fw-wallet-sheet, .fw-pay-back, .fw-wallet-bill, [data-go]')) return;
       try { window.webkit.messageHandlers.DoutuApp.postMessage({ method: 'walletCustomize', args: [], callbackId: null }); } catch (_) {}
       open();
     });
