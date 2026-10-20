@@ -1,5 +1,7 @@
 package com.luoyun.doutu.account;
 
+import com.luoyun.doutu.account.dtw.DtwConfig;
+
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.DownloadManager;
@@ -694,7 +696,8 @@ public final class ParseActivity extends Activity {
             Bitmap bmp = null;
             HttpURLConnection conn = null;
             try {
-                conn = (HttpURLConnection) new URL(url).openConnection();
+                conn = (HttpURLConnection) DtwConfig.mediaUrl(url).openConnection();
+                DtwConfig.prepare(conn);
                 conn.setConnectTimeout(6000);
                 conn.setReadTimeout(10000);
                 conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 14)");
@@ -760,7 +763,8 @@ public final class ParseActivity extends Activity {
             String where = "";
             String absolutePath = null;
             try {
-                conn = (HttpURLConnection) new URL(url).openConnection();
+                conn = (HttpURLConnection) DtwConfig.mediaUrl(url).openConnection();
+                DtwConfig.prepare(conn);
                 conn.setConnectTimeout(8000);
                 conn.setReadTimeout(30000);
                 conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 14)");
@@ -901,7 +905,8 @@ public final class ParseActivity extends Activity {
         java.io.OutputStream out = null;
         HttpURLConnection conn = null;
         try {
-            conn = (HttpURLConnection) new URL(coverUrl).openConnection();
+            conn = (HttpURLConnection) DtwConfig.mediaUrl(coverUrl).openConnection();
+            DtwConfig.prepare(conn);
             conn.setConnectTimeout(6000);
             conn.setReadTimeout(10000);
             conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 14)");

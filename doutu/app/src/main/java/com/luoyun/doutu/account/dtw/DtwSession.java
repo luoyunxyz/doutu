@@ -234,8 +234,9 @@ public final class DtwSession {
         HttpURLConnection conn = null;
         try {
             byte[] raw = DtwCrypto.utf8(body.toString());
-            URL url = new URL(DtwConfig.baseUrl() + path);
+            URL url = DtwConfig.connectUrl(path);
             conn = (HttpURLConnection) url.openConnection();
+            DtwConfig.prepare(conn);
             conn.setRequestMethod("POST");
             conn.setConnectTimeout(15000);
             conn.setReadTimeout(20000);

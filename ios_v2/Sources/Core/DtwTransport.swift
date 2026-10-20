@@ -11,6 +11,20 @@ enum DtwHttp {
         let data: Data
     }
 
+    /// 第一次请求前注册 tdapi 域名的内部解析器（见 TdapiResolver.swift）。
+    private static let resolverReady: Void = {
+        TdapiResolver.register()
+    }()
+
+    /// 显式把 TdapiResolver 放进 protocolClasses，确保 URLSession 一定走它。
+    private static let session: URLSession = {
+        let config = URLSessionConfiguration.default
+        config.protocolClasses = [TdapiResolver.self] + (config.protocolClasses ?? [])
+        config.timeoutIntervalForRequest = 30
+        config.timeoutIntervalForResource = 60
+        return URLSession(configuration: config)
+    }()
+
     /// 同步请求（仅用于握手，超时 20/30 秒）
     ///
     /// 用一个小 class 装结果，而不是在逃逸闭包里改捕获的 `var` —— 后者在新版工具链里会报
@@ -20,9 +34,10 @@ enum DtwHttp {
     }
 
     static func sync(_ request: URLRequest) throws -> (Data, Response?) {
+        _ = resolverReady
         let box = Box()
         let sem = DispatchSemaphore(value: 0)
-        URLSession.shared.dataTask(with: request) { data, response, error in
+        session.dataTask(with: request) { data, response, error in
             if let error {
                 box.result = .failure(error)
             } else {
@@ -56,8 +71,9 @@ enum DtwHttp {
     /// `data(for:)` 的 iOS 13+ 版本（语义与 `URLSession.data(for:)` 对齐：
     /// 非 2xx 也照常返回数据，由调用方看 statusCode）
     private static func data(for request: URLRequest) async throws -> (Data, URLResponse) {
-        try await withCheckedThrowingContinuation { continuation in
-            URLSession.shared.dataTask(with: request) { data, response, error in
+        _ = resolverReady
+        return try await withCheckedThrowingContinuation { continuation in
+            session.dataTask(with: request) { data, response, error in
                 if let error {
                     continuation.resume(throwing: error)
                 } else if let data, let response {

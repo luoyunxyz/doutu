@@ -1,5 +1,7 @@
 package com.luoyun.doutu.account;
 
+import com.luoyun.doutu.account.dtw.DtwConfig;
+
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -105,7 +107,8 @@ public final class AvatarStore {
     private static Bitmap download(String url) {
         HttpURLConnection conn = null;
         try {
-            conn = (HttpURLConnection) new URL(url).openConnection();
+            conn = (HttpURLConnection) DtwConfig.mediaUrl(url).openConnection();
+            DtwConfig.prepare(conn);
             conn.setConnectTimeout(6000);
             conn.setReadTimeout(8000);
             conn.setRequestMethod("GET");

@@ -89,8 +89,9 @@ public final class DtwTransport {
 
         HttpURLConnection conn = null;
         try {
-            URL url = new URL(DtwConfig.baseUrl() + DtwConfig.TUNNEL_PATH);
+            URL url = DtwConfig.connectUrl(DtwConfig.TUNNEL_PATH);
             conn = (HttpURLConnection) url.openConnection();
+            DtwConfig.prepare(conn);
             conn.setRequestMethod("POST");
             conn.setConnectTimeout(15000);
             conn.setReadTimeout(30000);

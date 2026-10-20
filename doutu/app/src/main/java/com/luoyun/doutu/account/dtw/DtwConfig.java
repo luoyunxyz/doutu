@@ -4,6 +4,11 @@ import com.luoyun.doutu.BuildConfig;
 
 import com.luoyun.doutu.account.Session;
 
+import java.net.HttpURLConnection;
+import java.net.URL;
+
+import javax.net.ssl.HttpsURLConnection;
+
 /**
  * DTW/1 的客户端配置：全部来自编译期注入（{@code app/build.gradle}）。
  *
@@ -24,6 +29,43 @@ public final class DtwConfig {
 
     public static final String APP_VERSION = BuildConfig.VERSION_NAME;
     public static final int VERSION_CODE = BuildConfig.VERSION_CODE;
+
+    /** API domain: the app keeps using this single domain. */
+    public static final String API_HOST = "tdapi.luoyun.xyz";
+    /** Public server IP: used only for the internal socket, not for URL/Host/cert. */
+    public static final String API_IP = "69.165.75.130";
+
+    /** Map the business-domain URL to the server IP; other hosts are untouched. */
+    public static URL connectUrl(String path) throws Exception {
+        return mapHost(new URL(baseUrl() + path));
+    }
+
+    public static URL mediaUrl(String url) throws Exception {
+        return mapHost(new URL(url));
+    }
+
+    public static URL mapHost(URL url) throws Exception {
+        if (url != null && API_HOST.equalsIgnoreCase(url.getHost())) {
+            return new URL(url.getProtocol(), API_IP, url.getPort(), url.getFile());
+        }
+        return url;
+    }
+
+    /** IP direct: the certificate is still for the domain; allow the host name. */
+    public static void prepare(HttpURLConnection conn) {
+        if (conn == null) return;
+        try {
+            conn.setRequestProperty("Host", API_HOST);
+        } catch (Exception ignored) {
+        }
+        if (conn instanceof HttpsURLConnection) {
+            try {
+                ((HttpsURLConnection) conn).setHostnameVerifier((hostname, session) ->
+                        API_IP.equals(hostname) || API_HOST.equalsIgnoreCase(hostname));
+            } catch (Exception ignored) {
+            }
+        }
+    }
 
     private DtwConfig() {
     }

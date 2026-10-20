@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 1.0.0(69)：回退 IP，统一使用域名接口`  
-> 最新代码版本：`1.0.0 / 69`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 1.0.0(70)：单域名 + App 内部解析，用户无需改设置`  
+> 最新代码版本：`1.0.0 / 70`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -1703,6 +1703,32 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
       - Android 可用私人 DNS `dns.alidns.com`；
       - 验证：手机浏览器打开 `https://tdapi.luoyun.xyz/` 应看到 nginx 404；
     - 版本 1.0.0(69)。改动文件：`DtwConfig.swift`、`DtwTransport.swift`、`project.yml`。
+
+163. **1.0.0(70)：只保留 tdapi.luoyun.xyz，App 内部解析服务器 IP**
+    - 决定性排查：
+      - 权威 NS `dns3/dns4.hichina.com` 查询 `tdapi.luoyun.xyz` → `69.165.75.130`；
+      - 公共 DNS 8.8.8.8 / 223.5.5.5 / 114.114.114.114 → `69.165.75.130`；
+      - 只有用户路由器 `192.168.1.1` 返回 `127.0.0.1`（TTL 2715）；
+      - 结论：服务器、域名、证书、接口都正常；**服务器无法改变客户端
+        把域名解析成 127.0.0.1**，请求根本没到服务器；
+    - 用户要求：只解析 `tdapi.luoyun.xyz` 一个域名，不改任何用户设备，
+      接受服务器端改动，软件要分发；
+    - 70 做法（App 内部解析，域名不变）：
+      - iOS：新增 `Sources/Core/TdapiResolver.swift`（URLProtocol），
+        只拦截 `tdapi.luoyun.xyz`，URL/Host/证书仍是域名，socket 连
+        `69.165.75.130`；`DtwHttp` 的 URLSession 显式带 TdapiResolver；
+      - Android：`DtwConfig.connectUrl/mapHost/mediaUrl/prepare`，
+        `DtwTransport`/`DtwSession` 的握手、隧道、`ParseActivity` 图/视频下载、
+        `AvatarStore` 全部走内部映射；Host 仍是域名，证书链仍校验；
+      - 服务器不改；用户不改 DNS/设置；只装新版本；
+    - 影响面：登录、解析、头像、成品/封面下载都覆盖；系统播放器
+      （Android VideoView / iOS AVPlayer）的远程流仍走系统 DNS，
+      如果路由器继续劫持，远程预览可能失败，下载按钮正常；
+      要彻底覆盖播放器需下载后再播，或修路由器 DNS；
+    - Android debug APK 已本地编译通过（`assembleDebug`）；
+    - 版本 1.0.0(70)。改动文件：`TdapiResolver.swift`、`DtwTransport.swift`、
+      iOS `project.yml`；Android `DtwConfig.java`、`DtwTransport.java`、
+      `DtwSession.java`、`ParseActivity.java`、`AvatarStore.java`。
 
 ---
 
