@@ -223,7 +223,10 @@ final class ApiClient {
     /// 的工程里不是可用的 Swift 模块（会报 `no such module 'CommonCrypto'`），
     /// 而 CryptoKit 是系统模块、结果完全等价。
     static func hmacHex(key: String, message: String) -> String? {
-        guard let keyData = DtwCrypto.fromHex(key) ?? key.data(using: .utf8) else { return nil }
+        // Android DoutuApi.hmacHex 用 signKey.getBytes(UTF_8) 直接做 HMAC，
+        // 不会先 hex 解码。之前这里优先 fromHex，64 位十六进制 signKey 被
+        // 解成 32 字节，服务端必然报“签名校验失败”。
+        guard let keyData = key.data(using: .utf8) else { return nil }
         let mac = HMAC<SHA256>.authenticationCode(
             for: Data(message.utf8), using: SymmetricKey(data: keyData))
         return DtwCrypto.hex(Data(mac))

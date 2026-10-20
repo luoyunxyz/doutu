@@ -3,9 +3,9 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 2.4.73：去水印请求字段改成 Android 的 share_text`  
-> 最新代码版本：`2.4.73 / 20113`（已推送，待 Codemagic 构建）  
-> 设备当前安装：`2.4.71 / 20111`（已通过 USB 查询确认）
+> 最新提交：`本轮 2.4.74：修复 x-sign 的 HMAC key 编码`  
+> 最新代码版本：`2.4.74 / 20114`（已推送，待 Codemagic 构建）  
+> 设备当前安装：`2.4.73 / 20113`（已通过 USB 查询确认）
 
 ---
 
@@ -861,6 +861,13 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
     - 反编译 Android `DoutuApi.parse`：body 用的是 `{"share_text": link}`；
     - iOS 之前发的是 `{"link": link}`，服务端拿不到分享文本，任务不会正常建立，表现就是一直“提交中”；
     - 2.4.73 改成 `body: ["share_text": link]`，与 Android 完全一致。
+
+90. **改字段后返回 1002 签名校验失败**
+    - 设备 crash.log：
+      `PARSE response code=1002 msg=签名校验失败`；
+    - 反编译 Android `DoutuApi.hmacHex`：`new SecretKeySpec(signKey.getBytes(UTF_8), "HmacSHA256")`，**直接用 signKey 字符串的 UTF-8 字节**；
+    - iOS `hmacHex` 之前优先 `DtwCrypto.fromHex(key)`，当 signKey 是 64 位十六进制时会解成 32 字节，签名和服务端不一致；
+    - 2.4.74 改成始终 `key.data(using: .utf8)`，与 Android 相同。
 
 ---
 
