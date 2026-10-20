@@ -4982,3 +4982,11 @@ body.fw-moments-open .wechat-bottom-navbar { display:none !important; }
 
 /* 让最后一行不被底栏压住，并保留一段可滚动空间 */
 .wechat-dialogue-list { padding-bottom: 88px !important; box-sizing: border-box !important; }
+
+/* 原生边缘/切 tab 滑动时：只让上层快照动，底层页面禁止自己再做路由动画。 */
+html.fw-swipe-preview *,
+html.fw-swipe-preview *::before,
+html.fw-swipe-preview *::after {
+  transition: none !important;
+  animation: none !important;
+}

@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 1.0.0(36)：微信滑动预渲染下一层，竖直滚动不误切 tab`  
-> 最新代码版本：`1.0.0 / 36`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 1.0.0(37)：滑动时冻结底层动画，只让上层快照移动`  
+> 最新代码版本：`1.0.0 / 37`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -1170,6 +1170,15 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
       - 边缘返回：`prepareEdgePreview()` 判断不是根 tab 后，先执行 `performEdgeBack()` 把网页切到上一层，再让快照跟手滑出；取消时 `history.forward()` 恢复；
       - 根 tab（微信/通讯录/发现/我）不预切，滑出后直接关闭微主页。
     - 1.0.0(36) `updateTabPreview` 增加 `abs(dx) > 20` 门槛，避免竖直滚动时轻微横移就预切 tab。
+
+132. **只让选中层滑动，底层不动**
+    - 底层页面切换时 React/CSS 自带路由动画，看起来像两层一起滑；
+    - 1.0.0(37) 在 `wechat-chat-actions.css` 增加：
+      ```css
+      html.fw-swipe-preview * { transition: none !important; animation: none !important; }
+      ```
+    - 原生在 tab/边缘手势 began 时加 `fw-swipe-preview`，结束/回弹时移除；
+    - 这样只有上层快照跟手移动，底层下一层保持静止。
 
 ---
 

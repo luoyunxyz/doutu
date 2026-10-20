@@ -404,6 +404,7 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
         case .began:
             edgeActive = true
             edgePreNavigated = false
+            setSwipeFreeze(true)
             makeSwipeSnapshot()
             prepareEdgePreview()
         case .changed:
@@ -431,6 +432,7 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
                                                     completionHandler: nil)
                 }
                 self.edgePreNavigated = false
+                self.setSwipeFreeze(false)
             }
         default:
             break
@@ -447,6 +449,13 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
             self.edgePreNavigated = true
             self.performEdgeBack()
         }
+    }
+
+    private func setSwipeFreeze(_ on: Bool) {
+        let method = on ? "add" : "remove"
+        webView.evaluateJavaScript(
+            "document.documentElement.classList.\(method)('fw-swipe-preview')",
+            completionHandler: nil)
     }
 
     private func makeSwipeSnapshot() {
@@ -467,6 +476,7 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
             tabOriginalHash = nil
             tabPreviewIndex = nil
             if tabSwipeActive {
+                setSwipeFreeze(true)
                 makeSwipeSnapshot()
                 webView.evaluateJavaScript("String(location.hash || '')") { [weak self] result, _ in
                     guard let self else { return }
@@ -505,6 +515,7 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
         } completion: { _ in
             snapshot.removeFromSuperview()
             self.swipeSnapshot = nil
+            self.setSwipeFreeze(false)
         }
     }
 
@@ -542,6 +553,7 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
         } completion: { _ in
             snapshot.removeFromSuperview()
             self.swipeSnapshot = nil
+            self.setSwipeFreeze(false)
         }
     }
 
