@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 1.0.0(52)：补 pushState 路由监听 + 滚动不再删预览`  
-> 最新代码版本：`1.0.0 / 52`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 1.0.0(53)：真正的快路径拦路虎 overlayOpen = !visible`  
+> 最新代码版本：`1.0.0 / 53`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -1377,6 +1377,31 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
       `EDGE begin fast=true topCache=true prev=#/wechat/wallet snaps=3+`
       `EDGE end commit=true fast=true`
     - 版本 1.0.0(52)。改动文件：`WeChatV2Host.swift`、`project.yml`。
+
+145. **1.0.0(53)：返回快路径一直没生效的真正原因**
+    - 52 真机日志（已经装了 52）：
+      `EDGE begin fast=false topCache=true prev=#/wechat/wallet snaps=5`
+      `EDGE begin fast=false topCache=false prev=#/wechat/service snaps=5`
+      上一页 hash 有、快照也有 5 张，但 `fast` 永远是 false；
+    - 唯一还能拦住快路径的条件是 `!overlayOpen`，而 `overlayOpen` 的来源是：
+      ```swift
+      // headerTargets
+      let visible = args.first as? Bool ?? true
+      overlayOpen = !visible
+      ```
+      `visible` 实际只是“是不是微主页”。所有子页（钱包/服务/我/零钱…）都会让
+      `visible=false` → `overlayOpen=true` → **快路径被 100% 挡掉**，一直走旧 fallback；
+      旧 fallback 的底图是手势中临时抓的活 WebView，正好抓到切页动画中间帧，
+      所以下层会偏、会动；
+    - 修复：
+      - `overlayOpen = false`（不再用“是否主页”冒充“是否浮层”；浮层打开本来也不改 hash，
+        这个信号从来不可靠）；
+      - 返回快路径不再检查 `overlayOpen`；
+      - 诊断新增 `preview=0/1 overlay=0/1`，下一次日志能直接看到是哪一个条件；
+    - 预期 53 日志：
+      `EDGE begin fast=true topCache=true preview=true overlay=false prev=#/wechat/wallet snaps=5`
+      `EDGE end commit=true fast=true`
+    - 版本 1.0.0(53)。改动文件：`WeChatV2Host.swift`、`project.yml`。
 
 ---
 

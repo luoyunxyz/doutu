@@ -511,8 +511,7 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
                 view.layer.shadowPath = UIBezierPath(rect: view.bounds).cgPath
             } else if let current = currentHash,
                       let prev = previousHashByRoute[current],
-                      let preview = pageSnapshots[prev],
-                      !overlayOpen {
+                      let preview = pageSnapshots[prev] {
                 // 快路径：上一页快照在页面稳定时就预加载好，并锁定成一张静态图。
                 // 整个手势只移动 top/preview 两个 UIView，不调用 JS、不抓图、不重排版。
                 fastEdgeBack = true
@@ -540,7 +539,9 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
                 prepareEdgePreview()
             }
             let cur = currentHash ?? "-"
-            CrashLog.append("EDGE begin fast=\(fastEdgeBack) topCache=\(currentTopSnapshot != nil) prev=\(previousHashByRoute[cur] ?? "-") snaps=\(pageSnapshots.count)")
+            let prevHash = previousHashByRoute[cur]
+            let previewFound = prevHash.flatMap { pageSnapshots[$0] } != nil
+            CrashLog.append("EDGE begin fast=\(fastEdgeBack) topCache=\(currentTopSnapshot != nil) preview=\(previewFound) overlay=\(overlayOpen) prev=\(prevHash ?? "-") snaps=\(pageSnapshots.count)")
         case .changed:
             if edgeRootDismiss {
                 view.transform = CGAffineTransform(translationX: max(0, outerTranslation.x), y: 0)
@@ -1220,8 +1221,11 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
             let visible = args.first as? Bool ?? true
             headerPlusButton?.isHidden = !visible
             headerSearchButton?.isHidden = !visible
-            // 网页里的浮层/子页状态：边缘手势据此决定「退出一整层」还是「整页回首页」。
-            overlayOpen = !visible
+            // 之前这里写的是 overlayOpen = !visible：visible 只是“是否微主页”，
+            // 结果所有子页（钱包/服务/我…）都被当成“开着浮层”，直接挡住了返回快路径。
+            // 现在不再用这个信号判断浮层（它本来也不可靠：浮层打开不会改 hash），
+            // 返回快路径不再检查 overlay；这里保持 false，避免误伤根 tab 的滑动。
+            overlayOpen = false
         case "pageHash":
             let oldHash = args.count > 0 ? (args[0] as? String ?? "") : ""
             let newHash = args.count > 1 ? (args[1] as? String ?? "") : ""
