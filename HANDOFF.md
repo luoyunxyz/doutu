@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 1.0.0(9)：DoutuV2App 深链类加 MainActor`  
-> 最新代码版本：`1.0.0 / 9`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 1.0.0(10)：登录页右侧推入；邀请码重置修复`  
+> 最新代码版本：`1.0.0 / 10`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -973,6 +973,12 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
     - `DoutuAppDelegate` / `DeepLinkCenter` 访问 `Router.shared`（`@MainActor`），但类型本身没有标注 `@MainActor`，在 Xcode 26 SDK 下会报隔离错误；
     - 1.0.0(9) 给 `DoutuAppDelegate` 和 `DeepLinkCenter` 都加 `@MainActor`；
     - 如果仍失败，需要日志里 `DoutuV2App.swift` 的 `error:` 行才能继续定位。
+
+107. **登录页从下往上、邀请码重置无反应**
+    - `LoginPresenter` 之前用 `.pageSheet`，iOS 默认从底部弹；
+    - 1.0.0(10) 改成 `.fullScreen` + `LoginSlideTransition` / `LoginSlideAnimator`：present 时从右侧推入，dismiss 时向右退出；
+    - 「邀请码重置密码」按钮之前直接 `Router.handle("resetInvite")`，但 LoginView 还在模态栈顶，ResetByInviteScreen 被推到模态后面，看起来没反应；
+    - 新增 `dismissThen(token)`：先 dismiss 登录页，0.32 秒后再 handle，小支的 ResetByInviteScreen 就能显示；客服入口也走同一逻辑。
 
 ---
 

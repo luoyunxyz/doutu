@@ -212,18 +212,25 @@ struct LoginView: View {
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: .infinity)
             Button("忘记密码？请联系客服协助重置") {
-                Router.shared?.handle("entry:0", at: .zero)
+                dismissThen("entry:0")
             }
             .font(.system(size: 16))
             .foregroundColor(Color(red: 0.29, green: 0.48, blue: 0.97))
             Button("邀请码重置密码") {
-                Router.shared?.handle("resetInvite", at: .zero)
+                dismissThen("resetInvite")
             }
             .font(.system(size: 16))
             .foregroundColor(Color(red: 0.29, green: 0.48, blue: 0.97))
         }
         .frame(maxWidth: .infinity)
         .padding(.top, 8)
+    }
+
+    private func dismissThen(_ token: String) {
+        presentationMode.wrappedValue.dismiss()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.32) {
+            Router.shared?.handle(token, at: .zero)
+        }
     }
 
     private var legal: some View {
@@ -323,7 +330,8 @@ enum LoginPresenter {
     static func present(onDone: (() -> Void)? = nil) {
         guard let host = UpdatePrompt.topViewController() else { return }
         let controller = LoginHostingController(rootView: LoginView(onDone: onDone))
-        controller.modalPresentationStyle = .pageSheet
+        controller.modalPresentationStyle = .fullScreen
+        controller.transitioningDelegate = LoginSlideTransition.shared
         // 登录/注册页不铺水印（会盖住输入框；Android 侧同样跳过登录页）
         WatermarkOverlay.beginSuppress()
         controller.onDismiss = {
