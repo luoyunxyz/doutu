@@ -9,7 +9,7 @@ import UIKit
 ///
 /// 与 Android 的差异：iOS 不允许在运行时改启动器上的应用名，所以这里只换图标，
 /// 名称仍然是「豆图」。底栏弹窗的布局（把手 / 标题 / 说明 / 四行 / 蓝勾）照 Android 画。
-final class AppIconChooser: UIViewController {
+final class AppIconChooser: UIViewController, EdgeBackHandling {
     private struct Option {
         let label: String
         let imageName: String
@@ -274,6 +274,11 @@ final class AppIconChooser: UIViewController {
     @objc private func edgeBack(_ gesture: UIScreenEdgePanGestureRecognizer) {
         guard gesture.state == .ended,
               gesture.translation(in: view).x > 60 else { return }
+        guard EdgeBackCenter.shouldHandle() else { return }
+        handleEdgeBack()
+    }
+
+    func handleEdgeBack() {
         close()
     }
 

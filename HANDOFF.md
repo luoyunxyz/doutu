@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 1.0.0(27)：仅左边缘右滑；微信钱包调用 __fwHandleBack`  
-> 最新代码版本：`1.0.0 / 27`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 1.0.0(28)：window 级 EdgeBackCenter 兜住所有模态页`  
+> 最新代码版本：`1.0.0 / 28`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -1098,6 +1098,17 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
       3. `history.back()`（其他深层 hash）；
       4. 都不处理才 `closeHost()`；
     - 这样零钱 → 钱包 → 服务/微主页每次只退一层。
+
+124. **所有模态页统一 window 级边缘返回**
+    - 新增 `EdgeBackCenter`：挂在 UIWindow 上的 `UIScreenEdgePanGestureRecognizer(edges:.left)`，任何最上层模态都能收到；
+    - `EdgeBackHandling` 协议：
+      - `WeChatV2Host` → 执行微信深层返回脚本；
+      - `LoginHostingController` → `onEdgeBack`（关闭登录页）；
+      - `ContactPickerViewController` → `cancel()`；
+      - `AppIconChooser` → `close()`；
+      - 其他未知模态 → 直接 `dismiss`；
+    - `ScreenHostView.didMoveToWindow` 安装；原生 Canvas 页面仍用自身手势（带上一页快照的交互式效果）；
+    - `EdgeBackCenter.shouldHandle()` 用 350ms 门槛，防止 window 手势和页面手势同时触发两次。
 
 ---
 

@@ -14,7 +14,8 @@ import WebKit
 ///   · `window.__fwOpenRoute("#/wechat/wallet/bills")`  —— 进页内路由
 ///   · `window.__fwOpenFeature("group-chat")`          —— 叠一个浮层功能
 ///   · `window.DoutuApp.xxx(...)`                      —— 调原生（相册、http、键盘…）
-final class WeChatV2Host: UIViewController, WKScriptMessageHandler, UIGestureRecognizerDelegate {
+final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
+                        UIGestureRecognizerDelegate, EdgeBackHandling {
     /// 页面根路径（包内 Resources/web）
     private static let scheme = "app"
     private static let host = "local"
@@ -386,6 +387,16 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler, UIGestureRec
         guard gesture.state == .ended else { return }
         let translation = gesture.translation(in: view)
         guard translation.x > 60, abs(translation.y) < 120 else { return }
+        guard EdgeBackCenter.shouldHandle() else { return }
+        performEdgeBack()
+    }
+
+    func handleEdgeBack() {
+        guard EdgeBackCenter.shouldHandle() else { return }
+        performEdgeBack()
+    }
+
+    private func performEdgeBack() {
         // 微信内部页面层级很深（钱包、零钱、账单、提现、亲属卡……），
         // 不能只对聊天/支付做判断。统一让网页先处理：
         // 1) 聊天/支付浮层调 __fwHandleChatPayBack；

@@ -357,6 +357,13 @@ final class ScreenHostView: UIView, UIScrollViewDelegate {
         onAction?(token, design)
     }
 
+    override func didMoveToWindow() {
+        super.didMoveToWindow()
+        if let window {
+            EdgeBackCenter.shared.install(on: window)
+        }
+    }
+
     @objc private func themeChanged() {
         setNeedsDisplay()
     }
