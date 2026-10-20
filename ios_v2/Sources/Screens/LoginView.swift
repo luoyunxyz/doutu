@@ -54,7 +54,7 @@ struct LoginView: View {
             // 顶部直接用 Android 登录页裁下来的头图，避免 SwiftUI 重画渐变/文字造成变形。
             Image("LoginHeader")
                 .resizable()
-                .aspectRatio(1020.0 / 460.0, contentMode: .fit)
+                .aspectRatio(1020.0 / 435.0, contentMode: .fit)
                 .frame(maxWidth: .infinity)
 
             Button {
@@ -317,6 +317,12 @@ struct LoginView: View {
 final class LoginHostingController: UIHostingController<LoginView> {
     var onDismiss: (() -> Void)?
     private var didNotify = false
+
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        // push 之后再次强制隐藏导航栏，避免顶部出现 back 栏。
+        navigationController?.setNavigationBarHidden(true, animated: false)
+    }
 
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
