@@ -318,7 +318,7 @@ struct LoginView: View {
 /// 登录表单的宿主控制器：只在真正消失时解除水印抑制。
 /// 之前把 endSuppress 放在 present 的 completion 里，而那个 completion 是“弹出完成后”
 /// 立刻执行，不是关闭后执行，所以登录页刚出现水印就被重新挂上来了。
-final class LoginHostingController: UIHostingController<LoginView>, EdgeBackHandling {
+final class LoginHostingController: UIHostingController<LoginView> {
     var onDismiss: (() -> Void)?
     var onEdgeBack: (() -> Void)?
     private var didNotify = false
@@ -338,7 +338,7 @@ final class LoginHostingController: UIHostingController<LoginView>, EdgeBackHand
         handleEdgeBack()
     }
 
-    func handleEdgeBack() {
+    @objc func handleEdgeBack() {
         onEdgeBack?()
     }
 

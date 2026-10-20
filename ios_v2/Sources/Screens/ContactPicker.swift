@@ -3,7 +3,7 @@ import UIKit
 /// 模拟来电的完整通讯录选择器。用 UITableView 而不是 UIAlertController，
 /// 避免 iOS actionSheet 在联系人多时只露出几行、看起来像“只有四个可选”。
 final class ContactPickerViewController: UIViewController, UITableViewDataSource, UITableViewDelegate,
-                                          UISearchBarDelegate, EdgeBackHandling {
+                                          UISearchBarDelegate {
     private let contacts: [CallSetupScreen.Contact]
     private var filtered: [CallSetupScreen.Contact]
     private let onPick: (CallSetupScreen.Contact) -> Void
@@ -69,7 +69,7 @@ final class ContactPickerViewController: UIViewController, UITableViewDataSource
         handleEdgeBack()
     }
 
-    func handleEdgeBack() {
+    @objc func handleEdgeBack() {
         cancel()
     }
 

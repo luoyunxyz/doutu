@@ -4,11 +4,6 @@ import UIKit
 /// 原生 Canvas 页由 ScreenHostView 自己的手势处理；
 /// 这里挂在 window 上，兜住登录、微信、联系人、图标选择等模态页面。
 @MainActor
-protocol EdgeBackHandling: AnyObject {
-    func handleEdgeBack()
-}
-
-@MainActor
 final class EdgeBackCenter: NSObject, UIGestureRecognizerDelegate {
     static let shared = EdgeBackCenter()
 
@@ -44,10 +39,12 @@ final class EdgeBackCenter: NSObject, UIGestureRecognizerDelegate {
         guard top.presentingViewController != nil else { return }
 
         guard Self.shouldHandle() else { return }
-        if let handler = top as? EdgeBackHandling {
-            handler.handleEdgeBack()
+        // 用 @objc selector 而不是协议：WeChatV2Host 同时实现 WKScriptMessageHandler，
+        // 跨协议的 MainActor 隔离在 Xcode 26 下容易让 module 生成失败。
+        let selector = NSSelectorFromString("handleEdgeBack")
+        if top.responds(to: selector) {
+            top.perform(selector)
         } else {
-            // 没有实现协议的模态（例如系统相册/提示），按系统习惯关闭。
             top.dismiss(animated: true)
         }
     }

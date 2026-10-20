@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 1.0.0(28)：window 级 EdgeBackCenter 兜住所有模态页`  
-> 最新代码版本：`1.0.0 / 28`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 1.0.0(29)：EdgeBack 改用 @objc selector，避开协议隔离`  
+> 最新代码版本：`1.0.0 / 29`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -1109,6 +1109,13 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
       - 其他未知模态 → 直接 `dismiss`；
     - `ScreenHostView.didMoveToWindow` 安装；原生 Canvas 页面仍用自身手势（带上一页快照的交互式效果）；
     - `EdgeBackCenter.shouldHandle()` 用 350ms 门槛，防止 window 手势和页面手势同时触发两次。
+
+125. **1.0.0(28) EmitSwiftModule 失败**
+    - `EdgeBackHandling` 是 `@MainActor` 协议，而 `WeChatV2Host` 同时实现 `WKScriptMessageHandler` 等非隔离协议，Xcode 26 在 module 生成阶段报隔离冲突；
+    - 1.0.0(29) 删除 `EdgeBackHandling` 协议和所有 conformance，改用 `@objc handleEdgeBack` + `NSSelectorFromString("handleEdgeBack")`：
+      - `EdgeBackCenter` 对最上层控制器做 `responds(to:)`，命中就 `perform`；
+      - 未命中才 `dismiss`；
+    - 不引入跨协议 MainActor 约束，规避 EmitSwiftModule 失败。
 
 ---
 

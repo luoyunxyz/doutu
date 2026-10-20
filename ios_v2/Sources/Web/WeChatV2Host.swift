@@ -15,7 +15,7 @@ import WebKit
 ///   · `window.__fwOpenFeature("group-chat")`          —— 叠一个浮层功能
 ///   · `window.DoutuApp.xxx(...)`                      —— 调原生（相册、http、键盘…）
 final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
-                        UIGestureRecognizerDelegate, EdgeBackHandling {
+                        UIGestureRecognizerDelegate {
     /// 页面根路径（包内 Resources/web）
     private static let scheme = "app"
     private static let host = "local"
@@ -391,7 +391,7 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
         performEdgeBack()
     }
 
-    func handleEdgeBack() {
+    @objc func handleEdgeBack() {
         guard EdgeBackCenter.shouldHandle() else { return }
         performEdgeBack()
     }
