@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 1.0.0(38)：底层改成静态快照并隐藏 WKWebView`  
-> 最新代码版本：`1.0.0 / 38`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 1.0.0(39)：滑动取消回原页；底层快照延迟到 250ms`  
+> 最新代码版本：`1.0.0 / 39`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -1189,6 +1189,18 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
       - 滑动时视觉上只有上层快照移动，底层是静态图片，绝不会跟着动；
       - 结束/取消时 `clearSwipeLayers()` 移除两张快照、恢复 webView、移除 `fw-swipe-preview`；
       - 底层快照准备好前，上层最多先不动（`swipeReady=false`），准备好后再按当前手指位移继续跟手。
+
+134. **滑一半又滑回去会停在新页面**
+    - 原因：
+      - `tabOriginalHash` 原来是在异步 JS 查询里才赋值，用户快速拖动时可能已经把 hash 切到目标，再记录就记成了目标页；
+      - 手势 `.cancelled` 没有走取消分支；
+      - 回拉到 20pt 以内时没有立即恢复原 tab；
+    - 1.0.0(39)：
+      - 用 `webView.url?.fragment` **同步**取原始 hash，不再依赖异步查询；
+      - tab/边缘手势同时处理 `.ended` 和 `.cancelled`；
+      - tab 回拉到 `abs(dx)<20` 时立刻 `restoreTabAfterCancel()`；
+      - 边缘取消时用 `edgeOriginalHash` 直接恢复原路由，不再只靠 `history.forward()`；
+      - 底层快照延迟从 120ms 调到 250ms，确保抓到的确实是下一层静态画面。
 
 ---
 

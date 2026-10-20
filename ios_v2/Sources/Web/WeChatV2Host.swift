@@ -221,6 +221,7 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
     private var swipeLastTranslation: CGFloat = 0
     private var edgeActive = false
     private var edgePreNavigated = false
+    private var edgeOriginalHash: String?
 
     private func installBackAffordance() {
         let edge = UIScreenEdgePanGestureRecognizer(target: self, action: #selector(handleEdgePan(_:)))
@@ -407,6 +408,7 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
         case .began:
             edgeActive = true
             edgePreNavigated = false
+            edgeOriginalHash = currentHash
             setSwipeFreeze(true)
             makeSwipeSnapshot()
             prepareEdgePreview()
@@ -420,7 +422,8 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
         case .ended, .cancelled:
             edgeActive = false
             guard let snapshot = swipeSnapshot else { return }
-            let commit = translation.x > 60 && abs(translation.y) < 120
+            let commit = gesture.state != .cancelled
+                && translation.x > 60 && abs(translation.y) < 120
             let width = max(view.bounds.width, 1)
             UIView.animate(withDuration: commit ? 0.22 : 0.2,
                            delay: 0,
@@ -433,8 +436,13 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
                     if !self.edgePreNavigated { self.performEdgeBack() }
                 } else if self.edgePreNavigated {
                     // 取消：把网页恢复到滑动前的路由。
-                    self.webView.evaluateJavaScript("history.forward()",
-                                                    completionHandler: nil)
+                    let script: String
+                    if let original = self.edgeOriginalHash {
+                        script = "location.hash = '\(original)'"
+                    } else {
+                        script = "history.forward()"
+                    }
+                    self.webView.evaluateJavaScript(script, completionHandler: nil)
                 }
                 self.edgePreNavigated = false
                 self.clearSwipeLayers()
@@ -464,6 +472,11 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
             completionHandler: nil)
     }
 
+    private var currentHash: String? {
+        guard let fragment = webView.url?.fragment, !fragment.isEmpty else { return nil }
+        return fragment.hasPrefix("#") ? fragment : "#" + fragment
+    }
+
     private func makeSwipeSnapshot() {
         guard swipeSnapshot == nil else { return }
         guard let snapshot = webView.snapshotView(afterScreenUpdates: false) else { return }
@@ -478,7 +491,7 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
     /// 下一层路由渲染完后，抓一张静态底图并隐藏 WKWebView；
     /// 这样滑动时只有上层快照在动，底层绝对不会跟着位移。
     private func captureBottomSnapshot() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) { [weak self] in
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { [weak self] in
             guard let self, let top = self.swipeSnapshot,
                   self.swipeBottomSnapshot == nil else { return }
             guard let bottom = self.webView.snapshotView(afterScreenUpdates: true) else {
@@ -512,16 +525,17 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
         if gesture.state == .began {
             tabSwipeStartX = gesture.location(in: view).x
             tabSwipeActive = tabSwipeStartX > 40
-            tabOriginalHash = nil
+            tabOriginalHash = currentHash
             tabPreviewIndex = nil
             if tabSwipeActive {
                 setSwipeFreeze(true)
                 makeSwipeSnapshot()
-                webView.evaluateJavaScript("String(location.hash || '')") { [weak self] result, _ in
-                    guard let self else { return }
-                    let hash = (result as? String) ?? ""
-                    self.tabOriginalHash = hash.hasSuffix("/") ? String(hash.dropLast()) : hash
-                    self.updateTabPreview(translation.x)
+                if tabOriginalHash == nil {
+                    webView.evaluateJavaScript("String(location.hash || '')") { [weak self] result, _ in
+                        guard let self else { return }
+                        let hash = (result as? String) ?? ""
+                        self.tabOriginalHash = hash.hasSuffix("/") ? String(hash.dropLast()) : hash
+                    }
                 }
             }
             return
@@ -533,12 +547,18 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
             if swipeReady {
                 snapshot.transform = CGAffineTransform(translationX: translation.x, y: 0)
             }
-            updateTabPreview(translation.x)
+            if abs(translation.x) < 20, tabPreviewIndex != nil {
+                // 已经滑出去又回正：立刻恢复原 tab，避免停在新页面。
+                restoreTabAfterCancel()
+            } else {
+                updateTabPreview(translation.x)
+            }
             return
         }
-        guard gesture.state == .ended else { return }
+        guard gesture.state == .ended || gesture.state == .cancelled else { return }
         guard let snapshot = swipeSnapshot else { return }
-        guard abs(translation.x) > 60, abs(translation.y) < 60,
+        guard gesture.state != .cancelled,
+              abs(translation.x) > 60, abs(translation.y) < 60,
               tabSwipeStartX > 40 else {
             restoreTabAfterCancel()
             springBackSwipeSnapshot()
