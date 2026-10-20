@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 1.0.0(61)：自绘宿主挂到 <html>，脱离 body transform`  
-> 最新代码版本：`1.0.0 / 61`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 1.0.0(62)：去掉 HTML query（网络异常）+ 宿主位置诊断`  
+> 最新代码版本：`1.0.0 / 62`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -1558,6 +1558,24 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
       - 打开前 `elementFromPoint(195,50)` 是 `.fw-pay-header`/`h1`（我们的页）；
       - 钱包页直接显示 10 行，红框空白处弹面板；
     - 版本 1.0.0(61)。改动文件：`wechat-pay-pages.js`、`index.html`、
+      `WeChatV2Host.swift`、`project.yml`。
+
+154. **1.0.0(62)：去掉 HTML query + 精确诊断宿主位置**
+    - 61 装到真机仍白；同时出现「网络异常」：
+      - `index.html?v=61` 的 query 改变了页面 URL，App 的接口/网络检查可能按
+        `location.href` 拼地址，触发网络异常；62 去掉 HTML query，CSS/JS 仍用
+        `?v=62` + 面板样式内联；
+    - 60 的日志 `sheet top=1688` 说明宿主/面板在视口外；61 已把宿主挂到 `<html>`，
+      但还没有日志证明 top 变成 0；
+    - 62 在 `WALLET page mounted` 里补：
+      `rows | display | zIndex | nextSibling | hostTop | hostHeight | parentTag`；
+      在 `WALLET sheet state` 里补宿主 `top/height`；
+      装 62 打开钱包后，日志会直接告诉我们：
+      - `parentTag=HTML` 且 `hostTop=0`：宿主已回到视口，白屏是内容/绘制问题；
+      - `hostTop=1688`：`<html>` 也被 transform 了，需要把宿主改成
+        `position:absolute`/顶层 window；
+      - `parentTag=BODY`：61 的 JS 没生效（缓存）；
+    - 版本 1.0.0(62)。改动文件：`wechat-pay-pages.js`、`index.html`、
       `WeChatV2Host.swift`、`project.yml`。
 
 ---

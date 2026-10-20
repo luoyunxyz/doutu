@@ -1764,6 +1764,12 @@
       if (old) old.remove();
       const root = document.getElementById('root');
       if (root) { root.style.display = ''; root.style.visibility = ''; }
+      try {
+        document.documentElement.style.transform = '';
+        document.documentElement.style.webkitTransform = '';
+        document.body.style.transform = '';
+        document.body.style.webkitTransform = '';
+      } catch (_) {}
       document.documentElement.classList.remove('fw-pay-route-active');
       if (typeof window.__fwSyncSystemBars === 'function') window.__fwSyncSystemBars(); else if (window.DoutuApp && window.DoutuApp.setPayPageSystemBars) window.DoutuApp.setPayPageSystemBars(false);
       return;
@@ -1775,6 +1781,12 @@
       if (old) old.remove();
       const root = document.getElementById('root');
       if (root) { root.style.display = ''; root.style.visibility = ''; }
+      try {
+        document.documentElement.style.transform = '';
+        document.documentElement.style.webkitTransform = '';
+        document.body.style.transform = '';
+        document.body.style.webkitTransform = '';
+      } catch (_) {}
       document.documentElement.classList.add('fw-pay-route-active');
       if (typeof window.__fwSyncSystemBars === 'function') window.__fwSyncSystemBars();
       else if (window.DoutuApp && window.DoutuApp.setPayPageSystemBars) window.DoutuApp.setPayPageSystemBars(true);
@@ -1925,6 +1937,16 @@
     if (root.parentElement !== document.documentElement || root.nextElementSibling) {
       document.documentElement.appendChild(root);
     }
+    // 如果宿主仍然被祖先 transform 推出视口，直接把 html/body 的 transform 清掉。
+    // 自绘支付页是全屏的，清掉过渡 transform 不会影响页面内容。
+    try {
+      if (Math.abs(root.getBoundingClientRect().top) > 2) {
+        document.documentElement.style.transform = 'none';
+        document.documentElement.style.webkitTransform = 'none';
+        document.body.style.transform = 'none';
+        document.body.style.webkitTransform = 'none';
+      }
+    } catch (_) {}
     try {
       window.webkit.messageHandlers.DoutuApp.postMessage({
         method: 'walletPageMounted',
@@ -1932,7 +1954,10 @@
           String(root.querySelectorAll('[data-wallet-key]').length),
           getComputedStyle(root).display,
           getComputedStyle(root).zIndex,
-          root.nextElementSibling ? (root.nextElementSibling.id || root.nextElementSibling.tagName || '?') : ''
+          root.nextElementSibling ? (root.nextElementSibling.id || root.nextElementSibling.tagName || '?') : '',
+          String(Math.round(root.getBoundingClientRect().top)),
+          String(Math.round(root.getBoundingClientRect().height)),
+          root.parentElement ? root.parentElement.tagName : ''
         ],
         callbackId: null
       });
@@ -1970,6 +1995,8 @@
             getComputedStyle(root).visibility,
             getComputedStyle(root).zIndex,
             String(Math.round(root.getBoundingClientRect().width)),
+            String(Math.round(root.getBoundingClientRect().top)),
+            String(Math.round(root.getBoundingClientRect().height)),
             topEl ? (topEl.className || topEl.tagName || '') : ''
           ],
           callbackId: null

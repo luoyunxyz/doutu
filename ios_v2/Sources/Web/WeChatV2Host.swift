@@ -169,8 +169,9 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
                 }
                 return
             }
-            // v=61：给 HTML 本身做 cache-bust，确保 index 里引用的新 CSS/JS 一定会重新拉取。
-        let raw = "http://localhost:\(port)/index.html?v=61#/wechat"
+            // 不再给 HTML 加 query：真机上会触发 App 的“网络异常”。
+            // CSS/JS 用 ?v=62 做 cache-bust，关键面板样式已在 JS 内联。
+        let raw = "http://localhost:\(port)/index.html#/wechat"
             CrashLog.append("WebHost loading \(raw)")
             if let url = URL(string: raw) {
                 self.webView.load(URLRequest(url: url))
