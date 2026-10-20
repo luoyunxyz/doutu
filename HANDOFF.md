@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 1.0.0(17)：LoginCloseBox 强引用导航 + 关闭日志`  
-> 最新代码版本：`1.0.0 / 17`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 1.0.0(18)：登录头图直接使用 Android 抠图`  
+> 最新代码版本：`1.0.0 / 18`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -1021,6 +1021,13 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
       - `LOGIN push host=...`
       - `LOGIN close onClose=...`
       - `LOGIN CloseBox nav=...`
+
+114. **顶部头图改用 Android 抠图**
+    - 从 ADB 登录页截图裁出 `(30,140)-(1050,600)` 的头图，保存为 `Assets.xcassets/LoginHeader.imageset/LoginHeader.png`；
+    - `LoginView.header` 不再用 SwiftUI 画渐变/标题/副标题/胶囊，直接：
+      `Image("LoginHeader").resizable().aspectRatio(1020/460, contentMode:.fit)`
+    - 白色面板上移量从 -54 改为 -28，匹配抠图底部的面板圆角；
+    - 头图 PNG 被 `.gitignore` 忽略，需要 `git add -f`。
 
 ---
 

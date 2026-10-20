@@ -51,30 +51,11 @@ struct LoginView: View {
 
     private var header: some View {
         ZStack(alignment: .topTrailing) {
-            LinearGradient(
-                gradient: Gradient(colors: [
-                    Color(red: 0.29, green: 0.48, blue: 0.97),
-                    Color(red: 0.55, green: 0.36, blue: 0.96),
-                ]),
-                startPoint: .topLeading, endPoint: .bottomTrailing)
-            VStack(alignment: .leading, spacing: 12) {
-                Text("注册 / 登录")
-                    .font(.system(size: 36, weight: .bold))
-                    .foregroundColor(.white)
-                Text("一键解析 · 服务端合成 · 支持批量")
-                    .font(.system(size: 16))
-                    .foregroundColor(.white.opacity(0.86))
-                Text("未开通会员也能用，只是成品带水印")
-                    .font(.system(size: 14))
-                    .foregroundColor(.white.opacity(0.95))
-                    .padding(.horizontal, 16).padding(.vertical, 10)
-                    .background(Color.white.opacity(0.16))
-                    .clipShape(Capsule())
-                    .padding(.top, 8)
-                Spacer(minLength: 0)
-            }
-            .padding(.leading, 28)
-            .padding(.top, 48)
+            // 顶部直接用 Android 登录页裁下来的头图，避免 SwiftUI 重画渐变/文字造成变形。
+            Image("LoginHeader")
+                .resizable()
+                .aspectRatio(1020.0 / 460.0, contentMode: .fit)
+                .frame(maxWidth: .infinity)
 
             Button {
                 closeLogin()
@@ -87,7 +68,6 @@ struct LoginView: View {
             }
         }
         .frame(maxWidth: .infinity)
-        .frame(height: 300)
         .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
         .padding(.horizontal, 18)
         .padding(.top, 16)
@@ -113,7 +93,7 @@ struct LoginView: View {
         .background(Color.white)
         .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
         .padding(.horizontal, 24)
-        .padding(.top, -54)
+        .padding(.top, -28)
     }
 
     private var modeTabs: some View {
