@@ -216,6 +216,9 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
     private var tabOriginalHash: String?
     private var tabPreviewIndex: Int?
     private var swipeSnapshot: UIView?
+    private var swipeBottomSnapshot: UIView?
+    private var swipeReady = true
+    private var swipeLastTranslation: CGFloat = 0
     private var edgeActive = false
     private var edgePreNavigated = false
 
@@ -409,7 +412,11 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
             prepareEdgePreview()
         case .changed:
             guard let snapshot = swipeSnapshot else { return }
-            snapshot.transform = CGAffineTransform(translationX: max(0, translation.x), y: 0)
+            let x = max(0, translation.x)
+            swipeLastTranslation = x
+            if swipeReady {
+                snapshot.transform = CGAffineTransform(translationX: x, y: 0)
+            }
         case .ended, .cancelled:
             edgeActive = false
             guard let snapshot = swipeSnapshot else { return }
@@ -422,8 +429,6 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
                     ? CGAffineTransform(translationX: width, y: 0)
                     : .identity
             } completion: { _ in
-                snapshot.removeFromSuperview()
-                self.swipeSnapshot = nil
                 if commit {
                     if !self.edgePreNavigated { self.performEdgeBack() }
                 } else if self.edgePreNavigated {
@@ -432,7 +437,7 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
                                                     completionHandler: nil)
                 }
                 self.edgePreNavigated = false
-                self.setSwipeFreeze(false)
+                self.clearSwipeLayers()
             }
         default:
             break
@@ -448,6 +453,7 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
             guard !roots.contains(hash) else { return }
             self.edgePreNavigated = true
             self.performEdgeBack()
+            self.captureBottomSnapshot()
         }
     }
 
@@ -465,6 +471,39 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
         snapshot.isUserInteractionEnabled = false
         view.addSubview(snapshot)
         swipeSnapshot = snapshot
+        swipeReady = false
+        swipeLastTranslation = 0
+    }
+
+    /// 下一层路由渲染完后，抓一张静态底图并隐藏 WKWebView；
+    /// 这样滑动时只有上层快照在动，底层绝对不会跟着位移。
+    private func captureBottomSnapshot() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) { [weak self] in
+            guard let self, let top = self.swipeSnapshot,
+                  self.swipeBottomSnapshot == nil else { return }
+            guard let bottom = self.webView.snapshotView(afterScreenUpdates: true) else {
+                self.swipeReady = true
+                return
+            }
+            bottom.frame = self.webView.frame
+            bottom.isUserInteractionEnabled = false
+            self.view.insertSubview(bottom, belowSubview: top)
+            self.swipeBottomSnapshot = bottom
+            self.webView.isHidden = true
+            self.swipeReady = true
+            top.transform = CGAffineTransform(translationX: self.swipeLastTranslation, y: 0)
+        }
+    }
+
+    private func clearSwipeLayers() {
+        swipeSnapshot?.removeFromSuperview()
+        swipeSnapshot = nil
+        swipeBottomSnapshot?.removeFromSuperview()
+        swipeBottomSnapshot = nil
+        webView.isHidden = false
+        swipeReady = true
+        swipeLastTranslation = 0
+        setSwipeFreeze(false)
     }
 
 
@@ -490,7 +529,10 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
         guard tabSwipeActive else { return }
         if gesture.state == .changed {
             guard let snapshot = swipeSnapshot else { return }
-            snapshot.transform = CGAffineTransform(translationX: translation.x, y: 0)
+            swipeLastTranslation = translation.x
+            if swipeReady {
+                snapshot.transform = CGAffineTransform(translationX: translation.x, y: 0)
+            }
             updateTabPreview(translation.x)
             return
         }
@@ -513,9 +555,7 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
                        options: [.curveEaseOut]) {
             snapshot.transform = CGAffineTransform(translationX: offset, y: 0)
         } completion: { _ in
-            snapshot.removeFromSuperview()
-            self.swipeSnapshot = nil
-            self.setSwipeFreeze(false)
+            self.clearSwipeLayers()
         }
     }
 
@@ -533,6 +573,7 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
         tabPreviewIndex = next
         webView.evaluateJavaScript("location.hash = '\(tabs[next])'",
                                    completionHandler: nil)
+        captureBottomSnapshot()
     }
 
     private func restoreTabAfterCancel() {
@@ -551,9 +592,7 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
                        options: [.curveEaseOut]) {
             snapshot.transform = .identity
         } completion: { _ in
-            snapshot.removeFromSuperview()
-            self.swipeSnapshot = nil
-            self.setSwipeFreeze(false)
+            self.clearSwipeLayers()
         }
     }
 

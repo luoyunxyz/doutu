@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 1.0.0(37)：滑动时冻结底层动画，只让上层快照移动`  
-> 最新代码版本：`1.0.0 / 37`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 1.0.0(38)：底层改成静态快照并隐藏 WKWebView`  
+> 最新代码版本：`1.0.0 / 38`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -1179,6 +1179,16 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
       ```
     - 原生在 tab/边缘手势 began 时加 `fw-swipe-preview`，结束/回弹时移除；
     - 这样只有上层快照跟手移动，底层下一层保持静止。
+
+133. **底层仍然会动：改成静态底图**
+    - 只禁 CSS 动画不够，WKWebView 本身的路由切换/重绘仍可能位移；
+    - 1.0.0(38)：
+      - 上层：当前页快照，跟手移动；
+      - 底层：等下一层路由渲染 120ms 后，再抓一张 `snapshotView(afterScreenUpdates:true)`，插在上层快照下面；
+      - 然后 `webView.isHidden = true`，真正隐藏 WKWebView；
+      - 滑动时视觉上只有上层快照移动，底层是静态图片，绝不会跟着动；
+      - 结束/取消时 `clearSwipeLayers()` 移除两张快照、恢复 webView、移除 `fw-swipe-preview`；
+      - 底层快照准备好前，上层最多先不动（`swipeReady=false`），准备好后再按当前手指位移继续跟手。
 
 ---
 
