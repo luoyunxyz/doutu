@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 1.0.0(56)：钱包顶部空白热区（含 31px 安全区）`  
-> 最新代码版本：`1.0.0 / 56`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 1.0.0(57)：整个顶部 78px 都能点开勾选面板`  
+> 最新代码版本：`1.0.0 / 57`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -1446,6 +1446,26 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
       `title(195,54) → 同`、`back(30,54) → 返回`、`bill(360,54) → 账单`；
     - 版本 1.0.0(56)。改动文件：`wechat-pay-pages.js`、`wechat-pay-pages.css`、
       `WeChatV2Host.swift`、`project.yml`。
+
+149. **1.0.0(57)：整个顶部 78px 全宽热区**
+    - 56 的热区是 `left:56px;right:64px`，左右两角（返回/账单上方）仍然是死区；
+      用户红框圈的是**整条顶部**，点角落会没反应；
+    - 改成在 `root` 上监听 click：
+      ```js
+      if (e.clientY >= 78) return;
+      if (e.target.closest('.fw-pay-back, .fw-wallet-bill, [data-go]')) return;
+      open();
+      ```
+      顶部 78px（31px 安全区 + 47px 标题栏）**整条全宽**都能打开勾选面板，
+      只有真正的返回/账单按钮仍执行原动作；
+    - 新增 `walletPageMounted` 上报：`WALLET page mounted rows=<n>`；
+      如果用户日志里没有这行，说明当前看到的不是自绘钱包页（而是 bundled React
+      钱包页），那就不是点击位置问题，需要先解决钱包页有没有挂载；
+    - 同时修 `currentRoute()`：`#/wechat/wallet?from=...` 这类带 query 的钱包 URL
+      之前会被 `endsWith('/wechat/wallet')` 判成空路由，自绘钱包页不挂载，
+      用户看到 bundled 钱包页（数字人民币/消费者保护）；现在先剥 query 再匹配；
+    - 版本 1.0.0(57)。改动文件：`wechat-pay-pages.js`、`WeChatV2Host.swift`、
+      `project.yml`。
 
 ---
 

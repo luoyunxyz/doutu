@@ -1232,6 +1232,8 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
             handlePageHash(old: oldHash, new: newHash)
         case "pageScroll":
             invalidateCurrentSnapshot(hash: args.first as? String ?? "")
+        case "walletPageMounted":
+            CrashLog.append("WALLET page mounted rows=\(args.first as? String ?? "?")")
         case "walletCustomize":
             CrashLog.append("WALLET customize tap")
         default:

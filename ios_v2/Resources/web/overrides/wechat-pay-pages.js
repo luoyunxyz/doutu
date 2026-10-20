@@ -23,14 +23,18 @@
     if (/[?&]withdraw=1(?:&|$)/.test(value)) return routes.withdraw;
     if (/[?&]card-add=1(?:&|$)/.test(value)) return routes.cardAdd;
     if (/[?&]cards=1(?:&|$)/.test(value)) return routes.cards;
-    return value.endsWith('/wechat/service') ? routes.service
-      : /\/wechat\/wallet\/bills(\/|$)/.test(value) ? routes.bills
-      : /\/wechat\/wallet\/cards\/add(\/|$)/.test(value) ? routes.cardAdd
-      : /\/wechat\/wallet\/cards(\/|$)/.test(value) ? routes.cards
-      : value.endsWith('/wechat/wallet/withdraw') ? routes.withdraw
-      : value.endsWith('/wechat/wallet/balance') ? routes.balance
-      : value.endsWith('/wechat/wallet') ? routes.wallet
-      : value.endsWith('/wechat/payment') ? routes.payment
+    // 2026-10-20: bundled React Router 有时会在钱包 URL 后面带 query（?from=...），
+    // 之前只对 value 做 endsWith，导致 currentRoute() 返回空、自绘钱包页不挂载，
+    // 用户看到的是 bundled 钱包页（数字人民币/消费者保护那版）。这里统一剥掉 query。
+    const routePath = value.split(/[?#]/)[0].replace(/\/$/, '');
+    return routePath.endsWith('/wechat/service') ? routes.service
+      : /\/wechat\/wallet\/bills(\/|$)/.test(routePath) ? routes.bills
+      : /\/wechat\/wallet\/cards\/add(\/|$)/.test(routePath) ? routes.cardAdd
+      : /\/wechat\/wallet\/cards(\/|$)/.test(routePath) ? routes.cards
+      : routePath.endsWith('/wechat/wallet/withdraw') ? routes.withdraw
+      : routePath.endsWith('/wechat/wallet/balance') ? routes.balance
+      : routePath.endsWith('/wechat/wallet') ? routes.wallet
+      : routePath.endsWith('/wechat/payment') ? routes.payment
       : '';
   }  const esc = (v) => String(v).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const icon = (name, color) => {
@@ -1871,6 +1875,13 @@
   function bindWalletPage(root) {
     const hidden = readWalletHidden();
     applyWalletVisibility(root, hidden);
+    try {
+      window.webkit.messageHandlers.DoutuApp.postMessage({
+        method: 'walletPageMounted',
+        args: [String(root.querySelectorAll('[data-wallet-key]').length)],
+        callbackId: null
+      });
+    } catch (_) {}
     const sheet = document.createElement('div');
     sheet.className = 'fw-wallet-sheet';
     sheet.innerHTML = `<div class="fw-wallet-sheet-mask"></div>
@@ -1906,6 +1917,14 @@
         open();
       });
     }
+    // 整个顶部 78px（31px 安全区 + 47px 标题栏）都算“空白处”，
+    // 左右两角也覆盖；只排除返回、账单和带 data-go 的按钮。
+    root.addEventListener('click', e => {
+      if (e.clientY >= 78) return;
+      if (e.target.closest('.fw-pay-back, .fw-wallet-bill, [data-go]')) return;
+      try { window.webkit.messageHandlers.DoutuApp.postMessage({ method: 'walletCustomize', args: [], callbackId: null }); } catch (_) {}
+      open();
+    });
     sheet.querySelector('.fw-wallet-sheet-mask').addEventListener('click', close);
     sheet.querySelector('[data-sheet-close]').addEventListener('click', close);
     sheet.querySelectorAll('[data-sheet-key]').forEach(row => {
