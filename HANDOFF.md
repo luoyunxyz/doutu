@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 1.0.0(66)：三个金额统一为参考图的常规字重`  
-> 最新代码版本：`1.0.0 / 66`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 1.0.0(67)：启动会员刷新静默，去掉网络异常 Toast`  
+> 最新代码版本：`1.0.0 / 67`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -1652,6 +1652,20 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
       - 金额宽度/位置/行高不变；
     - 版本 1.0.0(66)。改动文件：`wechat-pay-pages.js`、`wechat-pay-pages.css`、
       `index.html`、`WeChatV2Host.swift`、`project.yml`。
+
+160. **1.0.0(67)：启动时的“网络异常”Toast**
+    - 截图 Toast 文案是 `网络异常：Could not connect to the server.`，
+      来源是 `ApiClient.call` 失败返回的信封（`ApiClient.swift:215`）；
+    - 启动链路：`Router.refreshMemberStatusIfNeeded()`（登录态）→
+      `refreshMemberStatus()`；服务端不可达时 `showToast(res.msg)` 在首页弹 Toast；
+      成功时还会弹「已刷新」；
+    - 67：
+      - `refreshMemberStatus` 增加 `silent` 参数（默认 false）；
+      - 启动/回前台的 `refreshMemberStatusIfNeeded` 改为 `silent: true`，
+        失败不弹「网络异常」，成功也不弹「已刷新」；
+      - 手动刷新（登录后、换图标页带 completion）保持原提示；
+      - 本地功能（钱包/微/娱乐）不依赖该接口；
+    - 版本 1.0.0(67)。改动文件：`LegacyDoutuApp.swift`、`project.yml`。
 
 ---
 

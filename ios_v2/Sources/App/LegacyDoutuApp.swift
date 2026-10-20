@@ -641,7 +641,9 @@ final class Router {
         guard Session.shared.isLoggedIn else { return }
         // 不要只在 status_text 为空时刷新：会员到期/续费/换账号后本地 activated
         // 可能还是旧值，图标等会员功能就会被误判为未开通。
-        refreshMemberStatus()
+        // 启动/回前台的后台刷新必须静默：服务端不可达时不能弹「网络异常」，
+        // 本地功能（钱包、微、娱乐）不依赖这个接口。
+        refreshMemberStatus(silent: true)
     }
 
     /// 收款码页「修改」姓名：Android CollectMoneyActivity.editName 的等价实现。
@@ -666,12 +668,14 @@ final class Router {
     }
 
     /// 对应 Android `MainActivity.refreshAccount(true)`：`GET /api/v1/auth/status`
-    func refreshMemberStatus(completion: (() -> Void)? = nil) {
+    func refreshMemberStatus(silent: Bool = false, completion: (() -> Void)? = nil) {
         Task { @MainActor in
             // Android 用 GET；之前写成 POST 会被服务端回「请求方法不支持」，启动时还会弹 toast。
             let res = await ApiClient.shared.call("GET", "/api/v1/auth/status")
             guard res.ok, let data = res.data as? [String: Any] else {
-                self.showToast(res.msg.isEmpty ? "刷新失败" : res.msg, ok: false)
+                if !silent {
+                    self.showToast(res.msg.isEmpty ? "刷新失败" : res.msg, ok: false)
+                }
                 completion?()
                 return
             }
@@ -699,7 +703,7 @@ final class Router {
             }
             WatermarkOverlay.attachIfNeeded()
             self.host?.setNeedsDisplay()
-            self.showToast("已刷新", ok: true)
+            if !silent { self.showToast("已刷新", ok: true) }
             completion?()
         }
     }
