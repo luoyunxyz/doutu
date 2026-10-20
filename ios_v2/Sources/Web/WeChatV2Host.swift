@@ -511,7 +511,7 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
                       let prev = previousHashByRoute[current],
                       let preview = pageSnapshots[prev],
                       !overlayOpen {
-                // 快路径：上一页快照在 touchstart 时就已经预加载好，并锁定成一张静态图。
+                // 快路径：上一页快照在页面稳定时就预加载好，并锁定成一张静态图。
                 // 整个手势只移动 top/preview 两个 UIView，不调用 JS、不抓图、不重排版。
                 fastEdgeBack = true
                 // 快路径连 JS 都不调：手势期间只有两个 UIView 的 transform。
