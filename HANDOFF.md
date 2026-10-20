@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 1.0.0(62)：去掉 HTML query（网络异常）+ 宿主位置诊断`  
-> 最新代码版本：`1.0.0 / 62`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 1.0.0(63)：iOS 14.3 不支持 inset，显式四边钉住宿主/面板`  
+> 最新代码版本：`1.0.0 / 63`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -1577,6 +1577,32 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
       - `parentTag=BODY`：61 的 JS 没生效（缓存）；
     - 版本 1.0.0(62)。改动文件：`wechat-pay-pages.js`、`index.html`、
       `WeChatV2Host.swift`、`project.yml`。
+
+155. **1.0.0(63)：白屏的真正根因——iOS 14.3 不支持 CSS `inset` 简写**
+    - 62 真机日志：
+      ```
+      WALLET page mounted 10 | block | 2147483647 |  | 844 | 844 | HTML
+      ```
+      `hostTop=844` 正好是一个屏高，`parentTag=HTML`，宿主像是按**静态位置**
+      排在 `<body>` 后面，而不是 fixed 到视口；
+    - 根因：宿主/面板的 CSS 只写了 `position:fixed; inset:0`。**iOS 14.3 的 WebKit
+      不识别 `inset` 简写**，四边都是 auto，fixed 元素回到静态位置：
+      - 宿主在 body 后面 → top≈844；
+      - 面板在页面后面 → top≈1688（60 的日志）。
+      代码里 2026-10-19 只对 bills/withdraw/cards 单独写了 top/left/right/bottom，
+      钱包/零钱/支付没有，所以它们一直掉在视口外，用户看到 bundled 页/白屏；
+    - 63 全链路显式四边：
+      - `#fw-pay-pages-host` CSS 增加 `top/left/right/bottom:0!important`；
+      - `render()` 的 `old.style.cssText` 增加四边；
+      - `bindWalletPage` 挂载时用 `setProperty(...,'important')` 再钉一次；
+      - `__fwForceWalletPage` 同样；
+      - 面板 `.fw-wallet-sheet`、遮罩 `.fw-wallet-sheet-mask` 的 CSS 和 JS
+        内联样式都增加四边（`inset` 保留，兼容新系统）；
+    - 网络异常：62 已去掉页面 URL 的 `?v=`，62 日志确认
+      `WebHost loading .../index.html#/wechat`；如果 63 仍有“网络异常”，
+      那是 App 接口/手机网络本身，不再是页面 query；
+    - 版本 1.0.0(63)。改动文件：`wechat-pay-pages.js`、`wechat-pay-pages.css`、
+      `index.html`、`WeChatV2Host.swift`、`project.yml`。
 
 ---
 

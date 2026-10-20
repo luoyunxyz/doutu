@@ -1819,7 +1819,7 @@
        page.style.setProperty('box-sizing', 'border-box', 'important');
        page.style.setProperty('height', '100%', 'important');
        page.style.setProperty('min-height', '100%', 'important');
-     }     old.style.cssText = 'position:fixed;inset:0;z-index:2147483647;display:block;visibility:visible;opacity:1;pointer-events:auto;box-sizing:border-box;width:100vw;height:100vh;transform:none';
+     }     old.style.cssText = 'position:fixed;inset:0;top:0;left:0;right:0;bottom:0;z-index:2147483647;display:block;visibility:visible;opacity:1;pointer-events:auto;box-sizing:border-box;width:100vw;height:100vh;transform:none';
     // 2026-10-19: 这份 CSS 在真机上丢了 `inset:0`，fixed 元素按静态位置落到屏幕下方，
     // 自绘页一直不可见。账单页没有 bundled 版本，必须由自绘层显示：单独把它钉到视口。
     if (pinnedPage) {
@@ -1906,9 +1906,9 @@
 #fw-pay-pages-host .fw-wallet-row-icon .fw-wallet-row-img{width:22px;height:22px;display:block;object-fit:contain}
 #fw-pay-pages-host .fw-wallet-row-copy .fw-wallet-note{font-style:normal;display:inline-block;color:#e99b37!important;margin-left:6px!important;font-size:11px!important}
 #fw-pay-pages-host .fw-wallet-row.is-hidden,#fw-pay-pages-host .fw-wallet-list.is-hidden{display:none!important}
-#fw-pay-pages-host .fw-wallet-sheet{position:fixed;inset:0;z-index:2147483647;display:none}
+#fw-pay-pages-host .fw-wallet-sheet{position:fixed;inset:0;top:0;left:0;right:0;bottom:0;z-index:2147483647;display:none}
 #fw-pay-pages-host .fw-wallet-sheet.is-open{display:block}
-#fw-pay-pages-host .fw-wallet-sheet-mask{position:absolute;inset:0;background:rgba(0,0,0,.42)}
+#fw-pay-pages-host .fw-wallet-sheet-mask{position:absolute;inset:0;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.42)}
 #fw-pay-pages-host .fw-wallet-sheet-panel{position:absolute;left:0;right:0;bottom:0;max-height:72vh;background:#fff;border-radius:12px 12px 0 0;display:flex;flex-direction:column;overflow:hidden;padding-bottom:calc(10px + env(safe-area-inset-bottom))}
 #fw-pay-pages-host .fw-wallet-sheet-head{height:50px;min-height:50px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;border-bottom:1px solid #f2f2f2}
 #fw-pay-pages-host .fw-wallet-sheet-head h2{font-size:16px;font-weight:500;margin:0;color:#191919}
@@ -1934,6 +1934,15 @@
     root.style.visibility = 'visible';
     root.style.zIndex = '2147483647';
     root.style.pointerEvents = 'auto';
+    // iOS 14.3 的 WebKit 不支持 inset 简写；只写 inset:0 时 fixed 元素会留在
+    // 静态位置（body 后面，top≈844），整页/面板掉到视口外。必须显式写四边。
+    root.style.setProperty('position', 'fixed', 'important');
+    root.style.setProperty('top', '0', 'important');
+    root.style.setProperty('left', '0', 'important');
+    root.style.setProperty('right', '0', 'important');
+    root.style.setProperty('bottom', '0', 'important');
+    root.style.setProperty('width', '100vw', 'important');
+    root.style.setProperty('height', '100vh', 'important');
     if (root.parentElement !== document.documentElement || root.nextElementSibling) {
       document.documentElement.appendChild(root);
     }
@@ -2817,6 +2826,11 @@
       existing.style.visibility = 'visible';
       existing.style.zIndex = '2147483647';
       existing.style.pointerEvents = 'auto';
+      existing.style.setProperty('position', 'fixed', 'important');
+      existing.style.setProperty('top', '0', 'important');
+      existing.style.setProperty('left', '0', 'important');
+      existing.style.setProperty('right', '0', 'important');
+      existing.style.setProperty('bottom', '0', 'important');
       // 如果 React 后续又往 body 尾部挂了浮层，把自绘钱包页重新提到最后。
       if (existing.parentElement !== document.documentElement || existing.nextElementSibling) {
         document.documentElement.appendChild(existing);
