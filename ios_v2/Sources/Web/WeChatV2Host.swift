@@ -442,7 +442,8 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
             if (window.__fwHandleChatPayBack && window.__fwHandleChatPayBack()) return true;
           } catch (e) {}
           // 四个根 tab 页面再滑就是退出微主页，不能 history.back 又回到服务页。
-          var h = String(location.hash || '').replace(/\/$/, '');
+          var h = String(location.hash || '');
+          if (h.charAt(h.length - 1) === '/') h = h.slice(0, -1);
           var roots = {'#/wechat':1, '#/wechat/contacts':1, '#/wechat/discover':1, '#/wechat/my':1};
           if (roots[h]) return false;
           // 其他深层 hash 路由：逐级 history.back。

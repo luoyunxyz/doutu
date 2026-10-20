@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 1.0.0(32)：微主页四 tab 左右滑；钱包逐级返回`  
-> 最新代码版本：`1.0.0 / 32`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 1.0.0(33)：修复 JS 正则 \\/ 的 Swift 转义错误`  
+> 最新代码版本：`1.0.0 / 33`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -1142,6 +1142,17 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
       - 左滑 → 下一个 tab；
       - 右滑 → 上一个 tab；
       - 顺序：微信 → 通讯录 → 发现 → 我。
+
+129. **1.0.0(32) 编译错误：invalid escape sequence**
+    - 具体错误：
+      `WeChatV2Host.swift:445:57: error: invalid escape sequence in literal`
+    - Swift 多行字符串里的 JS 正则 `/\/$/` 被 Swift 当成 `\/` 转义；
+    - 1.0.0(33) 改成不用正则：
+      ```js
+      var h = String(location.hash || '');
+      if (h.charAt(h.length - 1) === '/') h = h.slice(0, -1);
+      ```
+    - 同时保留 `codemagic.yaml` 最后的 `grep error:`，后续编译错误能直接看到。
 
 ---
 
