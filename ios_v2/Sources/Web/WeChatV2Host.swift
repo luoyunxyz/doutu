@@ -677,7 +677,9 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
     /// 和手指、点击完全解耦：只在页面静止时做一次，滑动期间不会碰 WKWebView。
     private func scheduleCurrentSnapshot(hash: String) {
         let expected = hash
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak self] in
+        // 根 tab（React 整页）渲染更慢，多等一点；子页面 0.45s 足够。
+        let delay: TimeInterval = isRootRoute(hash) ? 0.85 : 0.45
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
             guard let self else { return }
             guard !self.webView.isHidden, !self.edgeActive, !self.tabSwipeActive else { return }
             guard (self.currentHash ?? "") == expected else { return }
