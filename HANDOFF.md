@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 1.0.0(34)：微信边缘返回/切 tab 增加跟手快照滑动`  
-> 最新代码版本：`1.0.0 / 34`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 1.0.0(35)：微信滑动时先渲染下一层再拉开`  
+> 最新代码版本：`1.0.0 / 35`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -1162,6 +1162,13 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
       - tab 手势 changed 时快照跟手左右移，松手后先 `location.hash` 切到目标 tab，再让快照朝对应方向滑出，露出下一层 tab；
       - `tabSwipeActive` 保证左边缘 40pt 内只走边缘返回，不误切 tab；
       - 快照 `isUserInteractionEnabled=false`，不挡网页点击。
+
+131. **滑动时真正露出下一层**
+    - 1.0.0(34) 只是把当前页快照滑走，底下还是当前页；
+    - 1.0.0(35) 在 began 后先让网页切到下一层，快照盖住，拖动时露出的就是下一层：
+      - tab：`tabOriginalHash` 记录当前 tab；`updateTabPreview()` 在 changed 时按方向提前 `location.hash` 到相邻 tab；取消时恢复原 tab；
+      - 边缘返回：`prepareEdgePreview()` 判断不是根 tab 后，先执行 `performEdgeBack()` 把网页切到上一层，再让快照跟手滑出；取消时 `history.forward()` 恢复；
+      - 根 tab（微信/通讯录/发现/我）不预切，滑出后直接关闭微主页。
 
 ---
 

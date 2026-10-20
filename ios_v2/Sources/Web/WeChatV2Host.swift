@@ -213,7 +213,11 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
     /// 会盖住微信标题栏 —— 与「UI 一模一样」冲突，所以去掉，只保留边缘手势。
     private var tabSwipeStartX: CGFloat = 0
     private var tabSwipeActive = false
+    private var tabOriginalHash: String?
+    private var tabPreviewIndex: Int?
     private var swipeSnapshot: UIView?
+    private var edgeActive = false
+    private var edgePreNavigated = false
 
     private func installBackAffordance() {
         let edge = UIScreenEdgePanGestureRecognizer(target: self, action: #selector(handleEdgePan(_:)))
@@ -398,11 +402,15 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
         let translation = gesture.translation(in: view)
         switch gesture.state {
         case .began:
+            edgeActive = true
+            edgePreNavigated = false
             makeSwipeSnapshot()
+            prepareEdgePreview()
         case .changed:
             guard let snapshot = swipeSnapshot else { return }
             snapshot.transform = CGAffineTransform(translationX: max(0, translation.x), y: 0)
         case .ended, .cancelled:
+            edgeActive = false
             guard let snapshot = swipeSnapshot else { return }
             let commit = translation.x > 60 && abs(translation.y) < 120
             let width = max(view.bounds.width, 1)
@@ -416,11 +424,28 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
                 snapshot.removeFromSuperview()
                 self.swipeSnapshot = nil
                 if commit {
-                    self.performEdgeBack()
+                    if !self.edgePreNavigated { self.performEdgeBack() }
+                } else if self.edgePreNavigated {
+                    // 取消：把网页恢复到滑动前的路由。
+                    self.webView.evaluateJavaScript("history.forward()",
+                                                    completionHandler: nil)
                 }
+                self.edgePreNavigated = false
             }
         default:
             break
+        }
+    }
+
+    /// 边缘返回时先把网页切到上一层，快照盖在上面，拖动时露出的就是上一层。
+    private func prepareEdgePreview() {
+        webView.evaluateJavaScript("String(location.hash || '')") { [weak self] result, _ in
+            guard let self, self.edgeActive, !self.edgePreNavigated else { return }
+            let hash = ((result as? String) ?? "").trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+            let roots = ["#/wechat", "#/wechat/contacts", "#/wechat/discover", "#/wechat/my"]
+            guard !roots.contains(hash) else { return }
+            self.edgePreNavigated = true
+            self.performEdgeBack()
         }
     }
 
@@ -439,52 +464,71 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
         if gesture.state == .began {
             tabSwipeStartX = gesture.location(in: view).x
             tabSwipeActive = tabSwipeStartX > 40
-            if tabSwipeActive { makeSwipeSnapshot() }
+            tabOriginalHash = nil
+            tabPreviewIndex = nil
+            if tabSwipeActive {
+                makeSwipeSnapshot()
+                webView.evaluateJavaScript("String(location.hash || '')") { [weak self] result, _ in
+                    guard let self else { return }
+                    let hash = (result as? String) ?? ""
+                    self.tabOriginalHash = hash.hasSuffix("/") ? String(hash.dropLast()) : hash
+                    self.updateTabPreview(translation.x)
+                }
+            }
             return
         }
         guard tabSwipeActive else { return }
         if gesture.state == .changed {
             guard let snapshot = swipeSnapshot else { return }
             snapshot.transform = CGAffineTransform(translationX: translation.x, y: 0)
+            updateTabPreview(translation.x)
             return
         }
         guard gesture.state == .ended else { return }
         guard let snapshot = swipeSnapshot else { return }
         guard abs(translation.x) > 60, abs(translation.y) < 60,
               tabSwipeStartX > 40 else {
+            restoreTabAfterCancel()
             springBackSwipeSnapshot()
             return
         }
 
-        let tabs = ["#/wechat", "#/wechat/contacts", "#/wechat/discover", "#/wechat/my"]
-        webView.evaluateJavaScript("String(location.hash || '')") { [weak self] result, _ in
-            guard let self else { return }
-            let hash = (result as? String) ?? ""
-            let normalized = hash.hasSuffix("/") ? String(hash.dropLast()) : hash
-            guard let index = tabs.firstIndex(of: normalized) else {
-                self.springBackSwipeSnapshot()
-                return
-            }
-            let next = translation.x < 0
-                ? min(index + 1, tabs.count - 1)
-                : max(index - 1, 0)
-            guard next != index else {
-                self.springBackSwipeSnapshot()
-                return
-            }
-            // 先切路由，快照同时滑出，露出下一层 tab。
-            self.webView.evaluateJavaScript("location.hash = '\(tabs[next])'",
-                                             completionHandler: nil)
-            let width = max(self.view.bounds.width, 1)
-            let offset = translation.x < 0 ? -width : width
-            UIView.animate(withDuration: 0.22, delay: 0,
-                           options: [.curveEaseOut]) {
-                snapshot.transform = CGAffineTransform(translationX: offset, y: 0)
-            } completion: { _ in
-                snapshot.removeFromSuperview()
-                self.swipeSnapshot = nil
-            }
+        guard tabPreviewIndex != nil else {
+            springBackSwipeSnapshot()
+            return
         }
+        let width = max(view.bounds.width, 1)
+        let offset = translation.x < 0 ? -width : width
+        UIView.animate(withDuration: 0.22, delay: 0,
+                       options: [.curveEaseOut]) {
+            snapshot.transform = CGAffineTransform(translationX: offset, y: 0)
+        } completion: { _ in
+            snapshot.removeFromSuperview()
+            self.swipeSnapshot = nil
+        }
+    }
+
+    /// 快照盖住页面时先把下一页 tab 渲染到下面，拖动时露出的就是下一层。
+    private func updateTabPreview(_ dx: CGFloat) {
+        let tabs = ["#/wechat", "#/wechat/contacts", "#/wechat/discover", "#/wechat/my"]
+        guard let original = tabOriginalHash,
+              let index = tabs.firstIndex(of: original) else { return }
+        let next = dx < 0
+            ? min(index + 1, tabs.count - 1)
+            : max(index - 1, 0)
+        guard next != index else { return }
+        guard tabPreviewIndex != next else { return }
+        tabPreviewIndex = next
+        webView.evaluateJavaScript("location.hash = '\(tabs[next])'",
+                                   completionHandler: nil)
+    }
+
+    private func restoreTabAfterCancel() {
+        guard let original = tabOriginalHash,
+              tabPreviewIndex != nil else { return }
+        webView.evaluateJavaScript("location.hash = '\(original)'",
+                                   completionHandler: nil)
+        tabPreviewIndex = nil
     }
 
     private func springBackSwipeSnapshot() {
