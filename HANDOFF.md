@@ -1247,11 +1247,14 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
       改成 Android 的 `(phase - (interval - anim)) / anim`，并把重绘心跳对齐到窗口起点、滚动期间 30fps；
     - **关机页闪烁**：从 4fps 提到 60fps（只有黑底 + 电池，绘制很轻）；
     - **深色模式**：window 统一 `overrideUserInterfaceStyle = .light`，避免弹窗/键盘/滚动条变黑与页面割裂；
-    - **协议扩展静态派发**（重要）：
-      - `longPress` / `usesCameraBackground` 之前只写在 `extension Screen`，宿主通过 `Screen` 存在类型调用
-        永远拿到扩展默认值（nil / false），页面里的实现根本不参与；
+    - **协议扩展静态派发**（重要，已用 Compiler Explorer 验证）：
+      - `longPress` / `selfScrolls` 之前只写在 `extension Screen`，宿主通过 `Screen` 存在类型调用
+        永远拿到扩展默认值，页面里的实现根本不参与；
       - 已把它们提升为 `protocol Screen` 的要求（与 `zhiTabIndex` / `verticalDrag` 同一处理），
-        这样**扫码页相机预览**和**芝麻/设置页长按**才真正生效；
+        这样**芝麻/设置页长按**、以及**模拟来电/意见反馈/去水印/邀请码重置的滚动**才真正生效；
+      - `usesCameraBackground` **暂不提升**：相机预览是 `insertSubview(at:0)`，而 UIView 的子视图
+        永远盖在自身绘制内容之上，开启后会遮住扫描线/按钮；要先给宿主加一层独立的内容视图再开；
+        扫码页先铺黑底保证白色控件可见；
       - `carouselDrag/Snap` 仍留在扩展里：Zhima 的实现没有拿到按下点 y，启用后会在任何横向拖动上
         误移轮播，需要先给协议加 `startY` 再做；
     - **`selfScrolls` 也提升为 protocol 要求**：

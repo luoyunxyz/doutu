@@ -59,8 +59,6 @@ protocol Screen: AnyObject {
     func verticalDragEnd(_ state: ScreenState)
     /// 长按。必须写在 protocol 里，否则通过 `Screen` 存在类型调用时永远拿到扩展默认的 nil。
     func longPress(_ state: ScreenState, x: CGFloat, y: CGFloat) -> ActionToken?
-    /// 是否在页面底下垫相机预览（扫码页）。同上。
-    var usesCameraBackground: Bool { get }
     /// 这一屏的 draw 是否自己做了 `translate(0, -scroll)`。同上。
     var selfScrolls: Bool { get }
 }
