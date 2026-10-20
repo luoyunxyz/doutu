@@ -57,6 +57,10 @@ protocol Screen: AnyObject {
     /// 纵向拖动（财富页下拉展开资产面板）。必须写在 protocol 里才会动态派发。
     func verticalDrag(_ state: ScreenState, dy: CGFloat, startY: CGFloat) -> Bool
     func verticalDragEnd(_ state: ScreenState)
+    /// 长按。必须写在 protocol 里，否则通过 `Screen` 存在类型调用时永远拿到扩展默认的 nil。
+    func longPress(_ state: ScreenState, x: CGFloat, y: CGFloat) -> ActionToken?
+    /// 是否在页面底下垫相机预览（扫码页）。同上。
+    var usesCameraBackground: Bool { get }
 }
 
 extension Screen {
@@ -766,8 +770,15 @@ final class ScreenHostView: UIView, UIScrollViewDelegate {
 
         // 横向明显大于纵向 → 交给页面（轮播）。与 Android 的 1.2 倍阈值一致
         if !draggingCarousel, abs(totalDx) > abs(totalDy) * 1.2 {
-            let consumed = screen.carouselDrag(state, dx: dxDesign)
-            if consumed { draggingCarousel = true }
+            // 第一次调用既做「这一屏要不要接管」的判断，也已经在页面里应用了 dx。
+            // 之前这里再调一次会把首帧位移算两遍，横向拖动会突然跳一下。
+            if screen.carouselDrag(state, dx: dxDesign) {
+                draggingCarousel = true
+                lastPoint = p
+                lastMoveAt = 0
+                setNeedsDisplay()
+                return
+            }
         }
         if draggingCarousel {
             _ = screen.carouselDrag(state, dx: dxDesign)

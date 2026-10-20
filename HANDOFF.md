@@ -1247,7 +1247,23 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
       改成 Android 的 `(phase - (interval - anim)) / anim`，并把重绘心跳对齐到窗口起点、滚动期间 30fps；
     - **关机页闪烁**：从 4fps 提到 60fps（只有黑底 + 电池，绘制很轻）；
     - **深色模式**：window 统一 `overrideUserInterfaceStyle = .light`，避免弹窗/键盘/滚动条变黑与页面割裂；
-    - 版本 1.0.0(43)。改动文件：`Screen.swift`、`BannerStore.swift`、`LegacyDoutuApp.swift`、`WeChatV2Host.swift`。
+    - **协议扩展静态派发**（重要）：
+      - `longPress` / `usesCameraBackground` 之前只写在 `extension Screen`，宿主通过 `Screen` 存在类型调用
+        永远拿到扩展默认值（nil / false），页面里的实现根本不参与；
+      - 已把它们提升为 `protocol Screen` 的要求（与 `zhiTabIndex` / `verticalDrag` 同一处理），
+        这样**扫码页相机预览**和**芝麻/设置页长按**才真正生效；
+      - `carouselDrag/Snap` 仍留在扩展里：Zhima 的实现没有拿到按下点 y，启用后会在任何横向拖动上
+        误移轮播，需要先给协议加 `startY` 再做；
+    - **发现但本轮未动（需要单独一轮）**：
+      - `selfScrolls` 同样是扩展成员，宿主实际恒读到 `true`；已经自滚的页面正常，
+        但依赖宿主滚动的页面（设置 / 出行 / 个人信息 / 收款详情 / 提现…）不会滚；
+      - 约 30 屏的 `hitTest` 仍按「未滚坐标」写 `+ s.scroll`，而宿主 `touchesEnded` 已经加过
+        `state.scroll` → 滚动后点击会整体偏移（点到相邻行/下面的东西）；
+      - 这两件事必须一起改：先统一「宿主传内容坐标」这一约定，再逐屏删掉多余的 `+ s.scroll`
+        （Conversation / CustomerService / TaobaoOrder 里有固定顶栏需要 `- s.scroll` 的情况，要保留）。
+        本轮不做，避免在无法真机验证时引入双倍滚动/错点；
+    - 版本 1.0.0(43)。改动文件：`Screen.swift`、`BannerStore.swift`、`LegacyDoutuApp.swift`、
+      `WeChatV2Host.swift`、`ZhimaCreditScreen.swift`、`ZhimaCreditV2Screen.swift`、`project.yml`。
 
 ---
 
