@@ -5,23 +5,31 @@ import UIKit
 /// 这里只负责把 profile 生成好并通过本地服务器交给 Safari。
 enum WebClipBuilder {
     static func profile(label: String, icon: UIImage?) -> Data? {
-        let uuid = UUID().uuidString
-        var clip: [String: Any] = [
-            "PayloadType": "com.apple.webClip.managed",
-            "PayloadIdentifier": "com.luoyun.doutu.webclip.\(uuid)",
-            "PayloadUUID": uuid,
-            "PayloadVersion": 1,
-            "Label": label,
-            "URL": "doutu://",
-            "FullScreen": true,
-            "IsRemovable": true,
-        ]
-        if let data = icon?.pngData() {
-            clip["Icon"] = data
+        profile(items: [(label, icon)])
+    }
+
+    /// 一个描述文件里可以放多个 WebClip；一次安装即可得到多个桌面图标。
+    static func profile(items: [(String, UIImage?)]) -> Data? {
+        let clips: [[String: Any]] = items.map { item in
+            let uuid = UUID().uuidString
+            var clip: [String: Any] = [
+                "PayloadType": "com.apple.webClip.managed",
+                "PayloadIdentifier": "com.luoyun.doutu.webclip.\(uuid)",
+                "PayloadUUID": uuid,
+                "PayloadVersion": 1,
+                "Label": item.0,
+                "URL": "doutu://",
+                "FullScreen": true,
+                "IsRemovable": true,
+            ]
+            if let data = item.1?.pngData() {
+                clip["Icon"] = data
+            }
+            return clip
         }
         let root: [String: Any] = [
-            "PayloadContent": [clip],
-            "PayloadDisplayName": label,
+            "PayloadContent": clips,
+            "PayloadDisplayName": "豆图桌面图标",
             "PayloadIdentifier": "com.luoyun.doutu.webclip",
             "PayloadOrganization": "豆图",
             "PayloadType": "Configuration",

@@ -18,7 +18,7 @@ final class AppIconChooser: UIViewController {
 
     private static let options: [Option] = [
         Option(label: "支付宝", imageName: "PreviewAppIconAlipay", alternateName: "AppIconAlipay"),
-        Option(label: "支付宝", imageName: "PreviewAppIconAlipayHK", alternateName: "AppIconAlipayHK"),
+        Option(label: "支付宝HK", imageName: "PreviewAppIconAlipayHK", alternateName: "AppIconAlipayHK"),
         Option(label: "微信", imageName: "PreviewAppIconWechat", alternateName: "AppIconWechat"),
         Option(label: "豆图", imageName: "PreviewAppIconDoutu", alternateName: nil),
     ]
@@ -69,19 +69,21 @@ final class AppIconChooser: UIViewController {
     private static func offerWebClip(_ option: Option) {
         guard let host = UpdatePrompt.topViewController() else { return }
         let alert = UIAlertController(
-            title: "添加到主屏幕",
-            message: "是否把「\(option.label)」作为桌面图标？\n\niOS 会打开 Safari 下载描述文件，还需要你在「设置」里点一次「安装」。",
+            title: "添加桌面图标",
+            message: "是否一次添加「支付宝 / 支付宝HK / 微信 / 豆图」四个桌面图标？\n\n添加后桌面名称和图标都会对应；原 App 图标可以长按选择「从主屏幕移除」。\n\niOS 会打开 Safari 下载描述文件，还需要你在「设置」里点一次「安装」。",
             preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "仅换图标", style: .cancel))
-        alert.addAction(UIAlertAction(title: "添加到主屏幕", style: .default) { _ in
-            installWebClip(option, from: host)
+        alert.addAction(UIAlertAction(title: "添加四个图标", style: .default) { _ in
+            installWebClip(from: host)
         })
         host.present(alert, animated: true)
     }
 
-    private static func installWebClip(_ option: Option, from host: UIViewController) {
-        let icon = UIImage(named: option.imageName)
-        guard let data = WebClipBuilder.profile(label: option.label, icon: icon) else {
+    private static func installWebClip(from host: UIViewController) {
+        let items = Self.options.map { option in
+            (option.label, UIImage(named: option.imageName))
+        }
+        guard let data = WebClipBuilder.profile(items: items) else {
             let alert = UIAlertController(title: "生成失败", message: "描述文件生成失败，请重试。",
                                           preferredStyle: .alert)
             alert.addAction(UIAlertAction(title: "知道了", style: .cancel))

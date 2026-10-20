@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 1.0.0(2)：App 内生成 WebClip 桌面图标`  
-> 最新代码版本：`1.0.0 / 2`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 1.0.0(3)：一次生成四个 WebClip 桌面图标`  
+> 最新代码版本：`1.0.0 / 3`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -928,6 +928,12 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
     - 图标切换成功后弹「添加到主屏幕」，选择后启动本地服务器并用 Safari 打开 profile；用户在设置里安装后桌面出现对应名称/图标；
     - `project.yml` 加 `postBuildScripts`，构建后往 Info.plist 写 `CFBundleURLTypes`，注册 `doutu://`；
     - 版本保持 `1.0.0`，build 升到 `2`。
+
+100. **一次生成四个 WebClip 图标**
+    - 用户要「图标和名称一起切换」，原 App 的 `CFBundleDisplayName` 运行时不能改；
+    - 1.0.0(3) 把 `WebClipBuilder` 改成支持多 payload：一个描述文件里包含支付宝 / 支付宝HK / 微信 / 豆图 四个 WebClip；
+    - 图标切换成功后提示一次安装，桌面直接出现四个对应名称+图标的入口，点击都通过 `doutu://` 打开同一个 App；
+    - 原「豆图」App 图标可以长按「从主屏幕移除」，只保留四个自定义图标。
 
 ---
 
