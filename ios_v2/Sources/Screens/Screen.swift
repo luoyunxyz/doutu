@@ -557,6 +557,8 @@ final class ScreenHostView: UIView, UIScrollViewDelegate {
     private func currentRedrawInterval() -> TimeInterval {
         // 关机页只有黑底 + 一个电池，绘制很轻，直接跟满 60fps 才不「跳」。
         if screen is ShutdownScreen { return 1.0 / 60.0 }
+        // 扫码页的扫描线是按 Date() 推进的；4fps 会一格一格跳，30fps 才像在扫。
+        if screen is ScanOverlayScreen { return 1.0 / 30.0 }
         if screen is HomeShellScreen || screen is HomeV2Screen {
             let banner = BannerStore.shared
             if banner.hintFrame().rolling { return 1.0 / 30.0 }
