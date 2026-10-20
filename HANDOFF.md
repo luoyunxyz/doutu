@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 1.0.0(21)：全局左边缘右滑返回`  
-> 最新代码版本：`1.0.0 / 21`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 1.0.0(22)：交互式边缘返回（跟手/回弹/上一页快照）`  
+> 最新代码版本：`1.0.0 / 22`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -1049,6 +1049,16 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
     - `ContactPickerViewController`、`AppIconChooser` 增加左边缘手势；
     - 小微主页 `WeChatV2Host` 原本已有边缘返回，子页面仍由网页先处理；
     - 根页面（首页/我的/娱乐）栈空时滑动手势不动作。
+
+118. **交互式边缘返回手感**
+    - 原来只在手势结束判断 60pt，页面不会跟手；
+    - `ScreenHostView` 改成 began/changed/ended 三阶段：
+      - began：把 Router 在 push 前抓的上一页快照铺在当前页下面，加阴影；
+      - changed：当前页 `transform` 跟手右移，最大一屏宽；
+      - ended：进度 >33% 或速度 >650 就完成返回，否则 spring 回弹；
+      - 完成时轻触觉反馈，再 `Router.pop()`；
+    - Router 增加 `historySnapshots`，push 时抓当前页快照，pop 时恢复上一层快照；
+    - `canGoBack` / `onBackGesture` 由 Router 注入，根页面不响应。
 
 ---
 

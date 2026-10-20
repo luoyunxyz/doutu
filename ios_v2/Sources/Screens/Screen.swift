@@ -251,6 +251,13 @@ final class ScreenHostView: UIView, UIScrollViewDelegate {
     private var moved = false
     /// 按下时刻（长按判定用）
     private var downAt: Date?
+    /// 左边缘交互式返回
+    var canGoBack: (() -> Bool)?
+    var onBackGesture: (() -> Void)?
+    /// 上一页的快照，由 Router 在 push 前抓取
+    var previousSnapshot: UIView?
+    private var edgePreviousContainer: UIView?
+    private var edgeProgress: CGFloat = 0
     /// 扫码页底下那层相机预览
     private var cameraView: CameraPreviewView?
     /// 《用户须知》专用原生 ScrollView：宿主的 touchesMoved 在这台真机上收不到，
@@ -440,10 +447,78 @@ final class ScreenHostView: UIView, UIScrollViewDelegate {
     // MARK: - 触摸（对照 Android 的 onTouchEvent：横向拖动轮播、纵向滚动、抬起时命中）
 
     @objc private func handleEdgePan(_ gesture: UIScreenEdgePanGestureRecognizer) {
-        guard gesture.state == .ended else { return }
-        if gesture.translation(in: self).x > 60 {
-            onAction?("back", .zero)
+        switch gesture.state {
+        case .began:
+            beginEdgeBack()
+        case .changed:
+            updateEdgeBack(gesture)
+        case .ended, .cancelled:
+            finishEdgeBack(gesture)
+        default:
+            break
         }
+    }
+
+    private func beginEdgeBack() {
+        guard canGoBack?() == true else { return }
+        edgeProgress = 0
+        if let snapshot = previousSnapshot {
+            let container = UIView(frame: bounds)
+            container.backgroundColor = .black
+            snapshot.frame = container.bounds
+            snapshot.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+            container.addSubview(snapshot)
+            superview?.insertSubview(container, belowSubview: self)
+            edgePreviousContainer = container
+        }
+        layer.shadowColor = UIColor.black.cgColor
+        layer.shadowOpacity = 0.18
+        layer.shadowRadius = 10
+        layer.shadowOffset = CGSize(width: -3, height: 0)
+    }
+
+    private func updateEdgeBack(_ gesture: UIScreenEdgePanGestureRecognizer) {
+        guard canGoBack?() == true else { return }
+        let width = max(bounds.width, 1)
+        let x = max(0, min(width, gesture.translation(in: superview).x))
+        edgeProgress = x / width
+        transform = CGAffineTransform(translationX: x, y: 0)
+    }
+
+    private func finishEdgeBack(_ gesture: UIScreenEdgePanGestureRecognizer) {
+        guard canGoBack?() == true else { resetEdgeBack(); return }
+        let width = max(bounds.width, 1)
+        let velocity = gesture.velocity(in: self).x
+        let shouldComplete = edgeProgress > 0.33 || velocity > 650
+        let duration = shouldComplete ? 0.22 : 0.28
+
+        if shouldComplete {
+            UIView.animate(withDuration: duration, delay: 0,
+                           options: [.curveEaseOut]) {
+                self.transform = CGAffineTransform(translationX: width, y: 0)
+            } completion: { _ in
+                self.resetEdgeBack()
+                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                self.onBackGesture?()
+            }
+        } else {
+            UIView.animate(withDuration: duration, delay: 0,
+                           usingSpringWithDamping: 0.9,
+                           initialSpringVelocity: 0.6,
+                           options: [.curveEaseOut]) {
+                self.transform = .identity
+            } completion: { _ in
+                self.resetEdgeBack()
+            }
+        }
+    }
+
+    private func resetEdgeBack() {
+        transform = .identity
+        layer.shadowOpacity = 0
+        edgePreviousContainer?.removeFromSuperview()
+        edgePreviousContainer = nil
+        edgeProgress = 0
     }
 
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {

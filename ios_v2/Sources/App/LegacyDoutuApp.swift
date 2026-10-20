@@ -105,6 +105,8 @@ final class Router {
     private weak var host: ScreenHostView?
     /// 页面栈：进去一页压一栈，返回时恢复原页面与它的状态（与 Android 的 Activity 栈同义）
     private var stack: [(screen: Screen, state: ScreenState)] = []
+    /// 每一层 push 前的页面快照，给交互式边缘返回做背景。
+    private var historySnapshots: [UIView?] = []
     /// 本轮新补齐页面的实例引用（页内交互要回读到具体 Screen 的方法）
     private weak var parseScreen: ParseScreen?
     private weak var callSetupScreen: CallSetupScreen?
@@ -137,20 +139,27 @@ final class Router {
     init(host: ScreenHostView) {
         self.host = host
         Router.shared = self
+        host.canGoBack = { [weak self] in !(self?.stack.isEmpty ?? true) }
+        host.onBackGesture = { [weak self] in self?.pop() }
         DeepLinkCenter.flush(self)
     }
 
     /// 进入新页面（保留当前页面的状态，返回时恢复）
     private func push(_ screen: Screen, state: ScreenState = ScreenState()) {
         guard let host else { return }
+        let snapshot = host.snapshotView(afterScreenUpdates: false)
+        historySnapshots.append(snapshot)
         stack.append((host.screen, host.state))
+        host.previousSnapshot = historySnapshots.last ?? nil
         host.setScreen(screen, state: state)
     }
 
     /// 返回上一页；栈空时什么也不做
     private func pop() {
         guard let host, let previous = stack.popLast() else { return }
+        _ = historySnapshots.popLast()
         host.setScreen(previous.screen, state: previous.state)
+        host.previousSnapshot = historySnapshots.last ?? nil
     }
 
     // MARK: - 娱乐页玩法行（`play:<key>`）
