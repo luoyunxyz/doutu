@@ -599,6 +599,9 @@ final class ScreenHostView: UIView, UIScrollViewDelegate {
             updateEdgeBack(gesture)
         case .ended, .cancelled:
             finishEdgeBack(gesture)
+        case .failed:
+            // 被别的系统手势抢走时，别把页面留在半位移状态
+            resetEdgeBack()
         default:
             break
         }

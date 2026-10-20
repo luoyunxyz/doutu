@@ -527,13 +527,14 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
                     self.clearSwipeLayers()
                 }
             }
+        case .failed:
+            // 被别的系统手势抢走：别把整页留在被拖走的位置，也别留下快照。
+            edgeRootDismiss = false
+            view.transform = .identity
+            view.layer.shadowOpacity = 0
+            if swipeSnapshot != nil { clearSwipeLayers() }
         default:
-            // .failed / .possible：别把整页留在被拖走的位置
-            if edgeRootDismiss {
-                edgeRootDismiss = false
-                view.transform = .identity
-                view.layer.shadowOpacity = 0
-            }
+            break
         }
     }
 
