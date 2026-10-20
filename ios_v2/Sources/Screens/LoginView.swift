@@ -11,6 +11,8 @@ struct LoginView: View {
     var onDone: (() -> Void)?
     /// 由 LoginPresenter 注入：直接 dismiss UIHostingController，避免 presentationMode 在自定义转场下失效。
     var onClose: (() -> Void)? = nil
+    /// 登录成功后是否自动切到「我」页；从去水印页触发登录时传 false。
+    var goProfile = true
 
     private enum Mode: String, CaseIterable {
         case login = "登录"
@@ -298,8 +300,10 @@ struct LoginView: View {
                 // 登录/注册成功：直接关闭并用新会话刷新界面
                 if outcome.ok && mode != .reset {
                     onDone?()
-                    // 登录/注册成功回到「我」页；写 State 后关闭登录页即可看到。
-                    Router.shared?.selectProfileTab()
+                    // 登录/注册成功回到「我」页；从去水印页触发登录则不跳。
+                    if goProfile {
+                        Router.shared?.selectProfileTab()
+                    }
                     closeLogin()
                 }
                 if outcome.ok && mode == .reset && !resetTicket.isEmpty {
@@ -348,11 +352,12 @@ private final class LoginCloseBox {
 
 enum LoginPresenter {
     @MainActor
-    static func present(onDone: (() -> Void)? = nil) {
+    static func present(onDone: (() -> Void)? = nil, goProfile: Bool = true) {
         guard let host = UpdatePrompt.topViewController() else { return }
         let box = LoginCloseBox()
         let controller = LoginHostingController(
-            rootView: LoginView(onDone: onDone, onClose: { box.close() }))
+            rootView: LoginView(onDone: onDone, onClose: { box.close() },
+                                goProfile: goProfile))
 
         // 用一个空导航控制器承载：present 时无动画，再 push 登录页，
         // 得到和 Android 一样的“从右向左进入”，也避免自定义转场导致 dismiss 卡死。

@@ -114,6 +114,7 @@ final class Router {
     private var teaseEnabled = TeaseStore.enabled
     /// 登录页关闭后再执行的令牌（例如 resetInvite）
     var pendingAfterLoginDismiss: ActionToken?
+    private var pendingParseRetry = false
 
     /// 登录成功后切到「我」页。
     func selectProfileTab() {
@@ -408,10 +409,24 @@ final class Router {
         }
     }
 
+    private static func isAuthExpired(_ message: String) -> Bool {
+        message.contains("身份过期") || message.contains("重新登录")
+            || message.contains("登录已过期") || message.contains("token")
+    }
+
     private func startParse(screen: ParseScreen, state: ParseScreen.State) {
         let link = state.link.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !link.isEmpty else { showToast("请先粘贴视频链接", ok: false); return }
         guard !state.polling else { return }
+        guard Session.shared.isLoggedIn else {
+            pendingParseRetry = true
+            LoginPresenter.present(goProfile: false) { [weak self, weak screen] in
+                guard let self, let screen, Session.shared.isLoggedIn else { return }
+                self.pendingParseRetry = false
+                self.startParse(screen: screen, state: state)
+            }
+            return
+        }
         screen.beginParse(state)
         host?.setNeedsDisplay()
         // 抖音分享文案里常带大段中文/表情；Android 虽然原样发 share_text，
@@ -442,8 +457,20 @@ final class Router {
                 timeout.cancel()
                 CrashLog.append("PARSE response code=\(env.code) msg=\(env.msg)")
                 guard env.ok, let data = env.data as? [String: Any] else {
-                    screen.failParse(state, message: env.msg.isEmpty ? "解析失败，请稍后再试" : env.msg)
-                    self.showToast(env.msg.isEmpty ? "解析失败，请稍后再试" : env.msg, ok: false)
+                    if Self.isAuthExpired(env.msg) {
+                        Session.shared.clear()
+                        screen.failParse(state, message: "登录已过期，请重新登录")
+                        self.showToast("登录已过期，请重新登录", ok: false)
+                        self.pendingParseRetry = true
+                        LoginPresenter.present(goProfile: false) { [weak self, weak screen] in
+                            guard let self, let screen, Session.shared.isLoggedIn else { return }
+                            self.pendingParseRetry = false
+                            self.startParse(screen: screen, state: state)
+                        }
+                    } else {
+                        screen.failParse(state, message: env.msg.isEmpty ? "解析失败，请稍后再试" : env.msg)
+                        self.showToast(env.msg.isEmpty ? "解析失败，请稍后再试" : env.msg, ok: false)
+                    }
                     self.host?.setNeedsDisplay()
                     return
                 }

@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 1.0.0(19)：登录头图裁掉白色面板圆框；隐藏导航栏`  
-> 最新代码版本：`1.0.0 / 19`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 1.0.0(20)：去水印身份过期自动重新登录并重试`  
+> 最新代码版本：`1.0.0 / 20`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -1034,6 +1034,14 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
     - 重新裁 `(30,145)-(1050,580)`，y=580 之前全是渐变/胶囊，不含白色面板；
     - `LoginView.header` 的 aspectRatio 改成 `1020/435`；
     - `LoginHostingController.viewWillAppear` 再次 `setNavigationBarHidden(true)`，避免 push 后出现导航栏/back 栏。
+
+116. **已登录但去水印提示身份过期**
+    - 服务端 token 过期/失效时，parse 返回 `身份过期，请重新登录`，之前只显示失败；
+    - 1.0.0(20)：
+      - `startParse` 先检查 `Session.isLoggedIn`，未登录直接弹登录，登录成功后自动重试；
+      - parse 返回「身份过期/重新登录」时清空 Session、显示登录，登录成功后自动重新提交同一个链接；
+      - `LoginPresenter` 增加 `goProfile` 参数，从去水印触发的登录不会跳「我」页；
+    - 客户端没有本地会员/次数限制，会员期内是否放行由服务端 token 与会员状态决定；这次修复的是过期 token 未触发重新登录。
 
 ---
 
