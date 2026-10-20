@@ -82,7 +82,7 @@ final class MeScreen: Screen {
     private static let artNames = [
         "plate": "me_bgplate", "backOld": "me_backold", "headset": "me_headset",
         "gear": "me_gear", "headChevron": "me_chevron", "avatar": "me_avatar",
-        "banner": "me_banner",
+        "banner": "me_banner", "content": "me_content",
         "card1": "me_card1", "card2": "me_card2", "card3": "me_card3", "card4": "me_card4",
         "card5": "me_card5", "card6": "me_card6", "card7": "me_card7", "card8": "me_card8",
         "navMsg": "me_nav_msg", "navMe": "me_nav_me", "navbar": "msg_navbar",
@@ -103,7 +103,8 @@ final class MeScreen: Screen {
     // MARK: - 滚动（Java:137-139）
 
     func maxScroll(_ state: ScreenState) -> CGFloat {
-        max(0, Self.CONTENT_H - Self.NAV_TOP)
+        // 内容区直接用 Android 真机截图，固定一屏，避免卡片贴图边缘的描边/灰边。
+        0
     }
 
     // MARK: - 绘制（Java:143-168）
@@ -130,12 +131,15 @@ final class MeScreen: Screen {
         if s.banner {
             d.art(art["banner"], bannerRect)
         }
-        // Java:163-165 八张服务卡。
-        // 和 Android 一样直接按原尺寸画素材：不裁边、不垫白底、不描边。
-        // 附加的裁剪/描边会在 3x 屏上自己产生灰边，反而比素材本身更明显。
-        for (i, card) in cards.enumerated() {
-            d.art(art["card\(i + 1)"], CGRect(x: cardLeft, y: card.0,
-                                              width: cardRight - cardLeft, height: card.1 - card.0))
+        // 「支付宝会员」及以下整块用 Android 真机截图，避免逐张卡片贴图在 iOS 上
+        // 出现描边/灰边；上方头像、名字、手机号、横幅仍由 drawHeader 动态绘制。
+        if let content = art["content"] {
+            d.art(content, CGRect(x: 0, y: cards[0].0, width: Self.W, height: Self.NAV_TOP - cards[0].0))
+        } else {
+            for (i, card) in cards.enumerated() {
+                d.art(art["card\(i + 1)"], CGRect(x: cardLeft, y: card.0,
+                                                  width: cardRight - cardLeft, height: card.1 - card.0))
+            }
         }
         d.ctx.restoreGState()
 

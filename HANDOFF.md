@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 1.0.0(70)：单域名 + App 内部解析，用户无需改设置`  
-> 最新代码版本：`1.0.0 / 70`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 1.0.0(71)：我的页内容改用 Android 真机截图`  
+> 最新代码版本：`1.0.0 / 71`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -1729,6 +1729,23 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
     - 版本 1.0.0(70)。改动文件：`TdapiResolver.swift`、`DtwTransport.swift`、
       iOS `project.yml`；Android `DtwConfig.java`、`DtwTransport.java`、
       `DtwSession.java`、`ParseActivity.java`、`AvatarStore.java`。
+
+164. **1.0.0(71)：我的页「支付宝会员」及以下改用 Android 真机截图**
+    - 70 真机上卡片仍有明显边框（旧描边/贴图边缘），用户同意用 Android
+      「我的」页截图替代卡片区，但**上方头像/名字/手机号/横幅必须保留动态绘制**；
+    - 71：
+      - 从 Android 真机截图裁出 `y=270..860`（「支付宝会员」卡片顶到
+        第二排图标上方，避开状态栏和底部导航），存为
+        `Assets.xcassets/me_content.imageset/me_content.png`（417×590）；
+      - `MeScreen` 在 `cards[0].0..NAV_TOP`（698..2560）整块绘制该截图；
+        上方 `drawHeader` 仍画头像/名字/手机号/横幅/顶部按钮；
+      - 底部导航仍由 `drawNav` 原生绘制；
+      - `maxScroll` 改为 0（内容即一屏截图），hitTest 仍沿用原卡片区域；
+      - 不再逐张画 `me_card1..8`，边框彻底消失；
+    - 限制：截图来自 417px 宽的聊天图片，3x 屏上清晰度不如原生素材；
+      有 1080×2400 原图可替换同一张 `me_content.png`；
+    - 版本 1.0.0(71)。改动文件：`MeScreen.swift`、`me_content.imageset`、
+      iOS `project.yml`。
 
 ---
 
