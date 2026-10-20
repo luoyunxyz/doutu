@@ -1,6 +1,7 @@
 import SwiftUI
 import UIKit
 
+@MainActor
 final class DoutuAppDelegate: NSObject, UIApplicationDelegate {
     func application(_ application: UIApplication,
                      didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
@@ -17,6 +18,7 @@ final class DoutuAppDelegate: NSObject, UIApplicationDelegate {
     }
 }
 
+@MainActor
 enum DeepLinkCenter {
     static var pending: URL?
 

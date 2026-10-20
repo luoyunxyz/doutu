@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 1.0.0(8)：修复 WebClip 深链，恢复蓝支付宝，重做登录页`  
-> 最新代码版本：`1.0.0 / 8`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 1.0.0(9)：DoutuV2App 深链类加 MainActor`  
+> 最新代码版本：`1.0.0 / 9`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -968,6 +968,11 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
     - 支付宝蓝：`options` 恢复 `PreviewAppIconAlipay / AppIconAlipay`，标签「支付宝蓝」；WebClip 四项：支付宝、支付宝蓝（都 `doutu://zhi`）、微信（`doutu://wechat`）、豆图（`doutu://`）；
     - 登录页：删除 Form/NavigationView，按 ADB 截图重做：浅蓝底、蓝紫渐变头图、白色圆角面板、登录/注册新账号胶囊 tab、灰底输入框、蓝色登录按钮、底部客服/邀请码链接和版权说明；
     - 抖/Q：`HomeShellScreen` / `HomeV2Screen` 点 `page:2/3` 返回 `pageUnavailable`，Router toast「该平台暂未开放，敬请期待」，不再设置 servicePage，也不会落到支模块宫格。
+
+106. **1.0.0(8) 构建失败：DoutuV2App**
+    - `DoutuAppDelegate` / `DeepLinkCenter` 访问 `Router.shared`（`@MainActor`），但类型本身没有标注 `@MainActor`，在 Xcode 26 SDK 下会报隔离错误；
+    - 1.0.0(9) 给 `DoutuAppDelegate` 和 `DeepLinkCenter` 都加 `@MainActor`；
+    - 如果仍失败，需要日志里 `DoutuV2App.swift` 的 `error:` 行才能继续定位。
 
 ---
 
