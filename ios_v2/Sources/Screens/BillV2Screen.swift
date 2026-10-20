@@ -10,8 +10,9 @@ import UIKit
 /// 省略号会提前出现、右对齐的金额会偏。
 final class BillV2Screen: Screen {
     let canvasSize = CGSize(width: 1280, height: 2816)
-    /// 这一屏的 draw 不自带滚动 translate —— 由宿主统一滚
-    let selfScrolls = false
+    /// 顶部条固定、只有月卡区域跟着滚：draw 里自己做了 `translate(0, headH - scroll)`，
+    /// 不能再让宿主整页滚一次（否则顶部条会跟着走、内容双倍位移）。
+    let selfScrolls = true
     static let W: CGFloat = 1280
     static let H: CGFloat = 2816
     static let headH: CGFloat = 462

@@ -69,8 +69,9 @@ final class ConversationScreen: Screen {
     static let dpUnit: CGFloat = 1280.0 / 360.0
     let canvasSize = CGSize(width: ConversationScreen.W, height: ConversationScreen.H)
 
-    /// 顶栏固定、只有消息区跟着手指滚（对应 Java:62-75 的「header + 权重 1 的 ScrollView」）
-    let selfScrolls = false
+    /// 顶栏固定、只有消息区跟着手指滚（对应 Java:62-75 的「header + 权重 1 的 ScrollView」）。
+    /// draw 里只对消息区做 translate，所以宿主不能再整页滚一次。
+    let selfScrolls = true
 
     /// dp → 参考单位（Java:268-270 `dp()` 的 density=3.0 换成 1280/360）
     private func dp(_ value: CGFloat) -> CGFloat { value * Self.dpUnit }

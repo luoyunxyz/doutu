@@ -10,8 +10,9 @@ import UIKit
 /// 它们在 `onDraw` 里是同一层分派，下一轮按 `tab` 分支补上即可。
 final class HomeShellScreen: Screen {
     let canvasSize = CGSize(width: 1080, height: 2388)
-    /// 这一屏的 draw 不自带滚动 translate —— 由宿主统一滚
-    let selfScrolls = false
+    /// 娱乐页/我页的 draw 自己做了 `translate(0, -scroll)`（见 +Entertainment/+Profile），
+    /// 所以宿主不能再滚一次。
+    let selfScrolls = true
     static let W: CGFloat = 1080
     static let H: CGFloat = 2388
 

@@ -61,6 +61,8 @@ protocol Screen: AnyObject {
     func longPress(_ state: ScreenState, x: CGFloat, y: CGFloat) -> ActionToken?
     /// 是否在页面底下垫相机预览（扫码页）。同上。
     var usesCameraBackground: Bool { get }
+    /// 这一屏的 draw 是否自己做了 `translate(0, -scroll)`。同上。
+    var selfScrolls: Bool { get }
 }
 
 extension Screen {
