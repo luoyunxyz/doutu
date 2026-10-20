@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 1.0.0(39)：滑动取消回原页；底层快照延迟到 250ms`  
-> 最新代码版本：`1.0.0 / 39`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 1.0.0(40)：手势第一帧就藏 WKWebView，取消延迟揭盖`  
+> 最新代码版本：`1.0.0 / 40`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -1201,6 +1201,13 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
       - tab 回拉到 `abs(dx)<20` 时立刻 `restoreTabAfterCancel()`；
       - 边缘取消时用 `edgeOriginalHash` 直接恢复原路由，不再只靠 `history.forward()`；
       - 底层快照延迟从 120ms 调到 250ms，确保抓到的确实是下一层静态画面。
+
+135. **底层仍动 + 取消闪一下**
+    - 1.0.0(39) 在 began 时只加了顶层快照，真正的 WKWebView 还可见，直到 250ms 后抓到下层快照才隐藏；这段时间底层仍可能被手势/路由动画带着动；
+    - 1.0.0(40)：
+      - began 立刻加一张纯白占位，再隐藏 WKWebView、禁用 scrollView 滚动；从第一帧起底层只能是占位，不可能是活页面；
+      - 抓下一层快照时临时取消隐藏，`layoutIfNeeded()` 后用 `snapshotView(afterScreenUpdates:true)` 抓图，马上再隐藏；顶层快照+占位盖着，这一帧不可见；
+      - 取消时先把原路由恢复，顶层快照继续盖住，延迟 0.18~0.2s 再 `clearSwipeLayers()`，避免揭盖时看到路由重绘闪屏。
 
 ---
 

@@ -216,6 +216,7 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
     private var tabOriginalHash: String?
     private var tabPreviewIndex: Int?
     private var swipeSnapshot: UIView?
+    private var swipePlaceholder: UIView?
     private var swipeBottomSnapshot: UIView?
     private var swipeReady = true
     private var swipeLastTranslation: CGFloat = 0
@@ -445,7 +446,10 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
                     self.webView.evaluateJavaScript(script, completionHandler: nil)
                 }
                 self.edgePreNavigated = false
-                self.clearSwipeLayers()
+                // 等恢复后的路由在快照下面渲染完，再揭开，避免闪一下。
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {
+                    self.clearSwipeLayers()
+                }
             }
         default:
             break
@@ -482,8 +486,18 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
         guard let snapshot = webView.snapshotView(afterScreenUpdates: false) else { return }
         snapshot.frame = webView.frame
         snapshot.isUserInteractionEnabled = false
+
+        // 先放一张纯色占位在下面，然后立刻隐藏 WKWebView；
+        // 这样从手势第一帧开始，底层就不可能是活的 WebView。
+        let placeholder = UIView(frame: view.bounds)
+        placeholder.backgroundColor = .white
+        placeholder.isUserInteractionEnabled = false
+        view.addSubview(placeholder)
         view.addSubview(snapshot)
+        swipePlaceholder = placeholder
         swipeSnapshot = snapshot
+        webView.isHidden = true
+        webView.scrollView.isScrollEnabled = false
         swipeReady = false
         swipeLastTranslation = 0
     }
@@ -494,7 +508,14 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { [weak self] in
             guard let self, let top = self.swipeSnapshot,
                   self.swipeBottomSnapshot == nil else { return }
-            guard let bottom = self.webView.snapshotView(afterScreenUpdates: true) else {
+            // 临时取消隐藏抓一张下一层静态图；顶层快照和占位图都盖着，
+            // 这一帧用户看不到，抓完立刻再隐藏。
+            self.webView.isHidden = false
+            self.webView.setNeedsLayout()
+            self.webView.layoutIfNeeded()
+            let captured = self.webView.snapshotView(afterScreenUpdates: true)
+            self.webView.isHidden = true
+            guard let bottom = captured else {
                 self.swipeReady = true
                 return
             }
@@ -502,7 +523,6 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
             bottom.isUserInteractionEnabled = false
             self.view.insertSubview(bottom, belowSubview: top)
             self.swipeBottomSnapshot = bottom
-            self.webView.isHidden = true
             self.swipeReady = true
             top.transform = CGAffineTransform(translationX: self.swipeLastTranslation, y: 0)
         }
@@ -513,7 +533,10 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
         swipeSnapshot = nil
         swipeBottomSnapshot?.removeFromSuperview()
         swipeBottomSnapshot = nil
+        swipePlaceholder?.removeFromSuperview()
+        swipePlaceholder = nil
         webView.isHidden = false
+        webView.scrollView.isScrollEnabled = true
         swipeReady = true
         swipeLastTranslation = 0
         setSwipeFreeze(false)
@@ -612,7 +635,10 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
                        options: [.curveEaseOut]) {
             snapshot.transform = .identity
         } completion: { _ in
-            self.clearSwipeLayers()
+            // 取消时原路由刚恢复，多盖 0.2s 再揭开，避免闪屏。
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                self.clearSwipeLayers()
+            }
         }
     }
 
