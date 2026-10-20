@@ -1254,14 +1254,18 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
         这样**扫码页相机预览**和**芝麻/设置页长按**才真正生效；
       - `carouselDrag/Snap` 仍留在扩展里：Zhima 的实现没有拿到按下点 y，启用后会在任何横向拖动上
         误移轮播，需要先给协议加 `startY` 再做；
+    - **`selfScrolls` 也提升为 protocol 要求**：
+      - 之前宿主恒读到扩展默认的 `true`，依赖宿主滚动的页面（模拟来电 / 意见反馈 / 去水印 / 邀请码重置…）
+        永远滚不动；这些页的背景本来就画到了 `max(H, contentH)`，注释写着「滚到底不会露白底」，
+        说明它们一直是按宿主滚动写的；
+      - 修正 5 个「声明 false 但自己做了 translate」的页面（Bill / BillV2 / Conversation / HomeShell / HomeV2）
+        为 `true`，保持它们原来的行为；其余 false 页面开始真正由宿主滚；
     - **发现但本轮未动（需要单独一轮）**：
-      - `selfScrolls` 同样是扩展成员，宿主实际恒读到 `true`；已经自滚的页面正常，
-        但依赖宿主滚动的页面（设置 / 出行 / 个人信息 / 收款详情 / 提现…）不会滚；
       - 约 30 屏的 `hitTest` 仍按「未滚坐标」写 `+ s.scroll`，而宿主 `touchesEnded` 已经加过
-        `state.scroll` → 滚动后点击会整体偏移（点到相邻行/下面的东西）；
-      - 这两件事必须一起改：先统一「宿主传内容坐标」这一约定，再逐屏删掉多余的 `+ s.scroll`
-        （Conversation / CustomerService / TaobaoOrder 里有固定顶栏需要 `- s.scroll` 的情况，要保留）。
-        本轮不做，避免在无法真机验证时引入双倍滚动/错点；
+        `state.scroll` → 自滚页面滚动后点击会整体偏移（点到相邻行/下面的东西）；
+      - 需要统一「宿主传内容坐标」这一约定，再逐屏删掉多余的 `+ s.scroll`
+        （Conversation / CustomerService / TaobaoOrder 里固定顶栏需要 `- s.scroll` 的情况要保留）。
+        本轮不做，避免在无法真机验证时大面积改命中坐标；
     - 版本 1.0.0(43)。改动文件：`Screen.swift`、`BannerStore.swift`、`LegacyDoutuApp.swift`、
       `WeChatV2Host.swift`、`ZhimaCreditScreen.swift`、`ZhimaCreditV2Screen.swift`、`project.yml`。
 
