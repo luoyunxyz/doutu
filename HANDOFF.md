@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 1.0.0(24)：修复 self?.self.host 与 LoginPresenter 调用`  
-> 最新代码版本：`1.0.0 / 24`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 1.0.0(25)：微信深层路由边缘返回逐级回退`  
+> 最新代码版本：`1.0.0 / 25`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -1071,6 +1071,14 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
     - Swift 会报 `Router` 没有 `self` 成员，这就是每次 LegacyDoutuApp 编译失败的根因；
     - 1.0.0(24) 改成 `self?.host?.setNeedsDisplay()`；
     - 同时把 `LoginPresenter.present(goProfile:false) { ... }` 改成显式 `onDone:` 参数，避免尾随闭包绑定歧义。
+
+121. **微信零钱等深层页面边缘返回**
+    - 原来 `WeChatV2Host.handleEdgePan` 只把 conversation/chat/pay/transfer 当子页面，钱包、零钱、账单、提现等深层路由一律直接关闭整个微主页，用户感觉“退了一层却全退了”；
+    - 1.0.0(25) 改成统一脚本：
+      1. 先调 `__fwHandleChatPayBack()`（聊天/支付浮层/本地覆盖页）；
+      2. 没处理且 hash 不是 `#/wechat` 时执行 `history.back()`，逐级回退；
+      3. 只有根路由且无浮层时才 `closeHost()`；
+    - 这样微信零钱 → 钱包 → 微主页，每次边缘右滑只退一层。
 
 ---
 

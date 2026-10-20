@@ -386,35 +386,35 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler, UIGestureRec
         guard gesture.state == .ended else { return }
         let translation = gesture.translation(in: view)
         guard translation.x > 60, abs(translation.y) < 120 else { return }
-        // 只有聊天/支付这类子页面才让网页先处理返回；微主页本身、尤其是
-        // 「小微主页」这一层必须直接 dismiss，否则 __fwHandleChatPayBack 返回 true
-        // 会把用户困在页面里，看起来就是「退不出去」。
-        webView.evaluateJavaScript("String(location.hash || '')") { [weak self] result, _ in
+        // 微信内部页面层级很深（钱包、零钱、账单、提现、亲属卡……），
+        // 不能只对聊天/支付做判断。统一让网页先处理：
+        // 1) 聊天/支付浮层调 __fwHandleChatPayBack；
+        // 2) 其他深层路由用 history.back() 回到上一级；
+        // 3) 已经在微主页根路由时才关闭整个微主页。
+        let script = """
+        (function(){
+          try {
+            if (window.__fwHandleChatPayBack && window.__fwHandleChatPayBack()) return true;
+          } catch (e) {}
+          var h = String(location.hash || '');
+          if (h && h !== '#/wechat' && h !== '#/wechat/' && history.length > 1) {
+            try { history.back(); return true; } catch (e) {}
+          }
+          return false;
+        })()
+        """
+        webView.evaluateJavaScript(script) { [weak self] result, _ in
             guard let self else { return }
-            let hash = (result as? String) ?? ""
-            let isSubpage = hash.contains("/wechat/conversation/")
-                || hash.contains("/wechat/chat")
-                || hash.contains("/wechat/pay")
-                || hash.contains("/wechat/transfer")
-            if !isSubpage {
-                DispatchQueue.main.async { self.closeHost() }
-                return
+            let handled: Bool
+            if let flag = result as? Bool {
+                handled = flag
+            } else if let number = result as? NSNumber {
+                handled = number.boolValue
+            } else {
+                handled = false
             }
-            self.webView.evaluateJavaScript(
-                "(function(){try{return window.__fwHandleChatPayBack?window.__fwHandleChatPayBack():false}catch(e){return false}})()"
-            ) { [weak self] result, _ in
-                guard let self else { return }
-                let handled: Bool
-                if let flag = result as? Bool {
-                    handled = flag
-                } else if let number = result as? NSNumber {
-                    handled = number.boolValue
-                } else {
-                    handled = false
-                }
-                if !handled {
-                    DispatchQueue.main.async { self.closeHost() }
-                }
+            if !handled {
+                DispatchQueue.main.async { self.closeHost() }
             }
         }
     }
