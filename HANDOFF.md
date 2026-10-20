@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 1.0.0(48)：返回预览预加载 + 水印/layout 高频工作削减`  
-> 最新代码版本：`1.0.0 / 48`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 1.0.0(49)：返回/root tab 全部用预加载快照，手势只做 transform`  
+> 最新代码版本：`1.0.0 / 49`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -1329,7 +1329,9 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
       - `WatermarkOverlay.attachIfNeeded` 之前每次 layout 都改 frame/文案/重绘/置顶；
         现在只在 frame 或文案真的变化时才做，滑动期间不再反复重画整屏水印；
       - `WeChatV2Host.viewDidLayoutSubviews` 里顶栏按钮的 frame 也改成“真的变化才设”；
-    - 版本 1.0.0(48)。改动文件：`WeChatV2Host.swift`、`WatermarkOverlay.swift`、
+      - 根 tab 的快照也缓存（`rootTabSnapshots`）：tab 左右滑直接复用，
+        不再等 250ms 抓下一张图；没访问过的 tab 才走旧路径；
+    - 版本 1.0.0(49)。改动文件：`WeChatV2Host.swift`、`WatermarkOverlay.swift`、
       `project.yml`。
 
 ---

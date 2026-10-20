@@ -260,6 +260,8 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
     private var currentPageSnapshot: (hash: String, snapshot: UIView)?
     /// 已进入的页面栈（上一页快照），最多 8 层。
     private var backPreviews: [(hash: String, snapshot: UIView)] = []
+    /// 四个根 tab 的静态快照：根 tab 左右滑时直接复用，不再等 250ms 抓图。
+    private var rootTabSnapshots: [String: UIView] = [:]
     /// 我们自己触发的返回：hashchange 回调不要再入栈/出栈。
     private var suppressPreviewCapture = false
     private var edgeActive = false
@@ -682,6 +684,10 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
             guard let snap = self.webView.snapshotView(afterScreenUpdates: false) else { return }
             snap.frame = self.webView.frame
             snap.isUserInteractionEnabled = false
+            if self.isRootRoute(expected) {
+                self.rootTabSnapshots[expected]?.removeFromSuperview()
+                self.rootTabSnapshots[expected] = snap
+            }
             self.currentPageSnapshot = (expected, snap)
         }
     }
@@ -894,7 +900,19 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
         tabIncomingSign = dx < 0 ? 1 : -1
         webView.evaluateJavaScript("location.hash = '\(tabs[next])'",
                                    completionHandler: nil)
-        captureBottomSnapshot()
+        // 根 tab 之前访问过：直接用预加载快照当底图，不再等 250ms 抓图。
+        if let cached = rootTabSnapshots[tabs[next]], let top = swipeSnapshot {
+            let width = max(view.bounds.width, 1)
+            cached.frame = webView.frame
+            cached.isUserInteractionEnabled = false
+            cached.transform = CGAffineTransform(translationX: tabIncomingSign * width, y: 0)
+            view.insertSubview(cached, belowSubview: top)
+            swipeBottomSnapshot = cached
+            swipeReady = true
+            top.transform = CGAffineTransform(translationX: swipeLastTranslation, y: 0)
+        } else {
+            captureBottomSnapshot()
+        }
     }
 
     private func restoreTabAfterCancel(discardPreview: Bool = false) {
