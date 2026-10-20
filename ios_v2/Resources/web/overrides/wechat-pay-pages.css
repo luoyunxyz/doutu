@@ -37,6 +37,7 @@
 #fw-pay-pages-host .fw-wallet-row:last-child{border-bottom:0}
 #fw-pay-pages-host .fw-wallet-row-icon{position:absolute;left:-103px;width:52px;height:52px;display:grid;place-items:center}
 #fw-pay-pages-host .fw-wallet-row-icon .fw-pay-icon{width:52px;height:52px;stroke-width:1.45}
+#fw-pay-pages-host .fw-wallet-row-icon .fw-wallet-row-img{width:52px;height:52px;display:block;object-fit:contain}
 #fw-pay-pages-host .fw-wallet-row-copy{display:block;flex:1;min-width:0}
 #fw-pay-pages-host .fw-wallet-row-copy b{font-size:31px;line-height:1.2;font-weight:400}
 #fw-pay-pages-host .fw-wallet-row-copy small{font-size:22px;color:#aaa;margin-left:12px}
@@ -112,8 +113,9 @@
 #fw-pay-pages-host .wallet-scroll{padding:0 0 12px!important}
 #fw-pay-pages-host .fw-wallet-list{margin:0 0 11px;padding:0 0 0 52px}
 #fw-pay-pages-host .fw-wallet-row{height:51px;padding:0 10px 0 0}
-#fw-pay-pages-host .fw-wallet-row-icon{left:-35px;width:20px;height:20px}
+#fw-pay-pages-host .fw-wallet-row-icon{left:-37px;width:22px;height:22px}
 #fw-pay-pages-host .fw-wallet-row-icon .fw-pay-icon{width:19px;height:19px;stroke-width:1.4;fill:none}
+#fw-pay-pages-host .fw-wallet-row-icon .fw-wallet-row-img{width:22px;height:22px;display:block;object-fit:contain}
 #fw-pay-pages-host .fw-wallet-row-copy b{font-size:15px;line-height:1}
 #fw-pay-pages-host .fw-wallet-row-copy small{font-size:11px;margin-left:4px}
 #fw-pay-pages-host .fw-wallet-row strong{font-size:15px;margin-right:7px}
@@ -127,6 +129,7 @@
 /* Visual corrections from on-device comparison with supplied references. */
 #fw-pay-pages-host .fw-wallet-row-icon .fw-pay-icon{stroke:currentColor!important;fill:none!important;stroke-linecap:round;stroke-linejoin:round}
 #fw-pay-pages-host .fw-wallet-row-copy small{display:inline-block;color:#e99b37!important;margin-left:6px!important;font-size:11px!important}
+#fw-pay-pages-host .fw-wallet-row-copy .fw-wallet-note{font-style:normal;display:inline-block;color:#e99b37!important;margin-left:6px!important;font-size:11px!important}
 #fw-pay-pages-host .fw-wallet-row-copy b{font-size:15px!important}
 #fw-pay-pages-host .fw-wallet-row strong{font-size:15px!important}
 #fw-pay-pages-host .fw-wallet-row>.fw-pay-icon{stroke:#aaa!important;fill:none!important;stroke-linecap:round;stroke-linejoin:round}

@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 1.0.0(53)：真正的快路径拦路虎 overlayOpen = !visible`  
-> 最新代码版本：`1.0.0 / 53`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 1.0.0(54)：钱包页按参考图补齐 10 行 + 抠图图标`  
+> 最新代码版本：`1.0.0 / 54`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -1402,6 +1402,21 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
       `EDGE begin fast=true topCache=true preview=true overlay=false prev=#/wechat/wallet snaps=5`
       `EDGE end commit=true fast=true`
     - 版本 1.0.0(53)。改动文件：`WeChatV2Host.swift`、`project.yml`。
+
+146. **1.0.0(54)：钱包页按 Android 参考图补齐**
+    - 参考图（1080×2400）要求的 10 行全部补齐，顺序：
+      - 第一组：零钱（¥余额）/ 经营账户（¥1.93）/ 零钱通（收益率0.89%，¥0.00）/ 银行卡 / 亲属卡；
+      - 第二组：分付（查看可用额度）；
+      - 第三组：支付分 / 支付设置 / 身份信息 / 客服中心；
+    - 去掉旧的「数字人民币」和底部「身份信息 | 支付设置」；
+    - 10 个图标全部从参考图逐个抠出（白底转透明，60×60 PNG），以 base64 data URI
+      内嵌进 `wechat-pay-pages.js`，不依赖新增资源路径；行内图标 22px，与参考图比例一致；
+    - 三个 `.fw-wallet-list` 白色分组 + 11px 灰色间隔，与参考图的三段式一致；
+    - 「收益率」「查看可用额度」用橙色 11px，金额右对齐；
+    - 版本 1.0.0(54)。改动文件：`wechat-pay-pages.js`、`wechat-pay-pages.css`、
+      `project.yml`。
+    - **待确认**：用户说的「点击钱包这一行的空白区域选择要不要添加显示」的具体交互
+      （功能清单勾选 / 编辑模式开关 / 单行切换）。
 
 ---
 
