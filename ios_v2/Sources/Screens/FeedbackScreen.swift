@@ -299,8 +299,8 @@ final class FeedbackScreen: Screen {
         let s = (state as? State) ?? State()
         let l = layout(s)
 
-        // 页面底色 0xFFF5F6FA（Java:95）
-        d.rect(CGRect(x: 0, y: 0, width: Self.W, height: Self.H), pageBg)
+        // 页面底色 0xFFF5F6FA（Java:95）。滚到底也要铺满，否则会露出宿主白底。
+        d.rect(CGRect(x: 0, y: 0, width: Self.W, height: max(Self.H, l.contentHeight)), pageBg)
 
         // ── 标题栏（Java:114-127）──
         d.text(backText, x: l.back.minX, baseline: l.backBaseline, size: dp(16), ink)          // Java:115-117
