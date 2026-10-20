@@ -623,7 +623,10 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
                 }
                 self.edgePreNavigated = false
                 // 等恢复后的路由在快照下面渲染完，再揭开，避免闪一下。
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {
+                // 快路径的预览图就是目标页本身，多等一会儿完全看不出来；
+                // 给网页渲染留足时间，避免揭开时还是旧页。
+                let revealDelay: TimeInterval = self.fastEdgeBack ? 0.32 : 0.18
+                DispatchQueue.main.asyncAfter(deadline: .now() + revealDelay) {
                     self.clearSwipeLayers()
                 }
             }
