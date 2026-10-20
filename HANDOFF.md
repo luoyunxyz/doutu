@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 1.0.0(46)：微信返回两页平移 + 去掉高频日志`  
-> 最新代码版本：`1.0.0 / 46`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 1.0.0(47)：返回预览预加载 + 手势零 WebView 工作`  
+> 最新代码版本：`1.0.0 / 47`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -1311,6 +1311,20 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
       - 已删除这两处高频日志，`CrashLog` 改成静态 formatter + `NSLock`；
     - 版本 1.0.0(46)。改动文件：`WeChatV2Host.swift`、`CrashLog.swift`、
       `WatermarkOverlay.swift`、`project.yml`。
+
+141. **1.0.0(47)：返回预览预加载（手势期间完全不碰 WKWebView）**
+    - 46 的 250ms 等待仍会卡，因为边缘手势里还在做 JS `history.back` + 抓 WKWebView 快照；
+      这两件事都会占主线程，手指移动时必然掉帧；
+    - 改成「上一页快照预加载 + 锁定不动」：
+      - `previewHook` 在网页 `touchstart` 时把当前 hash 报给原生；原生立刻抓一张快照作为候选；
+      - `hashchange` 时如果 hash 变了，把候选快照压入 `backPreviews` 栈（最多 8 层）；
+      - 边缘手势 `.began` 直接用 `backPreviews.last` 作为底层（静态图，永不重绘），
+        整个拖动只有 `top.transform = x` / `bottom.transform = x - width` 两个 UIView 变换；
+      - 提交后（0.22s 动画结束）才让网页真正返回；`suppressPreviewCapture` 挡住这次 hashchange，
+        避免栈被重复修改；
+      - `history.back` 等网页自己返回时，`handlePageHash` 按目标 hash 把栈里该页及以上移除；
+      - 没有预加载快照时才回退到旧路径（先返回再抓图）；
+    - 版本 1.0.0(47)。改动文件：`WeChatV2Host.swift`、`project.yml`。
 
 ---
 
