@@ -3,9 +3,9 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 2.4.75：修复轮询返回值用反，45% 不再停住`  
-> 最新代码版本：`2.4.75 / 20115`（已推送，待 Codemagic 构建）  
-> 设备当前安装：`2.4.73 / 20113`（已通过 USB 查询确认）
+> 最新提交：`本轮 2.4.76：去水印成品直接保存到系统相册`  
+> 最新代码版本：`2.4.76 / 20116`（已推送，待 Codemagic 构建）  
+> 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
 
@@ -877,6 +877,16 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
     - 2.4.75 改成 `keepPolling` 语义：true → 继续 `pollParse`，false → `showResult`；
     - 同时加轮询错误处理和超时失败，不会无限停在某个百分比；
     - 提交的 `share_text` 优先提取第一个 `http(s)://` 链接，避免整段中文/表情干扰解析。
+
+92. **下载到本地保存不了**
+    - 之前 `download` 令牌只登记、Router 的 parse 分支没有实现下载；`ParseScreen` 的 `beginDownload/finishDownload/failDownload` 状态方法一直没被调用；
+    - 2.4.76 新增 `MediaSaver`：
+      - 视频走 `URLSession.downloadTask` → 临时 mp4 → `PHAssetCreationRequest` 写入相册；
+      - 图集逐张下载 → `PHAssetChangeRequest.creationRequestForAsset` 批量写入；
+      - `PHPhotoLibrary.requestAuthorization(for: .addOnly)`；
+    - Router `download` 分支调用 `downloadParse`，开始/完成/失败都会更新按钮与进度文案；
+    - `project.yml` 增加 `NSPhotoLibraryAddUsageDescription`，避免写入相册被系统拒绝；
+    - 保存成功后按钮变「打开」，再次点击提示成品已在系统相册。
 
 ---
 

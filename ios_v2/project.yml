@@ -10,8 +10,8 @@ options:
 settings:
   base:
     SWIFT_VERSION: "5.9"
-    MARKETING_VERSION: "2.4.75"
-    CURRENT_PROJECT_VERSION: "20115"
+    MARKETING_VERSION: "2.4.76"
+    CURRENT_PROJECT_VERSION: "20116"
     TARGETED_DEVICE_FAMILY: "1"
     ENABLE_USER_SCRIPT_SANDBOXING: NO
     SWIFT_STRICT_CONCURRENCY: minimal
@@ -61,6 +61,7 @@ targets:
         INFOPLIST_KEY_NSAppTransportSecurity_NSAllowsLocalNetworking: YES
         INFOPLIST_KEY_NSLocalNetworkUsageDescription: 用于连接开发机的调试服务
         INFOPLIST_KEY_NSPhotoLibraryUsageDescription: 需要访问相册以便更换头像/二维码
+        INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription: 需要写入相册以便保存去水印成品
         INFOPLIST_KEY_NSCameraUsageDescription: 需要相机以便扫一扫/拍摄头像
         INFOPLIST_KEY_NSMicrophoneUsageDescription: 扫码只用画面，不录音
     dependencies: []

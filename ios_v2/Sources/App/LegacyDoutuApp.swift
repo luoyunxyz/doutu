@@ -345,8 +345,45 @@ final class Router {
             host?.setNeedsDisplay()
         case "parse":
             startParse(screen: screen, state: state)
+        case "download":
+            downloadParse(screen: screen, state: state)
+        case "openSaved":
+            showToast("成品已保存到系统相册", ok: true)
         default:
             break
+        }
+    }
+
+    private func downloadParse(screen: ParseScreen, state: ParseScreen.State) {
+        if state.downloading { return }
+        if state.saved {
+            showToast("成品已保存到系统相册", ok: true)
+            return
+        }
+        CrashLog.append("PARSE download start video=\(state.outUrl.prefix(60)) images=\(state.imageUrls.count)")
+        screen.beginDownload(state)
+        host?.setNeedsDisplay()
+        let completion: (Result<String, Error>) -> Void = { [weak self, weak screen] result in
+            guard let self, let screen else { return }
+            switch result {
+            case .success(let location):
+                screen.finishDownload(state, at: location)
+                CrashLog.append("PARSE download saved \(location)")
+                self.showToast("已保存到系统相册", ok: true)
+            case .failure(let error):
+                screen.failDownload(state, message: error.localizedDescription)
+                CrashLog.append("PARSE download failed \(error.localizedDescription)")
+                self.showToast(error.localizedDescription, ok: false)
+            }
+            self.host?.setNeedsDisplay()
+        }
+        if state.imageMode, !state.imageUrls.isEmpty {
+            MediaSaver.saveImages(urlStrings: state.imageUrls, completion: completion)
+        } else if !state.outUrl.isEmpty {
+            MediaSaver.saveVideo(urlString: state.outUrl, completion: completion)
+        } else {
+            screen.failDownload(state, message: "成品地址还没准备好")
+            host?.setNeedsDisplay()
         }
     }
 
