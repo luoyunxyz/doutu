@@ -157,6 +157,17 @@ final class AppIconChooser: UIViewController {
         list.layer.masksToBounds = true
         sheet.addSubview(list)
 
+        let webClipButton = UIButton(type: .system)
+        webClipButton.tag = 104
+        webClipButton.setTitle("添加到主屏幕（WebClip）", for: .normal)
+        webClipButton.titleLabel?.font = .systemFont(ofSize: 15, weight: .medium)
+        webClipButton.setTitleColor(UIColor(red: 0x14 / 255, green: 0x78 / 255,
+                                            blue: 0xfc / 255, alpha: 1), for: .normal)
+        webClipButton.backgroundColor = .white
+        webClipButton.layer.cornerRadius = 14
+        webClipButton.addTarget(self, action: #selector(addWebClipTapped), for: .touchUpInside)
+        sheet.addSubview(webClipButton)
+
         let current = UIApplication.shared.alternateIconName
         for (index, option) in Self.options.enumerated() {
             let row = makeRow(option: option, index: index, current: current)
@@ -232,6 +243,8 @@ final class AppIconChooser: UIViewController {
         let listY: CGFloat = 108
         let listH: CGFloat = 4 * 62
         sheet.viewWithTag(103)?.frame = CGRect(x: 20, y: listY, width: width - 40, height: listH)
+        sheet.viewWithTag(104)?.frame = CGRect(x: 20, y: listY + listH + 8,
+                                                width: width - 40, height: 40)
         guard let list = sheet.viewWithTag(103) else { return }
         for (index, row) in rows.enumerated() {
             row.frame = CGRect(x: 0, y: CGFloat(index) * 62, width: list.bounds.width, height: 62)
@@ -248,6 +261,10 @@ final class AppIconChooser: UIViewController {
 
     @objc private func close() {
         dismiss(animated: true)
+    }
+
+    @objc private func addWebClipTapped() {
+        AppIconChooser.installWebClip(from: self)
     }
 
     @objc private func tapRow(_ sender: UIControl) {
