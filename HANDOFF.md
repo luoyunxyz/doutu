@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 1.0.0(12)：邀请码重置延后到 dismiss 后；登录成功回「我」`  
-> 最新代码版本：`1.0.0 / 12`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 1.0.0(13)：登录页布局撑满；重置跳转双保险`  
+> 最新代码版本：`1.0.0 / 13`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -991,6 +991,11 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
     - 新增 `Router.pendingAfterLoginDismiss`：按钮只记录 token 并 dismiss；`LoginHostingController.viewDidDisappear` 里再 `runPendingAfterLoginDismiss()`，保证真正关闭后再 push；
     - 登录/注册成功时调用 `Router.selectProfileTab()`，把 HomeShell/HomeV2 的 `tab` 设成 `.profile`，关闭登录页后自动回到「我」；
     - 客服入口也改为同样的延后执行。
+
+110. **登录页 UI 变形；重置仍可能没反应**
+    - 登录页的 header / panel / 输入框之前没有显式 `maxWidth`，SwiftUI 按内容 intrinsic 宽度算，白色面板会缩成一条、头图不铺满，看起来变形；
+    - 1.0.0(13) 给 VStack、header、panel、输入框都加 `.frame(maxWidth: .infinity)`，面板固定撑满屏幕宽度；
+    - 邀请码重置加双保险：除了 `viewDidDisappear` 的 `runPendingAfterLoginDismiss`，dismiss 后 0.6 秒再调用一次；token 执行后会被清空，不会重复 push。
 
 ---
 

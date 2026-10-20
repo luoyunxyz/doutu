@@ -40,6 +40,7 @@ struct LoginView: View {
                     panel
                     legal
                 }
+                .frame(maxWidth: .infinity)
                 .padding(.bottom, 28)
             }
         }
@@ -82,6 +83,7 @@ struct LoginView: View {
                     .padding(10)
             }
         }
+        .frame(maxWidth: .infinity)
         .frame(height: 300)
         .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
         .padding(.horizontal, 18)
@@ -104,6 +106,7 @@ struct LoginView: View {
         .padding(.horizontal, 22)
         .padding(.top, 22)
         .padding(.bottom, 26)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color.white)
         .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
         .padding(.horizontal, 24)
@@ -176,6 +179,7 @@ struct LoginView: View {
             }
             .font(.system(size: 17))
             .padding(.horizontal, 16)
+            .frame(maxWidth: .infinity, alignment: .leading)
             .frame(height: 52)
             .background(Color(red: 0.96, green: 0.965, blue: 0.975))
             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
@@ -231,6 +235,10 @@ struct LoginView: View {
         // 避免跳转页被推到登录模态下面。
         Router.shared?.pendingAfterLoginDismiss = token
         presentationMode.wrappedValue.dismiss()
+        // 兜底：万一 viewDidDisappear 没有触发 onDismiss，0.6 秒后也执行一次。
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+            Router.shared?.runPendingAfterLoginDismiss()
+        }
     }
 
     private var legal: some View {
