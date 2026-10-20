@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 1.0.0(10)：登录页右侧推入；邀请码重置修复`  
-> 最新代码版本：`1.0.0 / 10`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 1.0.0(11)：抖/Q 可进入，功能点击提示待更新`  
+> 最新代码版本：`1.0.0 / 11`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -979,6 +979,12 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
     - 1.0.0(10) 改成 `.fullScreen` + `LoginSlideTransition` / `LoginSlideAnimator`：present 时从右侧推入，dismiss 时向右退出；
     - 「邀请码重置密码」按钮之前直接 `Router.handle("resetInvite")`，但 LoginView 还在模态栈顶，ResetByInviteScreen 被推到模态后面，看起来没反应；
     - 新增 `dismissThen(token)`：先 dismiss 登录页，0.32 秒后再 handle，小支的 ResetByInviteScreen 就能显示；客服入口也走同一逻辑。
+
+108. **抖/Q 允许进入，但功能点击提示待更新**
+    - 1.0.0(8) 把 page 2/3 直接拦截，导致连参考页都切不过去；
+    - 1.0.0(11) 恢复 `page:2/3` 切换，显示 `dou_reference` / `q_reference` 参考页；
+    - 在 page 2/3 下任何内容点击返回 `pageUnavailable`，Router 仍 toast「该平台暂未开放，敬请期待」；
+    - 切回微/支仍正常。
 
 ---
 
