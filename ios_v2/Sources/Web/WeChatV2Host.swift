@@ -811,8 +811,13 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
         swipeLastTranslation = 0
         tabIncomingSign = 0
         tabPreviewIndex = nil
+        tabSwipeActive = false
         fastEdgeBack = false
         setSwipeFreeze(false)
+        // 手势结束后补一张当前页快照；tab 切换/返回后下一层的预览就绪。
+        if let hash = currentHash {
+            scheduleCurrentSnapshot(hash: hash)
+        }
     }
 
 
