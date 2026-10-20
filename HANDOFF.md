@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 1.0.0(33)：修复 JS 正则 \\/ 的 Swift 转义错误`  
-> 最新代码版本：`1.0.0 / 33`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 1.0.0(34)：微信边缘返回/切 tab 增加跟手快照滑动`  
+> 最新代码版本：`1.0.0 / 34`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -1153,6 +1153,15 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
       if (h.charAt(h.length - 1) === '/') h = h.slice(0, -1);
       ```
     - 同时保留 `codemagic.yaml` 最后的 `grep error:`，后续编译错误能直接看到。
+
+130. **微信返回/切 tab 的跟手视觉**
+    - 之前微信边缘返回和 tab 切换只在手势结束执行，页面不动；
+    - 1.0.0(34)：
+      - `makeSwipeSnapshot()` 在 began 抓当前 WKWebView 快照，盖在上面；
+      - 边缘手势 changed 时快照跟手右移，松手超过 60pt 滑出后执行 `performEdgeBack()`，否则弹回；
+      - tab 手势 changed 时快照跟手左右移，松手后先 `location.hash` 切到目标 tab，再让快照朝对应方向滑出，露出下一层 tab；
+      - `tabSwipeActive` 保证左边缘 40pt 内只走边缘返回，不误切 tab；
+      - 快照 `isUserInteractionEnabled=false`，不挡网页点击。
 
 ---
 

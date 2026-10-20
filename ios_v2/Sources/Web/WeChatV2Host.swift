@@ -212,6 +212,8 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
     /// 早期版本在左上角叠了一个「‹ 返回」胶囊，但它不属于 Android 的界面，
     /// 会盖住微信标题栏 —— 与「UI 一模一样」冲突，所以去掉，只保留边缘手势。
     private var tabSwipeStartX: CGFloat = 0
+    private var tabSwipeActive = false
+    private var swipeSnapshot: UIView?
 
     private func installBackAffordance() {
         let edge = UIScreenEdgePanGestureRecognizer(target: self, action: #selector(handleEdgePan(_:)))
@@ -393,35 +395,108 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
     }
 
     @objc private func handleEdgePan(_ gesture: UIScreenEdgePanGestureRecognizer) {
-        guard gesture.state == .ended else { return }
         let translation = gesture.translation(in: view)
-        guard translation.x > 60, abs(translation.y) < 120 else { return }
-        performEdgeBack()
+        switch gesture.state {
+        case .began:
+            makeSwipeSnapshot()
+        case .changed:
+            guard let snapshot = swipeSnapshot else { return }
+            snapshot.transform = CGAffineTransform(translationX: max(0, translation.x), y: 0)
+        case .ended, .cancelled:
+            guard let snapshot = swipeSnapshot else { return }
+            let commit = translation.x > 60 && abs(translation.y) < 120
+            let width = max(view.bounds.width, 1)
+            UIView.animate(withDuration: commit ? 0.22 : 0.2,
+                           delay: 0,
+                           options: [.curveEaseOut]) {
+                snapshot.transform = commit
+                    ? CGAffineTransform(translationX: width, y: 0)
+                    : .identity
+            } completion: { _ in
+                snapshot.removeFromSuperview()
+                self.swipeSnapshot = nil
+                if commit {
+                    self.performEdgeBack()
+                }
+            }
+        default:
+            break
+        }
+    }
+
+    private func makeSwipeSnapshot() {
+        guard swipeSnapshot == nil else { return }
+        guard let snapshot = webView.snapshotView(afterScreenUpdates: false) else { return }
+        snapshot.frame = webView.frame
+        snapshot.isUserInteractionEnabled = false
+        view.addSubview(snapshot)
+        swipeSnapshot = snapshot
     }
 
 
     @objc private func handleTabSwipe(_ gesture: UIPanGestureRecognizer) {
+        let translation = gesture.translation(in: view)
         if gesture.state == .began {
             tabSwipeStartX = gesture.location(in: view).x
+            tabSwipeActive = tabSwipeStartX > 40
+            if tabSwipeActive { makeSwipeSnapshot() }
+            return
+        }
+        guard tabSwipeActive else { return }
+        if gesture.state == .changed {
+            guard let snapshot = swipeSnapshot else { return }
+            snapshot.transform = CGAffineTransform(translationX: translation.x, y: 0)
             return
         }
         guard gesture.state == .ended else { return }
-        let translation = gesture.translation(in: view)
+        guard let snapshot = swipeSnapshot else { return }
         guard abs(translation.x) > 60, abs(translation.y) < 60,
-              tabSwipeStartX > 40 else { return }
+              tabSwipeStartX > 40 else {
+            springBackSwipeSnapshot()
+            return
+        }
 
         let tabs = ["#/wechat", "#/wechat/contacts", "#/wechat/discover", "#/wechat/my"]
         webView.evaluateJavaScript("String(location.hash || '')") { [weak self] result, _ in
             guard let self else { return }
             let hash = (result as? String) ?? ""
             let normalized = hash.hasSuffix("/") ? String(hash.dropLast()) : hash
-            guard let index = tabs.firstIndex(of: normalized) else { return }
+            guard let index = tabs.firstIndex(of: normalized) else {
+                self.springBackSwipeSnapshot()
+                return
+            }
             let next = translation.x < 0
                 ? min(index + 1, tabs.count - 1)
                 : max(index - 1, 0)
-            guard next != index else { return }
+            guard next != index else {
+                self.springBackSwipeSnapshot()
+                return
+            }
+            // 先切路由，快照同时滑出，露出下一层 tab。
             self.webView.evaluateJavaScript("location.hash = '\(tabs[next])'",
                                              completionHandler: nil)
+            let width = max(self.view.bounds.width, 1)
+            let offset = translation.x < 0 ? -width : width
+            UIView.animate(withDuration: 0.22, delay: 0,
+                           options: [.curveEaseOut]) {
+                snapshot.transform = CGAffineTransform(translationX: offset, y: 0)
+            } completion: { _ in
+                snapshot.removeFromSuperview()
+                self.swipeSnapshot = nil
+            }
+        }
+    }
+
+    private func springBackSwipeSnapshot() {
+        guard let snapshot = swipeSnapshot else { return }
+        UIView.animate(withDuration: 0.2, delay: 0,
+                       usingSpringWithDamping: 0.9,
+                       initialSpringVelocity: 0.5,
+                       options: [.curveEaseOut]) {
+            snapshot.transform = .identity
+        } completion: { _ in
+            snapshot.removeFromSuperview()
+            self.swipeSnapshot = nil
         }
     }
 
