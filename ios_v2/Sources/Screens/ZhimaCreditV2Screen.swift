@@ -203,7 +203,8 @@ final class ZhimaCreditV2Screen: Screen {
     private func inCarouselBand(_ s: State, designY: CGFloat) -> Bool {
         let cy = designY
         guard cy >= carouselY - 30, cy <= carouselY + cardH + 30 else { return false }
-        guard designY > Self.headerH, designY < Self.navTop else { return false }
+        // 可见视口换算成内容坐标是 [scroll + headerH, scroll + navTop)
+        guard cy > s.scroll + Self.headerH, cy < s.scroll + Self.navTop else { return false }
         return true
     }
 
