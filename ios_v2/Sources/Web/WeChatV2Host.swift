@@ -207,11 +207,16 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
             webView.frame = view.bounds
         }
         let top = view.safeAreaInsets.top
-        backButton?.frame = CGRect(x: 10, y: top + 8, width: 34, height: 34)
-        if let backButton { view.bringSubviewToFront(backButton) }
+        let backFrame = CGRect(x: 10, y: top + 8, width: 34, height: 34)
+        if let backButton, backButton.frame != backFrame {
+            backButton.frame = backFrame
+            view.bringSubviewToFront(backButton)
+        }
         let right = view.bounds.width
-        headerPlusButton?.frame = CGRect(x: right - 42, y: 8, width: 40, height: 50)
-        headerSearchButton?.frame = CGRect(x: right - 68, y: 8, width: 26, height: 50)
+        let plusFrame = CGRect(x: right - 42, y: 8, width: 40, height: 50)
+        let searchFrame = CGRect(x: right - 68, y: 8, width: 26, height: 50)
+        if let b = headerPlusButton, b.frame != plusFrame { b.frame = plusFrame }
+        if let b = headerSearchButton, b.frame != searchFrame { b.frame = searchFrame }
         // 注意：这里不能写日志。viewDidLayoutSubviews 在滑动/动画期间会被高频调用，
         // CrashLog 每次都会创建 ISO8601 formatter 并开关文件，直接卡主线程。
     }

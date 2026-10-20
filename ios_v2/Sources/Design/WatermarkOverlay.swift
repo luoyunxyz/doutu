@@ -79,10 +79,15 @@ final class WatermarkOverlay: UIView {
             window.addSubview(overlay)
             current = overlay
         }
-        overlay.frame = window.bounds
-        overlay.text = Session.shared.overlayText
-        window.bringSubviewToFront(overlay)
-        overlay.setNeedsDisplay()
+        // 这个方法会在每次 viewDidLayoutSubviews 被调用；只在真的变化时才改 frame/
+        // 文案/重绘，否则全屏水印会在滑动期间被反复重画。
+        let text = Session.shared.overlayText
+        let sizeChanged = overlay.frame != window.bounds
+        if sizeChanged { overlay.frame = window.bounds }
+        let textChanged = overlay.text != text
+        if textChanged { overlay.text = text }
+        if window.subviews.last !== overlay { window.bringSubviewToFront(overlay) }
+        if sizeChanged || textChanged { overlay.setNeedsDisplay() }
     }
 
     private static var keyWindow: UIWindow? {

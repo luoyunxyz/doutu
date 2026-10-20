@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 1.0.0(47)：返回预览预加载 + 手势零 WebView 工作`  
-> 最新代码版本：`1.0.0 / 47`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 1.0.0(48)：返回预览预加载 + 水印/layout 高频工作削减`  
+> 最新代码版本：`1.0.0 / 48`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -1316,15 +1316,21 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
     - 46 的 250ms 等待仍会卡，因为边缘手势里还在做 JS `history.back` + 抓 WKWebView 快照；
       这两件事都会占主线程，手指移动时必然掉帧；
     - 改成「上一页快照预加载 + 锁定不动」：
-      - `previewHook` 在网页 `touchstart` 时把当前 hash 报给原生；原生立刻抓一张快照作为候选；
-      - `hashchange` 时如果 hash 变了，把候选快照压入 `backPreviews` 栈（最多 8 层）；
+      - `previewHook` 只监听 `hashchange`；每次进入新页面后 0.4s（页面稳定）原生抓一张当前页快照；
+      - 下一次 `hashchange`（前进）时，这张快照就是“上一页”，压入 `backPreviews` 栈（最多 8 层）；
+      - **不在 touchstart 抓图**，点按/滚动路径完全没有额外快照开销；
       - 边缘手势 `.began` 直接用 `backPreviews.last` 作为底层（静态图，永不重绘），
         整个拖动只有 `top.transform = x` / `bottom.transform = x - width` 两个 UIView 变换；
       - 提交后（0.22s 动画结束）才让网页真正返回；`suppressPreviewCapture` 挡住这次 hashchange，
-        避免栈被重复修改；
+        避免栈被重复修改；目标页快照会留作下一次返回的 currentPageSnapshot；
       - `history.back` 等网页自己返回时，`handlePageHash` 按目标 hash 把栈里该页及以上移除；
       - 没有预加载快照时才回退到旧路径（先返回再抓图）；
-    - 版本 1.0.0(47)。改动文件：`WeChatV2Host.swift`、`project.yml`。
+    - **进一步削减高频工作**：
+      - `WatermarkOverlay.attachIfNeeded` 之前每次 layout 都改 frame/文案/重绘/置顶；
+        现在只在 frame 或文案真的变化时才做，滑动期间不再反复重画整屏水印；
+      - `WeChatV2Host.viewDidLayoutSubviews` 里顶栏按钮的 frame 也改成“真的变化才设”；
+    - 版本 1.0.0(48)。改动文件：`WeChatV2Host.swift`、`WatermarkOverlay.swift`、
+      `project.yml`。
 
 ---
 
