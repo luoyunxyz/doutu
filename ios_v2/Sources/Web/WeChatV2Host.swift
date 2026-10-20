@@ -616,8 +616,9 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
         tabIncomingSign = 0
     }
 
-    /// 下一层路由渲染完后，抓一张静态底图并隐藏 WKWebView；
-    /// 这样滑动时只有上层快照在动，底层绝对不会跟着位移。
+    /// 下一层路由渲染完后，抓一张静态底图并隐藏 WKWebView。
+    /// 根 tab 切换时这张底图也会按 `tabIncomingSign` 跟手平移（两页并排）；
+    /// 边缘返回时它保持静止，作为上一页的背景。
     private func captureBottomSnapshot() {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { [weak self] in
             guard let self, let top = self.swipeSnapshot,
