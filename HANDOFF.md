@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 1.0.0(23)：修复边缘返回闭包的 MainActor 编译错误`  
-> 最新代码版本：`1.0.0 / 23`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 1.0.0(24)：修复 self?.self.host 与 LoginPresenter 调用`  
+> 最新代码版本：`1.0.0 / 24`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -1064,6 +1064,13 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
     - 新增的 `host.canGoBack = { [weak self] in ... }` / `onBackGesture` 是普通闭包，却访问 `@MainActor` 的 `Router.stack` / `pop`，Xcode 26 下报主线程隔离错误；
     - 1.0.0(23) 改成简单 Bool 属性 `host.canGoBack = false/true`，边缘返回触发原有 `onAction("back")`，不再在闭包里访问 Router；
     - `historySnapshots` 从 `[UIView?]` 改成 `[UIView]`，nil 时用空 UIView 占位，避免可选数组的类型推断问题。
+
+120. **真正的编译错误：self?.self.host**
+    - 头像/账号未登录分支里写成了：
+      `self?.self.host?.setNeedsDisplay()`
+    - Swift 会报 `Router` 没有 `self` 成员，这就是每次 LegacyDoutuApp 编译失败的根因；
+    - 1.0.0(24) 改成 `self?.host?.setNeedsDisplay()`；
+    - 同时把 `LoginPresenter.present(goProfile:false) { ... }` 改成显式 `onDone:` 参数，避免尾随闭包绑定歧义。
 
 ---
 

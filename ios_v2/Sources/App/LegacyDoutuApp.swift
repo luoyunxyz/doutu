@@ -431,11 +431,11 @@ final class Router {
         guard !state.polling else { return }
         guard Session.shared.isLoggedIn else {
             pendingParseRetry = true
-            LoginPresenter.present(goProfile: false) { [weak self, weak screen] in
+            LoginPresenter.present(onDone: { [weak self, weak screen] in
                 guard let self, let screen, Session.shared.isLoggedIn else { return }
                 self.pendingParseRetry = false
                 self.startParse(screen: screen, state: state)
-            }
+            }, goProfile: false)
             return
         }
         screen.beginParse(state)
@@ -473,11 +473,11 @@ final class Router {
                         screen.failParse(state, message: "登录已过期，请重新登录")
                         self.showToast("登录已过期，请重新登录", ok: false)
                         self.pendingParseRetry = true
-                        LoginPresenter.present(goProfile: false) { [weak self, weak screen] in
+                        LoginPresenter.present(onDone: { [weak self, weak screen] in
                             guard let self, let screen, Session.shared.isLoggedIn else { return }
                             self.pendingParseRetry = false
                             self.startParse(screen: screen, state: state)
-                        }
+                        }, goProfile: false)
                     } else {
                         screen.failParse(state, message: env.msg.isEmpty ? "解析失败，请稍后再试" : env.msg)
                         self.showToast(env.msg.isEmpty ? "解析失败，请稍后再试" : env.msg, ok: false)
@@ -981,7 +981,7 @@ final class Router {
                 }
             } else {
                 LoginPresenter.present { [weak self] in
-                    self?.self.host?.setNeedsDisplay()
+                    self?.host?.setNeedsDisplay()
                 }
             }
         case "user":
@@ -991,7 +991,7 @@ final class Router {
                 push(SettingsV2Screen(), state: SettingsV2Screen.State())
             } else {
                 LoginPresenter.present { [weak self] in
-                    self?.self.host?.setNeedsDisplay()
+                    self?.host?.setNeedsDisplay()
                 }
             }
         case "member":
