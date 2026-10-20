@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 1.0.0(51)：下层锁死、只移上层 —— 独立页面的揭盖效果`  
-> 最新代码版本：`1.0.0 / 51`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 1.0.0(52)：补 pushState 路由监听 + 滚动不再删预览`  
+> 最新代码版本：`1.0.0 / 52`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -1358,6 +1358,25 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
       - 旧路径抓到的底图同样 `transform = .identity`，不再做 `x-width` 的并排平移；
     - **根 tab 左右滑保持两页平移**（用户之前要的首页效果），不受影响；
     - 版本 1.0.0(51)。改动文件：`WeChatV2Host.swift`、`project.yml`。
+
+144. **1.0.0(52)：预览为什么一直没命中 —— 补 pushState 监听**
+    - 真机 51 日志：
+      `EDGE begin fast=false topCache=false prev=- snaps=1`
+      `EDGE begin fast=false topCache=true prev=#/wechat/wallet/balance snaps=2`
+      说明手势一直走**旧路径**（先返回再抓图），下层当然是活的、会跟着动；
+    - 根因：React Router 用 `history.pushState/replaceState` 改 hash 时**不会触发
+      `hashchange`**，只监听 hashchange 会漏掉几乎所有主页面跳转，导致：
+      - `previousHashByRoute` 一直是空（日志里的 `prev=-`）；
+      - `pageSnapshots` 只有 1~2 张（didFinish + 手势结束补抓），没有上一页；
+    - 修复：
+      - `previewHook` 里包一层 `history.pushState/replaceState`，hash 变化后同样上报
+        `pageHash(oldURL,newURL)`；hashchange 监听保留（覆盖 `location.hash=`）；
+      - 滚动不再**删除**快照：旧快照是返回时唯一的下层预览，删了就会退回 250ms 抓图；
+        滚动只把该 hash 标记为 `staleTopHashes`（顶部改用实时截图），滚动停下再刷新快照；
+    - 预期 52 日志变成：
+      `EDGE begin fast=true topCache=true prev=#/wechat/wallet snaps=3+`
+      `EDGE end commit=true fast=true`
+    - 版本 1.0.0(52)。改动文件：`WeChatV2Host.swift`、`project.yml`。
 
 ---
 

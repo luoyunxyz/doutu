@@ -261,6 +261,8 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
     private var snapshotOrder: [String] = []
     /// hash → 它是从哪个 hash 进来的。返回时用 current 的上一页 hash 找快照。
     private var previousHashByRoute: [String: String] = [:]
+    /// 滚动过的页面：快照仍然保留（返回时还能当预览），但顶部不能再用它，改用实时截图。
+    private var staleTopHashes: Set<String> = []
     /// 我们自己触发的返回：hashchange 回调不要再入栈/出栈。
     private var suppressPreviewCapture = false
     /// 滚动停止后才抓图（滚动过程中抓 WKWebView 会卡列表）。
@@ -665,7 +667,7 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
 
     /// 当前页预加载好的静态图（没有就返回 nil，调用方回退到实时截图）。
     private var currentTopSnapshot: UIView? {
-        guard let hash = currentHash else { return nil }
+        guard let hash = currentHash, !staleTopHashes.contains(hash) else { return nil }
         return pageSnapshots[hash]
     }
 
@@ -686,6 +688,7 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
             snap.isUserInteractionEnabled = false
             self.pageSnapshots[expected]?.removeFromSuperview()
             self.pageSnapshots[expected] = snap
+            self.staleTopHashes.remove(expected)
             if !self.snapshotOrder.contains(expected) {
                 self.snapshotOrder.append(expected)
                 if self.snapshotOrder.count > 12 {
@@ -723,10 +726,9 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
     /// 再抓一张。滚动过程中抓图会直接把列表拖卡。
     private func invalidateCurrentSnapshot(hash: String) {
         guard !hash.isEmpty, !edgeActive, !tabSwipeActive else { return }
-        if let view = pageSnapshots.removeValue(forKey: hash) {
-            view.removeFromSuperview()
-        }
-        snapshotOrder.removeAll { $0 == hash }
+        // 注意：**不要删旧快照**。它是返回时唯一的下层预览；滚动只让它不适合再做顶部，
+        // 删掉会导致“滚动过的页面返回时没有预览”，又退回 250ms 抓图。
+        if pageSnapshots[hash] != nil { staleTopHashes.insert(hash) }
         scrollIdleTimer?.invalidate()
         scrollIdleTimer = Timer.scheduledTimer(withTimeInterval: 0.45, repeats: false) {
             [weak self] _ in
@@ -739,6 +741,7 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
         pageSnapshots.removeAll()
         snapshotOrder.removeAll()
         previousHashByRoute.removeAll()
+        staleTopHashes.removeAll()
     }
 
     /// `waitForBottom`：
@@ -1444,8 +1447,27 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
       function h(u){
         try { return String(new URL(u).hash || ''); } catch (e) { return ''; }
       }
+      function hash(){ return String(location.hash || ''); }
+      function report(oldHash, newHash){
+        if (newHash) post('pageHash', [oldHash, newHash]);
+      }
+      // React Router 用 pushState/replaceState 改 hash 时**不会**触发 hashchange，
+      // 只靠 hashchange 会漏掉几乎所有主页面跳转（真机日志里 prev 一直是 -）。
+      function patch(name){
+        var orig = history[name];
+        if (typeof orig !== 'function') return;
+        history[name] = function(){
+          var before = hash();
+          var r = orig.apply(this, arguments);
+          var after = hash();
+          if (after !== before) report(before, after);
+          return r;
+        };
+      }
+      patch('pushState');
+      patch('replaceState');
       window.addEventListener('hashchange', function(e){
-        post('pageHash', [h(e.oldURL), h(e.newURL)]);
+        report(h(e.oldURL), h(e.newURL));
       });
       // 滚动会让“当前页快照”过期；节流后报一次，原生重新抓图。
       var scrollTimer = 0;
@@ -1453,7 +1475,7 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
         if (scrollTimer) return;
         scrollTimer = setTimeout(function(){
           scrollTimer = 0;
-          post('pageScroll', [h(location.href)]);
+          post('pageScroll', [hash()]);
         }, 220);
       }, {capture: true, passive: true});
     })();
