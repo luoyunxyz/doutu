@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 1.0.0(44)：微信滚动惯性 + 根 tab 平移切换`  
-> 最新代码版本：`1.0.0 / 44`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 1.0.0(45)：微信滚动惯性 + tab 平移 + 边缘返回跟手`  
+> 最新代码版本：`1.0.0 / 45`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -1290,7 +1290,14 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
       - 进入页快照的 transform = `sign * width + dx`，与当前页 `dx` 同步；
       - 提交：当前页 → `±width`，进入页 → `0`；取消：当前页 → `0`，进入页 → `±width`；
       - 手势中途回正会丢掉旧底图，反方向再滑时重新抓图，避免拿错页；
-    - 版本 1.0.0(44)。改动文件：`WeChatV2Host.swift`、`wechat-chat-actions.css`、
+    - **边缘返回跟手修复**（真机视频：手指拖了约 200px，页面在 250ms 后才突然跳过去）：
+      - 根因是 `makeSwipeSnapshot` 把 `swipeReady` 置 false，要等上一页静态图（250ms）
+        才允许移动快照；
+      - 新增 `makeSwipeSnapshot(waitForBottom:)`：边缘返回传 `false`，第一帧就跟手；
+        根 tab 切换仍等待底图，避免大面积露白；
+      - 上一页底图抓到后按 `-25% → 0` 做视差；等待期占位色从白改成 `#ededed`，
+        不再出现刺眼白边；
+    - 版本 1.0.0(45)。改动文件：`WeChatV2Host.swift`、`wechat-chat-actions.css`、
       `wechat-chat-actions.js`、`project.yml`。
 
 ---

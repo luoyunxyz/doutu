@@ -484,7 +484,8 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
                 view.layer.shadowPath = UIBezierPath(rect: view.bounds).cgPath
             } else {
                 setSwipeFreeze(true)
-                makeSwipeSnapshot()
+                // 边缘返回必须立刻跟手，不能等上一页快照。
+                makeSwipeSnapshot(waitForBottom: false)
                 prepareEdgePreview()
             }
         case .changed:
@@ -497,6 +498,14 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
             swipeLastTranslation = x
             if swipeReady {
                 snapshot.transform = CGAffineTransform(translationX: x, y: 0)
+                // 边缘返回：上一页从 -25% 慢慢回到 0，做出纵深；
+                // 根 tab 切换的底图是「进入页」，由 handleTabSwipe 单独处理。
+                if let bottom = swipeBottomSnapshot, tabPreviewIndex == nil {
+                    let width = max(view.bounds.width, 1)
+                    let progress = min(1, max(0, x / width))
+                    bottom.transform = CGAffineTransform(
+                        translationX: -width * 0.25 * (1 - progress), y: 0)
+                }
             }
         case .ended, .cancelled:
             edgeActive = false
@@ -533,12 +542,19 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
             let commit = gesture.state != .cancelled
                 && translation.x > 60 && abs(translation.y) < 120
             let width = max(view.bounds.width, 1)
+            let edgeBottom = tabPreviewIndex == nil ? swipeBottomSnapshot : nil
             UIView.animate(withDuration: commit ? 0.22 : 0.2,
                            delay: 0,
                            options: [.curveEaseOut]) {
                 snapshot.transform = commit
                     ? CGAffineTransform(translationX: width, y: 0)
                     : .identity
+                if commit {
+                    edgeBottom?.transform = .identity
+                } else {
+                    edgeBottom?.transform = CGAffineTransform(
+                        translationX: -width * 0.25, y: 0)
+                }
             } completion: { _ in
                 if commit {
                     if !self.edgePreNavigated { self.performEdgeBack() }
@@ -594,7 +610,11 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
         return fragment.hasPrefix("#") ? fragment : "#" + fragment
     }
 
-    private func makeSwipeSnapshot() {
+    /// `waitForBottom`：
+    ///   · 根 tab 切换要等进入页静态图就绪，否则大面积露白 → true；
+    ///   · 边缘返回从左边 20pt 开始拖，露出的缝隙很小，必须立刻跟手 → false。
+    ///     之前一律等 250ms，页面会在手指移动 200px 后才突然跳过去，手感很硬。
+    private func makeSwipeSnapshot(waitForBottom: Bool = true) {
         guard swipeSnapshot == nil else { return }
         guard let snapshot = webView.snapshotView(afterScreenUpdates: false) else { return }
         snapshot.frame = webView.frame
@@ -602,8 +622,10 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
 
         // 先放一张纯色占位在下面，然后立刻隐藏 WKWebView；
         // 这样从手势第一帧开始，底层就不可能是活的 WebView。
+        // 颜色用微信页最常见的 #ededed，边缘返回等待上一页快照的 250ms 里，
+        // 露出来的是一条灰边而不是刺眼的白边。
         let placeholder = UIView(frame: view.bounds)
-        placeholder.backgroundColor = .white
+        placeholder.backgroundColor = UIColor(white: 0.929, alpha: 1)
         placeholder.isUserInteractionEnabled = false
         view.addSubview(placeholder)
         view.addSubview(snapshot)
@@ -611,7 +633,7 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
         swipeSnapshot = snapshot
         webView.isHidden = true
         webView.scrollView.isScrollEnabled = false
-        swipeReady = false
+        swipeReady = !waitForBottom
         swipeLastTranslation = 0
         tabIncomingSign = 0
     }
@@ -641,6 +663,12 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
                 let width = max(self.view.bounds.width, 1)
                 bottom.transform = CGAffineTransform(
                     translationX: self.tabIncomingSign * width, y: 0)
+            } else {
+                // 边缘返回：上一页先退 25%，跟手时再回到 0（与原生页的视差一致）。
+                let width = max(self.view.bounds.width, 1)
+                let progress = min(1, max(0, self.swipeLastTranslation / width))
+                bottom.transform = CGAffineTransform(
+                    translationX: -width * 0.25 * (1 - progress), y: 0)
             }
             self.view.insertSubview(bottom, belowSubview: top)
             self.swipeBottomSnapshot = bottom
