@@ -356,7 +356,15 @@ final class Router {
         guard !state.polling else { return }
         screen.beginParse(state)
         host?.setNeedsDisplay()
-        CrashLog.append("PARSE request start link=\(link.prefix(40))")
+        // 抖音分享文案里常带大段中文/表情；Android 虽然原样发 share_text，
+        // 但部分任务只有 URL 才能被服务端解析器识别，这里优先提取第一个链接。
+        let shareText: String
+        if let range = link.range(of: #"https?://[^\s，。]+"#, options: .regularExpression) {
+            shareText = String(link[range])
+        } else {
+            shareText = link
+        }
+        CrashLog.append("PARSE request start share=\(shareText.prefix(60))")
         let timeout = DispatchWorkItem { [weak self, weak screen] in
             guard let self, let screen, state.polling, state.taskNo.isEmpty else { return }
             CrashLog.append("PARSE request timeout")
@@ -370,7 +378,7 @@ final class Router {
             let env = await Task.detached(priority: .userInitiated) {
                 // Android DoutuApi.parse 的字段名是 share_text，不是 link。
                 await ApiClient.shared.call("POST", "/api/v1/dw/parse",
-                                            body: ["share_text": link])
+                                            body: ["share_text": shareText])
             }.value
             await MainActor.run {
                 timeout.cancel()
@@ -404,17 +412,34 @@ final class Router {
                     await ApiClient.shared.call("GET", path)
                 }.value
                 await MainActor.run {
+                    guard env.ok else {
+                        CrashLog.append("PARSE poll failed code=\(env.code) msg=\(env.msg)")
+                        if screen.registerPollFailure(state) {
+                            self.pollParse(screen: screen, state: state, taskNo: taskNo,
+                                           left: left - 1, delay: 0.7)
+                        } else {
+                            screen.failParse(state, message: env.msg.isEmpty
+                                             ? "查询解析结果失败" : env.msg)
+                            self.host?.setNeedsDisplay()
+                        }
+                        return
+                    }
                     let data = env.data as? [String: Any]
                     let status = (data?["status"] as? Int) ?? -1
                     let text = (data?["status_text"] as? String) ?? ""
+                    CrashLog.append("PARSE poll status=\(status) text=\(text) task=\(taskNo)")
                     let done = screen.applyPollStatus(state, status: status, statusText: text)
                     self.host?.setNeedsDisplay()
                     if done {
+                        if left <= 1 {
+                            screen.failParse(state, message: "解析超时，请稍后重试")
+                        } else {
+                            self.pollParse(screen: screen, state: state, taskNo: taskNo,
+                                           left: left - 1, delay: 0.7)
+                        }
+                    } else {
                         if let data { screen.showResult(state, data) }
                         self.host?.setNeedsDisplay()
-                    } else {
-                        self.pollParse(screen: screen, state: state, taskNo: taskNo,
-                                       left: left - 1, delay: 0.7)
                     }
                 }
             }

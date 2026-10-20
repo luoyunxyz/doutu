@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 2.4.74：修复 x-sign 的 HMAC key 编码`  
-> 最新代码版本：`2.4.74 / 20114`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 2.4.75：修复轮询返回值用反，45% 不再停住`  
+> 最新代码版本：`2.4.75 / 20115`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.73 / 20113`（已通过 USB 查询确认）
 
 ---
@@ -868,6 +868,15 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
     - 反编译 Android `DoutuApi.hmacHex`：`new SecretKeySpec(signKey.getBytes(UTF_8), "HmacSHA256")`，**直接用 signKey 字符串的 UTF-8 字节**；
     - iOS `hmacHex` 之前优先 `DtwCrypto.fromHex(key)`，当 signKey 是 64 位十六进制时会解成 32 字节，签名和服务端不一致；
     - 2.4.74 改成始终 `key.data(using: .utf8)`，与 Android 相同。
+
+91. **45% 停住：轮询返回值用反了**
+    - `ParseScreen.applyPollStatus` 的返回值语义是「是否还需要继续轮询」：status 0/1/2 返回 true，status 3/4/5 返回 false；
+    - Router 里变量却叫 `done`，判断写成 `if done { showResult } else { poll }`，完全反了：
+      - 状态 1（45%）返回 true，立刻当完成处理，不再发下一次轮询；
+      - 结果数据里还没有 out_url，所以卡在 45% + 空结果；
+    - 2.4.75 改成 `keepPolling` 语义：true → 继续 `pollParse`，false → `showResult`；
+    - 同时加轮询错误处理和超时失败，不会无限停在某个百分比；
+    - 提交的 `share_text` 优先提取第一个 `http(s)://` 链接，避免整段中文/表情干扰解析。
 
 ---
 
