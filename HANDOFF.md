@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 2.4.80：AltIcons PNG 强制入库`  
-> 最新代码版本：`2.4.80 / 20120`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 2.4.81：默认应用名改为「豆图」`  
+> 最新代码版本：`2.4.81 / 20121`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -910,6 +910,11 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
 96. **2.4.79 构建失败：AltIcons 目录不存在**
     - `.gitignore` 里 `*.png` 被忽略，2.4.79 提交时 6 个 PNG 实际没进仓库；Codemagic 上只有空的 `Resources/AltIcons`，XcodeGen 报 missing source directory；
     - 2.4.80 用 `git add -f ios_v2/Resources/AltIcons` 强制入库，并在本地用 `git ls-files` 确认 6 个文件都已跟踪。
+
+97. **默认应用名改为「豆图」**
+    - `project.yml` 的 `INFOPLIST_KEY_CFBundleDisplayName` 从「斗图去水印」改为「豆图」；
+    - `AppIconChooser` 的说明文案同步改成「名称仍是豆图」；
+    - 默认主图标仍是 `PreviewAppIconDoutu`，备选图标名不变。
 
 ---
 

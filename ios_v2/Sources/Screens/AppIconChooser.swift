@@ -8,7 +8,7 @@ import UIKit
 /// 「豆图」是主图标，`setAlternateIconName(nil)` 切回。
 ///
 /// 与 Android 的差异：iOS 不允许在运行时改启动器上的应用名，所以这里只换图标，
-/// 名称仍然是「斗图去水印」。底栏弹窗的布局（把手 / 标题 / 说明 / 四行 / 蓝勾）照 Android 画。
+/// 名称仍然是「豆图」。底栏弹窗的布局（把手 / 标题 / 说明 / 四行 / 蓝勾）照 Android 画。
 final class AppIconChooser: UIViewController {
     private struct Option {
         let label: String
@@ -93,7 +93,7 @@ final class AppIconChooser: UIViewController {
 
         let hint = UILabel()
         hint.tag = 102
-        hint.text = "点一个图标，启动器上的图标会换过去（iOS 只换图标，名称仍是「斗图去水印」）"
+        hint.text = "点一个图标，启动器上的图标会换过去（iOS 只换图标，名称仍是「豆图」）"
         hint.font = .systemFont(ofSize: 12.5)
         hint.textColor = UIColor(red: 0x93 / 255, green: 0x92 / 255, blue: 0x92 / 255, alpha: 1)
         hint.numberOfLines = 0

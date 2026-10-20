@@ -15,7 +15,7 @@ import UIKit
 /// 3. 装 signal handler 抓 SIGABRT/SIGSEGV 这类崩溃（Swift 运行时错误、野指针等）。
 ///
 /// 配合 Info.plist 里的 `UIFileSharingEnabled`，日志可以直接在「文件」App 里看到：
-/// 文件 → 我的 iPhone → 斗图去水印 → crash.log
+/// 文件 → 我的 iPhone → 豆图 → crash.log
 ///
 /// ⚠️ 这是**排障期临时保留**的组件：为了能取到现场，日志会一直追加。
 /// 正式发布前可以删掉这个文件和 DoutuApp.init() 里的调用。
