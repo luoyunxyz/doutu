@@ -643,7 +643,9 @@ final class ScreenHostView: UIView, UIScrollViewDelegate {
         let width = max(bounds.width, 1)
         // 用 superview 的速度：self 正在跟手位移，拿 self 当坐标系会把速度抵消掉。
         let velocity = gesture.velocity(in: superview ?? self).x
-        let shouldComplete = edgeProgress > 0.33 || velocity > 650
+        // `.cancelled` 绝不能当成「返回」：系统手势/来电打断时用户并没有完成操作。
+        let shouldComplete = gesture.state != .cancelled
+            && (edgeProgress > 0.33 || velocity > 650)
         let duration = shouldComplete ? 0.22 : 0.28
 
         if shouldComplete {
