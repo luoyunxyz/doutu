@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 2.4.81：默认应用名改为「豆图」`  
-> 最新代码版本：`2.4.81 / 20121`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 1.0.0：版本号重置为 1.0.0(1)`  
+> 最新代码版本：`1.0.0 / 1`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -915,6 +915,11 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
     - `project.yml` 的 `INFOPLIST_KEY_CFBundleDisplayName` 从「斗图去水印」改为「豆图」；
     - `AppIconChooser` 的说明文案同步改成「名称仍是豆图」；
     - 默认主图标仍是 `PreviewAppIconDoutu`，备选图标名不变。
+
+98. **版本号重置为 1.0.0**
+    - `MARKETING_VERSION: "1.0.0"`；
+    - `CURRENT_PROJECT_VERSION: "1"`；
+    - `DtwConfig.appVersion` 本来就是 `1.0.0`，版本号现在完全一致。
 
 ---
 
