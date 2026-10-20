@@ -1,4 +1,7 @@
 import UIKit
+// CADisplayLink / CACurrentMediaTime 在 QuartzCore 里。UIKit 虽然会再导出，
+// 但 CI 上曾出现过「cannot find ... in scope」，按 ShutdownScreen 的做法显式写一行。
+import QuartzCore
 
 /// 页面动作令牌 —— 与 Android 端 `hitTest` 返回的字符串一一对应。
 ///
@@ -6,6 +9,32 @@ import UIKit
 /// iOS 这边保留同样的词表（不改成枚举），这样逐屏比对源码时可以直接对照，
 /// 也避免了「Java 加了新动作、Swift 忘了加 case」这种漏改。
 typealias ActionToken = String
+
+/// 触觉反馈。
+///
+/// Android 端没有这一层（只有震动权限下的少数场景），但 iOS 用户对「点下去有没有反应」
+/// 非常敏感：同样的静态界面，带一次轻微 Taptic 点击就会显得「活」很多。
+/// 这里只给**有明确状态变化**的动作配触觉（切页、长按、返回、支付成功），
+/// 不给普通列表点击配，避免整机一直在震。
+enum Haptics {
+    /// 轻选（切页签 / 切底栏）
+    static func selection() {
+        let generator = UISelectionFeedbackGenerator()
+        generator.selectionChanged()
+    }
+
+    /// 撞击（返回、长按）
+    static func impact(_ style: UIImpactFeedbackGenerator.FeedbackStyle = .light) {
+        let generator = UIImpactFeedbackGenerator(style: style)
+        generator.impactOccurred()
+    }
+
+    /// 成功（支付 / 提现完成）
+    static func success() {
+        let generator = UINotificationFeedbackGenerator()
+        generator.notificationOccurred(.success)
+    }
+}
 
 /// 一个可绘制的页面。
 ///
@@ -218,6 +247,8 @@ final class ZhiTabBarView: UIView {
             let cx = bounds.width * refX / 1280
             if abs(cx - x) < bestD { bestD = abs(cx - x); best = i }
         }
+        // 底栏切换需要「按下去有回应」的感觉，Android 端靠水波纹，iOS 这里用一次轻选。
+        Haptics.selection()
         onSelect?(best)
     }
 }
@@ -257,8 +288,36 @@ final class ScreenHostView: UIView, UIScrollViewDelegate {
     var previousSnapshot: UIView?
     private var edgePreviousContainer: UIView?
     private var edgeProgress: CGFloat = 0
+    /// 本次边缘手势是否已经「提交返回」——用于兜底复位，避免误伤下一次手势
+    private var edgeCommitted = false
+    /// 正在做 push/pop 转场的那张「旧页面」快照
+    private weak var transitionSnapshot: UIView?
     /// 扫码页底下那层相机预览
     private var cameraView: CameraPreviewView?
+
+    // MARK: - 滚动惯性 / 边缘回弹
+    //
+    // Android 的 NativeView 是「手指抬起来就停」，iOS 用户对这一点极其敏感：
+    // 同样一屏账单，滑一下不走、得一直贴着手指，会立刻觉得「卡、廉价」。
+    // 这里用 CADisplayLink 做两层位移：
+    //   · 惯性滑行：速度按 UIScrollView 的 0.998/ms 衰减；
+    //   · 回弹：越界后按 iOS 的橡皮筋公式收敛回边界。
+    private var scrollLink: CADisplayLink?
+    /// 参考画布单位 / 秒（正数表示内容继续向上走）
+    private var scrollVelocity: CGFloat = 0
+    /// 回弹目标；nil 表示正在惯性滑行
+    private var scrollTarget: CGFloat?
+    private var lastFrameAt: CFTimeInterval = 0
+    /// 手指最后一次移动的时间 / 位置（UITouch.timestamp 与 CACurrentMediaTime 同一时钟）
+    private var lastMoveAt: CFTimeInterval = 0
+    private var lastMoveY: CGFloat = 0
+
+    // MARK: - 长按
+    private var longPressTimer: Timer?
+    private var longPressFired = false
+
+    /// 定时重绘的「空闲」间隔；滚动动画与触摸期间由 CADisplayLink 自己驱动，不依赖它。
+    private var slowRedrawInterval: TimeInterval = 0.25
     /// 《用户须知》专用原生 ScrollView：宿主的 touchesMoved 在这台真机上收不到，
     /// 用真正的 UIScrollView 接管滚动，页面本身仍然完整保留。
     private var termsScrollView: UIScrollView?
@@ -297,7 +356,12 @@ final class ScreenHostView: UIView, UIScrollViewDelegate {
         let navH = bounds.height * 256 / 2816
         zhiTabBar.frame = CGRect(x: 0, y: bounds.height - navH,
                                  width: bounds.width, height: navH)
-        bringSubviewToFront(zhiTabBar)
+        // 转场快照必须始终盖在最上面，否则 layout 一跑，新页面的底栏就会从快照里穿出来。
+        if let transitionSnapshot {
+            bringSubviewToFront(transitionSnapshot)
+        } else {
+            bringSubviewToFront(zhiTabBar)
+        }
     }
 
     override func didMoveToWindow() {
@@ -363,13 +427,38 @@ final class ScreenHostView: UIView, UIScrollViewDelegate {
 
     deinit {
         NotificationCenter.default.removeObserver(self)
+        scrollLink?.invalidate()
+        redrawTimer?.invalidate()
+        longPressTimer?.invalidate()
     }
 
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError("init(coder:) 未实现") }
 
-    /// 切换页面（保持同一份 View 实例，与 Android 复用 NativeView 的做法一致）
-    func setScreen(_ next: Screen, state: ScreenState = ScreenState()) {
+    /// 切换页面（保持同一份 View 实例，与 Android 复用 NativeView 的做法一致）。
+    ///
+    /// `animated` 只负责「旧页面怎么离场」：新页面先画好，再把旧页面的快照朝左（push）
+    /// 或朝右（pop）推出屏幕。这样既有方向感，又不用引入 UINavigationController，
+    /// 也不会破坏 27 屏共用一个宿主 View 的结构。
+    func setScreen(_ next: Screen, state: ScreenState = ScreenState(),
+                   animated: Bool = false, backwards: Bool = false) {
+        // 切页前收拾上一屏的临时状态：惯性、长按计时、边缘返回位移。
+        // 边缘返回时页面已经被手指推到屏幕外，这里的 reset 与新页面绘制在同一个
+        // runloop 里完成，中间不会露出旧页面（之前的「返回闪一下」就是这么来的）。
+        stopScrollAnimation()
+        longPressTimer?.invalidate()
+        longPressTimer = nil
+        downAt = nil
+        // 注意：不清 `longPressFired`。长按可能触发跳页，抬手事件会落到新页面上；
+        // 留着这个标记，才能让那一次抬手不被误当成点击。
+        resetEdgeBack()
+        // 连续快速 push/pop 时，上一段转场的截图不能留着抢层级。
+        transitionSnapshot?.removeFromSuperview()
+        transitionSnapshot = nil
+
+        // 先抓旧页面快照，再换 screen —— 顺序反了就会拍到新页面。
+        let snapshot = animated ? makeTransitionSnapshot() : nil
+
         screen = next
         self.state = state
         CrashLog.append("SCREEN \(type(of: next)) zhi=\(String(describing: next.zhiTabIndex)) bounds=\(bounds)")
@@ -389,6 +478,35 @@ final class ScreenHostView: UIView, UIScrollViewDelegate {
         setNeedsDisplay()
         // 状态栏图标明暗跟随当前页
         window?.rootViewController?.setNeedsStatusBarAppearanceUpdate()
+
+        guard let snapshot else { return }
+        transitionSnapshot = snapshot
+        addSubview(snapshot)
+        bringSubviewToFront(snapshot)
+        let width = max(bounds.width, 1)
+        snapshot.layer.shadowColor = UIColor.black.cgColor
+        snapshot.layer.shadowOpacity = 0.16
+        snapshot.layer.shadowRadius = 10
+        snapshot.layer.shadowOffset = CGSize(width: backwards ? 4 : -4, height: 0)
+        snapshot.layer.shadowPath = UIBezierPath(rect: snapshot.bounds).cgPath
+        UIView.animate(withDuration: 0.3, delay: 0, options: [.curveEaseInOut]) {
+            snapshot.transform = CGAffineTransform(translationX: backwards ? width : -width, y: 0)
+        } completion: { [weak self] _ in
+            snapshot.removeFromSuperview()
+            if let self, self.transitionSnapshot === snapshot {
+                self.transitionSnapshot = nil
+            }
+        }
+    }
+
+    private func makeTransitionSnapshot() -> UIView? {
+        guard window != nil, bounds.width > 1 else { return nil }
+        guard let snapshot = snapshotView(afterScreenUpdates: false) else { return nil }
+        snapshot.frame = bounds
+        // 留在最上层挡住 0.3s 转场期间的点击：否则下层新页面会先收到一次
+        // 「用户以为点在旧页上」的命中，容易出现连跳两页。
+        snapshot.isUserInteractionEnabled = true
+        return snapshot
     }
 
     /// 按当前屏的需要装上 / 卸下相机预览
@@ -406,12 +524,38 @@ final class ScreenHostView: UIView, UIScrollViewDelegate {
         }
     }
 
-    /// 开始定时重绘（横幅轮播用；与 Android 的 bannerTick 心跳等价）
+    /// 开始定时重绘（横幅轮播 / 关机页闪烁用；与 Android 的 bannerTick 心跳等价）。
+    ///
+    /// 原来固定 0.25s（4fps），横幅那 420ms 的滚动只有两帧、关机页电池也在跳。
+    /// 现在改成「一次一帧、按当前屏需要决定下一帧间隔」：
+    ///   · 关机页：30fps（电池明暗）
+    ///   · 首页且横幅正在滚动：30fps
+    ///   · 其它：保持原来的 0.25s，不为静态页面白烧电。
     func startRedrawTimer(interval: TimeInterval = 0.25) {
+        slowRedrawInterval = interval
+        scheduleRedrawTick()
+    }
+
+    private func scheduleRedrawTick() {
         redrawTimer?.invalidate()
-        redrawTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
-            self?.setNeedsDisplay()
+        redrawTimer = Timer.scheduledTimer(withTimeInterval: currentRedrawInterval(),
+                                           repeats: false) { [weak self] _ in
+            guard let self else { return }
+            self.setNeedsDisplay()
+            self.scheduleRedrawTick()
         }
+    }
+
+    private func currentRedrawInterval() -> TimeInterval {
+        // 关机页只有黑底 + 一个电池，绘制很轻，直接跟满 60fps 才不「跳」。
+        if screen is ShutdownScreen { return 1.0 / 60.0 }
+        if screen is HomeShellScreen || screen is HomeV2Screen {
+            let banner = BannerStore.shared
+            if banner.hintFrame().rolling { return 1.0 / 30.0 }
+            // 空闲时也不睡满 0.25s：把下一帧对齐到 420ms 滚动窗口的起点。
+            return min(slowRedrawInterval, max(0.02, banner.secondsUntilRoll()))
+        }
+        return slowRedrawInterval
     }
 
     func stopRedrawTimer() {
@@ -461,12 +605,16 @@ final class ScreenHostView: UIView, UIScrollViewDelegate {
     private func beginEdgeBack(_ gesture: UIScreenEdgePanGestureRecognizer) {
         guard canGoBack else { return }
         edgeProgress = 0
+        edgeCommitted = false
         if let snapshot = previousSnapshot {
             let container = UIView(frame: bounds)
             container.backgroundColor = .black
             snapshot.frame = container.bounds
             snapshot.autoresizingMask = [.flexibleWidth, .flexibleHeight]
             container.addSubview(snapshot)
+            // 上一页先往左退 30%，跟手时再回到 0 —— iOS 原生返回的「视差」，
+            // 比两层一起平移更有纵深，也不会让上一页看起来是贴上去的。
+            container.transform = CGAffineTransform(translationX: -bounds.width * 0.3, y: 0)
             superview?.insertSubview(container, belowSubview: self)
             edgePreviousContainer = container
         }
@@ -474,6 +622,8 @@ final class ScreenHostView: UIView, UIScrollViewDelegate {
         layer.shadowOpacity = 0.18
         layer.shadowRadius = 10
         layer.shadowOffset = CGSize(width: -3, height: 0)
+        // 全屏 layer 的阴影如果按 alpha 通道逐帧计算，必然掉帧；给个矩形路径。
+        layer.shadowPath = UIBezierPath(rect: bounds).cgPath
     }
 
     private func updateEdgeBack(_ gesture: UIScreenEdgePanGestureRecognizer) {
@@ -482,12 +632,15 @@ final class ScreenHostView: UIView, UIScrollViewDelegate {
         let distance = max(0, min(width, gesture.translation(in: superview).x))
         edgeProgress = distance / width
         transform = CGAffineTransform(translationX: distance, y: 0)
+        edgePreviousContainer?.transform =
+            CGAffineTransform(translationX: -width * 0.3 * (1 - edgeProgress), y: 0)
     }
 
     private func finishEdgeBack(_ gesture: UIScreenEdgePanGestureRecognizer) {
         guard canGoBack else { resetEdgeBack(); return }
         let width = max(bounds.width, 1)
-        let velocity = gesture.velocity(in: self).x
+        // 用 superview 的速度：self 正在跟手位移，拿 self 当坐标系会把速度抵消掉。
+        let velocity = gesture.velocity(in: superview ?? self).x
         let shouldComplete = edgeProgress > 0.33 || velocity > 650
         let duration = shouldComplete ? 0.22 : 0.28
 
@@ -495,10 +648,19 @@ final class ScreenHostView: UIView, UIScrollViewDelegate {
             UIView.animate(withDuration: duration, delay: 0,
                            options: [.curveEaseOut]) {
                 self.transform = CGAffineTransform(translationX: width, y: 0)
-            } completion: { _ in
-                self.resetEdgeBack()
-                UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                self.onAction?("back", .zero)
+                self.edgePreviousContainer?.transform = .identity
+            } completion: { [weak self] _ in
+                guard let self else { return }
+                // 注意顺序：先发令牌，让 Router 在同一轮 runloop 里 pop + 重绘，
+                // 再由 setScreen 收掉位移。若先 reset 画面会闪回旧页一帧。
+                Haptics.impact(.light)
+                self.edgeCommitted = true
+                self.onAction?("edgeback", .zero)
+                // 兜底：万一上层没有消费这个令牌，别把宿主永远留在屏幕外。
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { [weak self] in
+                    guard let self, self.edgeCommitted else { return }
+                    self.resetEdgeBack()
+                }
             }
         } else {
             UIView.animate(withDuration: duration, delay: 0,
@@ -518,10 +680,19 @@ final class ScreenHostView: UIView, UIScrollViewDelegate {
         edgePreviousContainer?.removeFromSuperview()
         edgePreviousContainer = nil
         edgeProgress = 0
+        edgeCommitted = false
     }
 
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let t = touches.first else { return }
+        // 手指一落下就停住惯性（与 UIScrollView 一致），否则想点一下会先被带着滑一段。
+        stopScrollAnimation()
+        // 如果正停在橡皮筋的越界位置，先把内容收回边界，否则这一次点击的
+        // 参考坐标会整体偏移，命中到错误的元素。
+        if state.scroll < 0 || state.scroll > maxScroll {
+            state.scroll = min(max(0, state.scroll), maxScroll)
+            setNeedsDisplay()
+        }
         let p = t.location(in: self)
         touchStart = p
         lastPoint = p
@@ -533,11 +704,38 @@ final class ScreenHostView: UIView, UIScrollViewDelegate {
         draggingCarousel = false
         verticalDragged = false
         moved = false
+        longPressFired = false
+        lastMoveY = p.y
+        lastMoveAt = 0
         downAt = Date()
+        scheduleLongPress()
+    }
+
+    /// 长按在**按住 500ms 时**触发（Android 的 `LONG_PRESS_MS`）。
+    ///
+    /// 之前是「抬手时看按了多久」：用户必须按住 → 再松手才出菜单，而且松手那一下
+    /// 还同时算点击，手感完全是反的。现在按住不动 500ms 立即触发，并给一次中等 Taptic。
+    private func scheduleLongPress() {
+        longPressTimer?.invalidate()
+        longPressTimer = nil
+        guard !(screen is TermsScreen) else { return }
+        longPressTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) { [weak self] _ in
+            guard let self, self.downAt != nil, !self.moved, !self.longPressFired else { return }
+            let canvas = Canvas(size: self.screen.canvasSize, bounds: self.bounds)
+            let start = canvas.design(self.touchStart)
+            let x = start.x
+            let y = start.y + self.state.scroll
+            guard let token = self.screen.longPress(self.state, x: x, y: y) else { return }
+            self.longPressFired = true
+            Haptics.impact(.medium)
+            self.onAction?(token, CGPoint(x: x, y: y))
+        }
     }
 
     override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let t = touches.first else { return }
+        // 长按已经触发：这次手势后面全部交给菜单，不再滚动/命中
+        if longPressFired { return }
         let p = t.location(in: self)
         let canvas = Canvas(size: screen.canvasSize, bounds: bounds)
 
@@ -552,7 +750,12 @@ final class ScreenHostView: UIView, UIScrollViewDelegate {
         let totalDx = p.x - touchStart.x
         let totalDy = p.y - touchStart.y
 
-        if abs(totalDx) > 6 || abs(totalDy) > 6 { moved = true }
+        if abs(totalDx) > 6 || abs(totalDy) > 6 {
+            moved = true
+            // 一动就不再是长按
+            longPressTimer?.invalidate()
+            longPressTimer = nil
+        }
 
         // 横向明显大于纵向 → 交给页面（轮播）。与 Android 的 1.2 倍阈值一致
         if !draggingCarousel, abs(totalDx) > abs(totalDy) * 1.2 {
@@ -562,6 +765,7 @@ final class ScreenHostView: UIView, UIScrollViewDelegate {
         if draggingCarousel {
             _ = screen.carouselDrag(state, dx: dxDesign)
             lastPoint = p
+            lastMoveAt = 0
             setNeedsDisplay()
             return
         }
@@ -574,23 +778,63 @@ final class ScreenHostView: UIView, UIScrollViewDelegate {
             // 面板收起/展开吃掉的这段纵向位移不要再算进页面滚动，避免收完面板后突然跳一段。
             dragStartY = p.y
             dragStartScroll = state.scroll
+            lastMoveAt = 0
             setNeedsDisplay()
             return
         }
 
+        // 采样手指速度（用 UITouch.timestamp，与 CACurrentMediaTime 同一时钟）。
+        // 抬手后用它做惯性；指数平滑一下，避免最后一帧抖动把页面甩飞。
+        let now = t.timestamp
+        if lastMoveAt > 0, now > lastMoveAt {
+            let dt = now - lastMoveAt
+            let instant = -(p.y - lastMoveY) / CGFloat(dt) / canvas.sy
+            scrollVelocity = scrollVelocity * 0.72 + instant * 0.28
+        }
+        lastMoveY = p.y
+        lastMoveAt = now
+
         let dy = p.y - dragStartY
         if abs(dy) > 8 { dragging = true }
         if dragging && maxScroll > 0 {
-            // 屏幕位移 → 参考坐标位移（纵向用 sy）
-            state.scroll = min(max(0, dragStartScroll - dy / canvas.sy), maxScroll)
+            // 屏幕位移 → 参考坐标位移（纵向用 sy）；越界走橡皮筋，松手再回弹。
+            let raw = dragStartScroll - dy / canvas.sy
+            state.scroll = rubberBand(raw, upper: maxScroll)
             setNeedsDisplay()
         }
         lastPoint = p
     }
 
+    /// iOS 的橡皮筋公式：越界位移 `x` 只映射成 `x·d·c/(x+d·c)`，永远拉不到 `d·c` 之外。
+    ///
+    /// 渐近上限压到约 32pt：页面背景是整块画布画出来的，越界时露出的其实是宿主底色；
+    /// 如果允许拉出小半屏，深色页面（消息、财富、芝麻）顶部会露出一条很大的白边。
+    /// 32pt 的弹性已经能明显感觉到「拉得住」，又不会把配色问题放大。
+    private func rubberBand(_ value: CGFloat, upper: CGFloat) -> CGFloat {
+        let canvas = Canvas(size: screen.canvasSize, bounds: bounds)
+        let visible = max(1, bounds.height / max(0.0001, canvas.sy))
+        let limit = min(visible * 0.55, 32 / max(0.0001, canvas.sy))
+        if value < 0 {
+            let over = -value
+            return -over * limit / (over + limit)
+        }
+        if value > upper {
+            let over = value - upper
+            return upper + over * limit / (over + limit)
+        }
+        return value
+    }
+
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+        longPressTimer?.invalidate()
+        longPressTimer = nil
+        downAt = nil
         defer { dragging = false; draggingCarousel = false; moved = false }
         guard let t = touches.first else { return }
+        if longPressFired {
+            longPressFired = false
+            return
+        }
         let p = t.location(in: self)
         let canvas = Canvas(size: screen.canvasSize, bounds: bounds)
         // 屏幕点 → 参考坐标（x 用 sx、y 用 sy），再叠加当前滚动量。
@@ -612,21 +856,98 @@ final class ScreenHostView: UIView, UIScrollViewDelegate {
             setNeedsDisplay()
             return
         }
-        guard !dragging else { return }
+        // 纵向拖动松手 → 带速度继续滑（惯性），越界则回弹
+        if dragging {
+            finishDragWithInertia()
+            return
+        }
         // 抬起位置与按下位置差太多说明是滑动，不当作点击
         guard abs(p.y - touchStart.y) < 8, abs(p.x - touchStart.x) < 8 else { return }
 
-        // 没移动但按得久 → 长按（Android 的 LONG_PRESS_MS = 500ms）
-        if let downAt, Date().timeIntervalSince(downAt) >= 0.5,
-           let token = screen.longPress(state, x: design.x, y: design.y) {
-            onAction?(token, design)
-            return
-        }
         let token = screen.hitTest(state, x: design.x, y: design.y)
         onAction?(token, design)
     }
 
     override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
+        longPressTimer?.invalidate()
+        longPressTimer = nil
+        downAt = nil
         dragging = false
+    }
+
+    // MARK: - 滚动惯性 / 回弹
+
+    private func finishDragWithInertia() {
+        guard maxScroll > 0 else { stopScrollAnimation(); return }
+        // 停手超过 120ms 就不给惯性：否则「手指早就停了、页面自己又滑一段」会很怪。
+        let idle = CACurrentMediaTime() - lastMoveAt
+        var velocity = idle < 0.12 ? scrollVelocity : 0
+        if abs(velocity) < 40 { velocity = 0 }
+
+        if state.scroll < 0 {
+            startSettle(to: 0)
+        } else if state.scroll > maxScroll {
+            startSettle(to: maxScroll)
+        } else if velocity != 0 {
+            scrollVelocity = velocity
+            scrollTarget = nil
+            startScrollLink()
+        }
+    }
+
+    private func startSettle(to target: CGFloat) {
+        scrollTarget = target
+        scrollVelocity = 0
+        startScrollLink()
+    }
+
+    private func startScrollLink() {
+        if scrollLink == nil {
+            let link = CADisplayLink(target: self, selector: #selector(stepScroll(_:)))
+            link.add(to: .main, forMode: .common)
+            scrollLink = link
+        }
+        lastFrameAt = 0
+    }
+
+    @objc private func stepScroll(_ link: CADisplayLink) {
+        let now = link.timestamp
+        let dt = lastFrameAt == 0 ? link.duration
+            : min(0.05, max(1.0 / 240.0, now - lastFrameAt))
+        lastFrameAt = now
+
+        if let target = scrollTarget {
+            let delta = target - state.scroll
+            if abs(delta) <= 0.5 {
+                state.scroll = target
+                stopScrollAnimation()
+                return
+            }
+            // 越界回弹：指数收敛，接近临界阻尼，不会来回弹。
+            state.scroll += delta * CGFloat(min(1, dt * 20))
+        } else {
+            state.scroll += scrollVelocity * CGFloat(dt)
+            // UIScrollView 的 normal 减速：每毫秒 0.998
+            scrollVelocity *= CGFloat(pow(0.998, dt * 1000))
+            if state.scroll <= 0 {
+                state.scroll = 0
+                startSettle(to: 0)
+            } else if state.scroll >= maxScroll {
+                state.scroll = maxScroll
+                startSettle(to: maxScroll)
+            } else if abs(scrollVelocity) < 12 {
+                stopScrollAnimation()
+                return
+            }
+        }
+        setNeedsDisplay()
+    }
+
+    private func stopScrollAnimation() {
+        scrollLink?.invalidate()
+        scrollLink = nil
+        scrollTarget = nil
+        scrollVelocity = 0
+        lastFrameAt = 0
     }
 }

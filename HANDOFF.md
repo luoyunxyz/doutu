@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 1.0.0(42)：钱包/余额页面按屏幕宽动态缩放，铺满 Max`  
-> 最新代码版本：`1.0.0 / 42`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 1.0.0(43)：滑动返回 / 滚动惯性 / 页面转场 / 长按 / 触觉专项`  
+> 最新代码版本：`1.0.0 / 43`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -1223,6 +1223,31 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
       - 加 `viewport-fit=cover`；
       - 追加 CSS：`html,body,#root` 高度 100%，`#fw-pay-pages-host` 宽高 100% + inset 0，`.fw-pay-page` min-height 100%；
       - 顶部/底部用 `env(safe-area-inset-top/bottom)` 适配刘海和 Home 指示条。
+
+138. **本轮 iOS 体验专项：滑动返回 / 滚动 / 转场 / 长按 / 触觉**
+    - 目标不是「再画一屏」，而是把 27 屏共用的宿主交互补齐到 iOS 的手感。
+    - **滚动惯性 + 橡皮筋**（`ScreenHostView`）：
+      - 之前 `touchesMoved` 直接把位移写进 `state.scroll`，抬手就停（与 Android 自定义 View 一致，但 iOS 上显得极「卡」）；
+      - 现在用 `CADisplayLink` 做惯性（速度按 UIScrollView 的 0.998/ms 衰减）与越界回弹（`x·d·c/(x+d·c)`），
+        手指按下立即停住惯性，停手超过 120ms 不再给惯性；
+    - **页面转场**（`setScreen(animated:backwards:)`）：
+      - push 把旧页面快照向左推出，pop 向右滑出，带阴影；不再「硬切」；
+      - 边缘手势提交后走新令牌 `edgeback`，Router 用 `pop(animated:false)`：旧页面已经被手指推走，
+        不再叠第二段动画，也不会闪回旧页一帧（之前先 reset 位移、再异步 pop，中间至少露一帧）；
+    - **边缘返回视差**：上一页快照从 -30% 平移回 0，当前页带矩形 shadowPath，拖动更接近 iOS 原生；
+    - **长按**：改成按住 500ms 立即触发（之前要「按住 → 抬手」才算，且抬手同时被当点击），触发后给中等 Taptic，移动即取消；
+    - **触觉**：切首页 tab / 平台页签 / 支底栏、边缘返回、支付密码六位成功，各有明确 Taptic；
+    - **微信微主页横向退出**：
+      - `presentWeb` 改 `.overFullScreen`，根页面边缘右滑时整个微主页跟手右移，露出下面的首页；
+      - 松手按 28% 或速度 700 提交，`dismiss(animated:false)`，不再出现「横向滑 → 整页向下滑走」；
+      - 开着浮层/子页时仍走原来的 `__fwHandleBack` / `__fwHandleChatPayBack` 逐层退；
+      - 位移/速度改在 `view.superview` 坐标系取，避免视图自身跟手后把 translation 抵消；
+    - **横幅滚动动画修复**：`BannerStore.hintFrame()` 的 progress 原来写成 `phase / animMs`
+      （phase 已接近 interval 末尾，一进窗口就 ≥1），所以 420ms 的上下滚动从来没真正播过；
+      改成 Android 的 `(phase - (interval - anim)) / anim`，并把重绘心跳对齐到窗口起点、滚动期间 30fps；
+    - **关机页闪烁**：从 4fps 提到 60fps（只有黑底 + 电池，绘制很轻）；
+    - **深色模式**：window 统一 `overrideUserInterfaceStyle = .light`，避免弹窗/键盘/滚动条变黑与页面割裂；
+    - 版本 1.0.0(43)。改动文件：`Screen.swift`、`BannerStore.swift`、`LegacyDoutuApp.swift`、`WeChatV2Host.swift`。
 
 ---
 

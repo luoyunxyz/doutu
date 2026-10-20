@@ -204,6 +204,13 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
     override var prefersStatusBarHidden: Bool { true }
     override var preferredStatusBarStyle: UIStatusBarStyle { .lightContent }
 
+    override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+        // overFullScreen 时下面的首页不会走 viewDidAppear，切换账号 / 会员状态在
+        // 返回后可能还停在旧画面；这里主动让宿主重绘一次。
+        Router.shared?.hostView?.setNeedsDisplay()
+    }
+
     // MARK: - 返回
 
     /// 左边缘右滑返回。
@@ -223,6 +230,22 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
     private var edgeActive = false
     private var edgePreNavigated = false
     private var edgeOriginalHash: String?
+    /// 根 tab 上边缘右滑：整个微主页跟手右移，露出下面的首页
+    private var edgeRootDismiss = false
+    /// 网页里的浮层/子页是否打开（由 `headerTargets` 消息同步）。
+    /// 开着浮层时不能整页退出，必须让网页先关掉那一层。
+    private var overlayOpen = false
+
+    /// 四个根 tab（微信 / 通讯录 / 发现 / 我）
+    private static let rootRoutes: Set<String> = [
+        "#/wechat", "#/wechat/index", "#/wechat/contacts", "#/wechat/discover", "#/wechat/my",
+    ]
+
+    private func isRootRoute(_ hash: String?) -> Bool {
+        guard let hash, !hash.isEmpty else { return true }
+        let normalized = hash.hasSuffix("/") ? String(hash.dropLast()) : hash
+        return Self.rootRoutes.contains(normalized)
+    }
 
     private func installBackAffordance() {
         let edge = UIScreenEdgePanGestureRecognizer(target: self, action: #selector(handleEdgePan(_:)))
@@ -263,9 +286,12 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
     }
 
     /// 所有“退出整个微主页”的动作都走这里，统一记录关闭时间。
-    private func closeHost() {
+    ///
+    /// 边缘手势已经把页面推到屏幕外时传 `animated: false`：
+    /// 再叠一次系统模态的「向下滑走」会和手指方向打架。
+    private func closeHost(animated: Bool = true) {
         Self.lastCloseAt = Date()
-        dismiss(animated: true)
+        dismiss(animated: animated)
     }
 
     /// 页面顶栏的加号/放大镜在 React 侧没有点击处理；再叠两个透明命中区，
@@ -405,15 +431,36 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
 
     @objc private func handleEdgePan(_ gesture: UIScreenEdgePanGestureRecognizer) {
         let translation = gesture.translation(in: view)
+        // 根页退出会把 view 本身右移，此时不能再拿 view 当坐标系（视图跟着手指走，
+        // 视图内坐标反而不变，translation 会被抵消）。用外层容器算位移。
+        let outer = view.superview ?? view
+        let outerTranslation = gesture.translation(in: outer)
         switch gesture.state {
         case .began:
             edgeActive = true
             edgePreNavigated = false
             edgeOriginalHash = currentHash
-            setSwipeFreeze(true)
-            makeSwipeSnapshot()
-            prepareEdgePreview()
+            // 在微主页的四个根 tab 上，按住边缘右滑 = 退出微主页回到首页。
+            // 这种情况不需要快照：直接把整个微主页跟手右移，手指下面露出的就是首页
+            // （modal 用 .overFullScreen 就是为了这个）。开着浮层/子页时仍走原逻辑，
+            // 交给网页一层一层关。
+            edgeRootDismiss = isRootRoute(currentHash) && !overlayOpen
+            if edgeRootDismiss {
+                view.layer.shadowColor = UIColor.black.cgColor
+                view.layer.shadowOpacity = 0.16
+                view.layer.shadowRadius = 8
+                view.layer.shadowOffset = CGSize(width: -4, height: 0)
+                view.layer.shadowPath = UIBezierPath(rect: view.bounds).cgPath
+            } else {
+                setSwipeFreeze(true)
+                makeSwipeSnapshot()
+                prepareEdgePreview()
+            }
         case .changed:
+            if edgeRootDismiss {
+                view.transform = CGAffineTransform(translationX: max(0, outerTranslation.x), y: 0)
+                return
+            }
             guard let snapshot = swipeSnapshot else { return }
             let x = max(0, translation.x)
             swipeLastTranslation = x
@@ -422,6 +469,35 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
             }
         case .ended, .cancelled:
             edgeActive = false
+            if edgeRootDismiss {
+                edgeRootDismiss = false
+                let width = max(view.bounds.width, 1)
+                let velocity = gesture.velocity(in: outer).x
+                let commit = gesture.state != .cancelled
+                    && (outerTranslation.x > width * 0.28 || velocity > 700)
+                if commit {
+                    UIView.animate(withDuration: 0.2, delay: 0,
+                                   options: [.curveEaseOut]) {
+                        self.view.transform = CGAffineTransform(translationX: width, y: 0)
+                    } completion: { _ in
+                        // 系统模态默认是「向下滑走」，方向与横向手势相反；
+                        // 这里已经手动滑出，直接无动画关闭，露出下面首页。
+                        self.view.transform = .identity
+                        self.view.layer.shadowOpacity = 0
+                        self.closeHost(animated: false)
+                    }
+                } else {
+                    UIView.animate(withDuration: 0.25, delay: 0,
+                                   usingSpringWithDamping: 0.9,
+                                   initialSpringVelocity: 0.6,
+                                   options: [.curveEaseOut]) {
+                        self.view.transform = .identity
+                    } completion: { _ in
+                        self.view.layer.shadowOpacity = 0
+                    }
+                }
+                return
+            }
             guard let snapshot = swipeSnapshot else { return }
             let commit = gesture.state != .cancelled
                 && translation.x > 60 && abs(translation.y) < 120
@@ -452,7 +528,12 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
                 }
             }
         default:
-            break
+            // .failed / .possible：别把整页留在被拖走的位置
+            if edgeRootDismiss {
+                edgeRootDismiss = false
+                view.transform = .identity
+                view.layer.shadowOpacity = 0
+            }
         }
     }
 
@@ -681,7 +762,8 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
                 handled = false
             }
             if !handled {
-                DispatchQueue.main.async { self.closeHost() }
+                // 快照已经跟着手指滑出屏幕，这里不要再播一次模态下滑动画。
+                DispatchQueue.main.async { self.closeHost(animated: false) }
             }
         }
     }
@@ -879,6 +961,8 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
             let visible = args.first as? Bool ?? true
             headerPlusButton?.isHidden = !visible
             headerSearchButton?.isHidden = !visible
+            // 网页里的浮层/子页状态：边缘手势据此决定「退出一整层」还是「整页回首页」。
+            overlayOpen = !visible
         default:
             // 其余方法（相册保存、来电音频、键盘、系统栏…）先按成功/空值应答，
             // 让页面逻辑不至于卡住；逐个补齐记在 README 的待办里。

@@ -47,7 +47,9 @@ final class BannerStore {
         let next: String?
         let progress: Double
 
-        var rolling: Bool { next != nil }
+        /// Android `HintFrame.rolling()`：进度严格在 0~1 之间才算「正在滚」。
+        /// 之前写成 `next != nil`，进度被钳到 1 时仍然按 30fps 重绘，白耗电。
+        var rolling: Bool { next != nil && progress > 0 && progress < 1 }
     }
 
     /// 取当前帧（与 Android `Session.hintFrame()` 同一套时间算法）
@@ -61,9 +63,27 @@ final class BannerStore {
         let phase = nowMs.truncatingRemainder(dividingBy: intervalMs)
         if phase >= intervalMs - animMs, pool.count > 1 {
             let next = pool[(idx + 1) % pool.count]
-            return HintFrame(current: pool[idx], next: next, progress: min(1, phase / animMs))
+            // 注意这里必须减去窗口起点 `intervalMs - animMs`。
+            // 之前是 `phase / animMs`（phase 已经是区间末尾，比如 7600/420 = 18），
+            // 一进窗口就钳成 1：文字瞬间跳到下一条，420ms 的滚动动画从来没真正播过。
+            let progress = min(1, max(0, (phase - (intervalMs - animMs)) / animMs))
+            return HintFrame(current: pool[idx], next: next, progress: progress)
         }
         return HintFrame(current: pool[idx], next: nil, progress: 0)
+    }
+
+    /// 距离下一次「滚动窗口」开始还有多少秒。
+    ///
+    /// 宿主的重绘心跳只有 0.25s，420ms 的滚动窗口很容易被整段错过；
+    /// 用它把下一帧对齐到窗口起点，动画才能从第一帧开始播。
+    func secondsUntilRoll(now: Date = Date()) -> TimeInterval {
+        let pool = hintList()
+        guard pool.count > 1 else { return 60 }
+        let interval = Double(max(3, rotateSec))
+        let phase = now.timeIntervalSince1970.truncatingRemainder(dividingBy: interval)
+        let start = interval - animMs / 1000
+        if phase < start { return start - phase }
+        return 1.0 / 30.0
     }
 
     /// 文字池：公告下排 + 后台配的池子；都没有时退回问候语

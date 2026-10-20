@@ -151,14 +151,21 @@ final class Router {
         stack.append((host.screen, host.state))
         host.previousSnapshot = historySnapshots.last
         host.canGoBack = true
-        host.setScreen(screen, state: state)
+        // 与 iOS 原生导航一致：旧页面向左推出，新页面在下面接管。
+        host.setScreen(screen, state: state, animated: true)
     }
 
-    /// 返回上一页；栈空时什么也不做
-    private func pop() {
+    /// 返回上一页；栈空时什么也不做。
+    ///
+    /// `animated` 区分两种来源：
+    ///   · 点页面里的返回箭头 / 系统返回 → true，旧页面向右滑出；
+    ///   · 左边缘手势已经亲手把旧页面推走（`edgeback`）→ false，直接换内容，
+    ///     否则会再滑一次、还会在两次动画之间闪回旧页。
+    private func pop(animated: Bool = true) {
         guard let host, let previous = stack.popLast() else { return }
         _ = historySnapshots.popLast()
-        host.setScreen(previous.screen, state: previous.state)
+        host.setScreen(previous.screen, state: previous.state,
+                       animated: animated, backwards: true)
         host.previousSnapshot = historySnapshots.last
         host.canGoBack = !stack.isEmpty
     }
@@ -576,7 +583,8 @@ final class Router {
         UserDefaults.standard.set(true, forKey: "terms.accepted")
         // 根页面直接就是 TermsScreen，没有可 pop 的栈；必须显式切到首页。
         // 之前只 pop()，真机上就是“点了同意还停在免责声明”。
-        host?.setScreen(HomeV2Screen(), state: HomeV2Screen.State())
+        // 用转场而不是硬切：首页是用户看到的第一屏，直接跳出来很像「闪屏」。
+        host?.setScreen(HomeV2Screen(), state: HomeV2Screen.State(), animated: true)
         host?.setNeedsDisplay()
     }
     // MARK: - 「我」页右上角 ··· 账号菜单
@@ -821,7 +829,10 @@ final class Router {
             return
         }
         let web = WeChatV2Host(route: route)
-        web.modalPresentationStyle = .fullScreen
+        // 用 overFullScreen 而不是 fullScreen：微信根页面边缘右滑时，手指下面露出的
+        // 应该是首页（跟微信/iOS 原生返回一致），而不是一块黑底。
+        // fullScreen 会把 presenting view 从层级里摘掉，没法做跟手返回。
+        web.modalPresentationStyle = .overFullScreen
         host.present(web, animated: true)
     }
 
@@ -915,25 +926,47 @@ final class Router {
 
         // 首页外壳：底部三栏 + 平台页签（Android MainActivity）
         case "tab:0", "tab:1", "tab:2":
+            let index = Int(token.suffix(1)) ?? 0
             if let state = self.host?.state as? HomeV2Screen.State {
-                state.tab = HomeV2Screen.Tab(rawValue: Int(token.suffix(1)) ?? 0) ?? .home
+                let next = HomeV2Screen.Tab(rawValue: index) ?? .home
+                if next != state.tab {
+                    state.tab = next
+                    state.scroll = 0
+                    Haptics.selection()
+                } else {
+                    // iOS 习惯：再点一次当前 tab = 回到顶部
+                    state.scroll = 0
+                }
                 self.host?.setNeedsDisplay()
                 return
             }
             guard let state = self.host?.state as? HomeShellScreen.State else { return }
-            state.tab = HomeShellScreen.Tab(rawValue: Int(token.suffix(1)) ?? 0) ?? .home
-            state.scroll = 0
+            let next = HomeShellScreen.Tab(rawValue: index) ?? .home
+            if next != state.tab {
+                state.tab = next
+                state.scroll = 0
+                Haptics.selection()
+            } else {
+                state.scroll = 0
+            }
             self.host?.setNeedsDisplay()
         case let t where t.hasPrefix("pageUnavailable:"):
             showToast("该平台暂未开放，敬请期待", ok: false)
         case let t where t.hasPrefix("page:"):
+            let page = max(0, min(3, Int(t.suffix(1)) ?? 0))
             if let state = self.host?.state as? HomeV2Screen.State {
-                state.servicePage = max(0, min(3, Int(t.suffix(1)) ?? 0))
+                if state.servicePage != page {
+                    state.servicePage = page
+                    Haptics.selection()
+                }
                 self.host?.setNeedsDisplay()
                 return
             }
             guard let state = self.host?.state as? HomeShellScreen.State else { return }
-            state.servicePage = max(0, min(3, Int(t.suffix(1)) ?? 0))
+            if state.servicePage != page {
+                state.servicePage = page
+                Haptics.selection()
+            }
             self.host?.setNeedsDisplay()
 
         // 首页外壳的宫格：微模块（4×4）与支模块（4×4）
@@ -1013,6 +1046,9 @@ final class Router {
             push(ProfileV2Screen(), state: ProfileV2Screen.State())
         case "back":
             pop()
+        case "edgeback":
+            // 左边缘手势：页面已经被手指推出屏幕，这里只换内容，不再播第二段转场。
+            pop(animated: false)
         case "balance":
             // 「我的」页资产卡「余额」→ 余额页
             push(BalanceV2Screen(), state: BalanceV2Screen.State())
@@ -1371,6 +1407,8 @@ final class Router {
                     let done = WithdrawDoneScreen.State()
                     done.amount = amount
                     done.bank = bank
+                    // 支付密码输满六位是整条流程唯一的「成功」时刻，给一次成功触觉。
+                    Haptics.success()
                     push(WithdrawDoneScreen(), state: done)
                     return
                 }
@@ -2133,6 +2171,10 @@ final class ScreenHostController: UIViewController {
 
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
+        // 整套界面是按 Android 的浅色参考图移植的，没有深色配色。
+        // 系统开深色时，UIAlertController / 键盘 / 滚动条会变成黑色，与页面割裂；
+        // 这里在 window 层级统一压成 light，一次覆盖所有模态。
+        view.window?.overrideUserInterfaceStyle = .light
         // 每次页面可见都按当前会员状态重挂水印（与 Android 的 attachIfNeeded 时机一致）
         WatermarkOverlay.attachIfNeeded(preferredWindow: view.window)
         Router.shared?.refreshMemberStatusIfNeeded()
