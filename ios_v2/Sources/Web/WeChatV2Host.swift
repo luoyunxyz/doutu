@@ -176,6 +176,9 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        // overFullScreen 下首页还在层级里，它那根 0.25s 重绘心跳会继续在网页底下
+        // 整屏重画（4fps 的 CoreGraphics 不便宜）。网页盖住期间先停掉，退出时恢复。
+        Router.shared?.hostView?.stopRedrawTimer()
         webView?.evaluateJavaScript(
             "window.__fwScanDisabled = \(TeaseStore.enabled ? "true" : "false");",
             completionHandler: nil)
@@ -206,8 +209,10 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
 
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
-        // overFullScreen 时下面的首页不会走 viewDidAppear，切换账号 / 会员状态在
-        // 返回后可能还停在旧画面；这里主动让宿主重绘一次。
+        // 恢复首页的重绘心跳（viewWillAppear 里停掉的），并主动刷新一次：
+        // overFullScreen 时首页不会走 viewDidAppear，切换账号 / 会员状态在返回后
+        // 可能还停在旧画面。
+        Router.shared?.hostView?.startRedrawTimer()
         Router.shared?.hostView?.setNeedsDisplay()
     }
 
