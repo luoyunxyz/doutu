@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 1.0.0(5)：黑色支付宝去 HK；WebClip 分别进小支/小微`  
-> 最新代码版本：`1.0.0 / 5`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 1.0.0(6)：修复 onOpenURL 的 MainActor 编译错误`  
+> 最新代码版本：`1.0.0 / 6`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -948,6 +948,11 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
       - 微信 → `doutu://wechat` → `WeChatV2Host` 小微主页；
       - 豆图 → `doutu://` → 应用首页；
     - `DoutuV2App.onOpenURL` 调用 `Router.handleDeepLink`；加入 pending 深链，防止冷启动时 Router 还没挂好。
+
+103. **1.0.0(5) 构建失败：onOpenURL 与 MainActor**
+    - `Router` 是 `@MainActor`，SwiftUI `.onOpenURL` 闭包不保证在主 actor 上，直接调用 `handleDeepLink` 会编译失败；
+    - 1.0.0(6) 改成在闭包里 `Task { @MainActor in Router.shared?.handleDeepLink(url) }`；
+    - 其余 WebClip 三项、深链、URL scheme 保持不变。
 
 ---
 

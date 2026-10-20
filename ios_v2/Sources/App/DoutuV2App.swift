@@ -17,7 +17,10 @@ struct DoutuV2App: App {
                 .statusBarHidden(true)
                 .onAppear { UpdatePrompt.shared.maybeCheck() }
                 .onOpenURL { url in
-                    Router.shared?.handleDeepLink(url)
+                    // onOpenURL 的闭包不一定在主 actor 上，Router 是 @MainActor。
+                    Task { @MainActor in
+                        Router.shared?.handleDeepLink(url)
+                    }
                 }
                 .onChange(of: scenePhase) { phase in
                     if phase == .active { UpdatePrompt.shared.maybeCheck() }
