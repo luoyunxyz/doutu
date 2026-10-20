@@ -19,6 +19,7 @@ final class AppIconChooser: UIViewController {
     private static let options: [Option] = [
         // 黑色支付宝图标（AppIconAlipayHK）直接显示为「支付宝」，不再带 HK。
         Option(label: "支付宝", imageName: "PreviewAppIconAlipayHK", alternateName: "AppIconAlipayHK"),
+        Option(label: "支付宝蓝", imageName: "PreviewAppIconAlipay", alternateName: "AppIconAlipay"),
         Option(label: "微信", imageName: "PreviewAppIconWechat", alternateName: "AppIconWechat"),
         Option(label: "豆图", imageName: "PreviewAppIconDoutu", alternateName: nil),
     ]
@@ -70,10 +71,10 @@ final class AppIconChooser: UIViewController {
         guard let host = UpdatePrompt.topViewController() else { return }
         let alert = UIAlertController(
             title: "添加桌面图标",
-            message: "是否一次添加「支付宝 / 微信 / 豆图」三个桌面图标？\n\n支付宝打开小支主页，微信打开小微主页，豆图打开应用首页。\n\niOS 会打开 Safari 下载描述文件，还需要你在「设置」里点一次「安装」。",
+            message: "是否一次添加「支付宝 / 支付宝蓝 / 微信 / 豆图」四个桌面图标？\n\n支付宝和支付宝蓝打开小支主页，微信打开小微主页，豆图打开应用首页。\n\niOS 会打开 Safari 下载描述文件，还需要你在「设置」里点一次「安装」。",
             preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "仅换图标", style: .cancel))
-        alert.addAction(UIAlertAction(title: "添加三个图标", style: .default) { _ in
+        alert.addAction(UIAlertAction(title: "添加四个图标", style: .default) { _ in
             installWebClip(from: host)
         })
         host.present(alert, animated: true)
@@ -82,6 +83,7 @@ final class AppIconChooser: UIViewController {
     private static func installWebClip(from host: UIViewController) {
         let items: [(label: String, icon: UIImage?, url: String)] = [
             ("支付宝", UIImage(named: "PreviewAppIconAlipayHK"), "doutu://zhi"),
+            ("支付宝蓝", UIImage(named: "PreviewAppIconAlipay"), "doutu://zhi"),
             ("微信", UIImage(named: "PreviewAppIconWechat"), "doutu://wechat"),
             ("豆图", UIImage(named: "PreviewAppIconDoutu"), "doutu://"),
         ]

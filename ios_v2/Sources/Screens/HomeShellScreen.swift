@@ -245,8 +245,11 @@ final class HomeShellScreen: Screen {
             // 真机表现就是「点了没反应，只能停在微」。
             if y >= Self.segmentTop - 8 && y <= Self.segmentBottom + 8 {
                 let page = x < 280 ? 0 : x < 540 ? 1 : x < 795 ? 2 : x <= 1045 ? 3 : -1
+                if page >= 2 { return "pageUnavailable:\(page)" }
                 if page >= 0 { return "page:\(page)" }
             }
+            // 抖 / Q 页面还没做，点在宫格上也不能落进支模块。
+            guard s.servicePage < 2 else { return "pageUnavailable:\(s.servicePage)" }
             // 宫格列中心与行边界也照 Android 1080×2388：
             // 列 295/540/782，行（微）900/1170/1390/1610/1830、（支）940/1180/1400/1610/1830。
             // 之前 iOS 用的是 350/639/927 和 1300..2560，导致点「抖音去水印」落到第一行，

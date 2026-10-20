@@ -32,82 +32,207 @@ struct LoginView: View {
     @Environment(\.presentationMode) private var presentationMode
 
     var body: some View {
-        NavigationView {
-            Form {
-                Section {
-                    Picker("方式", selection: $mode) {
-                        ForEach(Mode.allCases, id: \.self) { Text($0.rawValue).tag($0) }
-                    }
-                    .pickerStyle(.segmented)
+        ZStack {
+            Color(red: 0.94, green: 0.96, blue: 0.995).ignoresSafeArea()
+            ScrollView {
+                VStack(spacing: 0) {
+                    header
+                    panel
+                    legal
                 }
-
-                Section {
-                    // 用邀请码重置密码（对应 Android 的 ResetByInviteActivity）
-                    Button("用邀请码重置密码") {
-                        Router.shared?.handle("resetInvite", at: .zero)
-                    }
-                }
-
-                Section {
-                    if mode == .login {
-                        TextField("手机号或用户名", text: $username)
-                            .textContentType(.username)
-                            .autocapitalization(.none)
-                            .disableAutocorrection(true)
-                    } else if mode == .register {
-                        TextField("用户名", text: $username)
-                            .autocapitalization(.none)
-                        TextField("邀请码", text: $inviteCode)
-                            .autocapitalization(.none)
-                            .disableAutocorrection(true)
-                        TextField("手机号", text: $phone)
-                            .keyboardType(.numberPad)
-                    } else {
-                        if resetTicket.isEmpty {
-                            TextField("注册手机号", text: $phone).keyboardType(.numberPad)
-                            TextField("邀请码", text: $inviteCode).autocapitalization(.none)
-                        }
-                    }
-                }
-
-                Section {
-                    if mode == .login {
-                        // 登录只验证一遍密码，不再让用户重复输入确认密码。
-                        SecureField("密码", text: $password)
-                    } else if mode == .register || !resetTicket.isEmpty {
-                        SecureField("密码", text: $password)
-                        SecureField("确认密码", text: $confirm)
-                    }
-                }
-
-                if !message.isEmpty {
-                    Section {
-                        Text(message)
-                            .foregroundColor(messageIsError ? .red : .secondary)
-                            .font(.footnote)
-                    }
-                }
-
-                Section {
-                    Button(action: submit) {
-                        HStack {
-                            Spacer()
-                            if busy { ProgressView().padding(.trailing, 6) }
-                            Text(busy ? "请稍候…" : submitTitle).bold()
-                            Spacer()
-                        }
-                    }
-                    .disabled(busy || !canSubmit)
-                }
-            }
-            .navigationTitle(mode == .login ? "登录" : (mode == .register ? "注册" : "找回密码"))
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("关闭") { presentationMode.wrappedValue.dismiss() }
-                }
+                .padding(.bottom, 28)
             }
         }
+        .preferredColorScheme(.light)
+    }
+
+    private var header: some View {
+        ZStack(alignment: .topTrailing) {
+            LinearGradient(
+                gradient: Gradient(colors: [
+                    Color(red: 0.29, green: 0.48, blue: 0.97),
+                    Color(red: 0.55, green: 0.36, blue: 0.96),
+                ]),
+                startPoint: .topLeading, endPoint: .bottomTrailing)
+            VStack(alignment: .leading, spacing: 12) {
+                Text("注册 / 登录")
+                    .font(.system(size: 36, weight: .bold))
+                    .foregroundColor(.white)
+                Text("一键解析 · 服务端合成 · 支持批量")
+                    .font(.system(size: 16))
+                    .foregroundColor(.white.opacity(0.86))
+                Text("未开通会员也能用，只是成品带水印")
+                    .font(.system(size: 14))
+                    .foregroundColor(.white.opacity(0.95))
+                    .padding(.horizontal, 16).padding(.vertical, 10)
+                    .background(Color.white.opacity(0.16))
+                    .clipShape(Capsule())
+                    .padding(.top, 8)
+                Spacer(minLength: 0)
+            }
+            .padding(.leading, 28)
+            .padding(.top, 48)
+
+            Button {
+                presentationMode.wrappedValue.dismiss()
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.9))
+                    .padding(10)
+            }
+        }
+        .frame(height: 300)
+        .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
+        .padding(.horizontal, 18)
+        .padding(.top, 16)
+    }
+
+    private var panel: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            modeTabs
+            fields
+            if !message.isEmpty {
+                Text(message)
+                    .font(.system(size: 13))
+                    .foregroundColor(messageIsError ? .red : Color(red: 0.36, green: 0.4, blue: 0.48))
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            submitButton
+            footerLinks
+        }
+        .padding(.horizontal, 22)
+        .padding(.top, 22)
+        .padding(.bottom, 26)
+        .background(Color.white)
+        .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+        .padding(.horizontal, 24)
+        .padding(.top, -54)
+    }
+
+    private var modeTabs: some View {
+        HStack(spacing: 0) {
+            tabButton("登录", .login)
+            tabButton("注册新账号", .register)
+        }
+        .padding(4)
+        .background(Color(red: 0.95, green: 0.96, blue: 0.975))
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+    }
+
+    private func tabButton(_ title: String, _ value: Mode) -> some View {
+        Button {
+            mode = value
+            message = ""
+        } label: {
+            Text(title)
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundColor(mode == value ? .white : Color(red: 0.42, green: 0.45, blue: 0.52))
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 13)
+                .background(mode == value
+                            ? Color(red: 0.29, green: 0.48, blue: 0.97)
+                            : Color.clear)
+                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        }
+    }
+
+    @ViewBuilder private var fields: some View {
+        if mode == .login {
+            inputField("手机号 / 用户名", "手机号或用户名都行", text: $username)
+            inputField("密码", "至少 6 位", text: $password, secure: true)
+        } else if mode == .register {
+            inputField("用户名", "请输入用户名", text: $username)
+            inputField("邀请码", "请输入邀请码", text: $inviteCode)
+            inputField("手机号", "请输入手机号", text: $phone, number: true)
+            inputField("密码", "至少 6 位", text: $password, secure: true)
+            inputField("确认密码", "再次输入密码", text: $confirm, secure: true)
+        } else if resetTicket.isEmpty {
+            inputField("注册手机号", "请输入注册手机号", text: $phone, number: true)
+            inputField("邀请码", "请输入邀请码", text: $inviteCode)
+        } else {
+            inputField("新密码", "至少 6 位", text: $password, secure: true)
+            inputField("确认新密码", "再次输入新密码", text: $confirm, secure: true)
+        }
+    }
+
+    private func inputField(_ label: String, _ placeholder: String,
+                            text: Binding<String>, secure: Bool = false,
+                            number: Bool = false) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(label)
+                .font(.system(size: 15))
+                .foregroundColor(Color(red: 0.39, green: 0.42, blue: 0.48))
+            Group {
+                if secure {
+                    SecureField(placeholder, text: text)
+                } else if number {
+                    TextField(placeholder, text: text).keyboardType(.numberPad)
+                } else {
+                    TextField(placeholder, text: text)
+                        .autocapitalization(.none)
+                        .disableAutocorrection(true)
+                }
+            }
+            .font(.system(size: 17))
+            .padding(.horizontal, 16)
+            .frame(height: 52)
+            .background(Color(red: 0.96, green: 0.965, blue: 0.975))
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        }
+    }
+
+    private var submitButton: some View {
+        Button(action: submit) {
+            HStack(spacing: 8) {
+                if busy {
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                }
+                Text(busy ? "请稍候…" : submitTitle)
+                    .font(.system(size: 20, weight: .semibold))
+            }
+            .foregroundColor(.white)
+            .frame(maxWidth: .infinity)
+            .frame(height: 58)
+            .background(canSubmit && !busy
+                        ? Color(red: 0.29, green: 0.48, blue: 0.97)
+                        : Color(red: 0.55, green: 0.66, blue: 0.94))
+            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        }
+        .disabled(busy || !canSubmit)
+        .padding(.top, 6)
+    }
+
+    private var footerLinks: some View {
+        VStack(spacing: 12) {
+            Text("还没有账号？点上面的「注册新账号」，用邀请码创建。")
+                .font(.system(size: 15))
+                .foregroundColor(Color(red: 0.44, green: 0.47, blue: 0.54))
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: .infinity)
+            Button("忘记密码？请联系客服协助重置") {
+                Router.shared?.handle("entry:0", at: .zero)
+            }
+            .font(.system(size: 16))
+            .foregroundColor(Color(red: 0.29, green: 0.48, blue: 0.97))
+            Button("邀请码重置密码") {
+                Router.shared?.handle("resetInvite", at: .zero)
+            }
+            .font(.system(size: 16))
+            .foregroundColor(Color(red: 0.29, green: 0.48, blue: 0.97))
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.top, 8)
+    }
+
+    private var legal: some View {
+        Text("本软件仅用于处理您自己创作或拥有版权的素材，请勿用于去除他人作品的版权水印、搬运或二次发布。平台提供侵权投诉与下架通道，收到有效投诉将定位到具体账号与任务并停止服务。")
+            .font(.system(size: 13))
+            .foregroundColor(Color(red: 0.48, green: 0.5, blue: 0.56))
+            .lineSpacing(4)
+            .padding(.horizontal, 34)
+            .padding(.top, 22)
     }
 
     private var submitTitle: String {

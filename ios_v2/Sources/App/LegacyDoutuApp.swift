@@ -116,6 +116,7 @@ final class Router {
     init(host: ScreenHostView) {
         self.host = host
         Router.shared = self
+        DeepLinkCenter.flush(self)
     }
 
     /// 进入新页面（保留当前页面的状态，返回时恢复）
@@ -732,6 +733,7 @@ final class Router {
 
     /// WebClip 使用的深链：doutu://zhi → 小支主页；doutu://wechat → 小微主页。
     func handleDeepLink(_ url: URL) {
+        CrashLog.append("DEEPLINK \(url.absoluteString)")
         guard url.scheme?.lowercased() == "doutu", host != nil else { return }
         switch (url.host ?? "").lowercased() {
         case "zhi":
@@ -865,6 +867,8 @@ final class Router {
             state.tab = HomeShellScreen.Tab(rawValue: Int(token.suffix(1)) ?? 0) ?? .home
             state.scroll = 0
             self.host?.setNeedsDisplay()
+        case let t where t.hasPrefix("pageUnavailable:"):
+            showToast("该平台暂未开放，敬请期待", ok: false)
         case let t where t.hasPrefix("page:"):
             if let state = self.host?.state as? HomeV2Screen.State {
                 state.servicePage = max(0, min(3, Int(t.suffix(1)) ?? 0))
