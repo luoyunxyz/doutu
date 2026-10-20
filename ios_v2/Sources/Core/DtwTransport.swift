@@ -5,11 +5,34 @@ import Foundation
 /// 为什么需要一个同步版：握手是在 `DtwSession.ensure()` 里同步完成的（对应 Android 的
 /// 阻塞式 HttpURLConnection），调用方拿到结果才决定后续；用信号量桥接是最直白的写法。
 /// 注意：**不要在主线程调用 `sync`**（会阻塞 UI）。
+/// 服务器证书是 `tdapi.luoyun.xyz` 的；直连公网 IP 时域名不匹配，
+/// 这里接受服务器证书。DTW 握手仍会用内置公钥验签，业务数据也在协议层加密，
+/// 所以 TLS 不是唯一信任锚（这是为了绕开本机 DNS 把域名解析到 127.0.0.1）。
+private final class DtwTlsDelegate: NSObject, URLSessionDelegate {
+    func urlSession(_ session: URLSession,
+                    didReceive challenge: URLAuthenticationChallenge,
+                    completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
+        if challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodServerTrust,
+           let trust = challenge.protectionSpace.serverTrust {
+            completionHandler(.useCredential, URLCredential(trust: trust))
+        } else {
+            completionHandler(.performDefaultHandling, nil)
+        }
+    }
+}
+
 enum DtwHttp {
     struct Response {
         let statusCode: Int
         let data: Data
     }
+
+    private static let session: URLSession = {
+        let config = URLSessionConfiguration.ephemeral
+        config.timeoutIntervalForRequest = 30
+        config.timeoutIntervalForResource = 60
+        return URLSession(configuration: config, delegate: DtwTlsDelegate(), delegateQueue: nil)
+    }()
 
     /// 同步请求（仅用于握手，超时 20/30 秒）
     ///
@@ -22,7 +45,7 @@ enum DtwHttp {
     static func sync(_ request: URLRequest) throws -> (Data, Response?) {
         let box = Box()
         let sem = DispatchSemaphore(value: 0)
-        URLSession.shared.dataTask(with: request) { data, response, error in
+        session.dataTask(with: request) { data, response, error in
             if let error {
                 box.result = .failure(error)
             } else {
@@ -57,7 +80,7 @@ enum DtwHttp {
     /// 非 2xx 也照常返回数据，由调用方看 statusCode）
     private static func data(for request: URLRequest) async throws -> (Data, URLResponse) {
         try await withCheckedThrowingContinuation { continuation in
-            URLSession.shared.dataTask(with: request) { data, response, error in
+            session.dataTask(with: request) { data, response, error in
                 if let error {
                     continuation.resume(throwing: error)
                 } else if let data, let response {

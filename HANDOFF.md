@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 1.0.0(67)：启动会员刷新静默，去掉网络异常 Toast`  
-> 最新代码版本：`1.0.0 / 67`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 1.0.0(68)：API 直连公网 IP，绕过 127.0.0.1 DNS`  
+> 最新代码版本：`1.0.0 / 68`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -1666,6 +1666,20 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
       - 手动刷新（登录后、换图标页带 completion）保持原提示；
       - 本地功能（钱包/微/娱乐）不依赖该接口；
     - 版本 1.0.0(67)。改动文件：`LegacyDoutuApp.swift`、`project.yml`。
+
+161. **1.0.0(68)：API 直连公网 IP，绕过本机 DNS**
+    - 真机“解析失败 / Could not connect”根因：
+      - 公共 DNS（8.8.8.8 / 223.5.5.5）解析 `tdapi.luoyun.xyz` → `69.165.75.130`；
+      - 当前网络解析 → `127.0.0.1`，手机把 API 请求发给了自己；
+      - 真实服务器 `69.165.75.130:443` 正常（nginx）；
+    - 68：
+      - `DtwConfig.baseUrl` 改成 `https://69.165.75.130`，直接连公网，不再依赖域名解析；
+      - 服务器证书是 `tdapi.luoyun.xyz` 的，`DtwHttp` 使用自定义 `URLSession` +
+        `DtwTlsDelegate` 接受该证书；
+      - DTW 握手仍用内置公钥验签，协议层仍加密，TLS 不是唯一信任锚；
+      - 公告/登录 token/业务接口都走同一个 `DtwConfig.baseUrl`，一起恢复；
+    - 注意：服务器 IP 以后变了要同步改这个常量（或改回域名）；
+    - 版本 1.0.0(68)。改动文件：`DtwConfig.swift`、`DtwTransport.swift`、`project.yml`。
 
 ---
 
