@@ -211,12 +211,9 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler, UIGestureRec
     /// 早期版本在左上角叠了一个「‹ 返回」胶囊，但它不属于 Android 的界面，
     /// 会盖住微信标题栏 —— 与「UI 一模一样」冲突，所以去掉，只保留边缘手势。
     private func installBackAffordance() {
-        let leftEdge = UIScreenEdgePanGestureRecognizer(target: self, action: #selector(handleEdgePan(_:)))
-        leftEdge.edges = .left
-        view.addGestureRecognizer(leftEdge)
-        let rightEdge = UIScreenEdgePanGestureRecognizer(target: self, action: #selector(handleEdgePan(_:)))
-        rightEdge.edges = .right
-        view.addGestureRecognizer(rightEdge)
+        let edge = UIScreenEdgePanGestureRecognizer(target: self, action: #selector(handleEdgePan(_:)))
+        edge.edges = .left
+        view.addGestureRecognizer(edge)
     }
 
     /// iOS 没有 Android 的系统返回键；只留边缘滑动的话很多用户会卡在微主页里。
@@ -388,8 +385,7 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler, UIGestureRec
     @objc private func handleEdgePan(_ gesture: UIScreenEdgePanGestureRecognizer) {
         guard gesture.state == .ended else { return }
         let translation = gesture.translation(in: view)
-        let sign: CGFloat = gesture.edges.contains(.right) ? -1 : 1
-        guard translation.x * sign > 60, abs(translation.y) < 120 else { return }
+        guard translation.x > 60, abs(translation.y) < 120 else { return }
         // 微信内部页面层级很深（钱包、零钱、账单、提现、亲属卡……），
         // 不能只对聊天/支付做判断。统一让网页先处理：
         // 1) 聊天/支付浮层调 __fwHandleChatPayBack；
@@ -397,9 +393,15 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler, UIGestureRec
         // 3) 已经在微主页根路由时才关闭整个微主页。
         let script = """
         (function(){
+          // 钱包/零钱/账单/银行卡有独立的一层返回逻辑（__fwHandleBack）。
+          try {
+            if (window.__fwHandleBack && window.__fwHandleBack()) return true;
+          } catch (e) {}
+          // 聊天、转账、支付浮层。
           try {
             if (window.__fwHandleChatPayBack && window.__fwHandleChatPayBack()) return true;
           } catch (e) {}
+          // 其他深层 hash 路由：逐级 history.back。
           var h = String(location.hash || '');
           if (h && h !== '#/wechat' && h !== '#/wechat/' && history.length > 1) {
             try { history.back(); return true; } catch (e) {}

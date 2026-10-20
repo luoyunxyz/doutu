@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 1.0.0(26)：左右两侧边缘都可滑动返回`  
-> 最新代码版本：`1.0.0 / 26`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 1.0.0(27)：仅左边缘右滑；微信钱包调用 __fwHandleBack`  
+> 最新代码版本：`1.0.0 / 27`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -1088,6 +1088,16 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
       - 速度/进度都乘 `edgeSign`；
     - `WeChatV2Host`、`LoginHostingController`、`ContactPickerViewController`、`AppIconChooser` 都补了右边缘手势；
     - 微信深层路由仍走 `__fwHandleChatPayBack` + `history.back()` 逐级返回。
+
+123. **只保留左边缘右滑；零钱仍无反应**
+    - 用户明确不要右边缘，1.0.0(27) 删除所有 `.right` 边缘手势，只保留 `.left` 向右；
+    - 零钱/钱包/账单不是 hash 路由，而是 `wechat-pay-pages.js` 自绘层，真正的返回函数是 `window.__fwHandleBack`；
+    - 原生边缘脚本改为依次调用：
+      1. `__fwHandleBack()`（钱包/零钱/账单/银行卡）；
+      2. `__fwHandleChatPayBack()`（聊天/支付浮层）；
+      3. `history.back()`（其他深层 hash）；
+      4. 都不处理才 `closeHost()`；
+    - 这样零钱 → 钱包 → 服务/微主页每次只退一层。
 
 ---
 
