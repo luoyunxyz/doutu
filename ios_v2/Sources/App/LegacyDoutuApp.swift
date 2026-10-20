@@ -356,19 +356,26 @@ final class Router {
         guard !state.polling else { return }
         screen.beginParse(state)
         host?.setNeedsDisplay()
-        Task { @MainActor in
-            let env = await ApiClient.shared.call("POST", "/api/v1/dw/parse", body: ["link": link])
-            guard env.ok, let data = env.data as? [String: Any] else {
-                showToast(env.msg.isEmpty ? "解析失败，请稍后再试" : env.msg, ok: false)
+        Task {
+            // 关键：DTW 握手（PBKDF2 + 同步网络）不能跑在 MainActor 上，
+            // 否则解析一开始主线程就被占住，界面看起来像卡死。
+            let env = await Task.detached(priority: .userInitiated) {
+                await ApiClient.shared.call("POST", "/api/v1/dw/parse", body: ["link": link])
+            }.value
+            await MainActor.run {
+                guard env.ok, let data = env.data as? [String: Any] else {
+                    self.showToast(env.msg.isEmpty ? "解析失败，请稍后再试" : env.msg, ok: false)
+                    self.host?.setNeedsDisplay()
+                    return
+                }
+                let taskNo = (data["task_no"] as? String) ?? ""
+                screen.attachTask(state, taskNo: taskNo, status: 0)
                 self.host?.setNeedsDisplay()
-                return
-            }
-            let taskNo = (data["task_no"] as? String) ?? ""
-            screen.attachTask(state, taskNo: taskNo, status: 0)
-            self.host?.setNeedsDisplay()
-            if !taskNo.isEmpty {
-                // 第一次立刻查，之后 0.7s 一次；之前固定等 1.5s，体感会慢一倍。
-                self.pollParse(screen: screen, state: state, taskNo: taskNo, left: 60, delay: 0.15)
+                if !taskNo.isEmpty {
+                    // 第一次立刻查，之后 0.7s 一次；之前固定等 1.5s，体感会慢一倍。
+                    self.pollParse(screen: screen, state: state, taskNo: taskNo,
+                                   left: 60, delay: 0.15)
+                }
             }
         }
     }
@@ -378,19 +385,24 @@ final class Router {
         guard left > 0 else { return }
         DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
             guard let self else { return }
-            Task { @MainActor in
-                let env = await ApiClient.shared.call("GET", "/api/v1/dw/task/\(taskNo)")
-                let data = env.data as? [String: Any]
-                let status = (data?["status"] as? Int) ?? -1
-                let text = (data?["status_text"] as? String) ?? ""
-                let done = screen.applyPollStatus(state, status: status, statusText: text)
-                self.host?.setNeedsDisplay()
-                if done {
-                    if let data { screen.showResult(state, data) }
+            Task {
+                let path = "/api/v1/dw/task/\(taskNo)"
+                let env = await Task.detached(priority: .userInitiated) {
+                    await ApiClient.shared.call("GET", path)
+                }.value
+                await MainActor.run {
+                    let data = env.data as? [String: Any]
+                    let status = (data?["status"] as? Int) ?? -1
+                    let text = (data?["status_text"] as? String) ?? ""
+                    let done = screen.applyPollStatus(state, status: status, statusText: text)
                     self.host?.setNeedsDisplay()
-                } else {
-                    self.pollParse(screen: screen, state: state, taskNo: taskNo,
-                                   left: left - 1, delay: 0.7)
+                    if done {
+                        if let data { screen.showResult(state, data) }
+                        self.host?.setNeedsDisplay()
+                    } else {
+                        self.pollParse(screen: screen, state: state, taskNo: taskNo,
+                                       left: left - 1, delay: 0.7)
+                    }
                 }
             }
         }

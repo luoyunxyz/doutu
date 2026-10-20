@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 2.4.70：新装默认登出、登录单密码、去水印提速`  
-> 最新代码版本：`2.4.70 / 20110`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 2.4.71：去水印网络请求移出主线程`  
+> 最新代码版本：`2.4.71 / 20111`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.67 / 20107`（已通过 USB 查询确认）
 
 ---
@@ -842,6 +842,11 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
     - `LoginView` 登录模式只显示一个密码框；确认密码只在注册/重置新密码时出现；
     - `LoginPresenter` 原来把 `endSuppress` 放在 `present` 的 completion 里，而该 completion 是弹出完成就执行，登录页刚出现水印又被挂回来；改为 `LoginHostingController.viewDidDisappear` 真正关闭时再解除；
     - 去水印解析轮询从固定 1.5s 改为首次 0.15s、之后 0.7s，并防止重复点解析按钮重复起任务。
+
+87. **去水印一直卡在“提交中”**
+    - `startParse` / `pollParse` 原来在 `Task { @MainActor in ... }` 里直接 `await ApiClient.call`；DTW 握手包含 PBKDF2 和同步网络，一旦开始就把主线程占住，界面无法响应；
+    - 2.4.71 把 `/api/v1/dw/parse` 和 `/api/v1/dw/task/...` 都放进 `Task.detached` 执行，结果再 `await MainActor.run` 回主线程更新 State；
+    - 这样握手/网络慢时界面仍可滚动、返回，状态也能及时刷新，不会看起来像整页卡死。
 
 ---
 
