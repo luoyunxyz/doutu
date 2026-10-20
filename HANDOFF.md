@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 1.0.0(68)：API 直连公网 IP，绕过 127.0.0.1 DNS`  
-> 最新代码版本：`1.0.0 / 68`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 1.0.0(69)：回退 IP，统一使用域名接口`  
+> 最新代码版本：`1.0.0 / 69`（已推送，待 Codemagic 构建）  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -1680,6 +1680,29 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
       - 公告/登录 token/业务接口都走同一个 `DtwConfig.baseUrl`，一起恢复；
     - 注意：服务器 IP 以后变了要同步改这个常量（或改回域名）；
     - 版本 1.0.0(68)。改动文件：`DtwConfig.swift`、`DtwTransport.swift`、`project.yml`。
+
+162. **1.0.0(69)：回退 IP 直连，统一域名接口**
+    - 用户明确要求：所有服务端/移动端交互必须统一走
+      `https://tdapi.luoyun.xyz`，不要在 App 里硬编码 IP；
+    - 69 回退 68：
+      - `DtwConfig.baseUrl` 改回 `https://tdapi.luoyun.xyz`；
+      - 删除 `DtwTlsDelegate` / 自定义 URLSession，恢复 `URLSession.shared`，
+        正常校验服务器证书；
+      - 域名证书有效时无需接受任意证书；
+    - 服务器已登录核实（只读，未改动）：
+      - nginx 80/443 正常，`server_name tdapi.luoyun.xyz`，反代到 API 容器；
+      - `POST /api/v1/dtw/hs` 返回 `{"code":1001,"msg":"缺少时间戳"}`，接口正常；
+      - 服务器自身 `getent hosts tdapi.luoyun.xyz` → `69.165.75.130`；
+    - 真正问题在客户端 DNS：路由器 `192.168.1.1` 把域名返回 `127.0.0.1`，
+      电脑 `nslookup` 也是 `127.0.0.1`；公共 DNS 是 `69.165.75.130`；
+      Android/iPhone 都走这个路由器，所以连到手机自己；
+    - 处理：改路由器/手机 DNS，不在 App 里绕：
+      - 路由器 192.168.1.1：删除 `tdapi.luoyun.xyz → 127.0.0.1` 的静态
+        DNS/hosts，或把 DNS 改成 `223.5.5.5` / `8.8.8.8`，重启路由器；
+      - 或手机 Wi-Fi DNS 手动 `223.5.5.5` / `8.8.8.8`；
+      - Android 可用私人 DNS `dns.alidns.com`；
+      - 验证：手机浏览器打开 `https://tdapi.luoyun.xyz/` 应看到 nginx 404；
+    - 版本 1.0.0(69)。改动文件：`DtwConfig.swift`、`DtwTransport.swift`、`project.yml`。
 
 ---
 

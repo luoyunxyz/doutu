@@ -7,11 +7,10 @@ import Foundation
 /// **换服务端域名或轮换公钥时必须同步改这里**，否则握手会失败。
 enum DtwConfig {
     /// 生产服务端地址（与 Android 构建参数 `-PdoutuApi` 一致）
-    /// 直连公网 IP，绕过本机 DNS 把 tdapi.luoyun.xyz 解析到 127.0.0.1 的问题。
-    /// 服务器证书是 tdapi.luoyun.xyz 的，URLSession 用 DtwTlsDelegate 接受该证书；
-    /// DTW 协议本身还会用内置公钥验签，TLS 不是唯一信任锚。
-    /// 服务器 IP 变了需要同步改这里（或改回域名）。
-    static let baseUrl = "https://69.165.75.130"
+    /// 生产服务端地址：所有客户端/服务端交互统一走这个域名。
+    /// 域名必须解析到 69.165.75.130；如果本地 DNS 把它解析到 127.0.0.1，
+    /// 需要修路由器/手机 DNS，而不是在 App 里硬编码 IP。
+    static let baseUrl = "https://tdapi.luoyun.xyz"
 
     /// 协议版本（帧头 ver 字段）
     static let version = 1
