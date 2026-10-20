@@ -28,7 +28,7 @@ final class TdapiResolver: URLProtocol, URLSessionDelegate {
 
     override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
 
-    private var task: URLSessionDataTask?
+    private var dataTask: URLSessionDataTask?
     private var session: URLSession?
 
     override func startLoading() {
@@ -68,12 +68,12 @@ final class TdapiResolver: URLProtocol, URLSessionDelegate {
             }
             self.client?.urlProtocolDidFinishLoading(self)
         }
-        self.task = task
+        self.dataTask = task
         task.resume()
     }
 
     override func stopLoading() {
-        task?.cancel()
+        dataTask?.cancel()
     }
 
     /// 证书是 tdapi.luoyun.xyz 的，IP 直连时域名不匹配；证书链仍由系统校验，
