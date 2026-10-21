@@ -100,6 +100,7 @@ public final class LocalToolActivity extends Activity {
         else if ("wallet".equals(key)) buildWallet();
         else if ("redpacket".equals(key) || "transfer".equals(key)) buildPay();
         else if ("contacts".equals(key)) buildContacts();
+        else if ("discover".equals(key)) buildDiscover();
         else if ("moments".equals(key)) buildMoments();
         else if ("album".equals(key)) buildAlbum();
         else if ("team".equals(key)) buildTeam();
@@ -374,7 +375,7 @@ public final class LocalToolActivity extends Activity {
         tabs.setGravity(Gravity.CENTER);
         tabs.setBackgroundColor(0xfff7f7f7);
         tabs.setPadding(0, dp(6), 0, dp(4));
-        String[][] defs = {{"💬", "微信", "home"}, {"👥", "通讯录", "contacts"}, {"🧭", "发现", "moments"}, {"👤", "我", "profile"}};
+        String[][] defs = {{"💬", "微信", "home"}, {"👥", "通讯录", "contacts"}, {"🧭", "发现", "discover"}, {"👤", "我", "profile"}};
         for (String[] d : defs) {
             LinearLayout tab = new LinearLayout(this);
             tab.setOrientation(LinearLayout.VERTICAL);
@@ -397,6 +398,33 @@ public final class LocalToolActivity extends Activity {
             tabs.addView(tab, new LinearLayout.LayoutParams(0, dp(52), 1f));
         }
         return tabs;
+    }
+
+    private void buildDiscover() {
+        content.setBackgroundColor(0xffededed);
+        content.addView(wechatHeader("发现"));
+        String[][] rows = {
+                {"圈", "0xff07c160", "朋友圈", "moments"},
+                {"视", "0xffff9f1c", "视频号", "video"},
+                {"播", "0xffff5a5f", "直播", "video"},
+                {"扫", "0xff2f7bff", "扫一扫", "pay"},
+                {"摇", "0xff2f7bff", "摇一摇", "generic"},
+                {"看", "0xffffb400", "看一看", "articles"},
+                {"搜", "0xffff5a5f", "搜一搜", "articles"},
+                {"近", "0xff2f7bff", "附近", "generic"},
+                {"购", "0xffff5a5f", "购物", "shop"},
+                {"游", "0xff07c160", "游戏", "generic"},
+                {"程", "0xff7c5cf6", "小程序", "generic"}
+        };
+        for (int i = 0; i < rows.length; i++) {
+            if (i == 3 || i == 5 || i == 8 || i == 10) {
+                View gap = new View(this);
+                gap.setBackgroundColor(0xffededed);
+                content.addView(gap, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(8)));
+            }
+            content.addView(wechatRow(rows[i][0], rows[i][1], rows[i][2], rows[i][3]));
+        }
+        content.addView(wechatTabBar("discover"));
     }
 
     private void buildMoments() {
@@ -943,7 +971,7 @@ public final class LocalToolActivity extends Activity {
         tabs.setGravity(Gravity.CENTER);
         tabs.setBackgroundColor(0xfff7f7f7);
         tabs.setPadding(0, dp(6), 0, dp(4));
-        String[][] tabDefs = {{"💬", "微信", "home"}, {"👥", "通讯录", "contacts"}, {"🧭", "发现", "moments"}, {"👤", "我", "profile"}};
+        String[][] tabDefs = {{"💬", "微信", "home"}, {"👥", "通讯录", "contacts"}, {"🧭", "发现", "discover"}, {"👤", "我", "profile"}};
         for (String[] td : tabDefs) {
             LinearLayout tab = new LinearLayout(this);
             tab.setOrientation(LinearLayout.VERTICAL);
@@ -1098,29 +1126,38 @@ public final class LocalToolActivity extends Activity {
     }
 
     private void buildProfile() {
-        TextView card = new TextView(this);
-        card.setText("本地用户\n\n零钱  ¥" + getBalance() + "\n手机号  138****0000");
-        card.setTextSize(17);
-        card.setTextColor(0xff1d1f26);
-        card.setBackgroundColor(Color.WHITE);
-        card.setPadding(dp(18), dp(18), dp(18), dp(18));
-        content.addView(card);
-        String[] rows = {"我的账单", "总资产", "设置"};
-        for (String r : rows) {
-            TextView tv = new TextView(this);
-            tv.setText(r + "  ›");
-            tv.setTextSize(15);
-            tv.setTextColor(0xff1d1f26);
-            tv.setBackgroundColor(Color.WHITE);
-            tv.setPadding(dp(16), dp(16), dp(16), dp(16));
-            String k = r.contains("账单") ? "billstats" : r.contains("资产") ? "assets" : "settings";
-            tv.setOnClickListener(v -> LocalToolActivity.open(this, k, r));
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            lp.topMargin = dp(8);
-            content.addView(tv, lp);
-        }
+        content.setBackgroundColor(0xffededed);
+        content.addView(wechatHeader("我"));
+        LinearLayout user = new LinearLayout(this);
+        user.setGravity(Gravity.CENTER_VERTICAL);
+        user.setBackgroundColor(Color.WHITE);
+        user.setPadding(dp(16), dp(18), dp(16), dp(18));
+        TextView av = new TextView(this);
+        av.setText("本");
+        av.setTextSize(22);
+        av.setTextColor(Color.WHITE);
+        av.setGravity(Gravity.CENTER);
+        av.setBackgroundColor(0xff07c160);
+        user.addView(av, new LinearLayout.LayoutParams(dp(60), dp(60)));
+        LinearLayout info = new LinearLayout(this);
+        info.setOrientation(LinearLayout.VERTICAL);
+        info.setPadding(dp(14), 0, 0, 0);
+        TextView name = new TextView(this);
+        name.setText("本地用户");
+        name.setTextSize(20);
+        name.setTextColor(0xff191919);
+        info.addView(name);
+        TextView wx = new TextView(this);
+        wx.setText("微信号：local_user");
+        wx.setTextSize(13);
+        wx.setTextColor(0xff888888);
+        info.addView(wx);
+        user.addView(info, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        content.addView(user);
+        String[][] rows = {{"服", "服务", "wallet"}, {"收", "收藏", "favorites"}, {"朋", "朋友圈", "moments"}, {"卡", "卡包", "wallet"}, {"表", "表情", "articles"}, {"设", "设置", "settings"}};
+        for (String[] r : rows) content.addView(wechatRow(r[0], "0xff2f7bff", r[1], r[2]));
+        content.addView(wechatTabBar("profile"));
     }
-
 
     private void buildShop() {
         final String[][] products = {{"示例商品 A", "9.90"}, {"示例商品 B", "19.90"}, {"示例商品 C", "29.90"}};
