@@ -330,6 +330,10 @@
             android:name=".features.tools.ToolsTutorialActivity"
             android:screenOrientation="portrait"
             android:exported="false" />
+        <activity
+            android:name=".features.tools.LocalToolActivity"
+            android:screenOrientation="portrait"
+            android:exported="false" />
     </application>
 </manifest>
 

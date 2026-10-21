@@ -1581,14 +1581,50 @@ static final class FeatureRow {
                     new ToolEntry("自动替换", "auto", "自", 0xfffff0e8, 0xffff7a45, "HOT"),
                     new ToolEntry("AI一键模仿", "ai", "AI", 0xffefeaff, 0xff7c5cf6, "")
             });
-            addToolGroup("头像管理", new ToolEntry[]{
-                    new ToolEntry("本地头像", "localavatars", "头", 0xffeaf1ff, 0xff4a7bf7, "")
+            addToolGroup("小微", new ToolEntry[]{
+                    new ToolEntry("小微", "local:chat", "微", 0xffeaf1ff, 0xff4a7bf7, ""),
+                    new ToolEntry("创建聊天", "local:chat", "聊", 0xffeaf1ff, 0xff4a7bf7, ""),
+                    new ToolEntry("微信零钱", "local:wallet", "钱", 0xffeaf1ff, 0xff4a7bf7, ""),
+                    new ToolEntry("朋友圈", "local:moments", "圈", 0xffeaf1ff, 0xff4a7bf7, ""),
+                    new ToolEntry("通讯录", "local:contacts", "通", 0xffeaf1ff, 0xff4a7bf7, ""),
+                    new ToolEntry("红包", "local:redpacket", "红", 0xffeaf1ff, 0xff4a7bf7, ""),
+                    new ToolEntry("转账", "local:transfer", "转", 0xffeaf1ff, 0xff4a7bf7, ""),
+                    new ToolEntry("语音聊天", "local:call", "语", 0xffeaf1ff, 0xff4a7bf7, ""),
+                    new ToolEntry("视频聊天", "local:call", "视", 0xffeaf1ff, 0xff4a7bf7, "")
+            });
+            addToolGroup("阿宝", new ToolEntry[]{
+                    new ToolEntry("阿宝", "local:chat", "支", 0xffeaf1ff, 0xff4a7bf7, ""),
+                    new ToolEntry("创建聊天", "local:chat", "聊", 0xffeaf1ff, 0xff4a7bf7, ""),
+                    new ToolEntry("朋友", "local:contacts", "友", 0xffeaf1ff, 0xff4a7bf7, ""),
+                    new ToolEntry("红包", "local:redpacket", "红", 0xffeaf1ff, 0xff4a7bf7, ""),
+                    new ToolEntry("转账", "local:transfer", "转", 0xffeaf1ff, 0xff4a7bf7, ""),
+                    new ToolEntry("余额", "local:wallet", "余", 0xffeaf1ff, 0xff4a7bf7, ""),
+                    new ToolEntry("余额明细", "local:wallet", "明", 0xffeaf1ff, 0xff4a7bf7, ""),
+                    new ToolEntry("个人中心", "local:profile", "我", 0xffeaf1ff, 0xff4a7bf7, "")
+            });
+            addToolGroup("小Q", new ToolEntry[]{
+                    new ToolEntry("小Q", "local:chat", "Q", 0xffeaf1ff, 0xff4a7bf7, ""),
+                    new ToolEntry("创建聊天", "local:chat", "聊", 0xffeaf1ff, 0xff4a7bf7, ""),
+                    new ToolEntry("红包", "local:redpacket", "红", 0xffeaf1ff, 0xff4a7bf7, ""),
+                    new ToolEntry("转账", "local:transfer", "转", 0xffeaf1ff, 0xff4a7bf7, ""),
+                    new ToolEntry("语音聊天", "local:call", "语", 0xffeaf1ff, 0xff4a7bf7, ""),
+                    new ToolEntry("视频聊天", "local:call", "视", 0xffeaf1ff, 0xff4a7bf7, "")
+            });
+            addToolGroup("云相册", new ToolEntry[]{
+                    new ToolEntry("云相册", "local:album", "云", 0xffefeaff, 0xff7c5cf6, ""),
+                    new ToolEntry("我的团队", "local:team", "团", 0xffefeaff, 0xff7c5cf6, ""),
+                    new ToolEntry("创建团队", "local:team", "建", 0xffefeaff, 0xff7c5cf6, "")
+            });
+            addToolGroup("视频", new ToolEntry[]{
+                    new ToolEntry("抖音", "local:video", "抖", 0xffeaf1ff, 0xff4a7bf7, ""),
+                    new ToolEntry("微视", "local:video", "视", 0xffeaf1ff, 0xff4a7bf7, ""),
+                    new ToolEntry("快手", "local:video", "快", 0xffeaf1ff, 0xff4a7bf7, "")
             });
             addToolGroup("更多", new ToolEntry[]{
+                    new ToolEntry("本地头像", "localavatars", "头", 0xffeaf1ff, 0xff4a7bf7, ""),
                     new ToolEntry("编辑面板", "edit", "编", 0xffeaf1ff, 0xff4a7bf7, ""),
                     new ToolEntry("教程", "tutorial", "教", 0xffeaf1ff, 0xff4a7bf7, "")
             });
-            applyToolOrder();
             float y = 228f;
             for (ToolGroup g : toolGroups) {
                 g.top = y;
@@ -1669,6 +1705,10 @@ static final class FeatureRow {
         }
 
         private void openTool(ToolEntry e) {
+            if (e.action != null && e.action.startsWith("local:")) {
+                com.luoyun.doutu.features.tools.LocalToolActivity.open(MainActivity.this, e.action.substring(6), e.name);
+                return;
+            }
             switch (e.action) {
                 case "avatar":
                     com.luoyun.doutu.features.tools.ToolImageActivity.open(MainActivity.this, "avatar");
