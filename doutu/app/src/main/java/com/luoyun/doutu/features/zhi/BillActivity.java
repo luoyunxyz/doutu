@@ -145,7 +145,9 @@ public final class BillActivity extends Activity {
             Bill bill = screen.billAt(Integer.parseInt(parts[1]), Integer.parseInt(parts[2]));
             if (bill == null) return;
             BillStore.select(screen.monthAt(Integer.parseInt(parts[1])), bill);
-            startActivity(BillDetailActivity.intentFor(this));
+            // 账单详情：按真机 activity_ali_bill_transfer_detail 重画的静态页
+            startActivity(new android.content.Intent(this,
+                    com.luoyun.doutu.features.ali.AliBillDetailActivity.class));
             overridePendingTransition(R.anim.bill_in, 0);
         }
     }
