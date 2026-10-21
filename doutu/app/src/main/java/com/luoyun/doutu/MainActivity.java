@@ -2040,7 +2040,9 @@ static final class FeatureRow {
                     startActivity(com.luoyun.doutu.features.zhi.PayMsgActivity.intentFor(MainActivity.this));
                     break;
                 case "act:billstats":
-                    startActivity(com.luoyun.doutu.features.zhi.BillAnalyticsActivity.intentFor(MainActivity.this));
+                    // 年账单：按真机 activity_ali_year_bill 重画（碳减排 / 这一年你在支付宝 / 收支分析）
+                    startActivity(new Intent(MainActivity.this,
+                            com.luoyun.doutu.features.ali.AliYearBillActivity.class));
                     break;
                 case "act:withdraw":
                     startActivity(new Intent(MainActivity.this,
