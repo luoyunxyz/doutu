@@ -2037,7 +2037,9 @@ static final class FeatureRow {
                             com.luoyun.doutu.features.ali.AliMineActivity.class));
                     break;
                 case "act:paymsg":
-                    startActivity(com.luoyun.doutu.features.zhi.PayMsgActivity.intentFor(MainActivity.this));
+                    // 支付助手：真机是「消息盒子」（服务消息 / 支付消息 / 暂无消息）
+                    startActivity(new Intent(MainActivity.this,
+                            com.luoyun.doutu.features.ali.AliMsgBoxActivity.class));
                     break;
                 case "act:billstats":
                     // 年账单：按真机 activity_ali_year_bill 重画（碳减排 / 这一年你在支付宝 / 收支分析）
