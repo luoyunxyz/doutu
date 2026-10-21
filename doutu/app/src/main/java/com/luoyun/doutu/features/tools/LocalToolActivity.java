@@ -56,6 +56,7 @@ public final class LocalToolActivity extends Activity {
         if (title == null) title = "工具";
         String n = getIntent().getStringExtra("name");
         if (n != null && !n.isEmpty()) chatName = n;
+        else if ("chat".equals(key) && title != null && !title.isEmpty() && !"工具".equals(title)) chatName = title;
         load();
 
         LinearLayout root = new LinearLayout(this);
@@ -250,37 +251,123 @@ public final class LocalToolActivity extends Activity {
     }
 
     private void buildWallet() {
-        final TextView card = new TextView(this);
-        card.setText("本机零钱\n¥ " + getBalance());
-        card.setTextSize(18);
-        card.setTextColor(Color.WHITE);
-        card.setBackgroundColor(0xff4a7bf7);
-        card.setPadding(dp(18), dp(18), dp(18), dp(18));
-        content.addView(card);
-        Button recharge = new Button(this);
-        recharge.setText("＋ 充值 ¥100（本地）");
-        recharge.setAllCaps(false);
+        content.setBackgroundColor(Color.WHITE);
+        content.setPadding(0, 0, 0, 0);
+
+        LinearLayout bar = new LinearLayout(this);
+        bar.setGravity(Gravity.CENTER_VERTICAL);
+        bar.setBackgroundColor(0xffededed);
+        ImageView back = assetIcon("icon_wx_left_top_float", 21);
+        back.setOnClickListener(v -> finish());
+        LinearLayout.LayoutParams blp = new LinearLayout.LayoutParams(dp(21), dp(21));
+        blp.leftMargin = dp(13);
+        bar.addView(back, blp);
+        TextView title = new TextView(this);
+        title.setText("零钱");
+        title.setTextSize(16);
+        title.setTextColor(0xff2b2b2b);
+        title.setGravity(Gravity.CENTER);
+        bar.addView(title, new LinearLayout.LayoutParams(0, dp(43), 1f));
+        bar.addView(new View(this), new LinearLayout.LayoutParams(dp(34), dp(43)));
+        content.addView(bar);
+
+        ImageView diamond = assetIcon("ic_wx_pay_diamond", 64);
+        LinearLayout dl = new LinearLayout(this);
+        dl.setGravity(Gravity.CENTER);
+        dl.setPadding(0, dp(24), 0, dp(10));
+        dl.addView(diamond, new LinearLayout.LayoutParams(dp(64), dp(64)));
+        content.addView(dl);
+
+        TextView my = new TextView(this);
+        my.setText("我的零钱");
+        my.setTextSize(15.45f);
+        my.setTextColor(Color.BLACK);
+        my.setGravity(Gravity.CENTER);
+        content.addView(my);
+
+        LinearLayout amountRow = new LinearLayout(this);
+        amountRow.setGravity(Gravity.CENTER);
+        amountRow.setPadding(0, dp(8), 0, 0);
+        TextView yuan = new TextView(this);
+        yuan.setText("¥");
+        yuan.setTextSize(44);
+        yuan.setTextColor(0xff212121);
+        amountRow.addView(yuan);
+        TextView bal = new TextView(this);
+        bal.setText(getBalance());
+        bal.setTextSize(44);
+        bal.setTextColor(0xff212121);
+        amountRow.addView(bal);
+        content.addView(amountRow);
+
+        TextView tip = new TextView(this);
+        tip.setText("免费开通零钱通，给自己加加薪");
+        tip.setTextSize(12.7f);
+        tip.setTextColor(0xfffe9e32);
+        tip.setGravity(Gravity.CENTER);
+        tip.setPadding(0, dp(14), 0, dp(18));
+        content.addView(tip);
+
+        LinearLayout btns = new LinearLayout(this);
+        btns.setOrientation(LinearLayout.VERTICAL);
+        btns.setGravity(Gravity.CENTER);
+        TextView recharge = new TextView(this);
+        recharge.setText("充值");
+        recharge.setTextSize(14.5f);
+        recharge.setTextColor(Color.WHITE);
+        recharge.setGravity(Gravity.CENTER);
+        android.graphics.drawable.GradientDrawable g1 = new android.graphics.drawable.GradientDrawable();
+        g1.setColor(0xff07c160);
+        g1.setCornerRadius(dp(4));
+        recharge.setBackground(g1);
+        btns.addView(recharge, new LinearLayout.LayoutParams(dp(166), dp(36)));
+        TextView withdraw = new TextView(this);
+        withdraw.setText("提现");
+        withdraw.setTextSize(14.5f);
+        withdraw.setTextColor(Color.BLACK);
+        withdraw.setGravity(Gravity.CENTER);
+        android.graphics.drawable.GradientDrawable g2 = new android.graphics.drawable.GradientDrawable();
+        g2.setColor(Color.WHITE);
+        g2.setStroke(dp(1), 0xffdddddd);
+        g2.setCornerRadius(dp(4));
+        withdraw.setBackground(g2);
+        LinearLayout.LayoutParams wlp = new LinearLayout.LayoutParams(dp(166), dp(36));
+        wlp.topMargin = dp(14);
+        btns.addView(withdraw, wlp);
+        content.addView(btns);
+
+        TextView help = new TextView(this);
+        help.setText("常见问题");
+        help.setTextSize(12);
+        help.setTextColor(0xff576b95);
+        help.setGravity(Gravity.CENTER);
+        help.setPadding(0, dp(20), 0, dp(4));
+        content.addView(help);
+        TextView foot = new TextView(this);
+        foot.setText("本服务由财付通提供");
+        foot.setTextSize(10);
+        foot.setTextColor(0xff7f7f7f);
+        foot.setGravity(Gravity.CENTER);
+        content.addView(foot);
+
+        LinearLayout list = new LinearLayout(this);
+        list.setOrientation(LinearLayout.VERTICAL);
+        list.setPadding(dp(16), dp(16), dp(16), dp(16));
+        billList = list;
+        content.addView(list);
+        renderBills();
+
         recharge.setOnClickListener(v -> {
             try {
-                double bal = Double.parseDouble(getBalance()) + 100;
-                getSharedPreferences(PREFS, 0).edit().putString("balance", String.format("%.2f", bal)).apply();
+                double nb = Double.parseDouble(getBalance()) + 100;
+                getSharedPreferences(PREFS, 0).edit().putString("balance", String.format("%.2f", nb)).apply();
                 bills.add(0, "充值 +¥100.00");
                 saveList("bills", bills);
-                card.setText("本机零钱\n¥ " + getBalance());
+                bal.setText(getBalance());
                 renderBills();
             } catch (Exception ignored) { }
         });
-        content.addView(recharge, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(44)));
-        TextView t = new TextView(this);
-        t.setText("收支明细");
-        t.setTextSize(14);
-        t.setTextColor(0xff5b6070);
-        t.setPadding(0, dp(18), 0, dp(8));
-        content.addView(t);
-        billList = new LinearLayout(this);
-        billList.setOrientation(LinearLayout.VERTICAL);
-        content.addView(billList);
-        renderBills();
+        withdraw.setOnClickListener(v -> LocalToolActivity.open(this, "transfer", "提现"));
     }
 
     private void renderBills() {
