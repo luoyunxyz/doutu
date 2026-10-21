@@ -1,0 +1,104 @@
+[
+  {
+    "title": "图片工具",
+    "items": [
+      {"name": "换头像", "key": "avatar", "badge": "NEW"},
+      {"name": "自动替换", "key": "auto", "badge": "HOT"},
+      {"name": "AI一键模仿", "key": "ai", "glyph": "AI"},
+      {"name": "本地头像", "key": "localavatars"},
+      {"name": "编辑面板", "key": "edit"},
+      {"name": "教程", "key": "tutorial"}
+    ]
+  },
+  {
+    "title": "小微",
+    "items": [
+      {"name": "微信", "key": "chat"},
+      {"name": "创建单聊", "key": "chat"},
+      {"name": "创建群聊", "key": "chat"},
+      {"name": "发现", "key": "moments"},
+      {"name": "通讯录", "key": "contacts"},
+      {"name": "公众号", "key": "articles"},
+      {"name": "单聊", "key": "chat"},
+      {"name": "微信零钱", "key": "wallet"},
+      {"name": "支付消息", "key": "notices"},
+      {"name": "商城钱包", "key": "wallet"},
+      {"name": "新的朋友", "key": "contacts"},
+      {"name": "商城首页", "key": "shop"},
+      {"name": "零钱提现", "key": "transfer"},
+      {"name": "零钱明细", "key": "wallet"},
+      {"name": "收款助手", "key": "pay"},
+      {"name": "年度账单", "key": "billstats"},
+      {"name": "已发红包", "key": "redpackets"},
+      {"name": "支付成功", "key": "paysuccess"},
+      {"name": "群发助手", "key": "chat"},
+      {"name": "悬浮窗", "key": "settings"},
+      {"name": "编辑红包", "key": "redpacket"},
+      {"name": "编辑转账", "key": "transfer"},
+      {"name": "上传图片", "key": "album"},
+      {"name": "换头像", "key": "avatar"},
+      {"name": "自动替换", "key": "auto"}
+    ]
+  },
+  {
+    "title": "阿宝",
+    "items": [
+      {"name": "支付宝", "key": "chat"},
+      {"name": "创建单聊", "key": "chat"},
+      {"name": "余额宝", "key": "assets"},
+      {"name": "口碑", "key": "shop"},
+      {"name": "我的", "key": "profile"},
+      {"name": "公众号", "key": "articles"},
+      {"name": "余额", "key": "wallet"},
+      {"name": "转账到银行卡", "key": "transfer"},
+      {"name": "账单", "key": "wallet"},
+      {"name": "通讯录", "key": "contacts"},
+      {"name": "余额明细", "key": "wallet"},
+      {"name": "红包", "key": "redpacket"},
+      {"name": "转账", "key": "transfer"},
+      {"name": "总资产", "key": "assets"},
+      {"name": "收款助手", "key": "pay"},
+      {"name": "收款", "key": "pay"},
+      {"name": "语音播报", "key": "voice"},
+      {"name": "支付成功", "key": "paysuccess"},
+      {"name": "淘订单", "key": "order"},
+      {"name": "总资产（新）", "key": "assets"}
+    ]
+  },
+  {
+    "title": "小Q",
+    "items": [
+      {"name": "QQ", "key": "chat"},
+      {"name": "创建单聊", "key": "chat"},
+      {"name": "未读红点", "key": "status"},
+      {"name": "公众号", "key": "articles"},
+      {"name": "在线状态", "key": "status"},
+      {"name": "转账", "key": "transfer"},
+      {"name": "红包", "key": "redpacket"}
+    ]
+  },
+  {
+    "title": "云相册",
+    "items": [
+      {"name": "云相册", "key": "album"},
+      {"name": "我的团队", "key": "team"},
+      {"name": "创建团队", "key": "team"}
+    ]
+  },
+  {
+    "title": "视频",
+    "items": [
+      {"name": "抖音", "key": "video"},
+      {"name": "微视", "key": "video"},
+      {"name": "快手", "key": "video"},
+      {"name": "抖音评论", "key": "comment"}
+    ]
+  },
+  {
+    "title": "登录",
+    "items": [
+      {"name": "登录", "key": "login"},
+      {"name": "登录（转场）", "key": "login"}
+    ]
+  }
+]

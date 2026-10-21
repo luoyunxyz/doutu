@@ -96,6 +96,19 @@ public final class LocalToolActivity extends Activity {
         else if ("team".equals(key)) buildTeam();
         else if ("video".equals(key)) buildVideo();
         else if ("call".equals(key)) buildCall();
+        else if ("articles".equals(key)) buildInfo("公众号", new String[]{"本地公众号\n\n这是一篇只保存在本机的示例文章，不联网。", "工具更新说明\n\n工具页全部功能均为本地处理。"});
+        else if ("shop".equals(key)) buildInfo("本地商城", new String[]{"示例商品 A  ¥9.90", "示例商品 B  ¥19.90", "示例商品 C  ¥29.90"});
+        else if ("pay".equals(key)) buildPayPage();
+        else if ("billstats".equals(key)) buildBillStats();
+        else if ("redpackets".equals(key)) buildRedPackets();
+        else if ("paysuccess".equals(key)) buildSuccess();
+        else if ("settings".equals(key) || "status".equals(key)) buildSwitches("状态与显示", new String[]{"显示未读红点", "在线状态", "悬浮窗快捷入口"});
+        else if ("voice".equals(key)) buildSwitches("语音播报", new String[]{"收款语音播报", "红包到账播报", "转账到账播报"});
+        else if ("order".equals(key)) buildInfo("淘订单", new String[]{"订单 20261021001\n\n本地示例订单 · 待发货", "订单 20261021002\n\n本地示例订单 · 已完成"});
+        else if ("assets".equals(key)) buildAssets();
+        else if ("comment".equals(key)) buildComment();
+        else if ("login".equals(key)) buildLogin();
+        else if ("notices".equals(key)) buildNotices();
         else buildGeneric();
     }
 
@@ -468,6 +481,184 @@ public final class LocalToolActivity extends Activity {
 
     private void toast(String s) {
         Toast.makeText(this, s, Toast.LENGTH_SHORT).show();
+    }
+
+
+    private void buildInfo(String head, String[] lines) {
+        TextView h = new TextView(this);
+        h.setText(head);
+        h.setTextSize(15);
+        h.setTextColor(0xff5b6070);
+        h.setPadding(0, 0, 0, dp(10));
+        content.addView(h);
+        for (String line : lines) {
+            TextView tv = new TextView(this);
+            tv.setText(line);
+            tv.setTextSize(14);
+            tv.setTextColor(0xff1d1f26);
+            tv.setBackgroundColor(Color.WHITE);
+            tv.setPadding(dp(14), dp(14), dp(14), dp(14));
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            lp.bottomMargin = dp(8);
+            content.addView(tv, lp);
+        }
+    }
+
+    private void buildPayPage() {
+        TextView qr = new TextView(this);
+        qr.setText("▦ 收款码\n\n本地收款 · 不联网");
+        qr.setTextSize(18);
+        qr.setTextColor(0xff1d1f26);
+        qr.setGravity(Gravity.CENTER);
+        qr.setBackgroundColor(Color.WHITE);
+        qr.setPadding(0, dp(60), 0, dp(60));
+        content.addView(qr);
+        TextView bal = new TextView(this);
+        bal.setText("当前零钱：¥ " + getBalance());
+        bal.setTextSize(14);
+        bal.setTextColor(0xff5b6070);
+        bal.setPadding(0, dp(14), 0, 0);
+        content.addView(bal);
+        Button save = new Button(this);
+        save.setText("保存收款码");
+        save.setAllCaps(false);
+        save.setOnClickListener(v -> toast("收款码已保存到本机（演示）"));
+        content.addView(save, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(46)));
+    }
+
+    private void buildBillStats() {
+        double total = 0;
+        for (String b : bills) {
+            int i = b.indexOf("¥");
+            if (i >= 0) {
+                int j = i + 1;
+                while (j < b.length() && (Character.isDigit(b.charAt(j)) || b.charAt(j) == '.')) j++;
+                try { total += Double.parseDouble(b.substring(i + 1, j)); } catch (Exception ignored) { }
+            }
+        }
+        TextView tv = new TextView(this);
+        tv.setText("年度账单（本地）\n\n共 " + bills.size() + " 笔记录\n合计 ¥" + String.format("%.2f", total));
+        tv.setTextSize(18);
+        tv.setTextColor(0xff1d1f26);
+        tv.setGravity(Gravity.CENTER);
+        tv.setBackgroundColor(Color.WHITE);
+        tv.setPadding(0, dp(50), 0, dp(50));
+        content.addView(tv);
+    }
+
+    private void buildRedPackets() {
+        List<String> red = new ArrayList<>();
+        for (String b : bills) if (b.contains("红包")) red.add(b);
+        if (red.isEmpty()) red.add("还没有发出红包");
+        buildInfo("已发红包", red.toArray(new String[0]));
+    }
+
+    private void buildSuccess() {
+        TextView tv = new TextView(this);
+        tv.setText("✓\n\n支付成功（本地）\n\n本次操作只保存在本机");
+        tv.setTextSize(18);
+        tv.setTextColor(0xff07c160);
+        tv.setGravity(Gravity.CENTER);
+        tv.setBackgroundColor(Color.WHITE);
+        tv.setPadding(0, dp(60), 0, dp(60));
+        content.addView(tv);
+    }
+
+    private void buildSwitches(String head, String[] labels) {
+        TextView h = new TextView(this);
+        h.setText(head);
+        h.setTextSize(15);
+        h.setTextColor(0xff5b6070);
+        h.setPadding(0, 0, 0, dp(8));
+        content.addView(h);
+        for (String label : labels) {
+            android.widget.CheckBox cb = new android.widget.CheckBox(this);
+            cb.setText(label);
+            cb.setTextSize(14);
+            cb.setChecked(getSharedPreferences(PREFS, 0).getBoolean("sw_" + label, true));
+            cb.setOnCheckedChangeListener((b, checked) -> getSharedPreferences(PREFS, 0).edit().putBoolean("sw_" + label, checked).apply());
+            cb.setBackgroundColor(Color.WHITE);
+            cb.setPadding(dp(12), dp(12), dp(12), dp(12));
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            lp.bottomMargin = dp(6);
+            content.addView(cb, lp);
+        }
+    }
+
+    private void buildAssets() {
+        TextView tv = new TextView(this);
+        tv.setText("总资产（本地）\n\n零钱  ¥" + getBalance() + "\n理财  ¥0.00\n\n合计  ¥" + getBalance());
+        tv.setTextSize(17);
+        tv.setTextColor(0xff1d1f26);
+        tv.setBackgroundColor(Color.WHITE);
+        tv.setPadding(dp(18), dp(18), dp(18), dp(18));
+        content.addView(tv);
+    }
+
+    private void buildComment() {
+        EditText input = new EditText(this);
+        input.setHint("写评论…");
+        input.setTextSize(14);
+        content.addView(input);
+        final List<String> comments = new ArrayList<>(split("comments"));
+        LinearLayout list = new LinearLayout(this);
+        list.setOrientation(LinearLayout.VERTICAL);
+        content.addView(list);
+        Button send = new Button(this);
+        send.setText("发送评论");
+        send.setAllCaps(false);
+        send.setOnClickListener(v -> {
+            String t = input.getText().toString().trim();
+            if (t.isEmpty()) return;
+            comments.add(0, t);
+            saveList("comments", comments);
+            TextView tv = new TextView(this);
+            tv.setText(t);
+            tv.setTextSize(14);
+            tv.setTextColor(0xff1d1f26);
+            tv.setBackgroundColor(Color.WHITE);
+            tv.setPadding(dp(12), dp(10), dp(12), dp(10));
+            list.addView(tv, 0);
+            input.setText("");
+        });
+        content.addView(send, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(46)));
+        for (String c : comments) {
+            TextView tv = new TextView(this);
+            tv.setText(c);
+            tv.setTextSize(14);
+            tv.setTextColor(0xff1d1f26);
+            tv.setBackgroundColor(Color.WHITE);
+            tv.setPadding(dp(12), dp(10), dp(12), dp(10));
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            lp.bottomMargin = dp(6);
+            list.addView(tv, lp);
+        }
+    }
+
+    private void buildLogin() {
+        EditText phone = new EditText(this);
+        phone.setHint("手机号");
+        phone.setInputType(InputType.TYPE_CLASS_PHONE);
+        content.addView(phone);
+        EditText pwd = new EditText(this);
+        pwd.setHint("密码");
+        pwd.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        content.addView(pwd);
+        Button login = new Button(this);
+        login.setText("本地登录");
+        login.setAllCaps(false);
+        login.setOnClickListener(v -> {
+            if (phone.getText().toString().trim().isEmpty()) { toast("请输入手机号"); return; }
+            toast("登录成功（本地演示）");
+            finish();
+        });
+        content.addView(login, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(48)));
+    }
+
+    private void buildNotices() {
+        List<String> list = new ArrayList<>(bills);
+        if (list.isEmpty()) list.add("暂无支付消息");
+        buildInfo("支付消息", list.toArray(new String[0]));
     }
 
     private int dp(int v) {
