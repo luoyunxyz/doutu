@@ -78,7 +78,7 @@ public final class LocalToolActivity extends Activity {
         tv.setGravity(Gravity.CENTER);
         bar.addView(tv, new LinearLayout.LayoutParams(0, dp(50), 1f));
         bar.addView(new View(this), new LinearLayout.LayoutParams(dp(88), dp(50)));
-        if (!("home".equals(key) || "contacts".equals(key) || "moments".equals(key) || "profile".equals(key) || "discover".equals(key) || "chat".equals(key) || "wallet".equals(key) || "transfer".equals(key) || "redpacket".equals(key) || "paysuccess".equals(key) || "pay".equals(key) || "billstats".equals(key) || "service".equals(key) || "favorites".equals(key))) root.addView(bar);
+        if (!("home".equals(key) || "contacts".equals(key) || "moments".equals(key) || "profile".equals(key) || "discover".equals(key) || "chat".equals(key) || "wallet".equals(key) || "transfer".equals(key) || "redpacket".equals(key) || "paysuccess".equals(key) || "pay".equals(key) || "billstats".equals(key) || "service".equals(key) || "favorites".equals(key) || "cards".equals(key) || "stickers".equals(key))) root.addView(bar);
 
         ScrollView scroll = new ScrollView(this);
         content = new LinearLayout(this);
@@ -100,6 +100,8 @@ public final class LocalToolActivity extends Activity {
         else if ("chat".equals(key)) buildChat();
         else if ("wallet".equals(key)) buildWallet();
         else if ("favorites".equals(key)) buildFavorites();
+        else if ("cards".equals(key)) buildCards();
+        else if ("stickers".equals(key)) buildStickers();
         else if ("service".equals(key)) buildService();
         else if ("redpacket".equals(key) || "transfer".equals(key)) buildPay();
         else if ("contacts".equals(key)) buildContacts();
@@ -250,6 +252,28 @@ public final class LocalToolActivity extends Activity {
             row.addView(tv, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         }
         if (chatList != null) chatList.addView(row, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        final String msg = text;
+        tv.setOnLongClickListener(v -> {
+            new AlertDialog.Builder(this).setItems(new String[]{"收藏", "复制", "删除"}, (d, w) -> {
+                if (w == 0) {
+                    List<String> favs = split("favorites");
+                    if (!favs.contains(msg)) favs.add(0, msg);
+                    saveList("favorites", favs);
+                    toast("已收藏");
+                } else if (w == 1) {
+                    android.content.ClipboardManager cm = (android.content.ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
+                    cm.setPrimaryClip(android.content.ClipData.newPlainText("msg", msg));
+                    toast("已复制");
+                } else {
+                    messages.remove(msg);
+                    save();
+                    chatList.removeAllViews();
+                    for (String m : messages) addBubble(m, true);
+                    toast("已删除");
+                }
+            }).show();
+            return true;
+        });
     }
 
     private void buildWallet() {
@@ -1164,6 +1188,121 @@ public final class LocalToolActivity extends Activity {
         }
     }
 
+    private void buildCards() {
+        content.setBackgroundColor(0xfff5f5f5);
+        content.setPadding(0, 0, 0, 0);
+
+        LinearLayout bar = new LinearLayout(this);
+        bar.setGravity(Gravity.CENTER_VERTICAL);
+        bar.setBackgroundColor(0xffededed);
+        ImageView back = assetIcon("ic_wx_chat_title_back", 21);
+        back.setOnClickListener(v -> finish());
+        bar.addView(back, new LinearLayout.LayoutParams(dp(43), dp(43)));
+        TextView title = new TextView(this);
+        title.setText("卡包");
+        title.setTextSize(16);
+        title.setTextColor(0xff191919);
+        title.setGravity(Gravity.CENTER);
+        bar.addView(title, new LinearLayout.LayoutParams(0, dp(43), 1f));
+        bar.addView(new View(this), new LinearLayout.LayoutParams(dp(43), dp(43)));
+        content.addView(bar);
+
+        List<String> cards = split("cards");
+        if (cards.isEmpty()) {
+            TextView empty = new TextView(this);
+            empty.setText("暂无卡券\n\n点击下方按钮添加一张本地卡券");
+            empty.setTextSize(14);
+            empty.setTextColor(0xff999999);
+            empty.setGravity(Gravity.CENTER);
+            empty.setPadding(dp(20), dp(70), dp(20), dp(20));
+            content.addView(empty);
+        } else {
+            for (String c : cards) {
+                LinearLayout card = new LinearLayout(this);
+                card.setGravity(Gravity.CENTER_VERTICAL);
+                card.setBackgroundColor(Color.WHITE);
+                card.setPadding(dp(16), dp(18), dp(16), dp(18));
+                View icon = assetIcon("ic_wx_me_card_bg", 36);
+                card.addView(icon, new LinearLayout.LayoutParams(dp(36), dp(36)));
+                TextView tv = new TextView(this);
+                tv.setText(c);
+                tv.setTextSize(15);
+                tv.setTextColor(0xff191919);
+                tv.setPadding(dp(14), 0, 0, 0);
+                card.addView(tv, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+                LinearLayout.LayoutParams clp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                clp.leftMargin = dp(8);
+                clp.rightMargin = dp(8);
+                clp.topMargin = dp(8);
+                content.addView(card, clp);
+            }
+        }
+        TextView add = new TextView(this);
+        add.setText("＋ 添加卡券");
+        add.setTextSize(15);
+        add.setTextColor(Color.WHITE);
+        add.setGravity(Gravity.CENTER);
+        android.graphics.drawable.GradientDrawable g = new android.graphics.drawable.GradientDrawable();
+        g.setColor(0xff07c160);
+        g.setCornerRadius(dp(4));
+        add.setBackground(g);
+        LinearLayout.LayoutParams alp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(46));
+        alp.leftMargin = dp(16);
+        alp.rightMargin = dp(16);
+        alp.topMargin = dp(20);
+        content.addView(add, alp);
+        add.setOnClickListener(v -> {
+            List<String> cs = split("cards");
+            cs.add(0, "本地卡券 " + (cs.size() + 1));
+            saveList("cards", cs);
+            recreate();
+        });
+    }
+
+    private void buildStickers() {
+        content.setBackgroundColor(0xfff5f5f5);
+        content.setPadding(0, 0, 0, 0);
+
+        LinearLayout bar = new LinearLayout(this);
+        bar.setGravity(Gravity.CENTER_VERTICAL);
+        bar.setBackgroundColor(0xffededed);
+        ImageView back = assetIcon("ic_wx_chat_title_back", 21);
+        back.setOnClickListener(v -> finish());
+        bar.addView(back, new LinearLayout.LayoutParams(dp(43), dp(43)));
+        TextView title = new TextView(this);
+        title.setText("表情");
+        title.setTextSize(16);
+        title.setTextColor(0xff191919);
+        title.setGravity(Gravity.CENTER);
+        bar.addView(title, new LinearLayout.LayoutParams(0, dp(43), 1f));
+        bar.addView(new View(this), new LinearLayout.LayoutParams(dp(43), dp(43)));
+        content.addView(bar);
+
+        String[] emojis = {"😀", "😁", "😂", "🤣", "😊", "😍", "😘", "😎", "🤔", "😭", "😡", "👍", "👏", "🙏", "🎉", "❤️", "🌹", "☕", "🐶", "🐱"};
+        LinearLayout grid = new LinearLayout(this);
+        grid.setOrientation(LinearLayout.VERTICAL);
+        grid.setPadding(dp(12), dp(12), dp(12), dp(12));
+        content.addView(grid);
+        LinearLayout row = null;
+        for (int i = 0; i < emojis.length; i++) {
+            if (i % 5 == 0) {
+                row = new LinearLayout(this);
+                row.setOrientation(LinearLayout.HORIZONTAL);
+                grid.addView(row);
+            }
+            TextView tv = new TextView(this);
+            tv.setText(emojis[i]);
+            tv.setTextSize(28);
+            tv.setGravity(Gravity.CENTER);
+            tv.setBackgroundColor(Color.WHITE);
+            final String e = emojis[i];
+            tv.setOnClickListener(v -> toast("已选择 " + e));
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, dp(64), 1f);
+            lp.setMargins(dp(4), dp(4), dp(4), dp(4));
+            row.addView(tv, lp);
+        }
+    }
+
     private void buildService() {
         content.setBackgroundColor(0xffededed);
         content.setPadding(0, 0, 0, 0);
@@ -2018,9 +2157,9 @@ public final class LocalToolActivity extends Activity {
         content.addView(meDivider());
         content.addView(meRow("ic_wx_me_album", "朋友圈", "moments", false));
         content.addView(meDivider());
-        content.addView(meRow("ic_wx_me_card_bg", "卡包", "wallet", false));
+        content.addView(meRow("ic_wx_me_card_bg", "卡包", "cards", false));
         content.addView(meDivider());
-        content.addView(meRow("ic_wx_me_brow", "表情", "articles", true));
+        content.addView(meRow("ic_wx_me_brow", "表情", "stickers", true));
         addMeGap();
         content.addView(meRow("ic_wx_me_setting", "设置", "settings", true));
         content.addView(wechatTabBar("profile"));
