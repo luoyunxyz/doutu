@@ -41,7 +41,7 @@ import java.util.List;
  * 全部本机处理，不访问网络、不调用本软件其它模块。
  */
 public final class ToolImageActivity extends Activity {
-    private static final int REQ_BASE = 51, REQ_AVATAR = 52, REQ_AI = 53;
+    private static final int REQ_BASE = 51, REQ_AVATAR = 52, REQ_AI = 53, REQ_CROP = 54;
     private static final int MODE_AVATAR = 0, MODE_AUTO = 1, MODE_AI = 2;
 
     private int mode;
@@ -121,6 +121,11 @@ public final class ToolImageActivity extends Activity {
         } else {
             basePreview = addPickRow(col, "底图（聊天截图 / 任意图片）", () -> pickImage(REQ_BASE, false));
             avatarPreview = addPickRow(col, "头像图片", () -> pickImage(REQ_AVATAR, false));
+            Button cropBtn = new Button(this);
+            cropBtn.setText("裁剪底图（可选）");
+            cropBtn.setAllCaps(false);
+            cropBtn.setOnClickListener(v -> openCrop());
+            col.addView(cropBtn, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(44)));
             watermark = new CheckBox(this);
             watermark.setText("保存时添加水印");
             watermark.setTextSize(13);
@@ -216,9 +221,36 @@ public final class ToolImageActivity extends Activity {
         pickImage(REQ_AI, true);
     }
 
+    private void openCrop() {
+        if (base == null) { toast("请先选择底图"); return; }
+        CropImageActivity.source = base;
+        startActivityForResult(new Intent(this, CropImageActivity.class), REQ_CROP);
+    }
+
+    private void resetSlotState() {
+        slots.clear();
+        slotEnabled.clear();
+        slotsShown = false;
+        synthesized = false;
+        workBase = null;
+        if (slotList != null) slotList.removeAllViews();
+        if (processBtn != null) processBtn.setText("开始替换");
+        if (saveBtn != null) saveBtn.setEnabled(false);
+        if (preview != null) preview.setImageBitmap(null);
+    }
+
     @Override
     protected void onActivityResult(int request, int result, Intent data) {
         super.onActivityResult(request, result, data);
+        if (request == REQ_CROP) {
+            if (result == RESULT_OK && CropImageActivity.result != null) {
+                base = CropImageActivity.result;
+                if (basePreview != null) basePreview.setImageBitmap(base);
+                resetSlotState();
+                toast("已裁剪底图");
+            }
+            return;
+        }
         if (result != RESULT_OK || data == null) return;
         if (request == REQ_AI) {
             sources.clear();
