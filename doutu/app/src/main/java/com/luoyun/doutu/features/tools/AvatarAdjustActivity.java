@@ -279,7 +279,9 @@ public final class AvatarAdjustActivity extends Activity {
         private int borderColor = colors[0];
         private boolean preview;
         private float downX, downY;
-        private boolean drag;
+        private float lastDist;
+        /** 底图的缩放与平移（单指拖动平移、双指缩放）。 */
+        private float imgZoom = 1f, imgDx = 0f, imgDy = 0f;
 
         ClipView() {
             super(AvatarAdjustActivity.this);
@@ -309,6 +311,9 @@ public final class AvatarAdjustActivity extends Activity {
         }
 
         void reset() {
+            imgZoom = 1f;
+            imgDx = 0f;
+            imgDy = 0f;
             resetBox();
             borderRadius = 24 * getResources().getDisplayMetrics().density;
             invalidate();
@@ -369,10 +374,18 @@ public final class AvatarAdjustActivity extends Activity {
                 float areaBottom = getHeight() - dp(300);
                 float vw = getWidth(), vh = areaBottom - areaTop;
                 float k = Math.min(vw / source.getWidth(), vh / source.getHeight());
-                float w = source.getWidth() * k, h = source.getHeight() * k;
-                img.set((vw - w) / 2, areaTop + (vh - h) / 2,
-                        (vw - w) / 2 + w, areaTop + (vh - h) / 2 + h);
-                if (!boxReady || box.isEmpty()) resetBox();
+                float fw = source.getWidth() * k, fh = source.getHeight() * k;
+                RectF fit = new RectF((vw - fw) / 2, areaTop + (vh - fh) / 2,
+                        (vw - fw) / 2 + fw, areaTop + (vh - fh) / 2 + fh);
+                // 叠加拖动/双指缩放
+                float cx = fit.centerX() + imgDx, cy = fit.centerY() + imgDy;
+                float hw = fit.width() * imgZoom / 2f, hh = fit.height() * imgZoom / 2f;
+                img.set(cx - hw, cy - hh, cx + hw, cy + hh);
+                if (!boxReady || box.isEmpty()) {
+                    resetBox();
+                } else {
+                    clampImage();
+                }
                 src.set(0, 0, source.getWidth(), source.getHeight());
                 dst.set(img);
                 p.setFilterBitmap(true);
@@ -401,26 +414,70 @@ public final class AvatarAdjustActivity extends Activity {
             }
         }
 
+        /** 保证底图始终盖住选框：不够大就放大，偏移超出就拉回。 */
+        private void clampImage() {
+            if (img.isEmpty() || box.isEmpty()) return;
+            if (img.width() < box.width() || img.height() < box.height()) {
+                float need = Math.max(box.width() / Math.max(1f, img.width()),
+                        box.height() / Math.max(1f, img.height())) * 1.01f;
+                float icx = img.centerX(), icy = img.centerY();
+                float w = img.width() * need / 2f, h = img.height() * need / 2f;
+                img.set(icx - w, icy - h, icx + w, icy + h);
+                imgZoom *= need;
+            }
+            float dx = 0, dy = 0;
+            if (img.left > box.left) dx = box.left - img.left;
+            if (img.right < box.right) dx = box.right - img.right;
+            if (img.top > box.top) dy = box.top - img.top;
+            if (img.bottom < box.bottom) dy = box.bottom - img.bottom;
+            if (dx != 0 || dy != 0) {
+                img.offset(dx, dy);
+                imgDx += dx;
+                imgDy += dy;
+            }
+        }
+
+        private float spacing(MotionEvent e) {
+            if (e.getPointerCount() < 2) return 0f;
+            float dx = e.getX(0) - e.getX(1);
+            float dy = e.getY(0) - e.getY(1);
+            return (float) Math.hypot(dx, dy);
+        }
+
         @Override
         public boolean onTouchEvent(MotionEvent e) {
-            switch (e.getAction()) {
+            switch (e.getActionMasked()) {
                 case MotionEvent.ACTION_DOWN:
                     downX = e.getX();
                     downY = e.getY();
-                    drag = box.contains(downX, downY);
+                    lastDist = 0f;
+                    return true;
+                case MotionEvent.ACTION_POINTER_DOWN:
+                    lastDist = spacing(e);
                     return true;
                 case MotionEvent.ACTION_MOVE:
-                    if (drag) {
-                        float dx = e.getX() - downX, dy = e.getY() - downY;
-                        box.offset(dx, dy);
-                        clamp();
+                    if (e.getPointerCount() >= 2) {
+                        float d = spacing(e);
+                        if (lastDist > 0f && d > 0f) {
+                            imgZoom = Math.max(1f, Math.min(8f, imgZoom * (d / lastDist)));
+                            clampImage();
+                            invalidate();
+                        }
+                        lastDist = d;
+                    } else {
+                        imgDx += e.getX() - downX;
+                        imgDy += e.getY() - downY;
                         downX = e.getX();
                         downY = e.getY();
+                        clampImage();
                         invalidate();
                     }
                     return true;
+                case MotionEvent.ACTION_POINTER_UP:
+                    lastDist = 0f;
+                    return true;
                 default:
-                    drag = false;
+                    lastDist = 0f;
                     return true;
             }
         }
