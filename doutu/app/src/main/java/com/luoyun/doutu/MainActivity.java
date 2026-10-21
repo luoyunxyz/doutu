@@ -1936,6 +1936,11 @@ static final class FeatureRow {
                     startActivity(new Intent(MainActivity.this,
                             com.luoyun.doutu.features.ali.AliRedPacketActivity.class));
                     break;
+                case "alimsg":
+                    // 支付宝公众号：消息页 + 添加公众号弹窗。
+                    startActivity(new Intent(MainActivity.this,
+                            com.luoyun.doutu.features.ali.AliMsgActivity.class));
+                    break;
                 case "act:licai":
                     startActivity(com.luoyun.doutu.features.zhi.LicaiActivity.intentFor(MainActivity.this));
                     break;

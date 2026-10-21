@@ -63,6 +63,8 @@ public final class ToolLauncherActivity extends Activity {
             intent = new Intent(this, com.luoyun.doutu.features.ali.AliContactsActivity.class);
         } else if ("alired".equals(key)) {
             intent = new Intent(this, com.luoyun.doutu.features.ali.AliRedPacketActivity.class);
+        } else if ("alimsg".equals(key)) {
+            intent = new Intent(this, com.luoyun.doutu.features.ali.AliMsgActivity.class);
         } else if ("qqgz".equals(key)) {
             intent = new Intent(this, com.luoyun.doutu.features.qq.QqHomeActivity.class);
             intent.putExtra("gzh", true);
