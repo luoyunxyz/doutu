@@ -41,7 +41,7 @@ public final class DyCommentActivity extends Activity {
     protected void onCreate(Bundle state) {
         super.onCreate(state);
         Window w = getWindow();
-        w.setStatusBarColor(Color.WHITE);
+        w.setStatusBarColor(0xffffd84a);
         w.setNavigationBarColor(Color.WHITE);
         w.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
                 | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR);
@@ -52,7 +52,7 @@ public final class DyCommentActivity extends Activity {
 
         // 标题栏
         FrameLayout bar = new FrameLayout(this);
-        bar.setBackgroundColor(Color.WHITE);
+        bar.setBackgroundColor(0xffffd84a);
         bar.setLayoutParams(new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, dp(56)));
         TextView back = new TextView(this);
@@ -62,6 +62,15 @@ public final class DyCommentActivity extends Activity {
         back.setGravity(Gravity.CENTER);
         back.setOnClickListener(v -> finish());
         bar.addView(back, new FrameLayout.LayoutParams(dp(56), dp(56)));
+        TextView title = new TextView(this);
+        title.setText("发送评论");
+        title.setTextSize(17);
+        title.setTextColor(0xff161722);
+        title.setGravity(Gravity.CENTER);
+        FrameLayout.LayoutParams tlp = new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        tlp.gravity = Gravity.CENTER;
+        bar.addView(title, tlp);
         root.addView(bar);
 
         // 评论卡片
