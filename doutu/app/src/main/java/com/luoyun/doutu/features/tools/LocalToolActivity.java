@@ -77,7 +77,7 @@ public final class LocalToolActivity extends Activity {
         tv.setGravity(Gravity.CENTER);
         bar.addView(tv, new LinearLayout.LayoutParams(0, dp(50), 1f));
         bar.addView(new View(this), new LinearLayout.LayoutParams(dp(88), dp(50)));
-        if (!"home".equals(key)) root.addView(bar);
+        if (!("home".equals(key) || "contacts".equals(key) || "moments".equals(key) || "profile".equals(key))) root.addView(bar);
 
         ScrollView scroll = new ScrollView(this);
         content = new LinearLayout(this);
@@ -268,52 +268,135 @@ public final class LocalToolActivity extends Activity {
     }
 
     private void buildContacts() {
-        contactList = new LinearLayout(this);
-        contactList.setOrientation(LinearLayout.VERTICAL);
-        content.addView(contactList);
-        Button add = new Button(this);
-        add.setText("＋ 添加联系人");
-        add.setAllCaps(false);
-        add.setOnClickListener(v -> {
-            EditText input = new EditText(this);
-            input.setHint("姓名");
-            new AlertDialog.Builder(this).setTitle("添加联系人").setView(input)
-                    .setNegativeButton("取消", null)
-                    .setPositiveButton("添加", (d, w) -> {
-                        String n = input.getText().toString().trim();
-                        if (!n.isEmpty()) { contacts.add(n); saveList("contacts", contacts); renderContacts(); }
-                    }).show();
-        });
-        content.addView(add, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(46)));
-        if (contacts.isEmpty()) { contacts.add("文件传输助手"); contacts.add("本地好友"); }
-        renderContacts();
+        content.setBackgroundColor(0xffededed);
+        content.addView(wechatHeader("通讯录"));
+        String[][] feats = {{"新", "0xffff9f1c", "新的朋友"}, {"群", "0xff07c160", "群聊"}, {"标", "0xff2f7bff", "标签"}, {"公", "0xff2f7bff", "公众号"}};
+        for (String[] f : feats) content.addView(wechatRow(f[0], f[1], f[2], "新的朋友".equals(f[2]) ? "contacts" : "群聊".equals(f[2]) ? "chats" : "articles"));
+        TextView ent = new TextView(this);
+        ent.setText("我的企业及企业联系人");
+        ent.setTextSize(13);
+        ent.setTextColor(0xff888888);
+        ent.setBackgroundColor(0xffededed);
+        ent.setPadding(dp(14), dp(10), 0, dp(6));
+        content.addView(ent);
+        content.addView(wechatRow("企", "0xff2f7bff", "企业微信联系人", "articles"));
+
+        if (!contacts.contains("文件传输助手")) contacts.add("文件传输助手");
+        if (!contacts.contains("本地好友")) contacts.add("本地好友");
+        java.util.TreeMap<Character, java.util.List<String>> groups = new java.util.TreeMap<>();
+        for (String c : contacts) {
+            char ch = Character.toUpperCase(c.charAt(0));
+            if (ch < 'A' || ch > 'Z') ch = '#';
+            groups.computeIfAbsent(ch, k -> new java.util.ArrayList<>()).add(c);
+        }
+        for (Character ch : groups.keySet()) {
+            TextView sec = new TextView(this);
+            sec.setText(String.valueOf(ch));
+            sec.setTextSize(13);
+            sec.setTextColor(0xff888888);
+            sec.setBackgroundColor(0xffededed);
+            sec.setPadding(dp(14), dp(8), 0, dp(6));
+            content.addView(sec);
+            for (String c : groups.get(ch)) content.addView(wechatRow(c.substring(0, 1), "0xff07c160", c, "chat", c));
+        }
+        TextView count = new TextView(this);
+        count.setText(contacts.size() + "个朋友");
+        count.setTextSize(13);
+        count.setTextColor(0xff888888);
+        count.setGravity(Gravity.CENTER);
+        count.setPadding(0, dp(16), 0, dp(16));
+        content.addView(count);
+        content.addView(wechatTabBar("contacts"));
     }
 
-    private void renderContacts() {
-        if (contactList == null) return;
-        contactList.removeAllViews();
-        for (String c : contacts) {
-            TextView tv = new TextView(this);
-            tv.setText(c);
-            tv.setTextSize(15);
-            tv.setTextColor(0xff1d1f26);
-            tv.setBackgroundColor(Color.WHITE);
-            tv.setPadding(dp(14), dp(14), dp(14), dp(14));
-            tv.setOnClickListener(v -> LocalToolActivity.open(this, "chat", c));
-            tv.setOnLongClickListener(v -> {
-                new AlertDialog.Builder(this).setTitle("删除联系人").setMessage(c)
-                        .setNegativeButton("取消", null)
-                        .setPositiveButton("删除", (d, w) -> {
-                            contacts.remove(c);
-                            saveList("contacts", contacts);
-                            renderContacts();
-                        }).show();
-                return true;
+    private LinearLayout wechatHeader(String title) {
+        LinearLayout header = new LinearLayout(this);
+        header.setGravity(Gravity.CENTER_VERTICAL);
+        header.setBackgroundColor(0xffededed);
+        TextView back = new TextView(this);
+        back.setText("‹");
+        back.setTextSize(26);
+        back.setTextColor(0xff191919);
+        back.setGravity(Gravity.CENTER);
+        back.setOnClickListener(v -> finish());
+        header.addView(back, new LinearLayout.LayoutParams(dp(48), dp(48)));
+        TextView h = new TextView(this);
+        h.setText(title);
+        h.setTextSize(17);
+        h.setTextColor(0xff191919);
+        h.setGravity(Gravity.CENTER);
+        header.addView(h, new LinearLayout.LayoutParams(0, dp(48), 1f));
+        TextView search = new TextView(this);
+        search.setText("🔍");
+        search.setTextSize(18);
+        search.setGravity(Gravity.CENTER);
+        header.addView(search, new LinearLayout.LayoutParams(dp(44), dp(48)));
+        TextView plus = new TextView(this);
+        plus.setText("＋");
+        plus.setTextSize(24);
+        plus.setTextColor(0xff191919);
+        plus.setGravity(Gravity.CENTER);
+        header.addView(plus, new LinearLayout.LayoutParams(dp(48), dp(48)));
+        return header;
+    }
+
+    private LinearLayout wechatRow(String glyph, String color, String label, String key) {
+        return wechatRow(glyph, color, label, key, label);
+    }
+
+    private LinearLayout wechatRow(String glyph, String color, String label, String key, String title) {
+        LinearLayout row = new LinearLayout(this);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setBackgroundColor(Color.WHITE);
+        row.setPadding(dp(12), dp(9), dp(12), dp(9));
+        TextView icon = new TextView(this);
+        icon.setText(glyph);
+        icon.setTextSize(16);
+        icon.setTextColor(Color.WHITE);
+        icon.setGravity(Gravity.CENTER);
+        icon.setBackgroundColor(Color.parseColor(color.replace("0x", "#")));
+        row.addView(icon, new LinearLayout.LayoutParams(dp(40), dp(40)));
+        TextView tv = new TextView(this);
+        tv.setText(label);
+        tv.setTextSize(16);
+        tv.setTextColor(0xff191919);
+        tv.setPadding(dp(12), 0, 0, 0);
+        row.addView(tv, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        row.setOnClickListener(v -> {
+            if ("chat".equals(key)) LocalToolActivity.open(this, "chat", title);
+            else LocalToolActivity.open(this, key, title);
+        });
+        return row;
+    }
+
+    private LinearLayout wechatTabBar(String active) {
+        LinearLayout tabs = new LinearLayout(this);
+        tabs.setGravity(Gravity.CENTER);
+        tabs.setBackgroundColor(0xfff7f7f7);
+        tabs.setPadding(0, dp(6), 0, dp(4));
+        String[][] defs = {{"💬", "微信", "home"}, {"👥", "通讯录", "contacts"}, {"🧭", "发现", "moments"}, {"👤", "我", "profile"}};
+        for (String[] d : defs) {
+            LinearLayout tab = new LinearLayout(this);
+            tab.setOrientation(LinearLayout.VERTICAL);
+            tab.setGravity(Gravity.CENTER);
+            boolean on = active.equals(d[2]);
+            TextView icon = new TextView(this);
+            icon.setText(d[0]);
+            icon.setTextSize(20);
+            icon.setGravity(Gravity.CENTER);
+            tab.addView(icon);
+            TextView label = new TextView(this);
+            label.setText(d[1]);
+            label.setTextSize(10);
+            label.setTextColor(on ? 0xff07c160 : 0xff666666);
+            label.setGravity(Gravity.CENTER);
+            tab.addView(label);
+            tab.setOnClickListener(v -> {
+                if (!on) LocalToolActivity.open(this, d[2], d[1]);
             });
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            lp.bottomMargin = dp(6);
-            contactList.addView(tv, lp);
+            tabs.addView(tab, new LinearLayout.LayoutParams(0, dp(52), 1f));
         }
+        return tabs;
     }
 
     private void buildMoments() {
