@@ -24,7 +24,8 @@
     if (document.getElementById('fw-contacts-style')) return;
     var style = document.createElement('style');
     style.id = 'fw-contacts-style';
-    style.textContent = '.wechat-search-row{display:none !important}';
+    style.textContent = '.wechat-search-row{display:none !important}'
+      + '.wechat-topbar__actions{padding-right:34px !important}';
     document.head.appendChild(style);
   }
 
@@ -43,8 +44,8 @@
     btn.id = 'fw-contacts-plus';
     btn.type = 'button';
     btn.textContent = '＋';
-    btn.style.cssText = 'position:absolute;right:6px;top:50%;transform:translateY(-50%);'
-      + 'background:transparent;border:0;font-size:24px;line-height:1;color:#111;padding:0 8px;z-index:20;';
+    btn.style.cssText = 'position:absolute;right:4px;top:50px;width:34px;height:34px;'
+      + 'background:transparent;border:0;font-size:24px;line-height:1;color:#111;padding:0;z-index:20;';
     topbar.style.position = 'relative';
     btn.addEventListener('click', function (event) {
       event.preventDefault();
