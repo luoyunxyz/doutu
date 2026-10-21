@@ -1611,11 +1611,11 @@ static final class FeatureRow {
             for (ToolGroup g : toolGroups) {
                 g.top = y;
                 int rows = (g.items.size() + 3) / 4;
-                g.height = 92f + rows * 186f;
+                g.height = 96f + rows * 220f;
                 for (int i = 0; i < g.items.size(); i++) {
                     ToolEntry e = g.items.get(i);
                     e.cx = 162f + (i % 4) * 252f;
-                    e.top = y + 92f + (i / 4) * 186f;
+                    e.top = y + 96f + (i / 4) * 220f;
                 }
                 y += g.height + 22f;
             }
@@ -1646,14 +1646,14 @@ static final class FeatureRow {
             c.translate(0, -scroll);
             for (ToolGroup g : toolGroups) {
                 round(c, 32, g.top, 1048, g.top + g.height, 28, Color.WHITE);
-                text(c, g.title, 60, g.top + 52, 28, SUB_INK, false);
+                text(c, g.title, 60, g.top + 56, 34, SUB_INK, false);
                 for (ToolEntry e : g.items) {
-                    round(c, e.cx - 44, e.top, e.cx + 44, e.top + 88, 24, e.tint);
-                    textCentered(c, e.glyph, e.cx, e.top + 58, 36, e.accent, true);
-                    textCentered(c, e.name, e.cx, e.top + 124, 25, INK, false);
+                    round(c, e.cx - 58, e.top, e.cx + 58, e.top + 116, 30, e.tint);
+                    textCentered(c, e.glyph, e.cx, e.top + 74, 44, e.accent, true);
+                    textCentered(c, e.name, e.cx, e.top + 150, 30, INK, false);
                     if (!e.badge.isEmpty()) {
-                        round(c, e.cx + 20, e.top - 8, e.cx + 74, e.top + 22, 15, 0xffee3b30);
-                        textCentered(c, e.badge, e.cx + 47, e.top + 15, 17, Color.WHITE, true);
+                        round(c, e.cx + 28, e.top - 6, e.cx + 92, e.top + 28, 17, 0xffee3b30);
+                        textCentered(c, e.badge, e.cx + 60, e.top + 17, 19, Color.WHITE, true);
                     }
                 }
             }
@@ -1678,7 +1678,7 @@ static final class FeatureRow {
             }
             for (ToolGroup g : toolGroups) {
                 for (ToolEntry e : g.items) {
-                    if (x >= e.cx - 92 && x <= e.cx + 92 && py >= e.top - 16 && py <= e.top + 136) {
+                    if (x >= e.cx - 120 && x <= e.cx + 120 && py >= e.top - 16 && py <= e.top + 160) {
                         openTool(e);
                         return;
                     }
