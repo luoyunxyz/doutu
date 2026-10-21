@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 1.0.0(79)：收藏箭头气泡菜单`  
-> 最新代码版本：`1.0.0 / 79`（已推送，待 Codemagic 构建）；Android `1.0.8`  
+> 最新提交：`本轮 1.0.0(80)：长按删除底部 Action Sheet`  
+> 最新代码版本：`1.0.0 / 80`（已推送，待 Codemagic 构建）；Android `1.0.9`  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -1883,6 +1883,22 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
       - 长按删除（78 的功能）保留；
     - 浏览器实测：点箭头弹出气泡菜单 3 行，选「最早收藏」后菜单关闭并重排；
     - 版本 1.0.0(79)（iOS）/ 1.0.8（Android）。
+      改动文件：`wechat-me-pages.js/.css`、两个 `index.html`、iOS `project.yml`；
+      Android `assets/fake_world/overrides/*`。
+
+173. **1.0.0(80) / Android 1.0.9：长按删除改为底部 Action Sheet**
+    - 用户：长按后的弹窗 UI 不对；
+    - 80：
+      - 去掉居中的「删除收藏」确认框，改成 iOS/微信风格底部 Action Sheet：
+        - 半透明遮罩；
+        - 标题「删除收藏」+ 说明「删除后无法恢复。」；
+        - 红色「删除」整行，文字居中；
+        - 8px 间隔后的独立「取消」白色圆角按钮；
+        - 适配 `env(safe-area-inset-bottom)`；
+      - 收藏详情页的删除也切到同一个 Action Sheet；
+      - 长按 550ms 的交互、抑制误触、排序气泡菜单都不变；
+    - 浏览器实测：长按弹出底部 sheet，点「删除」后条目减少；
+    - 版本 1.0.0(80)（iOS）/ 1.0.9（Android）。
       改动文件：`wechat-me-pages.js/.css`、两个 `index.html`、iOS `project.yml`；
       Android `assets/fake_world/overrides/*`。
 

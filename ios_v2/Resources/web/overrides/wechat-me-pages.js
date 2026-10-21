@@ -176,6 +176,33 @@
     if (el) el.classList.remove('is-open');
     dialog = null;
   }
+  function closeSheet() {
+    if (!host) return;
+    var el = host.querySelector('.fwm-sheet');
+    if (el) el.remove();
+  }
+  function openSheet(opts) {
+    if (!host) return;
+    closeSheet();
+    var el = document.createElement('div');
+    el.className = 'fwm-sheet';
+    el.innerHTML = '<div class="fwm-sheet-mask" data-sheet-cancel></div>' +
+      '<div class="fwm-sheet-panel">' +
+      '<div class="fwm-sheet-group">' +
+      (opts.title ? '<div class="fwm-sheet-title">' + esc(opts.title) + '</div>' : '') +
+      (opts.text ? '<div class="fwm-sheet-text">' + esc(opts.text) + '</div>' : '') +
+      '<button type="button" class="fwm-sheet-danger" data-sheet-ok>' + esc(opts.okText || '删除') + '</button>' +
+      '</div>' +
+      '<button type="button" class="fwm-sheet-cancel" data-sheet-cancel>取消</button>' +
+      '</div>';
+    host.appendChild(el);
+    el.querySelector('[data-sheet-ok]').addEventListener('click', function () {
+      closeSheet();
+      if (opts.onOk) opts.onOk();
+    });
+    var cancels = el.querySelectorAll('[data-sheet-cancel]');
+    for (var i = 0; i < cancels.length; i++) cancels[i].addEventListener('click', closeSheet);
+  }
 
   /* -------------------------------------------------------------- favorites */
 
@@ -566,7 +593,7 @@
       if (el.hasAttribute('data-favdel')) {
         e.preventDefault();
         var fid = el.getAttribute('data-favdel');
-        openDialog({ title: '删除收藏', text: '删除后无法恢复。', danger: true, okText: '删除', onOk: function () {
+        openSheet({ title: '删除收藏', text: '删除后无法恢复。', okText: '删除', onOk: function () {
           favorites = favorites.filter(function (x) { return x.id !== fid; });
           saveFavorites(); nav('#/wechat/me/favorites'); toast('已删除');
         }});
@@ -626,7 +653,7 @@
         var id = pressItem.getAttribute('data-fav');
         pressItem = null;
         try { navigator.vibrate && navigator.vibrate(12); } catch (_) {}
-        openDialog({ title: '删除收藏', text: '删除后无法恢复。', danger: true, okText: '删除', onOk: function () { deleteFavorite(id); } });
+        openSheet({ title: '删除收藏', text: '删除后无法恢复。', okText: '删除', onOk: function () { deleteFavorite(id); } });
       }, 550);
     }, true);
     document.addEventListener('pointermove', function (e) {

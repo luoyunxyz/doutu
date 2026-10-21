@@ -303,3 +303,16 @@
 #fw-me-pages-host .fwm-favmenu-row:last-child { border-bottom: 0; }
 #fw-me-pages-host .fwm-favmenu-row.is-active { color: #07c160; font-weight: 500; }
 #fw-me-pages-host .fwm-favmenu-check { color: #07c160; font-size: 15px; margin-left: 10px; }
+
+/* 1.0.0(80): WeChat-style bottom action sheet for delete */
+#fw-me-pages-host .fwm-sheet-mask { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,.42); z-index: 50; }
+#fw-me-pages-host .fwm-sheet-panel { position: fixed; left: 8px; right: 8px; bottom: calc(8px + env(safe-area-inset-bottom)); z-index: 51; }
+#fw-me-pages-host .fwm-sheet-group { background: #fff; border-radius: 12px; overflow: hidden; }
+#fw-me-pages-host .fwm-sheet-title { padding: 16px 20px 4px; text-align: center; font-size: 13px; color: #888; }
+#fw-me-pages-host .fwm-sheet-text { padding: 0 20px 14px; text-align: center; font-size: 13px; color: #b2b2b2; }
+#fw-me-pages-host .fwm-sheet-danger { display: block; width: 100%; height: 56px; border-top: 1px solid #f2f2f2; color: #fa5151; font-size: 17px; font-weight: 500; background: #fff; }
+#fw-me-pages-host .fwm-sheet-cancel { display: block; width: 100%; height: 56px; margin-top: 8px; background: #fff; border-radius: 12px; font-size: 17px; font-weight: 600; color: #191919; }
+
+/* 1.0.0(80) fix: center action-sheet button labels */
+#fw-me-pages-host .fwm-sheet-danger { text-align: center; }
+#fw-me-pages-host .fwm-sheet-cancel { text-align: center; }
