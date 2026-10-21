@@ -268,48 +268,6 @@ public final class LocalToolActivity extends Activity {
         content.addView(bal);
     }
 
-    private void buildContacts() {
-        content.setBackgroundColor(0xffededed);
-        content.addView(wechatHeader("通讯录"));
-        String[][] feats = {{"新", "0xffff9f1c", "新的朋友"}, {"群", "0xff07c160", "群聊"}, {"标", "0xff2f7bff", "标签"}, {"公", "0xff2f7bff", "公众号"}};
-        for (String[] f : feats) content.addView(wechatRow(f[0], f[1], f[2], "新的朋友".equals(f[2]) ? "contacts" : "群聊".equals(f[2]) ? "chats" : "articles"));
-        TextView ent = new TextView(this);
-        ent.setText("我的企业及企业联系人");
-        ent.setTextSize(13);
-        ent.setTextColor(0xff888888);
-        ent.setBackgroundColor(0xffededed);
-        ent.setPadding(dp(14), dp(10), 0, dp(6));
-        content.addView(ent);
-        content.addView(wechatRow("企", "0xff2f7bff", "企业微信联系人", "articles"));
-
-        if (!contacts.contains("文件传输助手")) contacts.add("文件传输助手");
-        if (!contacts.contains("本地好友")) contacts.add("本地好友");
-        java.util.TreeMap<Character, java.util.List<String>> groups = new java.util.TreeMap<>();
-        for (String c : contacts) {
-            char ch = Character.toUpperCase(c.charAt(0));
-            if (ch < 'A' || ch > 'Z') ch = '#';
-            groups.computeIfAbsent(ch, k -> new java.util.ArrayList<>()).add(c);
-        }
-        for (Character ch : groups.keySet()) {
-            TextView sec = new TextView(this);
-            sec.setText(String.valueOf(ch));
-            sec.setTextSize(13);
-            sec.setTextColor(0xff888888);
-            sec.setBackgroundColor(0xffededed);
-            sec.setPadding(dp(14), dp(8), 0, dp(6));
-            content.addView(sec);
-            for (String c : groups.get(ch)) content.addView(wechatRow(c.substring(0, 1), "0xff07c160", c, "chat", c));
-        }
-        TextView count = new TextView(this);
-        count.setText(contacts.size() + "个朋友");
-        count.setTextSize(13);
-        count.setTextColor(0xff888888);
-        count.setGravity(Gravity.CENTER);
-        count.setPadding(0, dp(16), 0, dp(16));
-        content.addView(count);
-        content.addView(wechatTabBar("contacts"));
-    }
-
     private LinearLayout wechatHeader(String title) {
         LinearLayout header = new LinearLayout(this);
         header.setGravity(Gravity.CENTER_VERTICAL);
@@ -400,31 +358,168 @@ public final class LocalToolActivity extends Activity {
         return tabs;
     }
 
-    private void buildDiscover() {
-        content.setBackgroundColor(0xffededed);
-        content.addView(wechatHeader("发现"));
-        String[][] rows = {
-                {"圈", "0xff07c160", "朋友圈", "moments"},
-                {"视", "0xffff9f1c", "视频号", "video"},
-                {"播", "0xffff5a5f", "直播", "video"},
-                {"扫", "0xff2f7bff", "扫一扫", "pay"},
-                {"摇", "0xff2f7bff", "摇一摇", "generic"},
-                {"看", "0xffffb400", "看一看", "articles"},
-                {"搜", "0xffff5a5f", "搜一搜", "articles"},
-                {"近", "0xff2f7bff", "附近", "generic"},
-                {"购", "0xffff5a5f", "购物", "shop"},
-                {"游", "0xff07c160", "游戏", "generic"},
-                {"程", "0xff7c5cf6", "小程序", "generic"}
-        };
-        for (int i = 0; i < rows.length; i++) {
-            if (i == 3 || i == 5 || i == 8 || i == 10) {
-                View gap = new View(this);
-                gap.setBackgroundColor(0xffededed);
-                content.addView(gap, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(8)));
-            }
-            content.addView(wechatRow(rows[i][0], rows[i][1], rows[i][2], rows[i][3]));
+    private void buildContacts() {
+        content.setBackgroundColor(0xfff5f5f8);
+        content.addView(contactTitle());
+
+        LinearLayout hwrap = new LinearLayout(this);
+        hwrap.setOrientation(LinearLayout.HORIZONTAL);
+        LinearLayout left = new LinearLayout(this);
+        left.setOrientation(LinearLayout.VERTICAL);
+
+        left.addView(contactFeatureRow("ic_wx_contact_new_friend", "新的朋友", "contacts", "新的朋友"));
+        left.addView(contactFeatureRow("ic_wx_contact_group_chat", "群聊", "chats", "群聊"));
+        left.addView(contactFeatureRow("ic_wx_contact_label", "标签", "articles", "标签"));
+        left.addView(contactFeatureRow("ic_wx_contact_public_number", "公众号", "articles", "公众号"));
+        left.addView(contactSection("我的企业及企业联系人", 13, 0xff767676));
+        left.addView(contactFeatureRow("ic_wx_contact_publick_enterprise", "企业微信联系人", "articles", "企业微信联系人"));
+
+        if (!contacts.contains("文件传输助手")) contacts.add("文件传输助手");
+        if (!contacts.contains("本地好友")) contacts.add("本地好友");
+        java.util.TreeMap<String, java.util.List<String>> groups = new java.util.TreeMap<>();
+        for (String c : contacts) {
+            String letter = pinyinLetter(c);
+            groups.computeIfAbsent(letter, k -> new java.util.ArrayList<>()).add(c);
         }
-        content.addView(wechatTabBar("discover"));
+        for (String letter : groups.keySet()) {
+            left.addView(contactSection(letter, 11, 0xff888888));
+            for (String c : groups.get(letter)) left.addView(contactRow(c));
+        }
+        left.addView(contactFooter(contacts.size() + "位联系人"));
+
+        hwrap.addView(left, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        TextView alphabet = new TextView(this);
+        StringBuilder sb = new StringBuilder();
+        for (char ch = 'A'; ch <= 'Z'; ch++) sb.append(ch).append('\n');
+        sb.append('#');
+        alphabet.setText(sb.toString());
+        alphabet.setTextSize(9);
+        alphabet.setTextColor(0xff666666);
+        alphabet.setGravity(Gravity.TOP | Gravity.CENTER_HORIZONTAL);
+        alphabet.setPadding(0, dp(6), 0, dp(6));
+        hwrap.addView(alphabet, new LinearLayout.LayoutParams(dp(20), ViewGroup.LayoutParams.WRAP_CONTENT));
+        content.addView(hwrap);
+        content.addView(wechatTabBar("contacts"));
+    }
+
+    private String pinyinLetter(String name) {
+        if (name == null || name.isEmpty()) return "#";
+        char c0 = name.charAt(0);
+        if (c0 >= 'A' && c0 <= 'Z') return String.valueOf(c0);
+        if (c0 >= 'a' && c0 <= 'z') return String.valueOf(Character.toUpperCase(c0));
+        switch (c0) {
+            case '文': return "W";
+            case '本': return "B";
+            case '陈': return "C";
+            case '李': return "L";
+            case '王': return "W";
+            case '张': return "Z";
+            case '刘': return "L";
+            case '杨': return "Y";
+            case '黄': return "H";
+            case '赵': return "Z";
+            case '周': return "Z";
+            case '吴': return "W";
+            default: return "#";
+        }
+    }
+
+    private LinearLayout contactTitle() {
+        LinearLayout bar = new LinearLayout(this);
+        bar.setGravity(Gravity.CENTER_VERTICAL);
+        bar.setBackgroundColor(0xffededed);
+        ImageView back = assetIcon("icon_wx_left_top_float", 21);
+        back.setOnClickListener(v -> finish());
+        LinearLayout.LayoutParams blp = new LinearLayout.LayoutParams(dp(21), dp(21));
+        blp.leftMargin = dp(13);
+        bar.addView(back, blp);
+        TextView title = new TextView(this);
+        title.setText("通讯录");
+        title.setTextSize(16);
+        title.setTextColor(0xff2b2b2b);
+        title.setGravity(Gravity.CENTER);
+        bar.addView(title, new LinearLayout.LayoutParams(0, dp(43), 1f));
+        ImageView search = assetIcon("ic_wx_outlined_search", 21);
+        LinearLayout.LayoutParams slp = new LinearLayout.LayoutParams(dp(21), dp(21));
+        slp.rightMargin = dp(15);
+        bar.addView(search, slp);
+        ImageView add = assetIcon("ic_wx_outlined_add", 21);
+        LinearLayout.LayoutParams alp = new LinearLayout.LayoutParams(dp(21), dp(21));
+        alp.rightMargin = dp(14);
+        bar.addView(add, alp);
+        return bar;
+    }
+
+    private LinearLayout contactFeatureRow(String asset, String label, String key, String title) {
+        LinearLayout row = new LinearLayout(this);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setBackgroundColor(Color.WHITE);
+        ImageView icon = assetIcon(asset, 36);
+        LinearLayout.LayoutParams ilp = new LinearLayout.LayoutParams(dp(36), dp(36));
+        ilp.leftMargin = dp(14);
+        row.addView(icon, ilp);
+        TextView tv = new TextView(this);
+        tv.setText(label);
+        tv.setTextSize(15.45f);
+        tv.setTextColor(0xff303030);
+        LinearLayout.LayoutParams tlp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+        tlp.leftMargin = dp(14.54f);
+        row.addView(tv, tlp);
+        row.setOnClickListener(v -> LocalToolActivity.open(this, key, title));
+        row.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(47)));
+        return row;
+    }
+
+    private TextView contactSection(String text, float size, int color) {
+        TextView tv = new TextView(this);
+        tv.setText(text);
+        tv.setTextSize(size);
+        tv.setTextColor(color);
+        tv.setGravity(Gravity.CENTER_VERTICAL);
+        tv.setBackgroundColor(0xffededed);
+        tv.setPadding(dp(14.54f), 0, 0, 0);
+        tv.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(29)));
+        return tv;
+    }
+
+    private LinearLayout contactRow(String name) {
+        LinearLayout row = new LinearLayout(this);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setBackgroundColor(Color.WHITE);
+        ImageView av = assetIcon("ic_wx_default_image", 36);
+        LinearLayout.LayoutParams alp = new LinearLayout.LayoutParams(dp(36.36f), dp(36.36f));
+        alp.leftMargin = dp(14);
+        row.addView(av, alp);
+        TextView tv = new TextView(this);
+        tv.setText(name);
+        tv.setTextSize(14.54f);
+        tv.setTextColor(0xff404040);
+        LinearLayout.LayoutParams tlp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+        tlp.leftMargin = dp(14.54f);
+        row.addView(tv, tlp);
+        row.setOnClickListener(v -> LocalToolActivity.open(this, "chat", name));
+        row.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(52)));
+        return row;
+    }
+
+    private TextView contactFooter(String text) {
+        TextView tv = new TextView(this);
+        tv.setText(text);
+        tv.setTextSize(15);
+        tv.setTextColor(0xff717171);
+        tv.setGravity(Gravity.CENTER);
+        tv.setBackgroundColor(Color.WHITE);
+        tv.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(51)));
+        return tv;
+    }
+
+    private ImageView assetIcon(String name, int sizeDp) {
+        ImageView iv = new ImageView(this);
+        try (java.io.InputStream in = getAssets().open("wx_icons/" + name + ".png")) {
+            iv.setImageBitmap(android.graphics.BitmapFactory.decodeStream(in));
+        } catch (Exception ignored) { }
+        iv.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        return iv;
     }
 
     private void buildMoments() {
@@ -1249,6 +1344,10 @@ public final class LocalToolActivity extends Activity {
             }
         });
         content.addView(tryBtn, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(48)));
+    }
+
+    private int dp(float v) {
+        return Math.round(v * getResources().getDisplayMetrics().density);
     }
 
     private int dp(int v) {
