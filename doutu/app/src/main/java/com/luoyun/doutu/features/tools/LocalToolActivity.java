@@ -522,6 +522,33 @@ public final class LocalToolActivity extends Activity {
         return iv;
     }
 
+    private void buildDiscover() {
+        content.setBackgroundColor(0xffededed);
+        content.addView(wechatHeader("发现"));
+        String[][] rows = {
+                {"圈", "0xff07c160", "朋友圈", "moments"},
+                {"视", "0xffff9f1c", "视频号", "video"},
+                {"播", "0xffff5a5f", "直播", "video"},
+                {"扫", "0xff2f7bff", "扫一扫", "pay"},
+                {"摇", "0xff2f7bff", "摇一摇", "generic"},
+                {"看", "0xffffb400", "看一看", "articles"},
+                {"搜", "0xffff5a5f", "搜一搜", "articles"},
+                {"近", "0xff2f7bff", "附近", "generic"},
+                {"购", "0xffff5a5f", "购物", "shop"},
+                {"游", "0xff07c160", "游戏", "generic"},
+                {"程", "0xff7c5cf6", "小程序", "generic"}
+        };
+        for (int i = 0; i < rows.length; i++) {
+            if (i == 3 || i == 5 || i == 8 || i == 10) {
+                View gap = new View(this);
+                gap.setBackgroundColor(0xffededed);
+                content.addView(gap, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(8)));
+            }
+            content.addView(wechatRow(rows[i][0], rows[i][1], rows[i][2], rows[i][3]));
+        }
+        content.addView(wechatTabBar("discover"));
+    }
+
     private void buildMoments() {
         EditText post = new EditText(this);
         post.setHint("这一刻的想法…");
