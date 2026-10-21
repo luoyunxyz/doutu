@@ -276,11 +276,15 @@ public final class ReplaceHeaderListActivity extends Activity {
         RectF r = new RectF(slot);
         float grow = Math.min(r.width(), r.height()) * 0.03f;
         r.inset(-grow, -grow);
-        float radius = Math.min(r.width(), r.height()) * 0.20f;
+        float radius = Math.min(r.width(), r.height()) * 0.16f;
         Path path = new Path();
         path.addRoundRect(r, radius, radius, Path.Direction.CW);
         c.save();
         c.clipPath(path);
+        // 先铺白底：替换图带透明像素时不会透出原来的头像
+        Paint bg = new Paint(Paint.ANTI_ALIAS_FLAG);
+        bg.setColor(0xffffffff);
+        c.drawRect(r, bg);
         c.drawBitmap(cover, null, r, paint);
         c.restore();
     }
@@ -297,42 +301,93 @@ public final class ReplaceHeaderListActivity extends Activity {
         return out;
     }
 
+    /** 采样成 12×12 灰度网格，用于归一化互相关（对压缩/亮度差异更耐受）。 */
+    private float[] grayGrid(int[] px, int tw, int th) {
+        final int g = 12;
+        float[] out = new float[g * g];
+        for (int gy = 0; gy < g; gy++) {
+            int sy = Math.min(th - 1, gy * th / g);
+            for (int gx = 0; gx < g; gx++) {
+                int sx = Math.min(tw - 1, gx * tw / g);
+                int c = px[sy * tw + sx];
+                out[gy * g + gx] = 0.299f * ((c >> 16) & 255)
+                        + 0.587f * ((c >> 8) & 255) + 0.114f * (c & 255);
+            }
+        }
+        return out;
+    }
+
+    /** 归一化互相关，-1~1；1 表示完全一致。 */
+    private float ncc(float[] a, float[] b) {
+        float ma = 0f, mb = 0f;
+        for (int i = 0; i < a.length; i++) {
+            ma += a[i];
+            mb += b[i];
+        }
+        ma /= a.length;
+        mb /= b.length;
+        double num = 0, da = 0, db = 0;
+        for (int i = 0; i < a.length; i++) {
+            double x = a[i] - ma, y = b[i] - mb;
+            num += x * y;
+            da += x * x;
+            db += y * y;
+        }
+        double den = Math.sqrt(da * db);
+        return den < 1e-3 ? 0f : (float) (num / den);
+    }
+
     /**
-     * 以 ref 选框为模板，在整张图里找出所有相同的头像。
-     * 先缩到 360px 宽做块匹配（带提前退出），命中后再映射回原图坐标。
+     * 以 ref 选框为模板，用归一化互相关找出整张图里所有相同头像。
+     * 多个尺度（0.9 / 1.0 / 1.1）扫描，命中后映射回原图坐标。
      */
     private java.util.List<RectF> findSameAvatars(RectF ref) {
         java.util.List<RectF> found = new java.util.ArrayList<>();
-        if (base == null || ref.width() < 8 || ref.height() < 8) return found;
-        float k = Math.min(1f, 360f / base.getWidth());
+        if (base == null || ref.width() < 10 || ref.height() < 10) return found;
+        float inset = 0.10f;   // 内缩，避开选框边缘的背景
+        RectF core = new RectF(ref);
+        core.inset(ref.width() * inset, ref.height() * inset);
+        float k = Math.min(1f, 420f / base.getWidth());
         Bitmap work = Bitmap.createScaledBitmap(base,
                 Math.max(1, Math.round(base.getWidth() * k)),
                 Math.max(1, Math.round(base.getHeight() * k)), true);
-        int tw = Math.max(6, Math.round(ref.width() * k));
-        int th = Math.max(6, Math.round(ref.height() * k));
-        int tx = Math.max(0, Math.min(work.getWidth() - tw, Math.round(ref.left * k)));
-        int ty = Math.max(0, Math.min(work.getHeight() - th, Math.round(ref.top * k)));
-        int[] tpl = new int[tw * th];
-        try {
-            work.getPixels(tpl, 0, tw, tx, ty, tw, th);
-        } catch (Exception e) {
-            return found;
-        }
-        int stride = Math.max(2, Math.min(tw, th) / 5);
-        int[] buf = new int[tw * th];
+        final float threshold = 0.86f;
+        float[] scales = {1.0f, 0.9f, 1.1f};
         java.util.List<int[]> hits = new java.util.ArrayList<>();
-        for (int y = 0; y + th <= work.getHeight(); y += stride) {
-            for (int x = 0; x + tw <= work.getWidth(); x += stride) {
-                work.getPixels(buf, 0, tw, x, y, tw, th);
-                float d = meanDiff(tpl, buf, 26f);
-                if (d >= 0f) hits.add(new int[]{x, y, Math.round(d * 10)});
+        for (float sc : scales) {
+            int tw = Math.max(6, Math.round(core.width() * k * sc));
+            int th = Math.max(6, Math.round(core.height() * k * sc));
+            if (tw >= work.getWidth() || th >= work.getHeight()) continue;
+            int tx = Math.max(0, Math.min(work.getWidth() - tw, Math.round(core.left * k)));
+            int ty = Math.max(0, Math.min(work.getHeight() - th, Math.round(core.top * k)));
+            int[] tpl = new int[tw * th];
+            try {
+                work.getPixels(tpl, 0, tw, tx, ty, tw, th);
+            } catch (Exception e) {
+                continue;
+            }
+            float[] tplGrid = grayGrid(tpl, tw, th);
+            int stride = 3;
+            int[] buf = new int[tw * th];
+            for (int y = 0; y + th <= work.getHeight(); y += stride) {
+                for (int x = 0; x + tw <= work.getWidth(); x += stride) {
+                    work.getPixels(buf, 0, tw, x, y, tw, th);
+                    float score = ncc(tplGrid, grayGrid(buf, tw, th));
+                    if (score >= threshold) {
+                        hits.add(new int[]{x, y, Math.round((1f - score) * 1000),
+                                Math.round(tw / sc), Math.round(th / sc)});
+                    }
+                }
             }
         }
         hits.sort((a, b) -> Integer.compare(a[2], b[2]));
         java.util.List<RectF> picked = new java.util.ArrayList<>();
         for (int[] h : hits) {
-            if (picked.size() >= 12) break;
-            RectF r = new RectF(h[0] / k, h[1] / k, (h[0] + tw) / k, (h[1] + th) / k);
+            if (picked.size() >= 20) break;
+            float cx = h[0] + h[3] * k / 2f, cy = h[1] + h[4] * k / 2f;
+            float fw = h[3] * k / (1f - inset * 2f), fh = h[4] * k / (1f - inset * 2f);
+            RectF r = new RectF((cx - fw / 2f) / k, (cy - fh / 2f) / k,
+                    (cx + fw / 2f) / k, (cy + fh / 2f) / k);
             boolean dup = false;
             for (RectF o : picked) {
                 if (RectF.intersects(r, o)) { dup = true; break; }
