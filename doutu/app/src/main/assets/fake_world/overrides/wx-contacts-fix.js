@@ -105,6 +105,8 @@
   }
 
   function polish() {
+    // 只在通讯录路由生效，避免把「＋」「隐藏搜索框」带到微信首页
+    if (String(location.hash || '').indexOf('contacts') < 0) return;
     if (norm(document.body && document.body.innerText).indexOf('通讯录') < 0) return;
     if (!document.querySelector('.wechat-topbar')) return;
     injectStyle();

@@ -1888,6 +1888,14 @@ static final class FeatureRow {
 
         private void openTool(String action, String name) {
             if (action == null || action.isEmpty()) return;
+            // 只写 "wechat" 的入口（创建单聊 / 发现）：直接打开微信首页
+            if ("wechat".equals(action)) {
+                startActivity(com.luoyun.doutu.features.wei.WeiHomeActivity
+                        .intentFor(MainActivity.this, "#/wechat")
+                        .addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_SINGLE_TOP));
+                overridePendingTransition(0, 0);
+                return;
+            }
             if (action.startsWith("wechat:")) {
                 String route = action.substring(7);
                 // 微信转账：真机是「转账金额 + 收钱间隔 + 转账类型 + 键盘」的独立页，
