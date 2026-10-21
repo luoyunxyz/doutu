@@ -78,7 +78,7 @@ public final class LocalToolActivity extends Activity {
         tv.setGravity(Gravity.CENTER);
         bar.addView(tv, new LinearLayout.LayoutParams(0, dp(50), 1f));
         bar.addView(new View(this), new LinearLayout.LayoutParams(dp(88), dp(50)));
-        if (!("home".equals(key) || "contacts".equals(key) || "moments".equals(key) || "profile".equals(key) || "discover".equals(key) || "chat".equals(key) || "wallet".equals(key) || "transfer".equals(key) || "redpacket".equals(key))) root.addView(bar);
+        if (!("home".equals(key) || "contacts".equals(key) || "moments".equals(key) || "profile".equals(key) || "discover".equals(key) || "chat".equals(key) || "wallet".equals(key) || "transfer".equals(key) || "redpacket".equals(key) || "paysuccess".equals(key))) root.addView(bar);
 
         ScrollView scroll = new ScrollView(this);
         content = new LinearLayout(this);
@@ -1130,23 +1130,69 @@ public final class LocalToolActivity extends Activity {
     }
 
     private void buildSuccess() {
+        content.setBackgroundColor(Color.WHITE);
+        content.setPadding(0, 0, 0, 0);
         String raw = getSharedPreferences(PREFS, 0).getString("last_pay", "本地支付|0.00");
-        String[] parts = raw.split("\\|");
+        String[] parts = raw.split("\|");
         String merchant = parts.length > 0 ? parts[0] : "本地支付";
         String amount = parts.length > 1 ? parts[1] : "0.00";
-        TextView tv = new TextView(this);
-        tv.setText("✓\n\n¥ " + amount + "\n\n" + merchant + "\n\n支付成功（本地）");
-        tv.setTextSize(20);
-        tv.setTextColor(0xff07c160);
-        tv.setGravity(Gravity.CENTER);
-        tv.setBackgroundColor(Color.WHITE);
-        tv.setPadding(0, dp(45), 0, dp(45));
-        content.addView(tv);
-        Button done = new Button(this);
+
+        LinearLayout top = new LinearLayout(this);
+        top.setGravity(Gravity.CENTER);
+        top.setPadding(0, dp(24), 0, 0);
+        top.addView(assetIcon("ic_wx_pay_success", 19), new LinearLayout.LayoutParams(dp(19), dp(17)));
+        TextView tip = new TextView(this);
+        tip.setText("支付成功");
+        tip.setTextSize(15);
+        tip.setTextColor(0xff07c160);
+        tip.setPadding(dp(7), 0, 0, 0);
+        top.addView(tip);
+        content.addView(top);
+
+        LinearLayout avatarRow = new LinearLayout(this);
+        avatarRow.setGravity(Gravity.CENTER);
+        avatarRow.setPadding(0, dp(35), 0, 0);
+        avatarRow.addView(assetIcon("ic_wx_default_image", 44), new LinearLayout.LayoutParams(dp(44), dp(44)));
+        content.addView(avatarRow);
+
+        TextView name = new TextView(this);
+        name.setText("本地用户");
+        name.setTextSize(15);
+        name.setTextColor(0xff1a1a1a);
+        name.setGravity(Gravity.CENTER);
+        name.setPadding(0, dp(7), 0, 0);
+        content.addView(name);
+
+        TextView shop = new TextView(this);
+        shop.setText(merchant);
+        shop.setTextSize(15);
+        shop.setTextColor(0xff353535);
+        shop.setGravity(Gravity.CENTER);
+        shop.setPadding(0, dp(34), 0, 0);
+        content.addView(shop);
+
+        TextView money = new TextView(this);
+        money.setText("¥" + amount);
+        money.setTextSize(43);
+        money.setTextColor(0xff1b1b1b);
+        money.setGravity(Gravity.CENTER);
+        money.setPadding(0, dp(24), 0, dp(30));
+        content.addView(money);
+
+        TextView done = new TextView(this);
         done.setText("完成");
-        done.setAllCaps(false);
+        done.setTextSize(15);
+        done.setTextColor(0xff181818);
+        done.setGravity(Gravity.CENTER);
+        android.graphics.drawable.GradientDrawable g = new android.graphics.drawable.GradientDrawable();
+        g.setColor(0xfff2f2f2);
+        g.setCornerRadius(dp(6));
+        done.setBackground(g);
         done.setOnClickListener(v -> finish());
-        content.addView(done, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(48)));
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(dp(166), dp(46));
+        lp.gravity = Gravity.CENTER_HORIZONTAL;
+        lp.topMargin = dp(20);
+        content.addView(done, lp);
     }
 
     private void buildAssets() {
