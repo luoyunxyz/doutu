@@ -9232,7 +9232,7 @@
     let value = '';
     try { value = localStorage.getItem(DEVICE_ROW_KEY) || ''; } catch (_) { /* no-op */ }
     if (value === 'hidden') return 'hidden';
-    return DEVICE_ROW_OPTIONS.some(option => option.value === value) ? value : 'Windows';
+    return DEVICE_ROW_OPTIONS.some(option => option.value === value) ? value : 'hidden';
   }
   function applyDeviceRow() {
     const choice = readDeviceRowChoice();
