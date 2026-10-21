@@ -161,12 +161,30 @@
 (function () {
   if (window.__fwGroupSettingsHook) return;
   window.__fwGroupSettingsHook = true;
+
+  function headerTitle() {
+    try {
+      var nodes = document.querySelectorAll('div,span');
+      for (var i = 0; i < nodes.length; i++) {
+        var el = nodes[i];
+        if (el.children && el.children.length) continue;
+        var r = el.getBoundingClientRect();
+        if (r.top > 120 || r.top < 0 || r.width < 10) continue;
+        var text = (el.textContent || '').trim();
+        if (text) return text;
+      }
+    } catch (e) { }
+    return '';
+  }
+
   document.addEventListener('click', function (e) {
     try {
       if (String(location.hash || '').indexOf('/wechat/conversation/') < 0) return;
       var el = e.target;
       var r = el && el.getBoundingClientRect ? el.getBoundingClientRect() : null;
       if (!r || r.top > 120 || r.left < 300) return;
+      // 只有群聊才接管：群标题形如「再歪一点(100)」，一对一聊天交给克隆自己处理
+      if (!/[(（]\s*\d+\s*[)）]\s*$/.test(headerTitle())) return;
       var bridge = window.DoutuApp;
       if (bridge && bridge.openGroupSettings) {
         e.preventDefault();
