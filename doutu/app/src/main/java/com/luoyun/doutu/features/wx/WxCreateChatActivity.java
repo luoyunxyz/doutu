@@ -155,19 +155,11 @@ public final class WxCreateChatActivity extends Activity {
                     + "s.chats=s.chats||{};s.chats['" + safe + "']={unreadCount:0,unread:false,unreadOverride:true};"
                     + "localStorage.setItem('fake-world.wechat.chat-actions.v1',JSON.stringify(s));"
                     + "return true;}catch(e){return false;}})()";
-            boolean injected = com.luoyun.doutu.features.wei.WeiHomeActivity.execJs(js);
-            if (injected) {
-                // 直接进克隆自己的聊天页：左右滑切换发送者、底部输入栏都是原生的
-                startActivity(com.luoyun.doutu.features.wei.WeiHomeActivity
-                        .intentFor(this, "#/wechat/conversation/" + friendId));
-            } else {
-                Intent intent = new Intent(this, WxChatGreetingActivity.class);
-                intent.putExtra("name", name);
-                intent.putExtra("avatar", avatarPath);
-                intent.putExtra("avatarUrl", avatarUrl);
-                intent.putExtra("isNew", isNewValue[0]);
-                startActivity(intent);
-            }
+            // 先进克隆首页；写入脚本 + 跳会话页都排队到页面加载完成之后执行（冷启动也可靠）
+            String conversationRoute = "#/wechat/conversation/" + friendId;
+            startActivity(com.luoyun.doutu.features.wei.WeiHomeActivity
+                    .intentFor(this, com.luoyun.doutu.features.wei.WeiHomeActivity.ROUTE_HOME));
+            com.luoyun.doutu.features.wei.WeiHomeActivity.scheduleBridge(js, conversationRoute);
             finish();
         });
         buttons.addView(cancel, new LinearLayout.LayoutParams(0, dp(56), 1f));

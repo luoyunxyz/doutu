@@ -105,6 +105,47 @@ public final class WeiHomeActivity extends Activity {
     private static WebView cachedWebView;
     private static boolean preloadStarted;
 
+    /** 待执行的桥脚本与跳转路由（页面加载完成后再执行，冷启动也能生效）。 */
+    private static volatile String bridgeScript;
+    private static volatile String bridgeRoute;
+
+    /**
+     * 页面就绪后执行一段 JS，然后跳到指定路由。
+     * 调用时页面还没起来也没关系，等 onPageFinished 时再执行。
+     */
+    public static void scheduleBridge(String script, String route) {
+        bridgeScript = script;
+        bridgeRoute = route;
+        WeiHomeActivity inst = liveInstance;
+        if (inst != null) inst.drainBridge();
+    }
+
+    /** 写完数据后需要整页重载，重载完成再跳会话页。 */
+    private static volatile String pendingRouteAfterReload;
+
+    private void drainBridge() {
+        String script = bridgeScript;
+        String route = bridgeRoute;
+        if (script == null && route == null) return;
+        bridgeScript = null;
+        bridgeRoute = null;
+        if (script != null && webView != null) {
+            try {
+                webView.evaluateJavascript(script, null);
+            } catch (Throwable ignored) { }
+            // 数据刚写进 localStorage，克隆的 React 状态还没读到它 —— 整页重载后路由才认这个新好友
+            pendingRouteAfterReload = route;
+            try {
+                webView.reload();
+            } catch (Throwable ignored) { }
+            return;
+        }
+        if (route != null) {
+            pendingRoute = route;
+            applyPendingRoute();
+        }
+    }
+
     /**
      * 给原生页面用的执行 JS 入口：在克隆页面里写入数据或跳转。
      * 没有存活的 WebView 时返回 false，调用方自己兜底。
@@ -352,6 +393,11 @@ public final class WeiHomeActivity extends Activity {
             @Override
             public void onPageFinished(WebView view, String url) {
                 Log.e("WeiHomeWeb", "PAGE_FINISHED " + url);
+                drainBridge();
+                if (pendingRouteAfterReload != null) {
+                    pendingRoute = pendingRouteAfterReload;
+                    pendingRouteAfterReload = null;
+                }
                 applyPendingRoute();
                 applyPendingCall();
             }
