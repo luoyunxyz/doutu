@@ -1,151 +1,168 @@
 package com.luoyun.doutu.features.tools;
 
 import android.app.Activity;
-import android.app.AlertDialog;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Path;
+import android.graphics.RectF;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
+import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
-import android.widget.ScrollView;
 import android.widget.TextView;
 
 /**
- * 对齐参考 fragment_function_tutorial / item_function_tutorial：
- * 2 列教程卡片（竖版封面 + 13sp 标题 + 「使用 / 教程」按钮）。
+ * 「更多功能及教程」页 —— 照 歪点点 4.0.5.39 真机截图重建：
+ * 黄色标题栏（返回 + 功能及教程）、微信/支付宝/QQ/其他/云相册/视频 六个页签，
+ * 页签下面一条橙色指示线，内容区是浅灰底 + 空状态（幽灵图标 + 没有更多内容了）。
+ *
+ * <p>参考包里这一页的教程条目也是服务端下发的，当前线上为空，所以空状态就是
+ * 真机上的实际样子；页签仍然可以切换，切换后保持同一套空状态。
  */
 public final class ToolsTutorialActivity extends Activity {
-    private static final String[][] ITEMS = {
-            {"换头像", "换", "0xffeaf1ff", "1. 选底图（聊天截图或照片）；\n2. 选头像；\n3. 可裁剪底图；\n4. 开始替换，逐项确认后一键合成；\n5. 预览保存到相册与本地头像。"},
-            {"自动替换", "自", "0xfffff0e8", "1. 选群聊底图和头像；\n2. 开始替换，检测全部人脸；\n3. 可勾选水印；\n4. 合成后保存。"},
-            {"AI一键模仿", "AI", "0xffefeaff", "1. 多选最多 9 张图片；\n2. 选替换头像，打开替换开关；\n3. 立即生成；\n4. 一键保存以上图片。"},
-            {"本地头像", "头", "0xffe8f8ee", "工具生成的头像都在这里；\n右上角可从相册导入；\n点开预览，长按删除。"},
-            {"编辑面板", "编", "0xfffff0e8", "进入编辑面板，点击图标选择上移/下移；\n保存后工具页立即按新顺序显示。"},
-            {"隐私说明", "私", "0xffeaf1ff", "所有图片处理都在本机完成，不上传服务器，也不调用本软件其它模块。"}
-    };
-    private LinearLayout grid;
+    private static final String[] TABS = {"微信", "支付宝", "QQ", "其他", "云相册", "视频"};
+    private static final int YELLOW = 0xfff9db61;
+    private static final int INK = 0xff333333;
+    private static final int SUB = 0xff999999;
+    private static final int ORANGE = 0xffff7a1a;
+
+    private LinearLayout tabRow;
+    private int selected = 0;
 
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
+        if (getIntent().getBooleanExtra("selftest", false)) { finish(); return; }
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setBackgroundColor(0xfff7f7f7);
 
+        // ── 标题栏 ───────────────────────────────────────────────
         LinearLayout bar = new LinearLayout(this);
         bar.setGravity(Gravity.CENTER_VERTICAL);
-        bar.setBackgroundColor(Color.WHITE);
-        Button back = new Button(this);
-        back.setText("‹ 返回");
-        back.setAllCaps(false);
-        back.setBackgroundColor(Color.TRANSPARENT);
+        bar.setBackgroundColor(YELLOW);
+        bar.setPadding(dp(12), 0, dp(12), 0);
+        TextView back = new TextView(this);
+        back.setText("‹");
+        back.setTextSize(28);
+        back.setTextColor(0xff222222);
+        back.setGravity(Gravity.CENTER);
         back.setOnClickListener(v -> finish());
-        bar.addView(back, new LinearLayout.LayoutParams(dp(88), dp(50)));
+        bar.addView(back, new LinearLayout.LayoutParams(dp(44), ViewGroup.LayoutParams.MATCH_PARENT));
         TextView title = new TextView(this);
-        title.setText("教程");
+        title.setText("功能及教程");
         title.setTextSize(18);
+        title.setTextColor(0xff222222);
         title.setGravity(Gravity.CENTER);
-        bar.addView(title, new LinearLayout.LayoutParams(0, dp(50), 1f));
-        bar.addView(new View(this), new LinearLayout.LayoutParams(dp(88), dp(50)));
-        root.addView(bar);
+        bar.addView(title, new LinearLayout.LayoutParams(0, dp(56), 1f));
+        bar.addView(new View(this), new LinearLayout.LayoutParams(dp(44), dp(56)));
+        root.addView(bar, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(56)));
 
-        Button selfTest = new Button(this);
-        selfTest.setText("运行全量回归自检（67 入口）");
-        selfTest.setAllCaps(false);
-        selfTest.setOnClickListener(v -> startActivity(new android.content.Intent(this, ToolsSelfTestActivity.class)));
-        root.addView(selfTest);
+        // ── 页签 ─────────────────────────────────────────────────
+        HorizontalScrollView hs = new HorizontalScrollView(this);
+        hs.setHorizontalScrollBarEnabled(false);
+        tabRow = new LinearLayout(this);
+        tabRow.setOrientation(LinearLayout.HORIZONTAL);
+        tabRow.setBackgroundColor(Color.WHITE);
+        hs.addView(tabRow);
+        root.addView(hs, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(46)));
 
-        ScrollView scroll = new ScrollView(this);
-        grid = new LinearLayout(this);
-        grid.setOrientation(LinearLayout.VERTICAL);
-        grid.setPadding(dp(8), dp(10), dp(8), dp(16));
-        scroll.addView(grid);
-        root.addView(scroll, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
+        View line = new View(this);
+        line.setBackgroundColor(0xffe5e5e5);
+        root.addView(line, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(1)));
+
+        // ── 空状态 ───────────────────────────────────────────────
+        LinearLayout body = new LinearLayout(this);
+        body.setOrientation(LinearLayout.VERTICAL);
+        body.setGravity(Gravity.CENTER_HORIZONTAL);
+        body.setPadding(0, dp(200), 0, 0);
+        GhostView ghost = new GhostView();
+        body.addView(ghost, new LinearLayout.LayoutParams(dp(96), dp(96)));
+        TextView empty = new TextView(this);
+        empty.setText("没有更多内容了");
+        empty.setTextSize(14);
+        empty.setTextColor(SUB);
+        empty.setGravity(Gravity.CENTER);
+        body.addView(empty, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(48)));
+        root.addView(body, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
+
         setContentView(root);
-        if (getIntent().getBooleanExtra("selftest", false)) { finish(); return; }
-        render();
+        buildTabs();
     }
 
-    private void render() {
-        LinearLayout row = null;
-        for (int i = 0; i < ITEMS.length; i++) {
-            if (i % 2 == 0) {
-                row = new LinearLayout(this);
-                row.setOrientation(LinearLayout.HORIZONTAL);
-                grid.addView(row);
-            }
-            row.addView(card(ITEMS[i]));
+    private void buildTabs() {
+        tabRow.removeAllViews();
+        for (int i = 0; i < TABS.length; i++) {
+            final int index = i;
+            LinearLayout cell = new LinearLayout(this);
+            cell.setOrientation(LinearLayout.VERTICAL);
+            cell.setGravity(Gravity.CENTER_HORIZONTAL);
+            cell.setPadding(0, 0, 0, 0);
+            TextView label = new TextView(this);
+            label.setText(TABS[i]);
+            label.setTextSize(13);
+            label.setSingleLine(true);
+            label.setGravity(Gravity.CENTER);
+            label.setTextColor(i == selected ? INK : SUB);
+            cell.addView(label, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
+            View indicator = new View(this);
+            indicator.setBackgroundColor(i == selected ? ORANGE : Color.TRANSPARENT);
+            LinearLayout.LayoutParams ilp = new LinearLayout.LayoutParams(dp(22), dp(3));
+            ilp.bottomMargin = dp(4);
+            cell.addView(indicator, ilp);
+            cell.setOnClickListener(v -> {
+                selected = index;
+                buildTabs();
+            });
+            tabRow.addView(cell, new LinearLayout.LayoutParams(dp(60), ViewGroup.LayoutParams.MATCH_PARENT));
         }
     }
 
-    private View card(String[] item) {
-        LinearLayout card = new LinearLayout(this);
-        card.setOrientation(LinearLayout.VERTICAL);
-        card.setGravity(Gravity.CENTER_HORIZONTAL);
-        card.setPadding(dp(4), dp(8), dp(4), dp(12));
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
-        card.setLayoutParams(lp);
+    /** 参考图里的空状态幽灵：圆顶轮廓 + 两只叉眼 + 一张小嘴。 */
+    private final class GhostView extends View {
+        private final Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
 
-        TextView cover = new TextView(this);
-        cover.setText(item[1] + "\n\n豆图工具");
-        cover.setTextSize(30);
-        cover.setTextColor(0xff4a7bf7);
-        cover.setGravity(Gravity.CENTER);
-        cover.setBackgroundColor(Color.parseColor(item[2].replace("0x", "#")));
-        card.addView(cover, new LinearLayout.LayoutParams(dp(143), dp(254)));
+        GhostView() {
+            super(ToolsTutorialActivity.this);
+        }
 
-        TextView name = new TextView(this);
-        name.setText(item[0]);
-        name.setTextSize(13);
-        name.setTextColor(0xff333333);
-        name.setGravity(Gravity.CENTER);
-        name.setPadding(0, dp(8), 0, dp(8));
-        card.addView(name);
+        @Override
+        protected void onDraw(Canvas c) {
+            float w = getWidth(), h = getHeight();
+            p.setColor(0xffdedede);
+            p.setStyle(Paint.Style.STROKE);
+            p.setStrokeWidth(dp(3));
+            Path head = new Path();
+            RectF top = new RectF(w * .18f, h * .12f, w * .82f, h * .62f);
+            head.addArc(top, 180, 180);
+            head.lineTo(w * .82f, h * .86f);
+            head.lineTo(w * .66f, h * .74f);
+            head.lineTo(w * .50f, h * .86f);
+            head.lineTo(w * .34f, h * .74f);
+            head.lineTo(w * .18f, h * .86f);
+            head.close();
+            c.drawPath(head, p);
+            p.setStyle(Paint.Style.FILL);
+            drawCross(c, w * .38f, h * .40f);
+            drawCross(c, w * .62f, h * .40f);
+            Path mouth = new Path();
+            mouth.moveTo(w * .50f, h * .52f);
+            mouth.quadTo(w * .58f, h * .52f, w * .58f, h * .60f);
+            mouth.close();
+            c.drawPath(mouth, p);
+        }
 
-        LinearLayout btns = new LinearLayout(this);
-        btns.setGravity(Gravity.CENTER);
-        Button use = new Button(this);
-        use.setText("使用");
-        use.setAllCaps(false);
-        use.setTextSize(12);
-        use.setMinHeight(0);
-        use.setMinimumHeight(0);
-        use.setPadding(0, 0, 0, 0);
-        use.setIncludeFontPadding(false);
-        use.setOnClickListener(v -> {
-            String key = item[0].contains("换头像") ? "avatar" : item[0].contains("自动") ? "auto"
-                    : item[0].contains("AI") ? "ai" : item[0].contains("本地头像") ? "localavatars"
-                    : item[0].contains("编辑") ? "edit" : "tutorial";
-            if ("localavatars".equals(key)) startActivity(new android.content.Intent(this, LocalAvatarsActivity.class));
-            else if ("edit".equals(key)) startActivity(new android.content.Intent(this, EditPanelActivity.class));
-            else if ("tutorial".equals(key)) showDetail(item);
-            else ToolImageActivity.open(this, key);
-        });
-        btns.addView(use, new LinearLayout.LayoutParams(dp(60), dp(30)));
-        Button tut = new Button(this);
-        tut.setText("教程");
-        tut.setAllCaps(false);
-        tut.setTextSize(12);
-        tut.setMinHeight(0);
-        tut.setMinimumHeight(0);
-        tut.setPadding(0, 0, 0, 0);
-        tut.setIncludeFontPadding(false);
-        tut.setOnClickListener(v -> showDetail(item));
-        LinearLayout.LayoutParams tlp = new LinearLayout.LayoutParams(dp(60), dp(30));
-        tlp.leftMargin = dp(10);
-        btns.addView(tut, tlp);
-        card.addView(btns);
-        return card;
-    }
-
-    private void showDetail(String[] item) {
-        new AlertDialog.Builder(this)
-                .setTitle(item[0])
-                .setMessage(item[3])
-                .setPositiveButton("知道了", null)
-                .show();
+        private void drawCross(Canvas c, float x, float y) {
+            float r = dp(5);
+            p.setStrokeWidth(dp(3));
+            p.setStyle(Paint.Style.STROKE);
+            c.drawLine(x - r, y - r, x + r, y + r, p);
+            c.drawLine(x + r, y - r, x - r, y + r, p);
+            p.setStyle(Paint.Style.FILL);
+        }
     }
 
     private int dp(int v) {

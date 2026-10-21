@@ -1,0 +1,99 @@
+[
+  {
+    "title": "小微",
+    "icon": "h_wechat",
+    "action": "wechat:#/wechat",
+    "dark": true,
+    "items": [
+      {"name": "创建单聊", "icon": "chat", "action": "wechat:#/wechat"},
+      {"name": "创建群聊", "icon": "group", "action": "wechat:feature:group-chat"},
+      {"name": "通讯录", "icon": "contacts", "action": "wechat:#/wechat/contacts"},
+      {"name": "红包", "icon": "redpacket", "action": "local:redpacket"},
+      {"name": "转账", "icon": "transfer", "action": "local:transfer"},
+      {"name": "微信零钱", "icon": "yen", "action": "wechat:#/wechat/wallet/balance"},
+      {"name": "新的朋友", "icon": "newfriends", "action": "wechat:feature:new-friends"},
+      {"name": "发现", "icon": "moments", "action": "wechat:#/wechat/moments"},
+      {"name": "钱包", "icon": "wallet", "action": "wechat:#/wechat/wallet"},
+      {"name": "零钱提现", "icon": "withdraw", "action": "wechat:#/wechat/wallet/withdraw"},
+      {"name": "零钱明细", "icon": "detail", "action": "wechat:#/wechat/wallet/bills"},
+      {"name": "微信支付", "icon": "wxpay", "action": "wechat:#/wechat/payment"},
+      {"name": "支付成功", "icon": "check", "action": "wechat:feature:pay-success"},
+      {"name": "群发助手", "icon": "send", "action": "local:broadcast"},
+      {"name": "替换头像", "icon": "replace", "action": "tool:avatar"},
+      {"name": "公众号", "icon": "official", "action": "local:official"},
+      {"name": "发出的红包", "icon": "sentrp", "action": "local:redpackets"},
+      {"name": "年账单", "icon": "bill_receipt", "action": "wechat:feature:annual-bill"},
+      {"name": "微信收款助手", "icon": "receive", "action": "wechat:#/wechat/service"},
+      {"name": "上传截图", "icon": "upload", "action": "local:upload"}
+    ]
+  },
+  {
+    "title": "阿宝",
+    "icon": "h_alipay",
+    "action": "alipay",
+    "items": [
+      {"name": "创建聊天", "icon": "chat", "action": "alipay"},
+      {"name": "财富", "icon": "treasure", "action": "act:licai"},
+      {"name": "转账", "icon": "transfer", "action": "local:transfer"},
+      {"name": "余额", "icon": "balance", "action": "act:balance"},
+      {"name": "余额明细", "icon": "detail", "action": "act:bill"},
+      {"name": "账单", "icon": "bill_list", "action": "act:bill"},
+      {"name": "总资产", "icon": "assets", "action": "act:assets"},
+      {"name": "红包", "icon": "redpacket", "action": "local:redpacket"},
+      {"name": "公众号", "icon": "official", "action": "local:official"},
+      {"name": "口碑", "icon": "koubei", "action": "local:shop"},
+      {"name": "通讯录", "icon": "contacts", "action": "local:contacts"},
+      {"name": "我的", "icon": "me", "action": "act:me"},
+      {"name": "支付助手", "icon": "zhushou", "action": "act:paymsg"},
+      {"name": "年账单", "icon": "bill_receipt", "action": "act:billstats"},
+      {"name": "转账到银行卡", "icon": "bankcard", "action": "act:withdraw"},
+      {"name": "商家收款记录", "icon": "merchant", "action": "act:receipt"},
+      {"name": "支付成功", "icon": "check", "action": "act:paysuccess"},
+      {"name": "到账播放", "icon": "announce", "action": "act:sound"}
+    ]
+  },
+  {
+    "title": "小Q",
+    "icon": "h_qq",
+    "action": "qq",
+    "items": [
+      {"name": "创建聊天", "icon": "chat", "action": "local:pickchat"},
+      {"name": "红包", "icon": "redpacket", "action": "local:redpacket"},
+      {"name": "转账", "icon": "transfer", "action": "local:transfer"},
+      {"name": "公众号", "icon": "official", "action": "local:official"},
+      {"name": "在线状态", "icon": "online", "action": "local:status"},
+      {"name": "未读消息红点", "icon": "unread", "action": "local:status"}
+    ]
+  },
+  {
+    "title": "其它",
+    "icon": "h_other",
+    "action": "",
+    "items": [
+      {"name": "自动替换", "icon": "replace", "action": "tool:auto"},
+      {"name": "淘宝账单详情", "icon": "taobao", "action": "act:order"},
+      {"name": "AI一键模仿", "icon": "ai", "action": "tool:ai"}
+    ]
+  },
+  {
+    "title": "团队相册",
+    "icon": "h_album",
+    "action": "local:album",
+    "team": true,
+    "items": [
+      {"name": "创建团队", "icon": "plus", "action": "local:team"},
+      {"name": "我的团队", "icon": "team", "action": "local:team"}
+    ]
+  },
+  {
+    "title": "视频",
+    "icon": "h_video",
+    "action": "local:video",
+    "items": [
+      {"name": "抖音", "icon": "douyin", "action": "local:video"},
+      {"name": "评论切片", "icon": "comment", "action": "local:comment"},
+      {"name": "微视", "icon": "weishi", "action": "local:video"},
+      {"name": "快手", "icon": "kuaishou", "action": "local:video"}
+    ]
+  }
+]

@@ -610,24 +610,32 @@ static final class FeatureRow {
         private int servicePage = PAGE_WEI, bottom = 0;
         /** 工具页独立使用 bottom=4，保留 0/1/2 原有语义。 */
         private float toolsBottom;
-        private Bitmap toolsShot;
-        private static final int[][] TOOL_HOT = {
-                {0, 246, 1080, 248}, {0, 530, 1080, 221},
-                {41, 861, 225, 210}, {323, 861, 225, 210}, {613, 861, 225, 210}, {896, 861, 225, 210},
-                {41, 1101, 225, 211}, {323, 1101, 225, 211}, {613, 1101, 225, 211}, {896, 1101, 225, 211},
-                {41, 1341, 225, 211}, {323, 1341, 225, 211}, {613, 1341, 225, 211}, {896, 1341, 225, 211},
-                {41, 1581, 225, 211}, {323, 1581, 225, 211}, {613, 1581, 225, 211}, {896, 1581, 225, 211},
-                {41, 1814, 225, 203}, {323, 1814, 225, 203}, {613, 1814, 225, 203}, {896, 1814, 225, 203}
-        };
-        private static final String[][] TOOL_HOT_KEYS = {
-                {"avatar", "替换头像"}, {"home", "小微"},
-                {"pickchat", "创建单聊"}, {"pickgroup", "创建群聊"}, {"contacts", "通讯录"}, {"redpacket", "红包"},
-                {"transfer", "转账"}, {"wallet", "微信零钱"}, {"newfriends", "新的朋友"}, {"discover", "发现"},
-                {"wallet", "钱包"}, {"withdraw", "零钱提现"}, {"walletdetail", "零钱明细"}, {"pay", "微信支付"},
-                {"paysuccess", "支付成功"}, {"broadcast", "群发助手"}, {"avatar", "替换头像"}, {"official", "公众号"},
-                {"redpackets", "发出的红包"}, {"billstats", "年账单"}, {"payee", "微信收款助手"}, {"upload", "上传截图"}
-        };
-        private final java.util.List<ToolGroup> toolGroups = new java.util.ArrayList<>();
+        /**
+         * 「工具」页的版式数据。整页照 歪点点 4.0.5.39 真机截图重建：
+         * 黄色标题栏 + 「替换头像」单行 + 六组白底分组（小微 / 阿宝 / 小Q / 其它 /
+         * 团队相册 / 视频），每组 4 列图标网格，底部「更多功能及教程」。
+         * 所有坐标都是 1080×2388 设计坐标（参考图 1440 宽 × 0.75），画和点共用同一份。
+         */
+        private static final float TOOL_BAR_H = 234f;
+        private static final float TOOL_ROW_H = 258f;
+        private static final float TOOL_HDR_LOGO = 168f;
+        private static final float TOOL_LOGO = 132f;
+        private static final float TOOL_CELL_W = 264f;
+        private static final float TOOL_CELL_H = 272.25f;
+        private static final float TOOL_LEFT = 78f;
+        /** 分组标题行顶 → 第一行图标顶（参考图 498px）。 */
+        private static final float TOOL_GRID_DY = 373.5f;
+        private static final float TOOL_LABEL_DY = 150f;
+        private static final float TOOL_LABEL_H = 83.25f;
+        private static final float TOOL_TUT_W = 301.5f;
+        private static final float TOOL_TUT_H = 80.25f;
+        private static final float TOOL_DARK_H = 127.5f;
+        private static final float TOOL_TEAM_H = 168f;
+        private static final int TOOL_BAR_COLOR = 0xfff9db61;
+        private static final int TOOL_ACCENT = 0xffff7a1a;
+        private boolean toolsDark;
+        private final java.util.List<ToolSection> toolSections = new java.util.ArrayList<>();
+        private final java.util.HashMap<String, Bitmap> toolIconCache = new java.util.HashMap<>();
         private float scroll = 0, downY;
         private float downX;
         private long downAt;
@@ -670,10 +678,9 @@ static final class FeatureRow {
             loadHome();
             loadEntertainmentFromServer();
             buildEntertainmentLayout();
+            toolsDark = getContext().getSharedPreferences("doutu_tools", 0)
+                    .getBoolean("dark_mode", false);
             buildToolsLayout();
-            try (java.io.InputStream in = getContext().getAssets().open("tools_ref.png")) {
-                toolsShot = BitmapFactory.decodeStream(in);
-            } catch (Exception ignored) { }
             setContentDescription("豆图助手主页面");
         }
 
@@ -809,7 +816,7 @@ static final class FeatureRow {
 
         /** 当前这一页还能往下滚多少。娱乐页的内容比一屏短，本来就是 0。 */
         private float maxScrollForCurrentPage() {
-            if (bottom == 4) return Math.max(0f, toolsBottom + 60f - CONTENT_BOTTOM);
+            if (bottom == 4) return Math.max(0f, toolsBottom - 2192f);
             if (bottom != 1) return 0f;
             return Math.max(0f, entertainmentBottom + 40f - CONTENT_BOTTOM);
         }
@@ -839,7 +846,7 @@ static final class FeatureRow {
         private String detailTitle;
 
         private float contentHeight() {
-            return bottom == 4 ? toolsBottom + 140 : bottom == 1 ? 2350 : 2050;
+            return bottom == 4 ? toolsBottom + 40 : bottom == 1 ? 2350 : 2050;
         }
 
         private void drawDetail(Canvas c) {
@@ -1594,218 +1601,313 @@ static final class FeatureRow {
         }
 
         private void buildToolsLayout() {
-            toolGroups.clear();
-            try (java.io.InputStream in = getContext().getAssets().open("tools_catalog.json")) {
+            toolSections.clear();
+            float y = TOOL_BAR_H;
+            // 顶部「替换头像」：单独一行，后面没有网格
+            ToolSection replace = new ToolSection();
+            replace.replaceRow = true;
+            replace.title = "替换头像";
+            replace.icon = "h_replace";
+            replace.action = "tool:avatar";
+            replace.top = y;
+            replace.height = TOOL_ROW_H;
+            toolSections.add(replace);
+            y += TOOL_ROW_H + 1.5f;
+            try (java.io.InputStream in = getContext().getAssets().open("tools_page.json")) {
                 java.io.ByteArrayOutputStream bos = new java.io.ByteArrayOutputStream();
                 byte[] buf = new byte[4096];
                 int n;
                 while ((n = in.read(buf)) > 0) bos.write(buf, 0, n);
                 org.json.JSONArray groups = new org.json.JSONArray(new String(bos.toByteArray(), "UTF-8"));
-                int[] tints = {0xffeaf1ff, 0xffeaf1ff, 0xffeaf1ff, 0xffefeaff, 0xfffff0e8};
-                int[] accents = {0xff4a7bf7, 0xff4a7bf7, 0xff4a7bf7, 0xff7c5cf6, 0xffff7a45};
                 for (int gi = 0; gi < groups.length(); gi++) {
                     org.json.JSONObject g = groups.getJSONObject(gi);
                     org.json.JSONArray items = g.getJSONArray("items");
-                    ToolEntry[] arr = new ToolEntry[items.length()];
+                    ToolSection s = new ToolSection();
+                    s.title = g.optString("title");
+                    s.icon = g.optString("icon");
+                    s.action = g.optString("action", "");
+                    s.dark = g.optBoolean("dark", false);
+                    s.team = g.optBoolean("team", false);
+                    s.top = y;
+                    s.gridTop = y + TOOL_GRID_DY;
                     for (int i = 0; i < items.length(); i++) {
                         org.json.JSONObject o = items.getJSONObject(i);
-                        String name = o.getString("name");
-                        String key = o.getString("key");
-                        String glyph = o.optString("glyph", name.isEmpty() ? "·" : name.substring(0, 1));
-                        String badge = o.optString("badge", "");
-                        arr[i] = new ToolEntry(name, key, glyph, tints[gi % tints.length], accents[gi % accents.length], badge);
+                        ToolCell cell = new ToolCell(o.optString("name"), o.optString("icon"), o.optString("action"));
+                        cell.left = TOOL_LEFT + (i % 4) * TOOL_CELL_W;
+                        cell.top = s.gridTop + (i / 4) * TOOL_CELL_H;
+                        s.items.add(cell);
                     }
-                    addToolGroup(g.optString("title"), arr);
+                    int rows = Math.max(1, (s.items.size() + 3) / 4);
+                    float lastLogo = s.gridTop + (rows - 1) * TOOL_CELL_H;
+                    float lastLabelBottom = lastLogo + TOOL_LABEL_DY + TOOL_LABEL_H;
+                    if (s.dark) {
+                        s.darkTop = lastLabelBottom + 84.75f;
+                        s.tutorialTop = s.darkTop + TOOL_DARK_H;
+                    } else if (s.team) {
+                        s.teamTop = lastLabelBottom + 60f;
+                        s.tutorialTop = s.teamTop + TOOL_TEAM_H;
+                    } else {
+                        s.tutorialTop = lastLabelBottom + 84.75f;
+                    }
+                    // 下一组标题 = 教程按钮文案顶 + 215.25（参考图 287px）
+                    s.height = s.tutorialTop - s.top + 215.25f;
+                    y = s.top + s.height;
+                    toolSections.add(s);
                 }
             } catch (Exception e) {
-                addToolGroup("图片工具", new ToolEntry[]{
-                        new ToolEntry("换头像", "avatar", "换", 0xffeaf1ff, 0xff4a7bf7, "NEW"),
-                        new ToolEntry("自动替换", "auto", "自", 0xfffff0e8, 0xffff7a45, "HOT"),
-                        new ToolEntry("AI一键模仿", "ai", "AI", 0xffefeaff, 0xff7c5cf6, "")
-                });
+                android.util.Log.w("DoutuTools", "tools_page.json 读取失败", e);
             }
-            try {
-                applyToolOrder();
-            } catch (Throwable ignored) { }
-            float y = 228f;
-            for (ToolGroup g : toolGroups) {
-                g.top = y;
-                int rows = (g.items.size() + 3) / 4;
-                g.height = 96f + rows * 220f;
-                for (int i = 0; i < g.items.size(); i++) {
-                    ToolEntry e = g.items.get(i);
-                    e.cx = 162f + (i % 4) * 252f;
-                    e.top = y + 96f + (i / 4) * 220f;
-                }
-                y += g.height + 22f;
-            }
-            toolsBottom = y + 100f;
+            toolsBottom = y + 30f;
         }
 
-        private void applyToolOrder() {
-            String raw = getContext().getSharedPreferences("doutu_tools", 0).getString("tool_order", "");
-            if (raw.isEmpty()) return;
-            final java.util.List<String> keys = java.util.Arrays.asList(raw.split(","));
-            for (ToolGroup g : toolGroups) {
-                java.util.Collections.sort(g.items, (a, b) -> Integer.compare(keys.indexOf(a.name), keys.indexOf(b.name)));
-            }
+        /** 工具图标是照真机截图裁出来的（assets/tools_icons），第一次用到才解码。 */
+        private Bitmap toolIcon(String key) {
+            if (key == null || key.isEmpty()) return null;
+            Bitmap b = toolIconCache.get(key);
+            if (b != null) return b;
+            try (java.io.InputStream in = getContext().getAssets().open("tools_icons/" + key + ".png")) {
+                b = BitmapFactory.decodeStream(in);
+            } catch (Exception ignored) { }
+            if (b != null) toolIconCache.put(key, b);
+            return b;
+        }
+
+        private void drawToolArt(Canvas c, String key, float left, float top, float size, int circleColor) {
+            if (circleColor != 0) round(c, left, top, left + size, top + size, size / 2f, circleColor);
+            Bitmap b = toolIcon(key);
+            if (b == null) return;
+            src.set(0, 0, b.getWidth(), b.getHeight());
+            dst.set(left, top, left + size, top + size);
+            p.setFilterBitmap(true);
+            c.drawBitmap(b, src, dst, p);
         }
 
         void rebuildTools() { buildToolsLayout(); invalidate(); }
 
-        private void addToolGroup(String title, ToolEntry[] items) {
-            ToolGroup g = new ToolGroup();
-            g.title = title;
-            for (ToolEntry e : items) g.items.add(e);
-            toolGroups.add(g);
+        private void drawToolHeaderRow(Canvas c, ToolSection s, int ink) {
+            boolean dark = toolsDark;
+            drawToolArt(c, s.icon, 45, s.top + 45f, TOOL_HDR_LOGO, dark ? 0xff242424 : 0xfff5f5f5);
+            text(c, s.title, 258, s.top + 143f, 39, ink, false);
+            line(c, 1013, s.top + 113f, 1027, s.top + 129f, 0xffb0b0b0, 4.5f);
+            line(c, 1027, s.top + 129f, 1013, s.top + 145f, 0xffb0b0b0, 4.5f);
+            line(c, 0, s.top + TOOL_ROW_H, W, s.top + TOOL_ROW_H,
+                    dark ? 0xff2b2b2b : 0xffeeeeee, 1.5f);
+        }
+
+        private void drawToolsSwitch(Canvas c, float left, float top, boolean on) {
+            float w = 101f, h = 60f;
+            round(c, left, top, left + w, top + h, h / 2f, on ? TOOL_BAR_COLOR : 0xffcccccc);
+            p.setColor(Color.WHITE);
+            c.drawCircle(on ? left + w - h / 2f : left + h / 2f, top + h / 2f, h / 2f - 5f, p);
+        }
+
+        private void drawTeamCodeRow(Canvas c, ToolSection s) {
+            round(c, 150, s.teamTop, 702, s.teamTop + 132, 12, toolsDark ? 0xff1e1e1e : 0xfff7f7f7);
+            text(c, "请输入团队暗号", 180, s.teamTop + 82, 33, toolsDark ? 0xff8b8b8b : 0xff999999, false);
+            round(c, 747, s.teamTop + 21, 945, s.teamTop + 111, 45, TOOL_BAR_COLOR);
+            textCentered(c, "确定", 846, s.teamTop + 82, 36, 0xff1a1a1a, false);
+        }
+
+        private void drawTutorialPill(Canvas c, ToolSection s, int pillBg, int ink) {
+            float left = 540 - TOOL_TUT_W / 2f;
+            round(c, left, s.tutorialTop, left + TOOL_TUT_W, s.tutorialTop + TOOL_TUT_H,
+                    TOOL_TUT_H / 2f, pillBg);
+            String a = "更多功能及", b = "教程";
+            float size = 32;
+            float wa = textWidth(a, size, false), wb = textWidth(b, size, false);
+            float x = 540 - (wa + wb) / 2f;
+            text(c, a, x, s.tutorialTop + 52f, size, ink, false);
+            text(c, b, x + wa, s.tutorialTop + 52f, size, TOOL_ACCENT, false);
         }
 
         private void drawTools(Canvas c) {
-            if (toolsShot != null) {
-                p.setColor(0xffffd400);
-                c.drawRect(0, 0, W, 46, p);
-                p.setColor(Color.WHITE);
-                c.drawRect(0, 46, W, 2212, p);
-                src.set(0, 0, toolsShot.getWidth(), toolsShot.getHeight());
-                float ih = 1080f * toolsShot.getHeight() / toolsShot.getWidth();
-                dst.set(0, 46, W, 46 + ih);
-                c.drawBitmap(toolsShot, src, dst, p);
-                drawNav(c);
-                return;
-            }
-            c.drawColor(PAGE_BG);
+            boolean dark = toolsDark;
+            int ink = dark ? 0xffeeeeee : 0xff333333;
+            int band = dark ? 0xff1b1b1b : 0xfff7f7f7;
+            int circle = dark ? 0xff242424 : 0xfff5f5f5;
+            int pillBg = dark ? 0xff202020 : 0xfff5f5f5;
+            c.drawColor(dark ? 0xff111111 : Color.WHITE);
             c.save();
+            c.clipRect(0, TOOL_BAR_H, W, 2212);
             c.translate(0, -scroll);
-            for (ToolGroup g : toolGroups) {
-                round(c, 32, g.top, 1048, g.top + g.height, 28, Color.WHITE);
-                text(c, g.title, 60, g.top + 56, 34, SUB_INK, false);
-                for (ToolEntry e : g.items) {
-                    round(c, e.cx - 58, e.top, e.cx + 58, e.top + 116, 30, e.tint);
-                    textCentered(c, e.glyph, e.cx, e.top + 74, 44, e.accent, true);
-                    textCentered(c, e.name, e.cx, e.top + 150, 30, INK, false);
-                    if (!e.badge.isEmpty()) {
-                        round(c, e.cx + 28, e.top - 6, e.cx + 92, e.top + 28, 17, 0xffee3b30);
-                        textCentered(c, e.badge, e.cx + 60, e.top + 17, 19, Color.WHITE, true);
+            for (int si = 0; si < toolSections.size(); si++) {
+                ToolSection s = toolSections.get(si);
+                if (s.replaceRow) {
+                    drawToolHeaderRow(c, s, ink);
+                    continue;
+                }
+                if (si >= 2) {
+                    p.setColor(band);
+                    c.drawRect(0, s.top - 47.5f, W, s.top - 17.5f, p);
+                }
+                drawToolHeaderRow(c, s, ink);
+                for (ToolCell cell : s.items) {
+                    float logoLeft = cell.left + (TOOL_CELL_W - TOOL_LOGO) / 2f;
+                    // 参考图的圆底比 176px 的图标槽小一圈（152/176），图标本身仍铺满槽位。
+                    float dot = TOOL_LOGO * 0.86f;
+                    float dotInset = (TOOL_LOGO - dot) / 2f;
+                    round(c, logoLeft + dotInset, cell.top + dotInset,
+                            logoLeft + dotInset + dot, cell.top + dotInset + dot, dot / 2f, circle);
+                    drawToolArt(c, cell.icon, logoLeft, cell.top, TOOL_LOGO, 0);
+                    float labelTop = cell.top + TOOL_LABEL_DY;
+                    float centerX = cell.left + TOOL_CELL_W / 2f;
+                    if (cell.name.length() > 4) {
+                        int cut = 4;
+                        textCentered(c, cell.name.substring(0, cut), centerX, labelTop + 34f, 33, ink, false);
+                        textCentered(c, cell.name.substring(cut), centerX, labelTop + 71.5f, 33, ink, false);
+                    } else {
+                        textCentered(c, cell.name, centerX, labelTop + 52f, 33, ink, false);
                     }
                 }
+                if (s.dark) {
+                    drawToolArt(c, "i_dark", 312, s.darkTop + 15f, 96, 0);
+                    text(c, "深色模式", 438, s.darkTop + 72f, 39, ink, false);
+                    drawToolsSwitch(c, 666, s.darkTop + 28f, toolsDark);
+                }
+                if (s.team) drawTeamCodeRow(c, s);
+                drawTutorialPill(c, s, pillBg, ink);
             }
-            p.setColor(0xfff5f6fa);
-            c.drawRect(0, toolsBottom - 96f, W, toolsBottom, p);
-            p.setColor(Color.WHITE);
-            c.drawRoundRect(300, toolsBottom - 86f, 780, toolsBottom - 26f, 30, 30, p);
-            textCentered(c, "更多功能及教程 ›", 540, toolsBottom - 46f, 26, BRAND, false);
             c.restore();
-            p.setColor(Color.WHITE);
-            c.drawRect(0, 0, W, 206, p);
-            text(c, "工具", 40, 128, 52, INK, true);
-            text(c, "常用工具与快捷入口", 40, 174, 26, SUB_INK, false);
+            p.setColor(TOOL_BAR_COLOR);
+            c.drawRect(0, 0, W, TOOL_BAR_H, p);
+            textCentered(c, "工具", 540, 174, 42, 0xff1a1a1a, false);
             drawNav(c);
         }
 
         private void handleToolTap(float x, float y) {
-            if (toolsShot != null) {
-                for (int i = 0; i < TOOL_HOT.length && i < TOOL_HOT_KEYS.length; i++) {
-                    int[] r = TOOL_HOT[i];
-                    if (x >= r[0] && x <= r[0] + r[2] && y >= r[1] && y <= r[1] + r[3]) {
-                        openTool(new ToolEntry(TOOL_HOT_KEYS[i][1], TOOL_HOT_KEYS[i][0], "", 0xffeaf1ff, 0xff4a7bf7, ""));
+            float py = y + scroll;
+            for (ToolSection s : toolSections) {
+                if (s.replaceRow) {
+                    if (py >= s.top && py < s.top + TOOL_ROW_H) {
+                        openTool(s.action, s.title);
+                        return;
+                    }
+                    continue;
+                }
+                if (py >= s.top && py < s.top + TOOL_ROW_H) {
+                    if (!s.action.isEmpty()) openTool(s.action, s.title);
+                    return;
+                }
+                for (ToolCell cell : s.items) {
+                    if (x >= cell.left && x < cell.left + TOOL_CELL_W
+                            && py >= cell.top && py < cell.top + TOOL_CELL_H) {
+                        openTool(cell.action, cell.name);
                         return;
                     }
                 }
-                return;
-            }
-            float py = y + scroll;
-            if (py >= toolsBottom - 96f && py <= toolsBottom && x >= 280 && x <= 800) {
-                startActivity(new Intent(MainActivity.this, com.luoyun.doutu.features.tools.ToolsTutorialActivity.class));
-                return;
-            }
-            for (ToolGroup g : toolGroups) {
-                for (ToolEntry e : g.items) {
-                    if (x >= e.cx - 120 && x <= e.cx + 120 && py >= e.top - 16 && py <= e.top + 160) {
-                        openTool(e);
-                        return;
-                    }
+                if (s.dark && py >= s.darkTop && py < s.darkTop + TOOL_DARK_H) {
+                    toolsDark = !toolsDark;
+                    getContext().getSharedPreferences("doutu_tools", 0).edit()
+                            .putBoolean("dark_mode", toolsDark).apply();
+                    invalidate();
+                    return;
+                }
+                if (s.team && py >= s.teamTop && py < s.teamTop + 132) {
+                    askTeamCode();
+                    return;
+                }
+                if (py >= s.tutorialTop - 8 && py < s.tutorialTop + TOOL_TUT_H
+                        && x >= 540 - TOOL_TUT_W / 2f && x <= 540 + TOOL_TUT_W / 2f) {
+                    startActivity(new Intent(MainActivity.this,
+                            com.luoyun.doutu.features.tools.ToolsTutorialActivity.class));
+                    return;
                 }
             }
         }
 
-        private void openTool(ToolEntry e) {
-            String toolKey = e.action == null ? "" : e.action;
-            if (toolKey.startsWith("local:")) toolKey = toolKey.substring(6);
-            if (!("avatar".equals(toolKey) || "auto".equals(toolKey) || "ai".equals(toolKey) || "localavatars".equals(toolKey) || "edit".equals(toolKey) || "tutorial".equals(toolKey))) {
-                com.luoyun.doutu.features.tools.LocalToolActivity.open(MainActivity.this, toolKey, e.name);
+        private void askTeamCode() {
+            android.widget.EditText input = new android.widget.EditText(MainActivity.this);
+            input.setHint("请输入团队暗号");
+            input.setSingleLine(true);
+            new AlertDialog.Builder(MainActivity.this)
+                    .setTitle("加入团队")
+                    .setView(input)
+                    .setNegativeButton("取消", null)
+                    .setPositiveButton("确定", (d, w) -> toast("团队暗号：" + input.getText().toString().trim()))
+                    .show();
+        }
+
+        private void openTool(String action, String name) {
+            if (action == null || action.isEmpty()) return;
+            if (action.startsWith("wechat:")) {
+                startActivity(com.luoyun.doutu.features.wei.WeiHomeActivity
+                        .intentFor(MainActivity.this, action.substring(7))
+                        .addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_SINGLE_TOP));
+                overridePendingTransition(0, 0);
                 return;
             }
-            switch (toolKey) {
-                case "avatar":
-                    com.luoyun.doutu.features.tools.ToolImageActivity.open(MainActivity.this, "avatar");
+            if (action.startsWith("tool:")) {
+                com.luoyun.doutu.features.tools.ToolImageActivity.open(MainActivity.this, action.substring(5));
+                return;
+            }
+            if (action.startsWith("local:")) {
+                com.luoyun.doutu.features.tools.LocalToolActivity.open(MainActivity.this, action.substring(6), name);
+                return;
+            }
+            switch (action) {
+                case "alipay":
+                    startActivity(com.luoyun.doutu.features.zhi.ZhiHomeActivity.intentFor(MainActivity.this));
                     break;
-                case "auto":
-                    com.luoyun.doutu.features.tools.ToolImageActivity.open(MainActivity.this, "auto");
+                case "qq":
+                    com.luoyun.doutu.features.tools.LocalToolActivity.open(MainActivity.this, "chats", "小Q");
                     break;
-                case "ai":
-                    com.luoyun.doutu.features.tools.ToolImageActivity.open(MainActivity.this, "ai");
+                case "act:licai":
+                    startActivity(com.luoyun.doutu.features.zhi.LicaiActivity.intentFor(MainActivity.this));
                     break;
-                case "localavatars":
-                    startActivity(new Intent(MainActivity.this, com.luoyun.doutu.features.tools.LocalAvatarsActivity.class));
+                case "act:balance":
+                    startActivity(com.luoyun.doutu.features.zhi.BalanceActivity.intentFor(MainActivity.this));
                     break;
-                case "edit":
-                    startActivity(new Intent(MainActivity.this, com.luoyun.doutu.features.tools.EditPanelActivity.class));
+                case "act:bill":
+                    startActivity(com.luoyun.doutu.features.zhi.BillActivity.intentFor(MainActivity.this));
                     break;
-                case "tutorial":
-                    startActivity(new Intent(MainActivity.this, com.luoyun.doutu.features.tools.ToolsTutorialActivity.class));
+                case "act:assets":
+                    startActivity(com.luoyun.doutu.features.zhi.AssetActivity.intentFor(MainActivity.this));
+                    break;
+                case "act:me":
+                    startActivity(com.luoyun.doutu.features.zhi.MeActivity.intentFor(MainActivity.this));
+                    break;
+                case "act:paymsg":
+                    startActivity(com.luoyun.doutu.features.zhi.PayMsgActivity.intentFor(MainActivity.this));
+                    break;
+                case "act:billstats":
+                    startActivity(com.luoyun.doutu.features.zhi.BillAnalyticsActivity.intentFor(MainActivity.this));
+                    break;
+                case "act:withdraw":
+                    startActivity(com.luoyun.doutu.features.zhi.WithdrawActivity.intentFor(MainActivity.this));
+                    break;
+                case "act:receipt":
+                    startActivity(com.luoyun.doutu.features.zhi.ReceiptActivity.intentFor(MainActivity.this));
+                    break;
+                case "act:paysuccess":
+                    startActivity(com.luoyun.doutu.features.zhi.PaySuccessActivity.intentFor(MainActivity.this));
+                    break;
+                case "act:sound":
+                    com.luoyun.doutu.features.sound.AccountSoundActivity.open(MainActivity.this);
+                    break;
+                case "act:order":
+                    com.luoyun.doutu.features.order.TaobaoOrderActivity.open(MainActivity.this);
                     break;
                 default:
-                    toast(e.name + "：暂未开放");
+                    break;
             }
         }
 
-        private void showToolsEdit() {
-            new AlertDialog.Builder(MainActivity.this)
-                    .setTitle("编辑面板")
-                    .setMessage("工具页只包含本地独立工具，所有图片处理都在本机完成，不会调用或上传到其他模块。\n\n"
-                            + "清空本地头像只会删除本工具生成的头像文件。")
-                    .setNegativeButton("关闭", null)
-                    .setPositiveButton("清空本地头像", (d, w) -> {
-                        java.io.File dir = new java.io.File(getContext().getFilesDir(), "avatars");
-                        java.io.File[] files = dir.listFiles();
-                        if (files != null) for (java.io.File f : files) f.delete();
-                        toast("已清空本地头像");
-                    })
-                    .show();
-        }
+        private static final class ToolCell {
+            final String name, icon, action;
+            float left, top;
 
-        private void showToolsTutorial() {
-            new AlertDialog.Builder(MainActivity.this)
-                    .setTitle("工具教程")
-                    .setMessage("工具页按 小微 / 阿宝 / 小Q / 其他 / 云相册 / 视频 分组。\n\n"
-                            + "· 微信、朋友圈、卡包、收藏、钱包：直达小微对应页面\n"
-                            + "· 支付宝、扫一扫、收付款、余额、账单、花呗：直达小支页面\n"
-                            + "· 换头像：从相册选图，设为当前头像\n"
-                            + "· 自动替换头像 / AI一键模仿：选图后本地生成并保存到相册\n"
-                            + "· 去水印：短视频解析入口")
-                    .setPositiveButton("知道了", null)
-                    .show();
-        }
-
-        private static final class ToolEntry {
-            final String name, action, glyph, badge;
-            final int tint, accent;
-            float cx, top;
-
-            ToolEntry(String name, String action, String glyph, int tint, int accent, String badge) {
+            ToolCell(String name, String icon, String action) {
                 this.name = name;
+                this.icon = icon;
                 this.action = action;
-                this.glyph = glyph;
-                this.tint = tint;
-                this.accent = accent;
-                this.badge = badge;
             }
         }
 
-        private static final class ToolGroup {
-            String title;
-            float top, height;
-            final java.util.List<ToolEntry> items = new java.util.ArrayList<>();
+        private static final class ToolSection {
+            String title, icon, action;
+            boolean dark, team, replaceRow;
+            final java.util.List<ToolCell> items = new java.util.ArrayList<>();
+            float top, height, gridTop, darkTop, teamTop, tutorialTop;
         }
 
         private void drawNav(Canvas c) {
@@ -1873,7 +1975,7 @@ static final class FeatureRow {
                 //   · 1440x3168 的机器上阈值变成 2934，而 rawY 最大只有 2388，
                 //     判定永远不成立 → 停在「我」页时点底部标签栏完全没反应。
                 // 这里改成和 drawNav() 同一套坐标（分割线 2212，三格中心 180/540/900）。
-                if (rawY >= 2212f) {
+                if (rawY >= 2212f && !moved) {
                     bottom = rawX < 270f ? 0 : rawX < 540f ? 4 : rawX < 810f ? 1 : 2;
                     detailTitle = null;   // 切页即退出详情态，免得回来还停在详情上
                     scroll = 0;
@@ -1881,7 +1983,7 @@ static final class FeatureRow {
                     performClick();
                     return true;
                 }
-            } else if (y >= 2212) {
+            } else if (y >= 2212 && !moved) {
                 bottom = x < 270 ? 0 : x < 540 ? 4 : x < 810 ? 1 : 2;
                 detailTitle = null;
                 scroll = 0;
@@ -1891,7 +1993,9 @@ static final class FeatureRow {
             }
 
             if (bottom == 4) {
-                handleToolTap(x, y);
+                // 拖动过的手指松在哪里都不算点击：以前这里不看 moved，滑一下列表就会把
+                // 松手位置下面那个入口打开（真机上就是这样点进了「收付款」）。
+                if (!moved) handleToolTap(x, y);
                 return true;
             }
 
