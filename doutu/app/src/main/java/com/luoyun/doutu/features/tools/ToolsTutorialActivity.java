@@ -109,7 +109,11 @@ public final class ToolsTutorialActivity extends Activity {
         Button use = new Button(this);
         use.setText("使用");
         use.setAllCaps(false);
-        use.setTextSize(13);
+        use.setTextSize(12);
+        use.setMinHeight(0);
+        use.setMinimumHeight(0);
+        use.setPadding(0, 0, 0, 0);
+        use.setIncludeFontPadding(false);
         use.setOnClickListener(v -> {
             String key = item[0].contains("换头像") ? "avatar" : item[0].contains("自动") ? "auto"
                     : item[0].contains("AI") ? "ai" : item[0].contains("本地头像") ? "localavatars"
@@ -119,13 +123,17 @@ public final class ToolsTutorialActivity extends Activity {
             else if ("tutorial".equals(key)) showDetail(item);
             else ToolImageActivity.open(this, key);
         });
-        btns.addView(use, new LinearLayout.LayoutParams(dp(60), dp(26)));
+        btns.addView(use, new LinearLayout.LayoutParams(dp(60), dp(30)));
         Button tut = new Button(this);
         tut.setText("教程");
         tut.setAllCaps(false);
-        tut.setTextSize(13);
+        tut.setTextSize(12);
+        tut.setMinHeight(0);
+        tut.setMinimumHeight(0);
+        tut.setPadding(0, 0, 0, 0);
+        tut.setIncludeFontPadding(false);
         tut.setOnClickListener(v -> showDetail(item));
-        LinearLayout.LayoutParams tlp = new LinearLayout.LayoutParams(dp(60), dp(26));
+        LinearLayout.LayoutParams tlp = new LinearLayout.LayoutParams(dp(60), dp(30));
         tlp.leftMargin = dp(10);
         btns.addView(tut, tlp);
         card.addView(btns);
