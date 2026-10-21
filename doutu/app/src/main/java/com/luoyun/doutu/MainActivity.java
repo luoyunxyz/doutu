@@ -2026,7 +2026,9 @@ static final class FeatureRow {
                     startActivity(com.luoyun.doutu.features.zhi.BillActivity.intentFor(MainActivity.this));
                     break;
                 case "act:assets":
-                    startActivity(com.luoyun.doutu.features.zhi.AssetActivity.intentFor(MainActivity.this));
+                    // 总资产：真机是「我的资产 + 三笔钱 + 我的保障」的独立页，按布局重画。
+                    startActivity(new Intent(MainActivity.this,
+                            com.luoyun.doutu.features.ali.AliAssetsActivity.class));
                     break;
                 case "act:me":
                     startActivity(com.luoyun.doutu.features.zhi.MeActivity.intentFor(MainActivity.this));

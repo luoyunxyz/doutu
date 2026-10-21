@@ -17,7 +17,12 @@ public final class ToolLauncherActivity extends Activity {
         if (key == null) key = "chat";
         if (title == null) title = key;
         Intent intent;
-        if ("wechat".equals(key)) {
+        String route = getIntent().getStringExtra("route");
+        if (route != null) {
+            // 回归用：直接给小微克隆页传站内路由，例如 --es route "#/wechat/wallet"
+            intent = new Intent(this, com.luoyun.doutu.features.wei.WeiHomeActivity.class);
+            intent.putExtra("fw_route", route);
+        } else if ("wechat".equals(key)) {
             intent = new Intent(this, com.luoyun.doutu.features.wei.WeiHomeActivity.class);
         } else if ("wxbalance".equals(key)) {
             intent = new Intent(this, com.luoyun.doutu.features.wei.WeiHomeActivity.class);
@@ -66,6 +71,8 @@ public final class ToolLauncherActivity extends Activity {
             intent.putExtra("ali", true);
         } else if ("alicontacts".equals(key)) {
             intent = new Intent(this, com.luoyun.doutu.features.ali.AliContactsActivity.class);
+        } else if ("aliassets".equals(key)) {
+            intent = new Intent(this, com.luoyun.doutu.features.ali.AliAssetsActivity.class);
         } else if ("alired".equals(key)) {
             intent = new Intent(this, com.luoyun.doutu.features.ali.AliRedPacketActivity.class);
         } else if ("alimsg".equals(key)) {
