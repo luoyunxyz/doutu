@@ -265,6 +265,99 @@ public final class ReplaceHeaderListActivity extends Activity {
         }
     }
 
+    /** 头像中正方形裁切，避免拉伸。 */
+    private Bitmap squareCover(Bitmap src) {
+        int side = Math.min(src.getWidth(), src.getHeight());
+        return Bitmap.createBitmap(src, (src.getWidth() - side) / 2, (src.getHeight() - side) / 2, side, side);
+    }
+
+    /** 圆角方形替换：圆角半径取边长 20%，并外扩 3% 盖住原头像边缘。 */
+    private void drawReplacement(Canvas c, Paint paint, Bitmap cover, RectF slot) {
+        RectF r = new RectF(slot);
+        float grow = Math.min(r.width(), r.height()) * 0.03f;
+        r.inset(-grow, -grow);
+        float radius = Math.min(r.width(), r.height()) * 0.20f;
+        Path path = new Path();
+        path.addRoundRect(r, radius, radius, Path.Direction.CW);
+        c.save();
+        c.clipPath(path);
+        c.drawBitmap(cover, null, r, paint);
+        c.restore();
+    }
+
+    private java.util.List<RectF> dedupe(java.util.List<RectF> list) {
+        java.util.List<RectF> out = new java.util.ArrayList<>();
+        for (RectF r : list) {
+            boolean dup = false;
+            for (RectF o : out) {
+                if (RectF.intersects(r, o)) { dup = true; break; }
+            }
+            if (!dup) out.add(r);
+        }
+        return out;
+    }
+
+    /**
+     * 以 ref 选框为模板，在整张图里找出所有相同的头像。
+     * 先缩到 360px 宽做块匹配（带提前退出），命中后再映射回原图坐标。
+     */
+    private java.util.List<RectF> findSameAvatars(RectF ref) {
+        java.util.List<RectF> found = new java.util.ArrayList<>();
+        if (base == null || ref.width() < 8 || ref.height() < 8) return found;
+        float k = Math.min(1f, 360f / base.getWidth());
+        Bitmap work = Bitmap.createScaledBitmap(base,
+                Math.max(1, Math.round(base.getWidth() * k)),
+                Math.max(1, Math.round(base.getHeight() * k)), true);
+        int tw = Math.max(6, Math.round(ref.width() * k));
+        int th = Math.max(6, Math.round(ref.height() * k));
+        int tx = Math.max(0, Math.min(work.getWidth() - tw, Math.round(ref.left * k)));
+        int ty = Math.max(0, Math.min(work.getHeight() - th, Math.round(ref.top * k)));
+        int[] tpl = new int[tw * th];
+        try {
+            work.getPixels(tpl, 0, tw, tx, ty, tw, th);
+        } catch (Exception e) {
+            return found;
+        }
+        int stride = Math.max(2, Math.min(tw, th) / 5);
+        int[] buf = new int[tw * th];
+        java.util.List<int[]> hits = new java.util.ArrayList<>();
+        for (int y = 0; y + th <= work.getHeight(); y += stride) {
+            for (int x = 0; x + tw <= work.getWidth(); x += stride) {
+                work.getPixels(buf, 0, tw, x, y, tw, th);
+                float d = meanDiff(tpl, buf, 26f);
+                if (d >= 0f) hits.add(new int[]{x, y, Math.round(d * 10)});
+            }
+        }
+        hits.sort((a, b) -> Integer.compare(a[2], b[2]));
+        java.util.List<RectF> picked = new java.util.ArrayList<>();
+        for (int[] h : hits) {
+            if (picked.size() >= 12) break;
+            RectF r = new RectF(h[0] / k, h[1] / k, (h[0] + tw) / k, (h[1] + th) / k);
+            boolean dup = false;
+            for (RectF o : picked) {
+                if (RectF.intersects(r, o)) { dup = true; break; }
+            }
+            if (!dup) picked.add(r);
+        }
+        found.addAll(picked);
+        return found;
+    }
+
+    /** 平均色差（0~255）；超过 limit 立刻返回 -1，省时间。 */
+    private float meanDiff(int[] a, int[] b, float limit) {
+        long sum = 0;
+        int n = 0;
+        for (int i = 0; i < a.length; i += 2) {
+            int ca = a[i], cb = b[i];
+            sum += Math.abs(((ca >> 16) & 255) - ((cb >> 16) & 255))
+                    + Math.abs(((ca >> 8) & 255) - ((cb >> 8) & 255))
+                    + Math.abs((ca & 255) - (cb & 255));
+            n += 3;
+            if (n > 0 && sum / (float) n > limit) return -1f;
+        }
+        return sum / (float) Math.max(1, n);
+    }
+
     private void compose() {
         if (avatar == null) {
             Toast.makeText(this, "请先选择替换头像", Toast.LENGTH_SHORT).show();
@@ -273,23 +366,16 @@ public final class ReplaceHeaderListActivity extends Activity {
         try {
             Bitmap out = base.copy(Bitmap.Config.ARGB_8888, true);
             Canvas c = new Canvas(out);
-            Paint ring = new Paint(Paint.ANTI_ALIAS_FLAG);
-            for (int i = 0; i < slots.size() && i < enabled.size(); i++) {
-                if (!Boolean.TRUE.equals(enabled.get(i))) continue;
-                RectF slot = slots.get(i);
-                int side = Math.min(avatar.getWidth(), avatar.getHeight());
-                Bitmap sq = Bitmap.createBitmap(avatar, (avatar.getWidth() - side) / 2, (avatar.getHeight() - side) / 2, side, side);
-                Bitmap scaled = Bitmap.createScaledBitmap(sq, Math.max(1, (int) slot.width()), Math.max(1, (int) slot.height()), true);
-                Path clip = new Path();
-                clip.addCircle(slot.centerX(), slot.centerY(), Math.min(slot.width(), slot.height()) / 2f, Path.Direction.CW);
-                c.save();
-                c.clipPath(clip);
-                c.drawBitmap(scaled, slot.left, slot.top, null);
-                c.restore();
-                ring.setStyle(Paint.Style.STROKE);
-                ring.setStrokeWidth(Math.max(2f, slot.width() * .035f));
-                ring.setColor(Color.WHITE);
-                c.drawCircle(slot.centerX(), slot.centerY(), Math.min(slot.width(), slot.height()) / 2f, ring);
+            Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            paint.setFilterBitmap(true);
+            Bitmap cover = squareCover(avatar);
+            java.util.List<RectF> targets = new java.util.ArrayList<>();
+            if (!slots.isEmpty()) {
+                targets.add(new RectF(slots.get(0)));
+                targets.addAll(findSameAvatars(slots.get(0)));
+            }
+            for (RectF slot : dedupe(targets)) {
+                drawReplacement(c, paint, cover, slot);
             }
             if (watermark) {
                 Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);

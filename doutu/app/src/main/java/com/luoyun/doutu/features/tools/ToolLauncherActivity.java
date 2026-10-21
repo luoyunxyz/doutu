@@ -81,6 +81,31 @@ public final class ToolLauncherActivity extends Activity {
             intent = new Intent(this, com.luoyun.doutu.features.ali.AliBalanceActivity.class);
         } else if ("aliwithdraw".equals(key)) {
             intent = new Intent(this, com.luoyun.doutu.features.ali.AliWithdrawActivity.class);
+        } else if ("replacetest".equals(key)) {
+            // 测试用：拼一张「同一个头像重复 4 次」的底图，直接进替换页验证自动全部替换
+            try {
+                android.graphics.Bitmap src = android.graphics.BitmapFactory.decodeStream(
+                        getAssets().open("video_icons/avatar.png"));
+                android.graphics.Bitmap dst = android.graphics.BitmapFactory.decodeStream(
+                        getAssets().open("tools_icons/me.png"));
+                android.graphics.Bitmap canvasBmp = android.graphics.Bitmap.createBitmap(600, 600,
+                        android.graphics.Bitmap.Config.ARGB_8888);
+                android.graphics.Canvas cv = new android.graphics.Canvas(canvasBmp);
+                cv.drawColor(0xfff2f2f2);
+                int[] xs = {20, 320, 20, 320};
+                int[] ys = {20, 20, 320, 320};
+                for (int i = 0; i < 4; i++) {
+                    cv.drawBitmap(src, null,
+                            new android.graphics.Rect(xs[i], ys[i], xs[i] + 240, ys[i] + 240), null);
+                }
+                com.luoyun.doutu.features.tools.ReplaceHeaderListActivity.base = canvasBmp;
+                com.luoyun.doutu.features.tools.ReplaceHeaderListActivity.avatar = dst;
+                com.luoyun.doutu.features.tools.ReplaceHeaderListActivity.initialSlot =
+                        new android.graphics.RectF(20, 20, 260, 260);
+                intent = new Intent(this, com.luoyun.doutu.features.tools.ReplaceHeaderListActivity.class);
+            } catch (Exception e) {
+                intent = new Intent(this, com.luoyun.doutu.features.tools.ReplaceHeaderListActivity.class);
+            }
         } else if ("avataradjust".equals(key)) {
             // 测试用：直接进「替换头像」选框页（用内置示例图当底图）
             try (java.io.InputStream in = getAssets().open("video_icons/avatar.png")) {
