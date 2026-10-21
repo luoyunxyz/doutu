@@ -19,6 +19,9 @@ public final class ToolLauncherActivity extends Activity {
         Intent intent;
         if ("wechat".equals(key)) {
             intent = new Intent(this, com.luoyun.doutu.features.wei.WeiHomeActivity.class);
+        } else if ("wxbalance".equals(key)) {
+            intent = new Intent(this, com.luoyun.doutu.features.wei.WeiHomeActivity.class);
+            intent.putExtra("fw_route", "#/wechat/wallet/balance");
         } else if ("avatar".equals(key) || "auto".equals(key) || "ai".equals(key)) {
             intent = new Intent(this, ToolImageActivity.class);
             intent.putExtra("mode", key);

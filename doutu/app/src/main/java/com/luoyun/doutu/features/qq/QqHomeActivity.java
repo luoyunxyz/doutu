@@ -541,6 +541,7 @@ public final class QqHomeActivity extends Activity {
         private final Bitmap navVideo = icon("nav_video");
         private final Bitmap navContact = icon("nav_contact");
         private final Bitmap navMoment = icon("nav_moment");
+        private final Bitmap chatAvatar = icon("rp_avatar");
 
         QqView() {
             super(QqHomeActivity.this);
@@ -616,28 +617,34 @@ public final class QqHomeActivity extends Activity {
             art(c, pet, 879, 156, 57);
             art(c, plus, 975, 159, 57);
 
-            // 白卡片：搜索 + 添加聊天
-            p.setColor(Color.WHITE);
-            c.drawRoundRect(-60, 248, 1140, 700, 34, 34, p);
-            // 已创建的聊天（白色列表，和真机一样在「添加聊天」下面）
+            // 白卡片：搜索 + 聊天列表 + 添加聊天（真机里「添加聊天」在列表末尾）
             java.util.List<QqChatStore.Chat> chats = QqChatStore.chats(getContext());
-            float listBottom = 532 + chats.size() * 64f;
+            float listTop = 410f, rowH = 100f;
+            float addCenter = listTop + chats.size() * rowH + 167f;
+            float cardBottom = addCenter + 47f;
             p.setColor(Color.WHITE);
-            c.drawRect(0, 532, 1080, listBottom, p);
+            c.drawRoundRect(-60, 248, 1140, cardBottom, 34, 34, p);
             for (int i = 0; i < chats.size(); i++) {
                 QqChatStore.Chat chat = chats.get(i);
-                float top = 532 + i * 64f;
-                text(c, chat.name, 36, top + 40, 33, 0xff1a1a1a, false);
+                float top = listTop + i * rowH;
+                // 圆形头像
+                c.save();
+                android.graphics.Path clip = new android.graphics.Path();
+                clip.addCircle(139, top + 50, 49, android.graphics.Path.Direction.CW);
+                c.clipPath(clip);
+                art(c, chatAvatar, 90, top + 1, 98);
+                c.restore();
+                text(c, chat.name, 214, top + 62, 36, 0xff1a1a1a, false);
                 float tw = textWidth(chat.time, 26, false);
-                text(c, chat.time, 1044 - tw, top + 40, 26, 0xff999999, false);
+                text(c, chat.time, 1044 - tw, top + 44, 26, 0xff999999, false);
                 p.setColor(0xffeeeeee);
                 p.setStyle(Paint.Style.STROKE);
                 p.setStrokeWidth(1);
-                c.drawLine(36, top + 64, 1080, top + 64, p);
+                c.drawLine(214, top + rowH, 1080, top + rowH, p);
                 p.setStyle(Paint.Style.FILL);
             }
             p.setColor(0xfff5f6fa);
-            c.drawRect(0, listBottom, 1080, 2171, p);
+            c.drawRect(0, cardBottom, 1080, 2171, p);
 
             // 搜索框
             round(c, 48, 283, 1032, 375, 18, 0xfff4f5fb);
@@ -651,15 +658,15 @@ public final class QqHomeActivity extends Activity {
 
             // 添加聊天
             p.setColor(0xffffd84d);
-            c.drawCircle(396, 474, 30, p);
+            c.drawCircle(396, addCenter, 30, p);
             p.setStyle(Paint.Style.STROKE);
             p.setStrokeWidth(3);
             p.setColor(0xff333333);
-            c.drawCircle(396, 474, 30, p);
-            c.drawLine(380, 474, 412, 474, p);
-            c.drawLine(396, 458, 396, 490, p);
+            c.drawCircle(396, addCenter, 30, p);
+            c.drawLine(380, addCenter, 412, addCenter, p);
+            c.drawLine(396, addCenter - 16, 396, addCenter + 16, p);
             p.setStyle(Paint.Style.FILL);
-            text(c, "添加聊天", 444, 488, 42, 0xff1a1a1a, false);
+            text(c, "添加聊天", 444, addCenter + 14, 42, 0xff1a1a1a, false);
 
             // 底部页签
             p.setColor(0xfff7f8fc);
@@ -725,7 +732,8 @@ public final class QqHomeActivity extends Activity {
                 }
                 return true;
             }
-            if (y >= 400 && y <= 540 && x >= 330 && x <= 700) {
+            float addCenter = 410f + QqChatStore.chats(getContext()).size() * 100f + 167f;
+            if (y >= addCenter - 60 && y <= addCenter + 60 && x >= 300 && x <= 760) {
                 openLocal("pickchat", "创建聊天");
             }
             return true;
