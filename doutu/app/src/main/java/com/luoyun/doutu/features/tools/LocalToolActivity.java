@@ -78,7 +78,7 @@ public final class LocalToolActivity extends Activity {
         tv.setGravity(Gravity.CENTER);
         bar.addView(tv, new LinearLayout.LayoutParams(0, dp(50), 1f));
         bar.addView(new View(this), new LinearLayout.LayoutParams(dp(88), dp(50)));
-        if (!("home".equals(key) || "contacts".equals(key) || "moments".equals(key) || "profile".equals(key) || "discover".equals(key) || "chat".equals(key))) root.addView(bar);
+        if (!("home".equals(key) || "contacts".equals(key) || "moments".equals(key) || "profile".equals(key) || "discover".equals(key) || "chat".equals(key) || "wallet".equals(key))) root.addView(bar);
 
         ScrollView scroll = new ScrollView(this);
         content = new LinearLayout(this);
@@ -395,32 +395,97 @@ public final class LocalToolActivity extends Activity {
     }
 
     private void buildPay() {
-        boolean red = "redpacket".equals(key);
-        TextView tip = new TextView(this);
-        tip.setText(red ? "发红包（本地模拟）" : "转账（本地模拟）");
-        tip.setTextSize(15);
-        tip.setTextColor(0xff1d1f26);
-        content.addView(tip);
+        final boolean red = "redpacket".equals(key);
+        content.setBackgroundColor(0xffededed);
+        content.setPadding(0, 0, 0, 0);
+
+        LinearLayout bar = new LinearLayout(this);
+        bar.setGravity(Gravity.CENTER_VERTICAL);
+        bar.setBackgroundColor(0xffededed);
+        ImageView back = assetIcon("icon_wx_left_top_float", 21);
+        back.setOnClickListener(v -> finish());
+        LinearLayout.LayoutParams blp = new LinearLayout.LayoutParams(dp(21), dp(21));
+        blp.leftMargin = dp(13);
+        bar.addView(back, blp);
+        TextView title = new TextView(this);
+        title.setText(red ? "红包" : "转账");
+        title.setTextSize(16);
+        title.setTextColor(0xff2b2b2b);
+        title.setGravity(Gravity.CENTER);
+        bar.addView(title, new LinearLayout.LayoutParams(0, dp(43), 1f));
+        bar.addView(new View(this), new LinearLayout.LayoutParams(dp(34), dp(43)));
+        content.addView(bar);
+
+        LinearLayout card = new LinearLayout(this);
+        card.setOrientation(LinearLayout.VERTICAL);
+        card.setBackgroundColor(Color.WHITE);
+        card.setPadding(dp(18), dp(18), dp(18), dp(18));
+        card.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
+        TextView label = new TextView(this);
+        label.setText(red ? "红包金额" : "转账金额");
+        label.setTextSize(13);
+        label.setTextColor(0xff888888);
+        card.addView(label);
+
+        LinearLayout amountRow = new LinearLayout(this);
+        amountRow.setGravity(Gravity.CENTER_VERTICAL);
+        TextView yuan = new TextView(this);
+        yuan.setText("¥");
+        yuan.setTextSize(30);
+        yuan.setTextColor(0xff191919);
+        amountRow.addView(yuan);
+        EditText amount = new EditText(this);
+        amount.setHint("0.00");
+        amount.setTextSize(30);
+        amount.setTextColor(0xff191919);
+        amount.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
+        amount.setBackground(null);
+        amountRow.addView(amount, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        card.addView(amountRow);
+
+        View line = new View(this);
+        line.setBackgroundColor(0xffe5e5e5);
+        card.addView(line, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(1)));
+
         EditText name = new EditText(this);
         name.setHint(red ? "红包祝福语" : "对方姓名");
         name.setTextSize(14);
-        content.addView(name);
-        EditText amount = new EditText(this);
-        amount.setHint("金额（元）");
-        amount.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
-        amount.setTextSize(14);
-        content.addView(amount);
-        Button ok = new Button(this);
+        name.setBackground(null);
+        name.setPadding(0, dp(12), 0, dp(12));
+        card.addView(name);
+
+        content.addView(card);
+
+        TextView bal = new TextView(this);
+        bal.setText("当前零钱：¥ " + getBalance());
+        bal.setTextSize(13);
+        bal.setTextColor(0xff888888);
+        bal.setPadding(dp(18), dp(12), dp(18), dp(12));
+        content.addView(bal);
+
+        TextView ok = new TextView(this);
         ok.setText(red ? "塞钱进红包" : "确认转账");
-        ok.setAllCaps(false);
+        ok.setTextSize(16);
+        ok.setTextColor(Color.WHITE);
+        ok.setGravity(Gravity.CENTER);
+        android.graphics.drawable.GradientDrawable g = new android.graphics.drawable.GradientDrawable();
+        g.setColor(0xff07c160);
+        g.setCornerRadius(dp(4));
+        ok.setBackground(g);
+        LinearLayout.LayoutParams olp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(46));
+        olp.leftMargin = dp(18);
+        olp.rightMargin = dp(18);
+        content.addView(ok, olp);
+
         ok.setOnClickListener(v -> {
-            String a = amount.getText().toString().trim();
-            if (a.isEmpty()) { toast("请输入金额"); return; }
+            String a2 = amount.getText().toString().trim();
+            if (a2.isEmpty()) { toast("请输入金额"); return; }
             try {
-                double v2 = Double.parseDouble(a);
-                double bal = Double.parseDouble(getBalance());
-                bal -= v2;
-                getSharedPreferences(PREFS, 0).edit().putString("balance", String.format("%.2f", bal)).apply();
+                double v2 = Double.parseDouble(a2);
+                double b2 = Double.parseDouble(getBalance());
+                b2 -= v2;
+                getSharedPreferences(PREFS, 0).edit().putString("balance", String.format("%.2f", b2)).apply();
                 bills.add(0, (red ? "红包 -¥" : "转账 -¥") + String.format("%.2f", v2) + "  " + name.getText().toString().trim());
                 saveList("bills", bills);
                 getSharedPreferences(PREFS, 0).edit().putString("last_pay", (red ? "红包 · " : "转账 · ") + name.getText().toString().trim() + "|" + String.format("%.2f", v2)).apply();
@@ -428,13 +493,6 @@ public final class LocalToolActivity extends Activity {
                 finish();
             } catch (Exception e) { toast("金额格式不正确"); }
         });
-        content.addView(ok, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(48)));
-        TextView bal = new TextView(this);
-        bal.setText("当前零钱：¥ " + getBalance());
-        bal.setTextSize(13);
-        bal.setTextColor(0xff8b90a0);
-        bal.setPadding(0, dp(10), 0, 0);
-        content.addView(bal);
     }
 
     private LinearLayout wechatHeader(String title) {
