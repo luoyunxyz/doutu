@@ -30,6 +30,7 @@ import java.util.List;
 public final class LocalToolActivity extends Activity {
     private static final String PREFS = "doutu_tools_local";
     private String key, title;
+    private String chatName = "文件传输助手";
     private LinearLayout content;
     private TextView balanceView;
     private LinearLayout chatList, billList, contactList, momentList, albumGrid, teamList;
@@ -53,6 +54,8 @@ public final class LocalToolActivity extends Activity {
         title = getIntent().getStringExtra("title");
         if (key == null) key = "chat";
         if (title == null) title = "工具";
+        String n = getIntent().getStringExtra("name");
+        if (n != null && !n.isEmpty()) chatName = n;
         load();
 
         LinearLayout root = new LinearLayout(this);
@@ -156,13 +159,27 @@ public final class LocalToolActivity extends Activity {
     }
 
     private void buildWallet() {
-        TextView card = new TextView(this);
+        final TextView card = new TextView(this);
         card.setText("本机零钱\n¥ " + getBalance());
         card.setTextSize(18);
         card.setTextColor(Color.WHITE);
         card.setBackgroundColor(0xff4a7bf7);
         card.setPadding(dp(18), dp(18), dp(18), dp(18));
         content.addView(card);
+        Button recharge = new Button(this);
+        recharge.setText("＋ 充值 ¥100（本地）");
+        recharge.setAllCaps(false);
+        recharge.setOnClickListener(v -> {
+            try {
+                double bal = Double.parseDouble(getBalance()) + 100;
+                getSharedPreferences(PREFS, 0).edit().putString("balance", String.format("%.2f", bal)).apply();
+                bills.add(0, "充值 +¥100.00");
+                saveList("bills", bills);
+                card.setText("本机零钱\n¥ " + getBalance());
+                renderBills();
+            } catch (Exception ignored) { }
+        });
+        content.addView(recharge, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(44)));
         TextView t = new TextView(this);
         t.setText("收支明细");
         t.setTextSize(14);
@@ -273,6 +290,17 @@ public final class LocalToolActivity extends Activity {
             tv.setTextColor(0xff1d1f26);
             tv.setBackgroundColor(Color.WHITE);
             tv.setPadding(dp(14), dp(14), dp(14), dp(14));
+            tv.setOnClickListener(v -> LocalToolActivity.open(this, "chat", c));
+            tv.setOnLongClickListener(v -> {
+                new AlertDialog.Builder(this).setTitle("删除联系人").setMessage(c)
+                        .setNegativeButton("取消", null)
+                        .setPositiveButton("删除", (d, w) -> {
+                            contacts.remove(c);
+                            saveList("contacts", contacts);
+                            renderContacts();
+                        }).show();
+                return true;
+            });
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
             lp.bottomMargin = dp(6);
             contactList.addView(tv, lp);
@@ -340,13 +368,16 @@ public final class LocalToolActivity extends Activity {
         e.setTextColor(0xff8b90a0);
         albumGrid.addView(e);
         for (String p : albumImages) {
-            TextView tv = new TextView(this);
-            tv.setText("🖼 " + p);
-            tv.setTextSize(12);
-            tv.setTextColor(0xff333333);
-            tv.setBackgroundColor(Color.WHITE);
-            tv.setPadding(dp(10), dp(10), dp(10), dp(10));
-            albumGrid.addView(tv);
+            ImageView iv = new ImageView(this);
+            iv.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            iv.setBackgroundColor(0xffeef0f6);
+            try {
+                Bitmap bmp = AvatarUpload.decode(this, android.net.Uri.parse(p));
+                if (bmp != null) iv.setImageBitmap(bmp);
+            } catch (Exception ignored) { }
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(dp(96), dp(96));
+            lp.bottomMargin = dp(8);
+            albumGrid.addView(iv, lp);
         }
     }
 
@@ -450,7 +481,8 @@ public final class LocalToolActivity extends Activity {
     }
 
     private void load() {
-        messages.addAll(getSharedPreferences(PREFS, 0).getString("chat", "").isEmpty() ? new ArrayList<>() : java.util.Arrays.asList(getSharedPreferences(PREFS, 0).getString("chat", "").split("\n")));
+        String rawChat = getSharedPreferences(PREFS, 0).getString(chatKey(), "");
+        if (!rawChat.isEmpty()) messages.addAll(java.util.Arrays.asList(rawChat.split("\n")));
         bills.addAll(split("bills"));
         contacts.addAll(split("contacts"));
         moments.addAll(split("moments"));
@@ -466,8 +498,9 @@ public final class LocalToolActivity extends Activity {
     }
 
     private void save() {
-        getSharedPreferences(PREFS, 0).edit().putString("chat", join(messages)).apply();
+        getSharedPreferences(PREFS, 0).edit().putString(chatKey(), join(messages)).apply();
     }
+    private String chatKey() { return "chat_" + chatName; }
 
     private void saveList(String key, List<String> list) {
         getSharedPreferences(PREFS, 0).edit().putString(key, join(list)).apply();
