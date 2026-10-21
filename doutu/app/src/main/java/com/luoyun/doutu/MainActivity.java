@@ -1878,6 +1878,11 @@ static final class FeatureRow {
                     startActivity(new Intent(MainActivity.this,
                             com.luoyun.doutu.features.wx.SentRedPacketActivity.class));
                     break;
+                case "qqrp":
+                    // QQ 发红包：金额 / 祝福语 / 发送人一行。
+                    startActivity(new Intent(MainActivity.this,
+                            com.luoyun.doutu.features.qq.QqRedPacketActivity.class));
+                    break;
                 case "act:licai":
                     startActivity(com.luoyun.doutu.features.zhi.LicaiActivity.intentFor(MainActivity.this));
                     break;

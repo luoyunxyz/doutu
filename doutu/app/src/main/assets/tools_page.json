@@ -217,7 +217,7 @@
       {
         "name": "红包",
         "icon": "redpacket",
-        "action": "local:redpacket"
+        "action": "qqrp"
       },
       {
         "name": "转账",
