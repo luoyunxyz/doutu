@@ -118,6 +118,12 @@ public final class WxGroupSettingsActivity extends Activity {
         body.addView(card);
 
         groupId = getIntent().getStringExtra("groupId");
+        String nameExtra = getIntent().getStringExtra("groupName");
+        if ((groupId == null || groupId.isEmpty()) && nameExtra != null && !nameExtra.isEmpty()) {
+            for (GroupStore.Group g : GroupStore.all(this)) {
+                if (nameExtra.startsWith(g.name)) { groupId = g.id; break; }
+            }
+        }
         GroupStore.Group saved = GroupStore.get(this, groupId);
         if (saved != null) {
             groupName = saved.name;

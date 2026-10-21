@@ -203,7 +203,7 @@
       if (bridge && bridge.openGroupSettings) {
         e.preventDefault();
         e.stopPropagation();
-        bridge.openGroupSettings();
+        bridge.openGroupSettings(headerTitle());
       }
     } catch (err) { }
   }, true);

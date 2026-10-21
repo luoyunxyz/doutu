@@ -75,16 +75,23 @@ public final class WxCreateGroupActivity extends Activity {
         ok.setOnClickListener(v -> {
             String groupName = name.getText().toString().trim();
             if (groupName.isEmpty()) groupName = "再歪一点";
-            String members = count.getText().toString().trim();
             int people = 100;
-            try { people = Integer.parseInt(members); } catch (Exception ignored) { }
+            try { people = Integer.parseInt(count.getText().toString().trim()); } catch (Exception ignored) { }
             GroupStore.Group group = new GroupStore.Group();
             group.id = "g" + System.currentTimeMillis();
             group.name = groupName;
             group.count = people;
             GroupStore.save(this, group);
-            startActivity(new android.content.Intent(this, WxGroupChatActivity.class)
-                    .putExtra("groupId", group.id));
+
+            String chatName = groupName + "(" + people + ")";
+            String safe = chatName.replace("\\", "\\\\").replace("'", "\\'");
+            String script = "try{var g=JSON.parse(localStorage.getItem('fw-group-names')||'[]');"
+                    + "if(g.indexOf('" + safe + "')<0)g.push('" + safe + "');"
+                    + "localStorage.setItem('fw-group-names',JSON.stringify(g));}catch(e){}"
+                    + "window.__fwAddFriend && window.__fwAddFriend('" + safe + "','');";
+            startActivity(com.luoyun.doutu.features.wei.WeiHomeActivity
+                    .intentFor(this, "#/wechat"));
+            com.luoyun.doutu.features.wei.WeiHomeActivity.scheduleBridge(script, "#/wechat");
             finish();
         });
         buttons.addView(cancel, new LinearLayout.LayoutParams(0, dp(56), 1f));

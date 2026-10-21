@@ -644,9 +644,9 @@ public final class WeiHomeActivity extends Activity {
      */
     private static final class ForwardingBridge {
         @android.webkit.JavascriptInterface
-        public void openGroupSettings() {
+        public void openGroupSettings(String name) {
             AppNavigationBridge b = target();
-            if (b != null) b.openGroupSettings();
+            if (b != null) b.openGroupSettings(name);
         }
 
         private static AppNavigationBridge target() {
@@ -752,11 +752,12 @@ public final class WeiHomeActivity extends Activity {
 
     private final class AppNavigationBridge {
         @android.webkit.JavascriptInterface
-        public void openGroupSettings() {
+        public void openGroupSettings(String name) {
             WeiHomeActivity host = liveInstance;
             if (host == null) return;
             host.startActivity(new android.content.Intent(host,
-                    com.luoyun.doutu.features.wx.WxGroupSettingsActivity.class));
+                    com.luoyun.doutu.features.wx.WxGroupSettingsActivity.class)
+                    .putExtra("groupName", name == null ? "" : name));
         }
 
         @JavascriptInterface
