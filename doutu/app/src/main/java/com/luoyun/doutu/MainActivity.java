@@ -1898,6 +1898,13 @@ static final class FeatureRow {
                     overridePendingTransition(0, 0);
                     return;
                 }
+                // 微信支付：真机是「提现 / 零钱提现到账」两张记录卡，不是收付款码页。
+                if ("#/wechat/payment".equals(route)) {
+                    startActivity(new Intent(MainActivity.this,
+                            com.luoyun.doutu.features.wx.WxPayRecordsActivity.class));
+                    overridePendingTransition(0, 0);
+                    return;
+                }
                 startActivity(com.luoyun.doutu.features.wei.WeiHomeActivity
                         .intentFor(MainActivity.this, route)
                         .addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_SINGLE_TOP));

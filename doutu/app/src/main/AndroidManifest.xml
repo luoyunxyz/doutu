@@ -239,6 +239,10 @@
             android:screenOrientation="portrait"
             android:exported="false" />
         <activity
+            android:name=".features.wx.WxPayRecordsActivity"
+            android:screenOrientation="portrait"
+            android:exported="false" />
+        <activity
             android:name=".features.tools.AvatarAdjustActivity"
             android:screenOrientation="portrait"
             android:exported="false" />
