@@ -2128,7 +2128,9 @@ static final class FeatureRow {
                             com.luoyun.doutu.features.ali.AliPaySuccessActivity.class));
                     break;
                 case "act:sound":
-                    com.luoyun.doutu.features.sound.AccountSoundActivity.open(MainActivity.this);
+                    // 到账播放：真机是「支付宝到账语音」页（定时播放提示 + 空状态 + 新增）
+                    startActivity(new Intent(MainActivity.this,
+                            com.luoyun.doutu.features.ali.AliVoiceActivity.class));
                     break;
                 case "act:order":
                     // 淘宝账单详情：真机是「卖家已发货」订单详情（物流卡 + 商品卡 + 订单服务）

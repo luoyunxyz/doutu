@@ -259,6 +259,10 @@
             android:screenOrientation="portrait"
             android:exported="false" />
         <activity
+            android:name=".features.ali.AliVoiceActivity"
+            android:screenOrientation="portrait"
+            android:exported="false" />
+        <activity
             android:name=".features.album.AlbumHomeActivity"
             android:screenOrientation="portrait"
             android:exported="false" />
