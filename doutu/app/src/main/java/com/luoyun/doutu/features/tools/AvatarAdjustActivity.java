@@ -204,6 +204,13 @@ public final class AvatarAdjustActivity extends Activity {
         done.setOnClickListener(v -> {
             resultRect = clip.boxInImage();
             setResult(RESULT_OK, new Intent());
+            // 从「替换头像」入口进来时，完成接着进头像列表页（原始头像 → 替换头像 → 一键合成）
+            if (getIntent().getBooleanExtra("chain", false)) {
+                ReplaceHeaderListActivity.base = source;
+                ReplaceHeaderListActivity.initialSlot = resultRect;
+                ReplaceHeaderListActivity.avatar = null;
+                startActivity(new Intent(this, ReplaceHeaderListActivity.class));
+            }
             finish();
         });
         top.addView(done, new LinearLayout.LayoutParams(

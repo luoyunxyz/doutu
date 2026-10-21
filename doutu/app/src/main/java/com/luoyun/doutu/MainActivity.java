@@ -324,7 +324,23 @@ public final class MainActivity extends Activity {
     protected void onActivityResult(int request, int result, android.content.Intent data) {
         super.onActivityResult(request, result, data);
         if (com.luoyun.doutu.account.AvatarUpload.deliver(this, request, result, data)) redrawNative();
+        // 「替换头像」第一步：选好聊天截图后进选框调整页
+        if (request == REQ_REPLACE_BASE && result == RESULT_OK && data != null && data.getData() != null) {
+            try (java.io.InputStream in = getContentResolver().openInputStream(data.getData())) {
+                android.graphics.Bitmap bmp = android.graphics.BitmapFactory.decodeStream(in);
+                if (bmp != null) {
+                    com.luoyun.doutu.features.tools.AvatarAdjustActivity.source = bmp;
+                    startActivity(new android.content.Intent(this,
+                            com.luoyun.doutu.features.tools.AvatarAdjustActivity.class)
+                            .putExtra("chain", true));
+                }
+            } catch (Exception ignored) {
+                android.widget.Toast.makeText(this, "读取图片失败", android.widget.Toast.LENGTH_SHORT).show();
+            }
+        }
     }
+
+    private static final int REQ_REPLACE_BASE = 91;
 
     /**
      * 同步会员状态（已登录才调用）。
@@ -1980,6 +1996,13 @@ static final class FeatureRow {
                         .intentFor(MainActivity.this, route)
                         .addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_SINGLE_TOP));
                 overridePendingTransition(0, 0);
+                return;
+            }
+            // 替换头像：真机第一步是选聊天截图 → 选框调整 → 头像列表 → 一键合成
+            if ("tool:avatar".equals(action)) {
+                android.content.Intent pick = new android.content.Intent(Intent.ACTION_GET_CONTENT);
+                pick.setType("image/*");
+                startActivityForResult(android.content.Intent.createChooser(pick, "选择聊天截图"), REQ_REPLACE_BASE);
                 return;
             }
             if (action.startsWith("tool:")) {

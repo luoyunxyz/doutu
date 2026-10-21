@@ -34,6 +34,9 @@ import java.util.List;
 public final class ReplaceHeaderListActivity extends Activity {
     public static Bitmap base, avatar;
     public static boolean watermark;
+    /** 调整页「完成」时框选的头像区域；为空则自动检测人脸。 */
+    public static RectF initialSlot;
+    private static final int REQ_AVATAR = 71;
 
     private final List<RectF> slots = new ArrayList<>();
     private final List<Boolean> enabled = new ArrayList<>();
@@ -42,8 +45,14 @@ public final class ReplaceHeaderListActivity extends Activity {
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
-        if (base == null || avatar == null) { finish(); return; }
-        detect();
+        if (base == null) { finish(); return; }
+        if (initialSlot != null) {
+            slots.add(new RectF(initialSlot));
+            enabled.add(true);
+            initialSlot = null;
+        } else {
+            detect();
+        }
         buildUi();
     }
 
@@ -187,12 +196,27 @@ public final class ReplaceHeaderListActivity extends Activity {
             LinearLayout.LayoutParams mlp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
             mlp.leftMargin = dp(30);
             row.addView(mid, mlp);
-            ImageView now = new ImageView(this);
-            now.setScaleType(ImageView.ScaleType.CENTER_CROP);
-            now.setImageBitmap(avatar);
-            LinearLayout.LayoutParams nlp = new LinearLayout.LayoutParams(dp(50), dp(50));
+            LinearLayout.LayoutParams nlp = new LinearLayout.LayoutParams(dp(54), dp(54));
             nlp.leftMargin = dp(20);
-            row.addView(now, nlp);
+            if (avatar != null) {
+                ImageView now = new ImageView(this);
+                now.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                now.setImageBitmap(avatar);
+                now.setOnClickListener(v -> pickAvatar());
+                row.addView(now, nlp);
+            } else {
+                TextView pick = new TextView(this);
+                pick.setText("＋\n相册选择");
+                pick.setTextSize(10);
+                pick.setTextColor(0xff888888);
+                pick.setGravity(Gravity.CENTER);
+                android.graphics.drawable.GradientDrawable bg = new android.graphics.drawable.GradientDrawable();
+                bg.setColor(0xfff2f2f2);
+                bg.setCornerRadius(dp(4));
+                pick.setBackground(bg);
+                pick.setOnClickListener(v -> pickAvatar());
+                row.addView(pick, nlp);
+            }
             View spacer = new View(this);
             row.addView(spacer, new LinearLayout.LayoutParams(0, 1, 1f));
             Button del = new Button(this);
@@ -223,7 +247,29 @@ public final class ReplaceHeaderListActivity extends Activity {
         }
     }
 
+    private void pickAvatar() {
+        Intent pick = new Intent(Intent.ACTION_GET_CONTENT);
+        pick.setType("image/*");
+        startActivityForResult(Intent.createChooser(pick, "选择替换头像"), REQ_AVATAR);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode != REQ_AVATAR || resultCode != RESULT_OK || data == null || data.getData() == null) return;
+        try (java.io.InputStream in = getContentResolver().openInputStream(data.getData())) {
+            avatar = android.graphics.BitmapFactory.decodeStream(in);
+            render();
+        } catch (Exception e) {
+            Toast.makeText(this, "读取图片失败", Toast.LENGTH_SHORT).show();
+        }
+    }
+
     private void compose() {
+        if (avatar == null) {
+            Toast.makeText(this, "请先选择替换头像", Toast.LENGTH_SHORT).show();
+            return;
+        }
         try {
             Bitmap out = base.copy(Bitmap.Config.ARGB_8888, true);
             Canvas c = new Canvas(out);
