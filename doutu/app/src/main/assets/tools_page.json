@@ -222,7 +222,7 @@
       {
         "name": "转账",
         "icon": "transfer",
-        "action": "local:transfer"
+        "action": "qqtransfer"
       },
       {
         "name": "公众号",

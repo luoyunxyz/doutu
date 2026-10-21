@@ -151,6 +151,20 @@ QQ 主页、团队相册、视频模块）。
   没有团队时和真机一样是空白。
 - 云相册主页：右上「创建/加入团队」和右下加号进创建页，「我加入的团队」进我的团队页。
 
+## 3.11 QQ 转账（2026-10-21 第十一轮）
+
+真机 `QQTransferCreateActivity` 用隐式 action 只能拿到透明窗口，但反编译包
+（`pojia\yidiandian_decode`）里有它的布局 `activity_qq_chat_transfer_create.xml`，
+本轮按布局逐项重画成 `features/qq/QqTransferActivity`：
+
+- 灰栏 #EDEDED（返回 / 转账 16sp / 黄色 #FFDA43 发送按钮，34dp 高、圆角 4dp）；
+- 白卡 15dp 内边距：转账金额 13sp（左 17dp）、￥ 35sp + 金额 50sp（左 10dp、上 13dp）；
+- #EEEEEE 0.5dp 分隔线（左 17dp）；
+- 转账说明行（左 32dp、上下 10dp）；
+- 10dp 间隔后是「选择发送人」：对方发 / 自己发两列（头像 40dp + 单选），
+  下面「切换收钱人 ›」#888888；
+- 金额聚焦时自动清掉默认的 0.0；发送校验金额 > 0，提示「转账已发送」并退出。
+
 ## 4. 教程页
 
 `ToolsTutorialActivity` 也已经按真机重做：黄色标题栏 + 返回、六个页签
