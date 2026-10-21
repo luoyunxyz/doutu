@@ -225,6 +225,17 @@ QQ 主页、团队相册、视频模块）。
 - 「选择发送人」两列：对方发 / 自己发（单选）；
 - 发送校验金额 > 0，提示「红包已发送」并退出。
 
+## 3.17 视频「评论切片」（2026-10-21 第十七轮）
+
+`features/video/DyCommentActivity`：按真机 `activity_dy_comment.xml` 重画
+
+- 白栏（返回）、白底评论卡片：36dp 圆形头像 + 昵称 13sp + 评论正文 15sp
+  + 时间地点 / ☆ 星标数 / 收藏图标 + 「—— 更多回复 ▾」；
+- 浅色模式开关（黄色 track、白色 thumb），关闭时卡片变深色；
+- 底部 40dp 黄色圆角「保存截图」：把评论卡片渲染成 PNG 存进相册 Pictures。
+
+真机验证：点保存后 `/sdcard/Pictures/doutu_comment_*.png` 生成。
+
 ## 4. 教程页
 
 `ToolsTutorialActivity` 也已经按真机重做：黄色标题栏 + 返回、六个页签

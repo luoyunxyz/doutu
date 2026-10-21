@@ -1871,6 +1871,11 @@ static final class FeatureRow {
                     startActivity(new Intent(MainActivity.this,
                             com.luoyun.doutu.features.video.VideoHomeActivity.class));
                     break;
+                case "dycomment":
+                    // 评论切片：抖音评论卡片 + 保存截图。
+                    startActivity(new Intent(MainActivity.this,
+                            com.luoyun.doutu.features.video.DyCommentActivity.class));
+                    break;
                 case "mass":
                     // 群发助手：浅灰页头 + 空列表 + 底部「新建群发」。
                     startActivity(new Intent(MainActivity.this,

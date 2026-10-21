@@ -294,7 +294,7 @@
       {
         "name": "评论切片",
         "icon": "comment",
-        "action": "local:comment"
+        "action": "dycomment"
       },
       {
         "name": "微视",

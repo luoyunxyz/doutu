@@ -215,6 +215,10 @@
             android:screenOrientation="portrait"
             android:exported="false" />
         <activity
+            android:name=".features.video.DyCommentActivity"
+            android:screenOrientation="portrait"
+            android:exported="false" />
+        <activity
             android:name=".features.wx.MassAssistantActivity"
             android:screenOrientation="portrait"
             android:exported="false" />

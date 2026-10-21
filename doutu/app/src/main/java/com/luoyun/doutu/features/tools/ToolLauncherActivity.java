@@ -36,6 +36,8 @@ public final class ToolLauncherActivity extends Activity {
             intent = new Intent(this, com.luoyun.doutu.features.album.MyTeamActivity.class);
         } else if ("videohome".equals(key)) {
             intent = new Intent(this, com.luoyun.doutu.features.video.VideoHomeActivity.class);
+        } else if ("dycomment".equals(key)) {
+            intent = new Intent(this, com.luoyun.doutu.features.video.DyCommentActivity.class);
         } else if ("mass".equals(key)) {
             intent = new Intent(this, com.luoyun.doutu.features.wx.MassAssistantActivity.class);
         } else if ("uploadimg".equals(key)) {
