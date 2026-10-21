@@ -50,7 +50,7 @@ public final class ToolImageActivity extends Activity {
     private final List<Bitmap> results = new ArrayList<>();
     private ImageView basePreview, avatarPreview, preview;
     private TextView hint;
-    private CheckBox watermark;
+    private CheckBox watermark, replaceAvatar;
     private LinearLayout styleBar;
     private int style = 0;
     private Button processBtn, saveBtn;
@@ -106,26 +106,13 @@ public final class ToolImageActivity extends Activity {
             pickAll.setAllCaps(false);
             pickAll.setOnClickListener(v -> pickMulti());
             col.addView(pickAll, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(48)));
-            styleBar = new LinearLayout(this);
-            styleBar.setGravity(Gravity.CENTER);
-            String[] styles = {"海报", "黑白", "暖色", "冷色"};
-            for (int i = 0; i < styles.length; i++) {
-                final int idx = i;
-                Button b = new Button(this);
-                b.setText(styles[i]);
-                b.setAllCaps(false);
-                b.setTextSize(13);
-                b.setAlpha(i == 0 ? 1f : .55f);
-                b.setOnClickListener(v -> {
-                    style = idx;
-                    for (int k = 0; k < styleBar.getChildCount(); k++) styleBar.getChildAt(k).setAlpha(k == idx ? 1f : .55f);
-                });
-                LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, dp(42), 1f);
-                if (i > 0) lp.leftMargin = dp(6);
-                styleBar.addView(b, lp);
-            }
-            col.addView(styleBar);
-            hint.setText("选择一张或多张图片，选风格，生成后批量保存到相册。");
+            avatarPreview = addPickRow(col, "头像图片（用于替换）", () -> pickImage(REQ_AVATAR, false));
+            replaceAvatar = new CheckBox(this);
+            replaceAvatar.setText("替换头像（请确保头像完整性）");
+            replaceAvatar.setTextSize(13);
+            replaceAvatar.setChecked(true);
+            col.addView(replaceAvatar);
+            hint.setText("参考 AI一键模仿：选多张图 + 头像，自动识别图中的头像槽位并批量替换，生成后可一键保存以上图片。");
         } else {
             basePreview = addPickRow(col, "底图（聊天截图 / 任意图片）", () -> pickImage(REQ_BASE, false));
             avatarPreview = addPickRow(col, "头像图片", () -> pickImage(REQ_AVATAR, false));
@@ -253,7 +240,14 @@ public final class ToolImageActivity extends Activity {
         results.clear();
         try {
             if (mode == MODE_AI) {
-                for (Bitmap src : sources) results.add(styleize(src, style));
+                for (Bitmap src : sources) {
+                    if (replaceAvatar != null && replaceAvatar.isChecked() && avatar != null) {
+                        Bitmap done = replaceFaces(src, avatar, true);
+                        results.add(done != null ? done : src.copy(Bitmap.Config.ARGB_8888, true));
+                    } else {
+                        results.add(src.copy(Bitmap.Config.ARGB_8888, true));
+                    }
+                }
             } else {
                 if (base == null || avatar == null) { toast("请先选择底图和头像"); return; }
                 Bitmap out = replaceFaces(base, avatar, mode == MODE_AUTO);
@@ -263,7 +257,7 @@ public final class ToolImageActivity extends Activity {
             }
             preview.setImageBitmap(results.get(0));
             saveBtn.setEnabled(true);
-            toast(mode == MODE_AI ? "已生成 " + results.size() + " 张，点保存" : "替换完成，点保存");
+            toast(mode == MODE_AI ? "已生成 " + results.size() + " 张，点「保存到相册」" : "替换完成，点保存");
         } catch (Exception e) {
             toast("处理失败：" + e.getMessage());
         }
