@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 1.0.0(72)：我的页截图加 bundle 兜底，强制加载`  
-> 最新代码版本：`1.0.0 / 72`（已推送，待 Codemagic 构建）  
+> 最新提交：`本轮 1.0.0(73)：iOS ATS 放行直连 IP，修别人设备 TLS 登录失败`  
+> 最新代码版本：`1.0.0 / 73`（已推送，待 Codemagic 构建）；Android `1.0.2`  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -1759,6 +1759,27 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
     - 构建 72 后，App 的 build 号应为 72；如果内容区还是卡片，说明装的是旧包；
     - 版本 1.0.0(72)。改动文件：`MeScreen.swift`、`Resources/me_content.png`、
       iOS `project.yml`。
+
+166. **1.0.0(73)：iOS ATS 放行直连 IP；Android 1.0.2 修 TLS**
+    - 用户反馈截图是 **iOS** 登录页，报
+      `网络异常：A TLS error caused the secure connection to fail.`；
+    - 根因：
+      - 生成式 Info.plist 里 `NSAllowsArbitraryLoads = NO`、
+        `NSAllowsLocalNetworking = YES`；
+      - iOS 端 `TdapiResolver` 把 `tdapi.luoyun.xyz` 改成公网 IP
+        `69.165.75.130`，ATS 先于 URLSessionDelegate 拦截这种
+        “IP 与证书域名不匹配”的 HTTPS，直接报 TLS 错误；
+      - Android 没有 ATS，所以 Android 1.0.2 的 TLS 放宽能生效，
+        用户自己的 Android 测试正常，别人 iOS 不行；
+    - 73：
+      - `INFOPLIST_KEY_NSAppTransportSecurity_NSAllowsArbitraryLoads: YES`；
+      - `TdapiResolver` 仍然接受服务器证书，DTW 握手仍用内置公钥验签；
+    - Android 1.0.2：
+      - `DtwConfig.prepare` 只对 API 域名/IP 放宽证书校验与 HostnameVerifier，
+        其他域名保持默认；
+      - 已构建并 adb 安装（1.0.2 / 10002）；
+    - 版本 1.0.0(73)（iOS）/ 1.0.2（Android）。
+      改动文件：iOS `project.yml`；Android `DtwConfig.java`。
 
 ---
 
