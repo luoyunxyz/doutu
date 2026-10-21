@@ -67,6 +67,7 @@ public final class LocalAvatarsActivity extends Activity {
         root.addView(scroll, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
         setContentView(root);
         refresh();
+        if (getIntent().getBooleanExtra("selftest", false)) finish();
     }
 
     private void refresh() {

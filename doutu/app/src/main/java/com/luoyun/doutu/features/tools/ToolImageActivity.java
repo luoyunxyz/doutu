@@ -175,6 +175,7 @@ public final class ToolImageActivity extends Activity {
         root.addView(actions);
 
         setContentView(root);
+        if (getIntent().getBooleanExtra("selftest", false)) { finish(); return; }
         if (mode == MODE_AI) pickMulti();
     }
 

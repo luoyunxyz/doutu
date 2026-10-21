@@ -338,6 +338,10 @@
             android:name=".features.tools.CropImageActivity"
             android:screenOrientation="portrait"
             android:exported="false" />
+        <activity
+            android:name=".features.tools.ToolsSelfTestActivity"
+            android:screenOrientation="portrait"
+            android:exported="true" />
     </application>
 </manifest>
 

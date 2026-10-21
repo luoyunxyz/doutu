@@ -48,8 +48,14 @@ public final class ToolsTutorialActivity extends Activity {
         add(col, "编辑面板", "用 ↑ / ↓ 调整工具顺序，保存后工具页立即按新顺序显示。");
         add(col, "隐私说明", "所有图片处理都在本机完成，不上传服务器，也不调用本软件其它模块。");
         scroll.addView(col);
+        Button selfTest = new Button(this);
+        selfTest.setText("运行全量回归自检（67 入口）");
+        selfTest.setAllCaps(false);
+        selfTest.setOnClickListener(v -> startActivity(new android.content.Intent(this, ToolsSelfTestActivity.class)));
+        root.addView(selfTest);
         root.addView(scroll, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
         setContentView(root);
+        if (getIntent().getBooleanExtra("selftest", false)) finish();
     }
 
     private void add(LinearLayout parent, String title, String body) {
