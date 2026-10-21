@@ -1284,36 +1284,104 @@ public final class LocalToolActivity extends Activity {
 
     private void buildProfile() {
         content.setBackgroundColor(0xffededed);
-        content.addView(wechatHeader("我"));
+
+        LinearLayout bar = new LinearLayout(this);
+        bar.setGravity(Gravity.CENTER_VERTICAL);
+        bar.setBackgroundColor(Color.WHITE);
+        ImageView back = assetIcon("icon_wx_left_top_float", 21);
+        back.setOnClickListener(v -> finish());
+        LinearLayout.LayoutParams blp = new LinearLayout.LayoutParams(dp(21), dp(21));
+        blp.leftMargin = dp(13);
+        bar.addView(back, blp);
+        bar.addView(new View(this), new LinearLayout.LayoutParams(0, dp(43), 1f));
+        content.addView(bar);
+
         LinearLayout user = new LinearLayout(this);
         user.setGravity(Gravity.CENTER_VERTICAL);
         user.setBackgroundColor(Color.WHITE);
-        user.setPadding(dp(16), dp(18), dp(16), dp(18));
-        TextView av = new TextView(this);
-        av.setText("本");
-        av.setTextSize(22);
-        av.setTextColor(Color.WHITE);
-        av.setGravity(Gravity.CENTER);
-        av.setBackgroundColor(0xff07c160);
-        user.addView(av, new LinearLayout.LayoutParams(dp(60), dp(60)));
+        user.setPadding(dp(22), dp(15), dp(12), dp(15));
+        ImageView avatar = assetIcon("ic_wx_default_image", 58);
+        user.addView(avatar, new LinearLayout.LayoutParams(dp(58), dp(58)));
         LinearLayout info = new LinearLayout(this);
         info.setOrientation(LinearLayout.VERTICAL);
-        info.setPadding(dp(14), 0, 0, 0);
+        info.setPadding(dp(13), 0, 0, 0);
         TextView name = new TextView(this);
         name.setText("本地用户");
         name.setTextSize(20);
         name.setTextColor(0xff191919);
         info.addView(name);
         TextView wx = new TextView(this);
-        wx.setText("微信号：local_user");
-        wx.setTextSize(13);
-        wx.setTextColor(0xff888888);
+        wx.setText("微信号： local_user");
+        wx.setTextSize(14);
+        wx.setTextColor(0xff7f7f7f);
+        wx.setPadding(0, dp(6), 0, 0);
         info.addView(wx);
         user.addView(info, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        ImageView qr = assetIcon("ic_wx_qr", 15);
+        user.addView(qr, new LinearLayout.LayoutParams(dp(15), dp(15)));
+        TextView arrow = new TextView(this);
+        arrow.setText("›");
+        arrow.setTextSize(20);
+        arrow.setTextColor(0xffc7c7cc);
+        arrow.setGravity(Gravity.CENTER);
+        user.addView(arrow, new LinearLayout.LayoutParams(dp(22), dp(58)));
+        user.setOnClickListener(v -> LocalToolActivity.open(this, "profile", "我"));
         content.addView(user);
-        String[][] rows = {{"服", "服务", "wallet"}, {"收", "收藏", "favorites"}, {"朋", "朋友圈", "moments"}, {"卡", "卡包", "wallet"}, {"表", "表情", "articles"}, {"设", "设置", "settings"}};
-        for (String[] r : rows) content.addView(wechatRow(r[0], "0xff2f7bff", r[1], r[2]));
+
+        addMeGap();
+        content.addView(meRow("ic_wx_me_wallet", "服务", "wallet", true));
+        addMeGap();
+        content.addView(meRow("ic_wx_me_favor", "收藏", "favorites", false));
+        content.addView(meDivider());
+        content.addView(meRow("ic_wx_me_album", "朋友圈", "moments", false));
+        content.addView(meDivider());
+        content.addView(meRow("ic_wx_me_card_bg", "卡包", "wallet", false));
+        content.addView(meDivider());
+        content.addView(meRow("ic_wx_me_brow", "表情", "articles", true));
+        addMeGap();
+        content.addView(meRow("ic_wx_me_setting", "设置", "settings", true));
         content.addView(wechatTabBar("profile"));
+    }
+
+    private void addMeGap() {
+        View line = new View(this);
+        line.setBackgroundColor(0xffededed);
+        content.addView(line, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(1)));
+        View gap = new View(this);
+        gap.setBackgroundColor(0xffededed);
+        content.addView(gap, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(8)));
+    }
+
+    private View meDivider() {
+        View v = new View(this);
+        v.setBackgroundColor(0xffe5e5e5);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(1));
+        lp.leftMargin = dp(54);
+        v.setLayoutParams(lp);
+        return v;
+    }
+
+    private LinearLayout meRow(String asset, String label, String key, boolean bottomGap) {
+        LinearLayout row = new LinearLayout(this);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setBackgroundColor(Color.WHITE);
+        row.setPadding(dp(15), 0, dp(12), 0);
+        row.addView(assetIcon(asset, 25), new LinearLayout.LayoutParams(dp(25), dp(25)));
+        TextView tv = new TextView(this);
+        tv.setText(label);
+        tv.setTextSize(16);
+        tv.setTextColor(0xff191919);
+        tv.setPadding(dp(14), 0, 0, 0);
+        row.addView(tv, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        TextView arrow = new TextView(this);
+        arrow.setText("›");
+        arrow.setTextSize(20);
+        arrow.setTextColor(0xffc7c7cc);
+        arrow.setGravity(Gravity.CENTER);
+        row.addView(arrow, new LinearLayout.LayoutParams(dp(22), dp(25)));
+        row.setOnClickListener(v -> LocalToolActivity.open(this, key, label));
+        row.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(54)));
+        return row;
     }
 
     private void buildShop() {
