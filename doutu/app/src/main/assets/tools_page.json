@@ -150,7 +150,7 @@
       {
         "name": "红包",
         "icon": "redpacket",
-        "action": "local:redpacket"
+        "action": "alired"
       },
       {
         "name": "公众号",

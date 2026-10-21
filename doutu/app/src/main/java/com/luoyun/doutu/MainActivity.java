@@ -1926,6 +1926,11 @@ static final class FeatureRow {
                     startActivity(new Intent(MainActivity.this,
                             com.luoyun.doutu.features.ali.AliContactsActivity.class));
                     break;
+                case "alired":
+                    // 支付宝红包：金额 / 祝福语 / 发送人。
+                    startActivity(new Intent(MainActivity.this,
+                            com.luoyun.doutu.features.ali.AliRedPacketActivity.class));
+                    break;
                 case "act:licai":
                     startActivity(com.luoyun.doutu.features.zhi.LicaiActivity.intentFor(MainActivity.this));
                     break;
