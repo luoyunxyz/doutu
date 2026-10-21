@@ -2049,6 +2049,7 @@ public final class LocalToolActivity extends Activity {
     }
 
     private void buildGroupSettings() {
+        final String groupName = this.title;
         content.setBackgroundColor(0xffededed);
         content.setPadding(0, 0, 0, 0);
 
@@ -2107,7 +2108,7 @@ public final class LocalToolActivity extends Activity {
             final String rr = r;
             row.setOnClickListener(v -> {
                 if ("群二维码".equals(rr)) {
-                    LocalToolActivity.open(this, "groupqr", title);
+                    LocalToolActivity.open(this, "groupqr", groupName);
                 } else {
                     EditText input = new EditText(this);
                     input.setText(getSharedPreferences(PREFS, 0).getString("grp_" + rr, ""));
@@ -2156,7 +2157,7 @@ public final class LocalToolActivity extends Activity {
                 .setNegativeButton("取消", null)
                 .setPositiveButton("退出", (d, w) -> {
                     List<String> gs = split("groups");
-                    gs.remove(title);
+                    gs.remove(groupName);
                     saveList("groups", gs);
                     finish();
                 }).show());
