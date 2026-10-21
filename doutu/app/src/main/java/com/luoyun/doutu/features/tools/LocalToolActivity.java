@@ -525,28 +525,65 @@ public final class LocalToolActivity extends Activity {
     private void buildDiscover() {
         content.setBackgroundColor(0xffededed);
         content.addView(wechatHeader("发现"));
+        int[] gaps = {1, 3, 5, 7, 10};
         String[][] rows = {
-                {"圈", "0xff07c160", "朋友圈", "moments"},
-                {"视", "0xffff9f1c", "视频号", "video"},
-                {"播", "0xffff5a5f", "直播", "video"},
-                {"扫", "0xff2f7bff", "扫一扫", "pay"},
-                {"摇", "0xff2f7bff", "摇一摇", "generic"},
-                {"看", "0xffffb400", "看一看", "articles"},
-                {"搜", "0xffff5a5f", "搜一搜", "articles"},
-                {"近", "0xff2f7bff", "附近", "generic"},
-                {"购", "0xffff5a5f", "购物", "shop"},
-                {"游", "0xff07c160", "游戏", "generic"},
-                {"程", "0xff7c5cf6", "小程序", "generic"}
+                {"pyq", "圈", "0xff07c160", "朋友圈", "moments", "朋友圈"},
+                {"sph", "视", "0xffff9f1c", "视频号", "video", "视频号"},
+                {"", "播", "0xffff5a5f", "直播", "video", "直播"},
+                {"sao", "扫", "0xff2f7bff", "扫一扫", "pay", "扫一扫"},
+                {"yao", "摇", "0xff2f7bff", "摇一摇", "generic", "摇一摇"},
+                {"kan", "看", "0xffffb400", "看一看", "articles", "看一看"},
+                {"sou", "搜", "0xffff5a5f", "搜一搜", "articles", "搜一搜"},
+                {"nearby", "近", "0xff2f7bff", "附近", "generic", "附近"},
+                {"shoping", "购", "0xffff5a5f", "购物", "shop", "购物"},
+                {"game", "游", "0xff07c160", "游戏", "generic", "游戏"},
+                {"xcx", "程", "0xff7c5cf6", "小程序", "generic", "小程序"}
         };
         for (int i = 0; i < rows.length; i++) {
-            if (i == 3 || i == 5 || i == 8 || i == 10) {
-                View gap = new View(this);
-                gap.setBackgroundColor(0xffededed);
-                content.addView(gap, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(8)));
+            boolean gap = false;
+            for (int g : gaps) if (g == i) gap = true;
+            if (gap) {
+                View g = new View(this);
+                g.setBackgroundColor(0xffededed);
+                content.addView(g, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(8)));
             }
-            content.addView(wechatRow(rows[i][0], rows[i][1], rows[i][2], rows[i][3]));
+            content.addView(discoverRow(rows[i][0], rows[i][1], rows[i][2], rows[i][3], rows[i][4], rows[i][5]));
         }
         content.addView(wechatTabBar("discover"));
+    }
+
+    private LinearLayout discoverRow(String asset, String glyph, String color, String label, String key, String title) {
+        LinearLayout row = new LinearLayout(this);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setBackgroundColor(Color.WHITE);
+        row.setPadding(dp(15), 0, dp(12), 0);
+        View icon;
+        if (asset != null && !asset.isEmpty()) {
+            icon = assetIcon("ic_wx_find_" + asset, 35);
+        } else {
+            TextView tv = new TextView(this);
+            tv.setText(glyph);
+            tv.setTextSize(18);
+            tv.setTextColor(Color.parseColor(color.replace("0x", "#")));
+            tv.setGravity(Gravity.CENTER);
+            icon = tv;
+        }
+        row.addView(icon, new LinearLayout.LayoutParams(dp(35), dp(35)));
+        TextView tv = new TextView(this);
+        tv.setText(label);
+        tv.setTextSize(16);
+        tv.setTextColor(0xff191919);
+        tv.setPadding(dp(15), 0, 0, 0);
+        row.addView(tv, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        TextView arrow = new TextView(this);
+        arrow.setText("›");
+        arrow.setTextSize(20);
+        arrow.setTextColor(0xffc7c7cc);
+        arrow.setGravity(Gravity.CENTER);
+        row.addView(arrow, new LinearLayout.LayoutParams(dp(22), dp(35)));
+        row.setOnClickListener(v -> LocalToolActivity.open(this, key, title));
+        row.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(54)));
+        return row;
     }
 
     private void buildMoments() {
