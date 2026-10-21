@@ -21,6 +21,7 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.EditText;
+import android.widget.GridLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Switch;
@@ -40,6 +41,9 @@ import java.io.InputStream;
  * （assets/qq_icons），页头底色 #F1F4FE、导航条 #F7F8FC 都取自同一张图。
  */
 public final class QqHomeActivity extends Activity {
+    private int unread = 0;
+    private QqView qqView;
+
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
@@ -56,11 +60,16 @@ public final class QqHomeActivity extends Activity {
                     | View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
                     | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR);
         }
-        QqView content = new QqView();
+        qqView = new QqView();
+        QqView content = qqView;
         setContentView(content);
         // 工具页「公众号」：进 QQ 主页并弹新建公众号表单（只有一个「消息置顶」开关）。
         if (getIntent().getBooleanExtra("gzh", false)) {
             content.post(this::showGzhDialog);
+        }
+        // 工具页「未读消息红点」：底部弹未读数量数字键盘。
+        if (getIntent().getBooleanExtra("unread", false)) {
+            content.post(this::showUnreadPanel);
         }
         // 必须在 setContentView 之后取：decorView 还没挂上去时 getInsetsController() 返回 null。
         if (android.os.Build.VERSION.SDK_INT >= 30) {
@@ -73,6 +82,114 @@ public final class QqHomeActivity extends Activity {
                                 | android.view.WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS);
             }
         }
+    }
+
+    /** QQ 的「未读消息红点」：底部数字键盘，完成把数量写到「消息」角标上。 */
+    private void showUnreadPanel() {
+        final Dialog dialog = new Dialog(this);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        LinearLayout panel = new LinearLayout(this);
+        panel.setOrientation(LinearLayout.VERTICAL);
+        panel.setBackgroundColor(Color.WHITE);
+
+        TextView title = new TextView(this);
+        title.setText("未读消息数量");
+        title.setTextSize(15);
+        title.setTextColor(0xff333333);
+        title.setGravity(Gravity.CENTER);
+        title.setBackgroundColor(0xffffd84d);
+        panel.addView(title, new LinearLayout.LayoutParams(dp(117), dp(49)));
+
+        final TextView valueView = new TextView(this);
+        valueView.setText(String.valueOf(unread));
+        valueView.setTextSize(18);
+        valueView.setTextColor(0xff333333);
+        valueView.setPadding(dp(16), dp(8), 0, dp(6));
+        panel.addView(valueView, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(44)));
+
+        final StringBuilder buffer = new StringBuilder(String.valueOf(unread));
+        GridLayout grid = new GridLayout(this);
+        grid.setColumnCount(4);
+        grid.setBackgroundColor(0xffe5e5e5);
+        grid.setLayoutParams(new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(256)));
+
+        String[][] rows = {{"1", "2", "3"}, {"4", "5", "6"}, {"7", "8", "9"}, {".", "0", "⌫"}};
+        for (int r = 0; r < rows.length; r++) {
+            for (int c = 0; c < 3; c++) {
+                final String k = rows[r][c];
+                TextView key = new TextView(this);
+                key.setText(k);
+                key.setTextSize(20);
+                key.setTextColor(0xff333333);
+                key.setGravity(Gravity.CENTER);
+                key.setBackgroundColor(Color.WHITE);
+                GridLayout.LayoutParams lp = new GridLayout.LayoutParams(
+                        GridLayout.spec(r, 1f), GridLayout.spec(c, 1f));
+                lp.width = 0;
+                lp.height = 0;
+                lp.setMargins(0, 0, 1, 1);
+                key.setLayoutParams(lp);
+                key.setOnClickListener(v -> {
+                    if ("⌫".equals(k)) {
+                        if (buffer.length() > 0) buffer.deleteCharAt(buffer.length() - 1);
+                    } else if (".".equals(k)) {
+                        if (buffer.indexOf(".") < 0) buffer.append(buffer.length() == 0 ? "0." : ".");
+                    } else if (buffer.length() < 4) {
+                        buffer.append(k);
+                    }
+                    valueView.setText(buffer.length() == 0 ? "0" : buffer.toString());
+                });
+                grid.addView(key);
+            }
+        }
+        // 第 1、2 行第 4 列留空
+        for (int r = 0; r < 2; r++) {
+            View empty = new View(this);
+            empty.setBackgroundColor(Color.WHITE);
+            GridLayout.LayoutParams lp = new GridLayout.LayoutParams(
+                    GridLayout.spec(r, 1f), GridLayout.spec(3, 1f));
+            lp.width = 0;
+            lp.height = 0;
+            lp.setMargins(0, 0, 1, 1);
+            grid.addView(empty, lp);
+        }
+        // 完成：第 3、4 行第 4 列，两行合并
+        TextView done = new TextView(this);
+        done.setText("完成");
+        done.setTextSize(16);
+        done.setTextColor(0xff333333);
+        done.setGravity(Gravity.CENTER);
+        done.setBackgroundColor(0xffffd84d);
+        GridLayout.LayoutParams dlp = new GridLayout.LayoutParams(
+                GridLayout.spec(2, 2, 1f), GridLayout.spec(3, 1f));
+        dlp.width = 0;
+        dlp.height = 0;
+        dlp.setMargins(0, 0, 1, 1);
+        done.setLayoutParams(dlp);
+        done.setOnClickListener(v -> {
+            String s = buffer.toString().replaceAll("[^0-9]", "");
+            unread = s.isEmpty() ? 0 : Math.min(999, Integer.parseInt(s));
+            qqView.invalidate();
+            dialog.dismiss();
+        });
+        grid.addView(done);
+        panel.addView(grid);
+
+        dialog.setContentView(panel);
+        Window win = dialog.getWindow();
+        if (win != null) {
+            win.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+            win.setGravity(Gravity.BOTTOM);
+            win.setDimAmount(0.15f);
+            win.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
+            WindowManager.LayoutParams lp = win.getAttributes();
+            lp.width = ViewGroup.LayoutParams.MATCH_PARENT;
+            lp.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+            win.setAttributes(lp);
+        }
+        dialog.show();
     }
 
     /**
@@ -378,9 +495,10 @@ public final class QqHomeActivity extends Activity {
             navItem(c, navMoment, "动态", 971, 0xff333333, false);
 
             // 消息红点
+            String badge = unread > 99 ? "99+" : String.valueOf(unread);
             p.setColor(0xfffa5151);
             c.drawCircle(130, 2188, 18, p);
-            text(c, "0", 130 - textWidth("0", 24, false) / 2f, 2197, 24, Color.WHITE, false);
+            text(c, badge, 130 - textWidth(badge, 22, false) / 2f, 2196, 22, Color.WHITE, false);
 
             c.restore();
         }

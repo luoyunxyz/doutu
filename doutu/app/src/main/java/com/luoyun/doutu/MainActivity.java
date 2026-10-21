@@ -1893,6 +1893,11 @@ static final class FeatureRow {
                     startActivity(new Intent(MainActivity.this,
                             com.luoyun.doutu.features.qq.QqEditProfileActivity.class));
                     break;
+                case "qqunread":
+                    // QQ 未读消息红点：进 QQ 主页并弹底部未读数量键盘。
+                    startActivity(new Intent(MainActivity.this,
+                            com.luoyun.doutu.features.qq.QqHomeActivity.class).putExtra("unread", true));
+                    break;
                 case "act:licai":
                     startActivity(com.luoyun.doutu.features.zhi.LicaiActivity.intentFor(MainActivity.this));
                     break;

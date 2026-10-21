@@ -42,6 +42,9 @@ public final class ToolLauncherActivity extends Activity {
             intent = new Intent(this, com.luoyun.doutu.features.qq.QqRedPacketActivity.class);
         } else if ("qqedit".equals(key)) {
             intent = new Intent(this, com.luoyun.doutu.features.qq.QqEditProfileActivity.class);
+        } else if ("qqunread".equals(key)) {
+            intent = new Intent(this, com.luoyun.doutu.features.qq.QqHomeActivity.class);
+            intent.putExtra("unread", true);
         } else if ("qqgz".equals(key)) {
             intent = new Intent(this, com.luoyun.doutu.features.qq.QqHomeActivity.class);
             intent.putExtra("gzh", true);
