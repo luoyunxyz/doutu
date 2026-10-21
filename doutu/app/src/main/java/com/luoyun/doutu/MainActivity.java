@@ -622,7 +622,7 @@ static final class FeatureRow {
         private static final float TOOL_LOGO = 132f;
         private static final float TOOL_CELL_W = 264f;
         private static final float TOOL_CELL_H = 272.25f;
-        private static final float TOOL_LEFT = 78f;
+        private static final float TOOL_LEFT = 12f;
         /** 分组标题行顶 → 第一行图标顶（参考图 498px）。 */
         private static final float TOOL_GRID_DY = 373.5f;
         private static final float TOOL_LABEL_DY = 150f;
