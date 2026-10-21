@@ -2326,6 +2326,7 @@ public final class LocalToolActivity extends Activity {
         sec.setPadding(dp(15), dp(22), 0, dp(18));
         card.addView(sec);
 
+        String[] icons = {"ic_phone", "ic_wx_wallet_xfz", "ic_wx_wallet_bank_card", "ic_wx_wallet_pay_jingying", "ic_wx_wallet_safety", "ic_wx_wallet_qinshu", "ic_wx_wallet_identity", "ic_wx_wallet_safety_set", "icon_wx_wallet_bill_all", "ic_wx_me_card_bg", "ic_wx_payment", "ic_wx_me_brow"};
         String[] names = {"手机充值", "生活缴费", "信用卡还款", "理财通", "保险服务", "腾讯公益", "城市服务", "医疗健康", "火车票机票", "酒店", "电影演出", "美团外卖"};
         String[] keys = {"pay", "pay", "transfer", "wallet", "articles", "articles", "generic", "generic", "video", "shop", "video", "shop"};
         LinearLayout row = null;
@@ -2339,7 +2340,7 @@ public final class LocalToolActivity extends Activity {
             cell.setOrientation(LinearLayout.VERTICAL);
             cell.setGravity(Gravity.CENTER);
             cell.setPadding(0, dp(12), 0, dp(12));
-            cell.addView(assetIcon("ic_wx_wallet_other", 30), new LinearLayout.LayoutParams(dp(30), dp(30)));
+            cell.addView(assetIcon(icons[i], 30), new LinearLayout.LayoutParams(dp(30), dp(30)));
             TextView tv = new TextView(this);
             tv.setText(names[i]);
             tv.setTextSize(12);
