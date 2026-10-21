@@ -169,10 +169,11 @@ public final class ToolImageActivity extends Activity {
         LinearLayout.LayoutParams slp = new LinearLayout.LayoutParams(0, dp(50), 1f);
         slp.leftMargin = dp(10);
         actions.addView(saveBtn, slp);
-        col.addView(actions);
 
         scroll.addView(col);
         root.addView(scroll, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
+        root.addView(actions);
+
         setContentView(root);
         if (mode == MODE_AI) pickMulti();
     }
