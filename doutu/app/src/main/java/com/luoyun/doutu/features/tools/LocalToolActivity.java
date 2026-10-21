@@ -997,6 +997,9 @@ public final class LocalToolActivity extends Activity {
     }
 
     private final List<String> albumImages = new ArrayList<>();
+    private int favFilter = 0;
+    private List<String> favItems = new ArrayList<>();
+    private LinearLayout favList;
 
     private void pickAlbum() {
         Intent i = new Intent(Intent.ACTION_GET_CONTENT);
@@ -1178,8 +1181,7 @@ public final class LocalToolActivity extends Activity {
         bar.setBackgroundColor(0xfff7f7f7);
         ImageView back = assetIcon("ic_wx_chat_title_back", 21);
         back.setOnClickListener(v -> finish());
-        LinearLayout.LayoutParams blp = new LinearLayout.LayoutParams(dp(43), dp(43));
-        bar.addView(back, blp);
+        bar.addView(back, new LinearLayout.LayoutParams(dp(43), dp(43)));
         TextView title = new TextView(this);
         title.setText("我的收藏");
         title.setTextSize(16);
@@ -1191,7 +1193,6 @@ public final class LocalToolActivity extends Activity {
 
         LinearLayout tabRow = new LinearLayout(this);
         tabRow.setBackgroundColor(Color.WHITE);
-        tabRow.setPadding(0, 0, 0, 0);
         String[] tabs = {"全部", "图片", "链接", "文件", "语音"};
         for (int i = 0; i < tabs.length; i++) {
             TextView tab = new TextView(this);
@@ -1201,11 +1202,12 @@ public final class LocalToolActivity extends Activity {
             tab.setGravity(Gravity.CENTER);
             final int idx2 = i;
             tab.setOnClickListener(v -> {
+                favFilter = idx2;
                 for (int k = 0; k < tabRow.getChildCount(); k++) {
                     TextView t = (TextView) tabRow.getChildAt(k);
                     t.setTypeface(null, k == idx2 ? android.graphics.Typeface.BOLD : android.graphics.Typeface.NORMAL);
                 }
-                toast("已筛选：" + tabs[idx2]);
+                renderFavorites();
             });
             if (i == 0) tab.setTypeface(null, android.graphics.Typeface.BOLD);
             tabRow.addView(tab, new LinearLayout.LayoutParams(0, dp(52), 1f));
@@ -1215,164 +1217,67 @@ public final class LocalToolActivity extends Activity {
         line.setBackgroundColor(0xffe5e5e5);
         content.addView(line, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(1)));
 
-        List<String> favs = split("favorites");
-        LinearLayout list = new LinearLayout(this);
-        list.setOrientation(LinearLayout.VERTICAL);
-        content.addView(list);
-        if (favs.isEmpty()) {
+        favItems = split("favorites");
+        favList = new LinearLayout(this);
+        favList.setOrientation(LinearLayout.VERTICAL);
+        content.addView(favList);
+        renderFavorites();
+    }
+
+    private boolean favMatch(String f) {
+        String lower = f.toLowerCase();
+        switch (favFilter) {
+            case 1: return lower.contains("[图片]") || lower.endsWith(".jpg") || lower.endsWith(".png") || lower.endsWith(".jpeg");
+            case 2: return lower.contains("http://") || lower.contains("https://");
+            case 3: return lower.contains("[文件]") || lower.endsWith(".pdf") || lower.endsWith(".doc") || lower.endsWith(".zip");
+            case 4: return lower.contains("[语音]") || lower.endsWith(".mp3") || lower.endsWith(".amr");
+            default: return true;
+        }
+    }
+
+    private void renderFavorites() {
+        if (favList == null) return;
+        favList.removeAllViews();
+        int shown = 0;
+        for (String f : favItems) {
+            if (!favMatch(f)) continue;
+            shown++;
+            LinearLayout row = new LinearLayout(this);
+            row.setGravity(Gravity.CENTER_VERTICAL);
+            row.setBackgroundColor(Color.WHITE);
+            row.setPadding(dp(15), dp(14), dp(15), dp(14));
+            row.addView(assetIcon("ic_wx_me_favor", 24), new LinearLayout.LayoutParams(dp(24), dp(24)));
+            TextView tv = new TextView(this);
+            tv.setText(f);
+            tv.setTextSize(15);
+            tv.setTextColor(0xff191919);
+            tv.setPadding(dp(12), 0, 0, 0);
+            row.addView(tv, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+            row.setOnLongClickListener(v -> {
+                new AlertDialog.Builder(this).setTitle("删除收藏").setMessage("只从本地收藏移除")
+                        .setNegativeButton("取消", null)
+                        .setPositiveButton("删除", (d, w) -> {
+                            favItems.remove(f);
+                            saveList("favorites", favItems);
+                            renderFavorites();
+                        }).show();
+                return true;
+            });
+            favList.addView(row);
+            View d = new View(this);
+            d.setBackgroundColor(0xffe5e5e5);
+            LinearLayout.LayoutParams dlp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(1));
+            dlp.leftMargin = dp(51);
+            favList.addView(d, dlp);
+        }
+        if (shown == 0) {
             TextView empty = new TextView(this);
             empty.setText("暂无收藏\n\n在聊天中长按消息即可收藏到这里");
             empty.setTextSize(14);
             empty.setTextColor(0xff999999);
             empty.setGravity(Gravity.CENTER);
             empty.setPadding(dp(20), dp(60), dp(20), dp(20));
-            list.addView(empty, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-        } else {
-            for (String f : favs) {
-                LinearLayout row = new LinearLayout(this);
-                row.setGravity(Gravity.CENTER_VERTICAL);
-                row.setBackgroundColor(Color.WHITE);
-                row.setPadding(dp(15), dp(14), dp(15), dp(14));
-                View icon = assetIcon("ic_wx_me_favor", 24);
-                row.addView(icon, new LinearLayout.LayoutParams(dp(24), dp(24)));
-                TextView tv = new TextView(this);
-                tv.setText(f);
-                tv.setTextSize(15);
-                tv.setTextColor(0xff191919);
-                tv.setPadding(dp(12), 0, 0, 0);
-                row.addView(tv, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
-                row.setOnLongClickListener(v -> {
-                    new AlertDialog.Builder(this).setTitle("删除收藏").setMessage("只从本地收藏移除")
-                            .setNegativeButton("取消", null)
-                            .setPositiveButton("删除", (d, w) -> {
-                                favs.remove(f);
-                                saveList("favorites", favs);
-                                recreate();
-                            }).show();
-                    return true;
-                });
-                list.addView(row);
-                View d = new View(this);
-                d.setBackgroundColor(0xffe5e5e5);
-                LinearLayout.LayoutParams dlp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(1));
-                dlp.leftMargin = dp(51);
-                list.addView(d, dlp);
-            }
-        }
-    }
-
-    private void buildCards() {
-        content.setBackgroundColor(0xfff5f5f5);
-        content.setPadding(0, 0, 0, 0);
-
-        LinearLayout bar = new LinearLayout(this);
-        bar.setGravity(Gravity.CENTER_VERTICAL);
-        bar.setBackgroundColor(0xffededed);
-        ImageView back = assetIcon("ic_wx_chat_title_back", 21);
-        back.setOnClickListener(v -> finish());
-        bar.addView(back, new LinearLayout.LayoutParams(dp(43), dp(43)));
-        TextView title = new TextView(this);
-        title.setText("卡包");
-        title.setTextSize(16);
-        title.setTextColor(0xff191919);
-        title.setGravity(Gravity.CENTER);
-        bar.addView(title, new LinearLayout.LayoutParams(0, dp(43), 1f));
-        bar.addView(new View(this), new LinearLayout.LayoutParams(dp(43), dp(43)));
-        content.addView(bar);
-
-        List<String> cards = split("cards");
-        if (cards.isEmpty()) {
-            TextView empty = new TextView(this);
-            empty.setText("暂无卡券\n\n点击下方按钮添加一张本地卡券");
-            empty.setTextSize(14);
-            empty.setTextColor(0xff999999);
-            empty.setGravity(Gravity.CENTER);
-            empty.setPadding(dp(20), dp(70), dp(20), dp(20));
-            content.addView(empty);
-        } else {
-            for (String c : cards) {
-                LinearLayout card = new LinearLayout(this);
-                card.setGravity(Gravity.CENTER_VERTICAL);
-                card.setBackgroundColor(Color.WHITE);
-                card.setPadding(dp(16), dp(18), dp(16), dp(18));
-                View icon = assetIcon("ic_wx_me_card_bg", 36);
-                card.addView(icon, new LinearLayout.LayoutParams(dp(36), dp(36)));
-                TextView tv = new TextView(this);
-                tv.setText(c);
-                tv.setTextSize(15);
-                tv.setTextColor(0xff191919);
-                tv.setPadding(dp(14), 0, 0, 0);
-                card.addView(tv, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
-                LinearLayout.LayoutParams clp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-                clp.leftMargin = dp(8);
-                clp.rightMargin = dp(8);
-                clp.topMargin = dp(8);
-                content.addView(card, clp);
-            }
-        }
-        TextView add = new TextView(this);
-        add.setText("＋ 添加卡券");
-        add.setTextSize(15);
-        add.setTextColor(Color.WHITE);
-        add.setGravity(Gravity.CENTER);
-        android.graphics.drawable.GradientDrawable g = new android.graphics.drawable.GradientDrawable();
-        g.setColor(0xff07c160);
-        g.setCornerRadius(dp(4));
-        add.setBackground(g);
-        LinearLayout.LayoutParams alp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(46));
-        alp.leftMargin = dp(16);
-        alp.rightMargin = dp(16);
-        alp.topMargin = dp(20);
-        content.addView(add, alp);
-        add.setOnClickListener(v -> {
-            List<String> cs = split("cards");
-            cs.add(0, "本地卡券 " + (cs.size() + 1));
-            saveList("cards", cs);
-            recreate();
-        });
-    }
-
-    private void buildStickers() {
-        content.setBackgroundColor(0xfff5f5f5);
-        content.setPadding(0, 0, 0, 0);
-
-        LinearLayout bar = new LinearLayout(this);
-        bar.setGravity(Gravity.CENTER_VERTICAL);
-        bar.setBackgroundColor(0xffededed);
-        ImageView back = assetIcon("ic_wx_chat_title_back", 21);
-        back.setOnClickListener(v -> finish());
-        bar.addView(back, new LinearLayout.LayoutParams(dp(43), dp(43)));
-        TextView title = new TextView(this);
-        title.setText("表情");
-        title.setTextSize(16);
-        title.setTextColor(0xff191919);
-        title.setGravity(Gravity.CENTER);
-        bar.addView(title, new LinearLayout.LayoutParams(0, dp(43), 1f));
-        bar.addView(new View(this), new LinearLayout.LayoutParams(dp(43), dp(43)));
-        content.addView(bar);
-
-        String[] emojis = {"😀", "😁", "😂", "🤣", "😊", "😍", "😘", "😎", "🤔", "😭", "😡", "👍", "👏", "🙏", "🎉", "❤️", "🌹", "☕", "🐶", "🐱"};
-        LinearLayout grid = new LinearLayout(this);
-        grid.setOrientation(LinearLayout.VERTICAL);
-        grid.setPadding(dp(12), dp(12), dp(12), dp(12));
-        content.addView(grid);
-        LinearLayout row = null;
-        for (int i = 0; i < emojis.length; i++) {
-            if (i % 5 == 0) {
-                row = new LinearLayout(this);
-                row.setOrientation(LinearLayout.HORIZONTAL);
-                grid.addView(row);
-            }
-            TextView tv = new TextView(this);
-            tv.setText(emojis[i]);
-            tv.setTextSize(28);
-            tv.setGravity(Gravity.CENTER);
-            tv.setBackgroundColor(Color.WHITE);
-            final String e = emojis[i];
-            tv.setOnClickListener(v -> toast("已选择 " + e));
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, dp(64), 1f);
-            lp.setMargins(dp(4), dp(4), dp(4), dp(4));
-            row.addView(tv, lp);
+            favList.addView(empty, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         }
     }
 
