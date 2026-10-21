@@ -202,7 +202,7 @@ public final class AvatarAdjustActivity extends Activity {
         done.setGravity(Gravity.CENTER);
         done.setPadding(dp(12), 0, dp(6), 0);
         done.setOnClickListener(v -> {
-            resultRect = clip.boxInImage();
+            resultRect = clip.boxInSource();
             setResult(RESULT_OK, new Intent());
             // 从「替换头像」入口进来时，完成接着进头像列表页（原始头像 → 替换头像 → 一键合成）
             if (getIntent().getBooleanExtra("chain", false)) {
@@ -356,6 +356,20 @@ public final class AvatarAdjustActivity extends Activity {
 
         RectF boxInImage() {
             return new RectF(box);
+        }
+
+        /** 选框换算到「原图像素坐标」，供后续替换头像使用。 */
+        RectF boxInSource() {
+            if (source == null || img.width() <= 0f || img.height() <= 0f) return new RectF(box);
+            float sx = source.getWidth() / img.width();
+            float sy = source.getHeight() / img.height();
+            RectF r = new RectF(box);
+            r.offset(-img.left, -img.top);
+            r.left *= sx;
+            r.right *= sx;
+            r.top *= sy;
+            r.bottom *= sy;
+            return r;
         }
 
         private void clamp() {
