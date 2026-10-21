@@ -49,6 +49,9 @@ public final class ToolLauncherActivity extends Activity {
         } else if ("qqunread".equals(key)) {
             intent = new Intent(this, com.luoyun.doutu.features.qq.QqHomeActivity.class);
             intent.putExtra("unread", true);
+        } else if ("qqnewchat".equals(key)) {
+            intent = new Intent(this, com.luoyun.doutu.features.qq.QqHomeActivity.class);
+            intent.putExtra("newchat", true);
         } else if ("qqtransfer".equals(key)) {
             intent = new Intent(this, com.luoyun.doutu.features.qq.QqTransferActivity.class);
         } else if ("alitransfer".equals(key)) {

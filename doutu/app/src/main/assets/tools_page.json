@@ -212,7 +212,7 @@
       {
         "name": "创建聊天",
         "icon": "chat",
-        "action": "local:pickchat"
+        "action": "qqnewchat"
       },
       {
         "name": "红包",

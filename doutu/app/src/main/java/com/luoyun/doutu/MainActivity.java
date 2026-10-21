@@ -1906,6 +1906,11 @@ static final class FeatureRow {
                     startActivity(new Intent(MainActivity.this,
                             com.luoyun.doutu.features.qq.QqHomeActivity.class).putExtra("unread", true));
                     break;
+                case "qqnewchat":
+                    // QQ 创建聊天：进 QQ 主页并弹新建聊天表单。
+                    startActivity(new Intent(MainActivity.this,
+                            com.luoyun.doutu.features.qq.QqHomeActivity.class).putExtra("newchat", true));
+                    break;
                 case "qqtransfer":
                     // QQ 转账：金额 / 转账说明 / 选择发送人 / 切换收钱人。
                     startActivity(new Intent(MainActivity.this,

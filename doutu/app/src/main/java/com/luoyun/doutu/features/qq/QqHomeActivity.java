@@ -71,6 +71,10 @@ public final class QqHomeActivity extends Activity {
         if (getIntent().getBooleanExtra("unread", false)) {
             content.post(this::showUnreadPanel);
         }
+        // 工具页「创建聊天」：弹真机那套新建聊天表单。
+        if (getIntent().getBooleanExtra("newchat", false)) {
+            content.post(this::showNewChatDialog);
+        }
         // 必须在 setContentView 之后取：decorView 还没挂上去时 getInsetsController() 返回 null。
         if (android.os.Build.VERSION.SDK_INT >= 30) {
             android.view.WindowInsetsController ctl = w.getInsetsController();
@@ -82,6 +86,164 @@ public final class QqHomeActivity extends Activity {
                                 | android.view.WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS);
             }
         }
+    }
+
+    /** QQ 的「创建聊天」表单：自动获取 / 头像 / 从相册获取、昵称、是否是新好友。 */
+    private void showNewChatDialog() {
+        final Dialog dialog = new Dialog(this);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        LinearLayout root = new LinearLayout(this);
+        root.setOrientation(LinearLayout.VERTICAL);
+        GradientDrawable bg = new GradientDrawable();
+        bg.setColor(Color.WHITE);
+        bg.setCornerRadius(dp(10));
+        root.setBackground(bg);
+        root.setPadding(0, dp(16), 0, 0);
+
+        LinearLayout icons = new LinearLayout(this);
+        icons.setGravity(Gravity.TOP);
+        icons.setPadding(dp(28), 0, dp(28), 0);
+        icons.setLayoutParams(new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(104)));
+        icons.addView(iconColumnPath("qq_icons/qe_auto.png", 44, "自动获取"),
+                new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f));
+        ImageView avatar = new ImageView(this);
+        avatar.setImageBitmap(asset("qq_icons/qe_avatar.png"));
+        icons.addView(avatar, new LinearLayout.LayoutParams(dp(80), dp(80)));
+        icons.addView(iconColumnPath("wx_icons/gzh_photo.png", 44, "从相册获取"),
+                new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f));
+        root.addView(icons);
+
+        LinearLayout nameBox = new LinearLayout(this);
+        nameBox.setGravity(Gravity.CENTER_VERTICAL);
+        GradientDrawable nbg = new GradientDrawable();
+        nbg.setColor(Color.WHITE);
+        nbg.setCornerRadius(dp(5));
+        nbg.setStroke(dp(1), 0xffd9d9d9);
+        nameBox.setBackground(nbg);
+        LinearLayout.LayoutParams nlp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(38));
+        nlp.leftMargin = dp(30);
+        nlp.rightMargin = dp(30);
+        nlp.topMargin = dp(18);
+        nameBox.setLayoutParams(nlp);
+        nameBox.setPadding(dp(12), 0, dp(8), 0);
+        TextView label = new TextView(this);
+        label.setText("昵称:");
+        label.setTextSize(14);
+        label.setTextColor(0xff333333);
+        nameBox.addView(label);
+        final EditText input = new EditText(this);
+        input.setHint("输入昵称");
+        input.setTextSize(14);
+        input.setSingleLine(true);
+        input.setBackground(null);
+        LinearLayout.LayoutParams ilp = new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.MATCH_PARENT, 1f);
+        ilp.leftMargin = dp(12);
+        nameBox.addView(input, ilp);
+        TextView clear = new TextView(this);
+        clear.setText("✕");
+        clear.setTextSize(10);
+        clear.setTextColor(Color.WHITE);
+        clear.setGravity(Gravity.CENTER);
+        GradientDrawable cg = new GradientDrawable();
+        cg.setColor(0xffc9c9c9);
+        cg.setShape(GradientDrawable.OVAL);
+        clear.setBackground(cg);
+        clear.setOnClickListener(v -> input.setText(""));
+        nameBox.addView(clear, new LinearLayout.LayoutParams(dp(16), dp(16)));
+        root.addView(nameBox);
+
+        LinearLayout friendRow = new LinearLayout(this);
+        friendRow.setGravity(Gravity.CENTER_VERTICAL);
+        GradientDrawable fbg = new GradientDrawable();
+        fbg.setColor(Color.WHITE);
+        fbg.setCornerRadius(dp(5));
+        fbg.setStroke(dp(1), 0xffd9d9d9);
+        friendRow.setBackground(fbg);
+        LinearLayout.LayoutParams flp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(38));
+        flp.leftMargin = dp(30);
+        flp.rightMargin = dp(30);
+        flp.topMargin = dp(18);
+        friendRow.setLayoutParams(flp);
+        friendRow.setPadding(dp(12), 0, dp(6), 0);
+        TextView friendLabel = new TextView(this);
+        friendLabel.setText("是否是新好友");
+        friendLabel.setTextSize(14);
+        friendLabel.setTextColor(0xff333333);
+        friendRow.addView(friendLabel, new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.MATCH_PARENT, 1f));
+        Switch sw = new Switch(this);
+        sw.setScaleX(0.72f);
+        sw.setScaleY(0.72f);
+        friendRow.addView(sw, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        root.addView(friendRow);
+
+        View divider = new View(this);
+        divider.setBackgroundColor(0xffeeeeee);
+        LinearLayout.LayoutParams dlp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, 1);
+        dlp.topMargin = dp(16);
+        root.addView(divider, dlp);
+
+        LinearLayout footer = new LinearLayout(this);
+        footer.setLayoutParams(new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(48)));
+        TextView cancel = new TextView(this);
+        cancel.setText("取消");
+        cancel.setTextSize(16);
+        cancel.setTextColor(0xff888888);
+        cancel.setGravity(Gravity.CENTER);
+        cancel.setOnClickListener(v -> dialog.dismiss());
+        footer.addView(cancel, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f));
+        TextView ok = new TextView(this);
+        ok.setText("确定");
+        ok.setTextSize(16);
+        ok.setTextColor(0xff333333);
+        ok.setGravity(Gravity.CENTER);
+        ok.setOnClickListener(v -> {
+            String name = input.getText().toString().trim();
+            if (name.isEmpty()) name = "好友";
+            String time = new java.text.SimpleDateFormat("HH:mm",
+                    java.util.Locale.getDefault()).format(new java.util.Date());
+            QqChatStore.add(QqHomeActivity.this, name, time);
+            qqView.invalidate();
+            dialog.dismiss();
+        });
+        footer.addView(ok, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f));
+        root.addView(footer);
+
+        dialog.setContentView(root);
+        Window win = dialog.getWindow();
+        if (win != null) {
+            win.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+            win.setDimAmount(0.38f);
+            win.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
+            WindowManager.LayoutParams lp = win.getAttributes();
+            lp.width = dp(288);
+            lp.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+            win.setAttributes(lp);
+        }
+        dialog.show();
+    }
+
+    private View iconColumnPath(String path, int size, String label) {
+        LinearLayout col = new LinearLayout(this);
+        col.setOrientation(LinearLayout.VERTICAL);
+        col.setGravity(Gravity.CENTER_HORIZONTAL);
+        ImageView img = new ImageView(this);
+        img.setImageBitmap(asset(path));
+        col.addView(img, new LinearLayout.LayoutParams(dp(size), dp(size)));
+        TextView tv = new TextView(this);
+        tv.setText(label);
+        tv.setTextSize(11);
+        tv.setTextColor(0xff333333);
+        tv.setPadding(0, dp(6), 0, 0);
+        col.addView(tv);
+        return col;
     }
 
     /** QQ 的「未读消息红点」：底部数字键盘，完成把数量写到「消息」角标上。 */
@@ -457,8 +619,25 @@ public final class QqHomeActivity extends Activity {
             // 白卡片：搜索 + 添加聊天
             p.setColor(Color.WHITE);
             c.drawRoundRect(-60, 248, 1140, 700, 34, 34, p);
+            // 已创建的聊天（白色列表，和真机一样在「添加聊天」下面）
+            java.util.List<QqChatStore.Chat> chats = QqChatStore.chats(getContext());
+            float listBottom = 532 + chats.size() * 64f;
+            p.setColor(Color.WHITE);
+            c.drawRect(0, 532, 1080, listBottom, p);
+            for (int i = 0; i < chats.size(); i++) {
+                QqChatStore.Chat chat = chats.get(i);
+                float top = 532 + i * 64f;
+                text(c, chat.name, 36, top + 40, 33, 0xff1a1a1a, false);
+                float tw = textWidth(chat.time, 26, false);
+                text(c, chat.time, 1044 - tw, top + 40, 26, 0xff999999, false);
+                p.setColor(0xffeeeeee);
+                p.setStyle(Paint.Style.STROKE);
+                p.setStrokeWidth(1);
+                c.drawLine(36, top + 64, 1080, top + 64, p);
+                p.setStyle(Paint.Style.FILL);
+            }
             p.setColor(0xfff5f6fa);
-            c.drawRect(0, 532, 1080, 2171, p);
+            c.drawRect(0, listBottom, 1080, 2171, p);
 
             // 搜索框
             round(c, 48, 283, 1032, 375, 18, 0xfff4f5fb);
