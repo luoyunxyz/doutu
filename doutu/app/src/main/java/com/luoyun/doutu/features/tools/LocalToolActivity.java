@@ -78,7 +78,7 @@ public final class LocalToolActivity extends Activity {
         tv.setGravity(Gravity.CENTER);
         bar.addView(tv, new LinearLayout.LayoutParams(0, dp(50), 1f));
         bar.addView(new View(this), new LinearLayout.LayoutParams(dp(88), dp(50)));
-        if (!("home".equals(key) || "contacts".equals(key) || "moments".equals(key) || "profile".equals(key) || "discover".equals(key) || "chat".equals(key) || "wallet".equals(key) || "transfer".equals(key) || "redpacket".equals(key) || "paysuccess".equals(key) || "pay".equals(key) || "billstats".equals(key) || "service".equals(key) || "favorites".equals(key) || "cards".equals(key) || "stickers".equals(key) || "redpackets".equals(key) || "broadcast".equals(key) || "payee".equals(key) || "walletdetail".equals(key) || "newfriends".equals(key) || "pickchat".equals(key) || "pickgroup".equals(key))) root.addView(bar);
+        if (!("home".equals(key) || "contacts".equals(key) || "moments".equals(key) || "profile".equals(key) || "discover".equals(key) || "chat".equals(key) || "wallet".equals(key) || "transfer".equals(key) || "redpacket".equals(key) || "paysuccess".equals(key) || "pay".equals(key) || "billstats".equals(key) || "service".equals(key) || "favorites".equals(key) || "cards".equals(key) || "stickers".equals(key) || "redpackets".equals(key) || "broadcast".equals(key) || "payee".equals(key) || "walletdetail".equals(key) || "newfriends".equals(key) || "pickchat".equals(key) || "pickgroup".equals(key) || "official".equals(key) || "withdraw".equals(key))) root.addView(bar);
 
         ScrollView scroll = new ScrollView(this);
         content = new LinearLayout(this);
@@ -99,6 +99,8 @@ public final class LocalToolActivity extends Activity {
         else if ("profile".equals(key)) buildProfile();
         else if ("chat".equals(key)) buildChat();
         else if ("wallet".equals(key)) buildWallet();
+        else if ("official".equals(key)) buildOfficial();
+        else if ("withdraw".equals(key)) buildWithdraw();
         else if ("pickchat".equals(key)) buildPickContacts(false);
         else if ("pickgroup".equals(key)) buildPickContacts(true);
         else if ("walletdetail".equals(key)) buildWalletDetail();
@@ -1667,6 +1669,134 @@ public final class LocalToolActivity extends Activity {
                 LocalToolActivity.open(this, "chat", picked.get(0));
                 finish();
             }
+        });
+    }
+
+    private void buildOfficial() {
+        content.setBackgroundColor(0xffededed);
+        content.setPadding(0, 0, 0, 0);
+
+        LinearLayout bar = new LinearLayout(this);
+        bar.setGravity(Gravity.CENTER_VERTICAL);
+        bar.setBackgroundColor(0xffededed);
+        ImageView back = assetIcon("ic_wx_chat_title_back", 21);
+        back.setOnClickListener(v -> finish());
+        bar.addView(back, new LinearLayout.LayoutParams(dp(43), dp(43)));
+        TextView title = new TextView(this);
+        title.setText("公众号");
+        title.setTextSize(16);
+        title.setTextColor(0xff191919);
+        title.setGravity(Gravity.CENTER);
+        bar.addView(title, new LinearLayout.LayoutParams(0, dp(43), 1f));
+        bar.addView(new View(this), new LinearLayout.LayoutParams(dp(43), dp(43)));
+        content.addView(bar);
+
+        LinearLayout sub = new LinearLayout(this);
+        sub.setGravity(Gravity.CENTER_VERTICAL);
+        sub.setBackgroundColor(Color.WHITE);
+        sub.setPadding(dp(14), dp(12), dp(14), dp(12));
+        sub.addView(assetIcon("ic_wx_contact_public_number", 36), new LinearLayout.LayoutParams(dp(36), dp(36)));
+        TextView st = new TextView(this);
+        st.setText("订阅号消息");
+        st.setTextSize(15);
+        st.setTextColor(0xff191919);
+        st.setPadding(dp(12), 0, 0, 0);
+        sub.addView(st, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        content.addView(sub);
+        sub.setOnClickListener(v -> LocalToolActivity.open(this, "articles", "订阅号消息"));
+
+        String[] accounts = {"本地公众号", "豆图教程", "微信派"};
+        for (String a : accounts) {
+            LinearLayout row = new LinearLayout(this);
+            row.setGravity(Gravity.CENTER_VERTICAL);
+            row.setBackgroundColor(Color.WHITE);
+            row.setPadding(dp(14), dp(12), dp(14), dp(12));
+            row.addView(assetIcon("ic_wx_default_image", 40), new LinearLayout.LayoutParams(dp(40), dp(40)));
+            TextView name = new TextView(this);
+            name.setText(a);
+            name.setTextSize(15);
+            name.setTextColor(0xff191919);
+            name.setPadding(dp(12), 0, 0, 0);
+            row.addView(name, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+            row.setOnClickListener(v -> LocalToolActivity.open(this, "articles", a));
+            LinearLayout.LayoutParams rlp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            rlp.topMargin = dp(1);
+            content.addView(row, rlp);
+        }
+    }
+
+    private void buildWithdraw() {
+        content.setBackgroundColor(0xffededed);
+        content.setPadding(0, 0, 0, 0);
+
+        LinearLayout bar = new LinearLayout(this);
+        bar.setGravity(Gravity.CENTER_VERTICAL);
+        bar.setBackgroundColor(0xffededed);
+        ImageView back = assetIcon("ic_wx_chat_title_back", 21);
+        back.setOnClickListener(v -> finish());
+        bar.addView(back, new LinearLayout.LayoutParams(dp(43), dp(43)));
+        TextView title = new TextView(this);
+        title.setText("零钱提现");
+        title.setTextSize(16);
+        title.setTextColor(0xff191919);
+        title.setGravity(Gravity.CENTER);
+        bar.addView(title, new LinearLayout.LayoutParams(0, dp(43), 1f));
+        bar.addView(new View(this), new LinearLayout.LayoutParams(dp(43), dp(43)));
+        content.addView(bar);
+
+        LinearLayout card = new LinearLayout(this);
+        card.setOrientation(LinearLayout.VERTICAL);
+        card.setBackgroundColor(Color.WHITE);
+        card.setPadding(dp(18), dp(18), dp(18), dp(18));
+        LinearLayout.LayoutParams clp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        clp.topMargin = dp(8);
+        content.addView(card, clp);
+        TextView to = new TextView(this);
+        to.setText("提现到 零钱");
+        to.setTextSize(13);
+        to.setTextColor(0xff888888);
+        card.addView(to);
+        EditText amount = new EditText(this);
+        amount.setHint("提现金额");
+        amount.setTextSize(26);
+        amount.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
+        amount.setBackground(null);
+        amount.setPadding(0, dp(10), 0, dp(10));
+        card.addView(amount, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        TextView bal = new TextView(this);
+        bal.setText("当前零钱 ¥" + getBalance() + "，提现手续费 0.1%");
+        bal.setTextSize(12);
+        bal.setTextColor(0xff888888);
+        card.addView(bal);
+
+        TextView ok = new TextView(this);
+        ok.setText("提现");
+        ok.setTextSize(16);
+        ok.setTextColor(Color.WHITE);
+        ok.setGravity(Gravity.CENTER);
+        android.graphics.drawable.GradientDrawable g = new android.graphics.drawable.GradientDrawable();
+        g.setColor(0xff07c160);
+        g.setCornerRadius(dp(4));
+        ok.setBackground(g);
+        LinearLayout.LayoutParams olp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(46));
+        olp.leftMargin = dp(18);
+        olp.rightMargin = dp(18);
+        olp.topMargin = dp(18);
+        content.addView(ok, olp);
+        ok.setOnClickListener(v -> {
+            String a = amount.getText().toString().trim();
+            if (a.isEmpty()) { toast("请输入提现金额"); return; }
+            try {
+                double v2 = Double.parseDouble(a);
+                double b = Double.parseDouble(getBalance());
+                if (v2 <= 0 || v2 > b) { toast("金额超出零钱余额"); return; }
+                double nb = b - v2;
+                getSharedPreferences(PREFS, 0).edit().putString("balance", String.format("%.2f", nb)).apply();
+                bills.add(0, "提现 -¥" + String.format("%.2f", v2));
+                saveList("bills", bills);
+                toast("提现成功（本地）");
+                finish();
+            } catch (Exception e) { toast("金额格式不正确"); }
         });
     }
 
