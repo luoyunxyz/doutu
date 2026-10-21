@@ -125,7 +125,7 @@
       {
         "name": "转账",
         "icon": "transfer",
-        "action": "local:transfer"
+        "action": "alitransfer"
       },
       {
         "name": "余额",

@@ -1911,6 +1911,11 @@ static final class FeatureRow {
                     startActivity(new Intent(MainActivity.this,
                             com.luoyun.doutu.features.qq.QqTransferActivity.class));
                     break;
+                case "alitransfer":
+                    // 支付宝转账：同一套版式 + 切换发送人 + 转账类型（收入/支出）。
+                    startActivity(new Intent(MainActivity.this,
+                            com.luoyun.doutu.features.qq.QqTransferActivity.class).putExtra("ali", true));
+                    break;
                 case "act:licai":
                     startActivity(com.luoyun.doutu.features.zhi.LicaiActivity.intentFor(MainActivity.this));
                     break;

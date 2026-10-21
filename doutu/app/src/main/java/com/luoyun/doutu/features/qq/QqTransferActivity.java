@@ -33,10 +33,12 @@ public final class QqTransferActivity extends Activity {
     private EditText mark;
     private RadioButton leftCb;
     private RadioButton rightCb;
+    private boolean ali;
 
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
+        ali = getIntent().getBooleanExtra("ali", false);
         Window w = getWindow();
         w.setStatusBarColor(0xffededed);
         w.setNavigationBarColor(Color.WHITE);
@@ -65,7 +67,7 @@ public final class QqTransferActivity extends Activity {
         tlp.gravity = Gravity.CENTER;
         bar.addView(title, tlp);
         TextView send = new TextView(this);
-        send.setText("发送");
+        send.setText(ali ? "完成" : "发送");
         send.setTextSize(14);
         send.setTextColor(Color.BLACK);
         send.setGravity(Gravity.CENTER);
@@ -157,6 +159,77 @@ public final class QqTransferActivity extends Activity {
         body.addView(space, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, dp(10)));
 
+        Bitmap avatar = asset("qq_icons/rp_avatar.png");
+
+        // 支付宝转账：切换发送人 + 转账类型（收入 / 支出）
+        if (ali) {
+            LinearLayout changeUser = new LinearLayout(this);
+            changeUser.setGravity(Gravity.CENTER_VERTICAL);
+            changeUser.setBackgroundColor(Color.WHITE);
+            changeUser.setPadding(dp(15), dp(10), dp(15), dp(10));
+            ImageView icon = new ImageView(this);
+            if (avatar != null) icon.setImageBitmap(avatar);
+            changeUser.addView(icon, new LinearLayout.LayoutParams(dp(40), dp(40)));
+            TextView userName = new TextView(this);
+            userName.setText("你");
+            userName.setTextSize(14);
+            userName.setTextColor(0xff333333);
+            LinearLayout.LayoutParams unlp = new LinearLayout.LayoutParams(
+                    0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+            unlp.leftMargin = dp(13);
+            changeUser.addView(userName, unlp);
+            TextView change = new TextView(this);
+            change.setText("切换发送人 ›");
+            change.setTextSize(14);
+            change.setTextColor(0xff333333);
+            changeUser.addView(change);
+            body.addView(changeUser);
+
+            View d1 = new View(this);
+            d1.setBackgroundColor(0xffeeeeee);
+            LinearLayout.LayoutParams d1lp = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, dp(1));
+            d1lp.leftMargin = dp(14);
+            d1lp.rightMargin = dp(16);
+            body.addView(d1, d1lp);
+
+            LinearLayout account = new LinearLayout(this);
+            account.setBackgroundColor(Color.WHITE);
+            account.setPadding(dp(15), dp(15), dp(15), dp(15));
+            TextView typeLabel = new TextView(this);
+            typeLabel.setText("转账类型");
+            typeLabel.setTextSize(14);
+            typeLabel.setTextColor(0xff333333);
+            account.addView(typeLabel, new LinearLayout.LayoutParams(
+                    0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+            LinearLayout typeRow = new LinearLayout(this);
+            typeRow.setGravity(Gravity.CENTER_VERTICAL);
+            android.widget.CheckBox income = new android.widget.CheckBox(this);
+            income.setText("收入");
+            income.setTextSize(13);
+            income.setChecked(true);
+            android.widget.CheckBox expend = new android.widget.CheckBox(this);
+            expend.setText("支出");
+            expend.setTextSize(13);
+            LinearLayout.LayoutParams elp = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            elp.leftMargin = dp(30);
+            typeRow.addView(income);
+            typeRow.addView(expend, elp);
+            account.addView(typeRow);
+            income.setOnCheckedChangeListener((b, checked) -> { if (checked) expend.setChecked(false); });
+            expend.setOnCheckedChangeListener((b, checked) -> { if (checked) income.setChecked(false); });
+            body.addView(account);
+
+            View d2 = new View(this);
+            d2.setBackgroundColor(0xffeeeeee);
+            LinearLayout.LayoutParams d2lp = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, dp(1));
+            d2lp.leftMargin = dp(14);
+            d2lp.rightMargin = dp(16);
+            body.addView(d2, d2lp);
+        }
+
         // 选择发送人
         LinearLayout panel = new LinearLayout(this);
         panel.setOrientation(LinearLayout.VERTICAL);
@@ -172,7 +245,6 @@ public final class QqTransferActivity extends Activity {
         LinearLayout.LayoutParams srlp = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         srlp.topMargin = dp(15);
-        Bitmap avatar = asset("qq_icons/rp_avatar.png");
 
         LinearLayout left = new LinearLayout(this);
         left.setOrientation(LinearLayout.VERTICAL);
