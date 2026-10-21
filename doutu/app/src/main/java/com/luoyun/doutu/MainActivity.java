@@ -1889,8 +1889,17 @@ static final class FeatureRow {
         private void openTool(String action, String name) {
             if (action == null || action.isEmpty()) return;
             if (action.startsWith("wechat:")) {
+                String route = action.substring(7);
+                // 微信转账：真机是「转账金额 + 收钱间隔 + 转账类型 + 键盘」的独立页，
+                // 克隆页里的简化版对不上，直接进原生重画页。
+                if ("tool:transfer".equals(route)) {
+                    startActivity(new Intent(MainActivity.this,
+                            com.luoyun.doutu.features.wx.WxTransferActivity.class));
+                    overridePendingTransition(0, 0);
+                    return;
+                }
                 startActivity(com.luoyun.doutu.features.wei.WeiHomeActivity
-                        .intentFor(MainActivity.this, action.substring(7))
+                        .intentFor(MainActivity.this, route)
                         .addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_SINGLE_TOP));
                 overridePendingTransition(0, 0);
                 return;
