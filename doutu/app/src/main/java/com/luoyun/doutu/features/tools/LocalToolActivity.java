@@ -79,7 +79,7 @@ public final class LocalToolActivity extends Activity {
         tv.setGravity(Gravity.CENTER);
         bar.addView(tv, new LinearLayout.LayoutParams(0, dp(50), 1f));
         bar.addView(new View(this), new LinearLayout.LayoutParams(dp(88), dp(50)));
-        if (!("home".equals(key) || "contacts".equals(key) || "moments".equals(key) || "profile".equals(key) || "discover".equals(key) || "chat".equals(key) || "wallet".equals(key) || "transfer".equals(key) || "redpacket".equals(key) || "paysuccess".equals(key) || "pay".equals(key) || "billstats".equals(key) || "service".equals(key) || "favorites".equals(key) || "cards".equals(key) || "stickers".equals(key) || "redpackets".equals(key) || "broadcast".equals(key) || "payee".equals(key) || "walletdetail".equals(key) || "newfriends".equals(key) || "pickchat".equals(key) || "pickgroup".equals(key) || "official".equals(key) || "withdraw".equals(key) || "group".equals(key) || "upload".equals(key) || "groupsettings".equals(key) || "video".equals(key))) root.addView(bar);
+        if (!("home".equals(key) || "contacts".equals(key) || "moments".equals(key) || "profile".equals(key) || "discover".equals(key) || "chat".equals(key) || "wallet".equals(key) || "transfer".equals(key) || "redpacket".equals(key) || "paysuccess".equals(key) || "pay".equals(key) || "billstats".equals(key) || "service".equals(key) || "favorites".equals(key) || "cards".equals(key) || "stickers".equals(key) || "redpackets".equals(key) || "broadcast".equals(key) || "payee".equals(key) || "walletdetail".equals(key) || "newfriends".equals(key) || "pickchat".equals(key) || "pickgroup".equals(key) || "official".equals(key) || "withdraw".equals(key) || "group".equals(key) || "upload".equals(key) || "groupsettings".equals(key) || "video".equals(key) || "groupqr".equals(key))) root.addView(bar);
 
         ScrollView scroll = new ScrollView(this);
         content = new LinearLayout(this);
@@ -101,6 +101,7 @@ public final class LocalToolActivity extends Activity {
         else if ("chat".equals(key)) buildChat();
         else if ("group".equals(key)) buildGroup();
         else if ("groupsettings".equals(key)) buildGroupSettings();
+        else if ("groupqr".equals(key)) buildGroupQr();
         else if ("upload".equals(key)) buildUpload();
         else if ("wallet".equals(key)) buildWallet();
         else if ("official".equals(key)) buildOfficial();
@@ -2103,6 +2104,21 @@ public final class LocalToolActivity extends Activity {
             arrow.setTextSize(20);
             arrow.setTextColor(0xffc7c7cc);
             row.addView(arrow);
+            final String rr = r;
+            row.setOnClickListener(v -> {
+                if ("群二维码".equals(rr)) {
+                    LocalToolActivity.open(this, "groupqr", title);
+                } else {
+                    EditText input = new EditText(this);
+                    input.setText(getSharedPreferences(PREFS, 0).getString("grp_" + rr, ""));
+                    new AlertDialog.Builder(this).setTitle(rr).setView(input)
+                            .setNegativeButton("取消", null)
+                            .setPositiveButton("保存", (d, w) -> {
+                                getSharedPreferences(PREFS, 0).edit().putString("grp_" + rr, input.getText().toString()).apply();
+                                toast("已保存");
+                            }).show();
+                }
+            });
             LinearLayout.LayoutParams rlp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
             rlp.topMargin = dp(1);
             content.addView(row, rlp);
@@ -2147,6 +2163,75 @@ public final class LocalToolActivity extends Activity {
         LinearLayout.LayoutParams qlp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(50));
         qlp.topMargin = dp(20);
         content.addView(quit, qlp);
+    }
+
+    private void buildGroupQr() {
+        content.setBackgroundColor(0xffededed);
+        content.setPadding(0, 0, 0, 0);
+
+        LinearLayout bar = new LinearLayout(this);
+        bar.setGravity(Gravity.CENTER_VERTICAL);
+        bar.setBackgroundColor(0xffededed);
+        ImageView back = assetIcon("ic_wx_chat_title_back", 21);
+        back.setOnClickListener(v -> finish());
+        bar.addView(back, new LinearLayout.LayoutParams(dp(43), dp(43)));
+        TextView title = new TextView(this);
+        title.setText("群二维码");
+        title.setTextSize(16);
+        title.setTextColor(0xff191919);
+        title.setGravity(Gravity.CENTER);
+        bar.addView(title, new LinearLayout.LayoutParams(0, dp(43), 1f));
+        bar.addView(new View(this), new LinearLayout.LayoutParams(dp(43), dp(43)));
+        content.addView(bar);
+
+        LinearLayout card = new LinearLayout(this);
+        card.setOrientation(LinearLayout.VERTICAL);
+        card.setGravity(Gravity.CENTER);
+        card.setBackgroundColor(Color.WHITE);
+        card.setPadding(0, dp(26), 0, dp(26));
+        LinearLayout.LayoutParams clp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        clp.topMargin = dp(8);
+        content.addView(card, clp);
+
+        final android.graphics.Bitmap qr = makeQr(220);
+        ImageView iv = new ImageView(this);
+        iv.setImageBitmap(qr);
+        card.addView(iv, new LinearLayout.LayoutParams(dp(220), dp(220)));
+        TextView name = new TextView(this);
+        name.setText(title);
+        name.setTextSize(15);
+        name.setTextColor(0xff191919);
+        name.setGravity(Gravity.CENTER);
+        name.setPadding(0, dp(12), 0, 0);
+        card.addView(name);
+        TextView tip = new TextView(this);
+        tip.setText("该群二维码仅本地演示，扫描无效");
+        tip.setTextSize(12);
+        tip.setTextColor(0xff999999);
+        tip.setGravity(Gravity.CENTER);
+        tip.setPadding(0, dp(4), 0, 0);
+        card.addView(tip);
+
+        TextView save = new TextView(this);
+        save.setText("保存到相册");
+        save.setTextSize(15);
+        save.setTextColor(Color.WHITE);
+        save.setGravity(Gravity.CENTER);
+        android.graphics.drawable.GradientDrawable g = new android.graphics.drawable.GradientDrawable();
+        g.setColor(0xff07c160);
+        g.setCornerRadius(dp(4));
+        save.setBackground(g);
+        LinearLayout.LayoutParams slp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(46));
+        slp.leftMargin = dp(30);
+        slp.rightMargin = dp(30);
+        slp.topMargin = dp(18);
+        content.addView(save, slp);
+        save.setOnClickListener(v -> {
+            try {
+                android.provider.MediaStore.Images.Media.insertImage(getContentResolver(), qr, "group_qr_" + System.currentTimeMillis(), "group qr");
+                toast("二维码已保存到相册");
+            } catch (Exception e) { toast("保存失败"); }
+        });
     }
 
     private void buildService() {
