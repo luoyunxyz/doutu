@@ -14,7 +14,7 @@ plugins {
  *   3. 调试包保留内网地址与「长按改地址」，方便真机联调；正式包这两样都不存在。
  */
 def releaseApi = (project.findProperty('doutuApi') ?: 'https://api.example.com').toString().trim()
-def debugApi = (project.findProperty('doutuDebugApi') ?: 'http://192.168.1.96:7199').toString().trim()
+def debugApi = (project.findProperty('doutuDebugApi') ?: 'https://tdapi.luoyun.xyz').toString().trim()
 
 /**
  * DTW/1 私有协议（2026-10-17）：客户端只内置**服务端公钥**与慢哈希盐 —— 都是可公开的材料。
