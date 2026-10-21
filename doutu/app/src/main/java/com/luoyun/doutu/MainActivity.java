@@ -2055,9 +2055,10 @@ static final class FeatureRow {
                             com.luoyun.doutu.features.qq.QqHomeActivity.class).putExtra("newchat", true));
                     break;
                 case "qqtransfer":
-                    // QQ 转账：金额 / 转账说明 / 选择发送人 / 切换收钱人。
+                    // QQ 转账：真机是「转账金额 / 新增转账说明 / 选择发送人（对方发·自己发）/
+                    // 切换收钱人 / 转账金额·转账说明 页签 / 键盘」。
                     startActivity(new Intent(MainActivity.this,
-                            com.luoyun.doutu.features.qq.QqTransferActivity.class));
+                            com.luoyun.doutu.features.qq.QqTransferV2Activity.class));
                     break;
                 case "alitransfer":
                     // 支付宝转账：同一套版式 + 切换发送人 + 转账类型（收入/支出）。
