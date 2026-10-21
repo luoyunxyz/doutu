@@ -104,9 +104,20 @@
     host.insertAdjacentElement('afterend', box);
   }
 
+  /** 离开通讯录时把我加过的样式和「＋」按钮都撤掉，恢复微信首页原样。 */
+  function cleanup() {
+    var style = document.getElementById('fw-contacts-style');
+    if (style && style.parentNode) style.parentNode.removeChild(style);
+    var plus = document.getElementById('fw-contacts-plus');
+    if (plus && plus.parentNode) plus.parentNode.removeChild(plus);
+  }
+
   function polish() {
-    // 只在通讯录路由生效，避免把「＋」「隐藏搜索框」带到微信首页
-    if (String(location.hash || '').indexOf('contacts') < 0) return;
+    // 只在通讯录路由生效；其它页面必须还原（否则右上角图标会被 padding 推左）
+    if (String(location.hash || '').indexOf('contacts') < 0) {
+      cleanup();
+      return;
+    }
     if (norm(document.body && document.body.innerText).indexOf('通讯录') < 0) return;
     if (!document.querySelector('.wechat-topbar')) return;
     injectStyle();
