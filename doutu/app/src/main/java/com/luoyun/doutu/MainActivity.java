@@ -1932,16 +1932,10 @@ static final class FeatureRow {
                 }
                 // 通讯录：进微信 clone 后等页面就绪再切到「通讯录」标签
                 if ("#/wechat/contacts".equals(route)) {
-                    // 直接点克隆底部「通讯录」标签，比改 hash 稳（哈希会被首页路由覆盖）
-                    String tapContacts = "(function(){var n=0;var iv=setInterval(function(){"
-                            + "try{var items=document.querySelectorAll('[class*=\"navbar__item\"]');"
-                            + "for(var i=0;i<items.length;i++){var el=items[i];"
-                            + "if((el.textContent||'').trim()==='\u901a\u8baf\u5f55'){el.click();clearInterval(iv);return;}}}"
-                            + "catch(e){}"
-                            + "if(++n>60)clearInterval(iv);},250);})()";
+                    // 交给 WeiHomeActivity 在 onPageFinished 里点「通讯录」标签，最可靠
+                    com.luoyun.doutu.features.wei.WeiHomeActivity.pendingNavTap = "\u901a\u8baf\u5f55";
                     startActivity(com.luoyun.doutu.features.wei.WeiHomeActivity
                             .intentFor(MainActivity.this, "#/wechat"));
-                    com.luoyun.doutu.features.wei.WeiHomeActivity.scheduleBridge(tapContacts, null);
                     overridePendingTransition(0, 0);
                     return;
                 }

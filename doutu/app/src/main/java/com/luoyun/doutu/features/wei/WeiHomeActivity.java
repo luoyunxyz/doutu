@@ -107,6 +107,8 @@ public final class WeiHomeActivity extends Activity {
 
     /** 待执行的桥脚本与跳转路由（页面加载完成后再执行，冷启动也能生效）。 */
     private static volatile String bridgeScript;
+    /** 页面就绪后要点击的底部标签文案（如「通讯录」）。 */
+    public static volatile String pendingNavTap;
     private static volatile String bridgeRoute;
 
     /**
@@ -122,6 +124,22 @@ public final class WeiHomeActivity extends Activity {
 
     /** 写完数据后需要整页重载，重载完成再跳会话页。 */
     private static volatile String pendingRouteAfterReload;
+
+    /** 页面加载完成后，按 pendingNavTap 点一次克隆底部对应标签。 */
+    private void tapPendingNavBar() {
+        final String label = pendingNavTap;
+        if (label == null || webView == null) return;
+        pendingNavTap = null;
+        String js = "(function(){var n=0;var iv=setInterval(function(){"
+                + "try{var items=document.querySelectorAll('[class*=\"navbar__item\"]');"
+                + "for(var i=0;i<items.length;i++){var el=items[i];"
+                + "if((el.textContent||'').trim()==='" + label.replace("'", "\\'") + "'){"
+                + "el.click();clearInterval(iv);return;}}}catch(e){}"
+                + "if(++n>60)clearInterval(iv);},250);})()";
+        try {
+            webView.evaluateJavascript(js, null);
+        } catch (Throwable ignored) { }
+    }
 
     private void drainBridge() {
         String script = bridgeScript;
@@ -403,6 +421,7 @@ public final class WeiHomeActivity extends Activity {
             public void onPageFinished(WebView view, String url) {
                 Log.e("WeiHomeWeb", "PAGE_FINISHED " + url);
                 drainBridge();
+                tapPendingNavBar();
                 if (pendingRouteAfterReload != null) {
                     pendingRoute = pendingRouteAfterReload;
                     pendingRouteAfterReload = null;
