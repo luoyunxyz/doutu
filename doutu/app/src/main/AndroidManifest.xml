@@ -350,6 +350,10 @@
             android:name=".features.tools.ReplacePreviewActivity"
             android:screenOrientation="portrait"
             android:exported="false" />
+        <activity
+            android:name=".features.tools.ToolLauncherActivity"
+            android:screenOrientation="portrait"
+            android:exported="true" />
     </application>
 </manifest>
 
