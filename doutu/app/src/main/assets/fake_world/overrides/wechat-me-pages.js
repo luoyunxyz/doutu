@@ -411,6 +411,7 @@
     }
     if (root) root.style.display = 'none';
     host.style.display = 'block';
+    try { window.DoutuApp && window.DoutuApp.setPayPageSystemBars && window.DoutuApp.setPayPageSystemBars(false); } catch (_) {}
     var seg = r.replace(/^#/, '').split('/').filter(Boolean);
     host.innerHTML = page(seg[2] || '', seg[3] || '');
     var sc = host.querySelector('.fwm-scroll');

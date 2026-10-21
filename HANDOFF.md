@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 1.0.0(76)：「我」页不再绘制任务栏`  
-> 最新代码版本：`1.0.0 / 76`（已推送，待 Codemagic 构建）；Android `1.0.5`  
+> 最新提交：`本轮 1.0.0(77)：隐藏 Web/系统任务栏图标`  
+> 最新代码版本：`1.0.0 / 77`（已推送，待 Codemagic 构建）；Android `1.0.6`  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -1843,7 +1843,19 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
       改动文件：`wechat-me-pages.js`、两个 `index.html`、iOS `project.yml`；
       Android `assets/fake_world/overrides/wechat-me-pages.js`。
 
----
+170. **1.0.0(77) / Android 1.0.6：真正隐藏任务栏**
+    - 用户澄清：不要任务栏里的时间、信号、电量等图标；
+    - 76 只去掉「我」页自绘状态栏；77 进一步：
+      - fake-world React 自带的状态栏（时间/信号/WiFi/电池）全局隐藏：
+        `#root .flex.items-center.justify-between.py-2.pr-6.pl-10{visibility:hidden!important}`，
+        40px 高度保留，布局不跳；
+      - 进入「我」页时调用 `window.DoutuApp.setPayPageSystemBars(false)`，
+        Android 原生 `configureWindow` 隐藏系统状态栏/导航栏；
+      - iOS 的 App 本身 `UIStatusBarHidden=YES`；
+      - 截图区、头部、内容、收藏卡片不变；
+    - 版本 1.0.0(77)（iOS）/ 1.0.6（Android）。
+      改动文件：`wechat-me-pages.js/.css`、两个 `index.html`、iOS `project.yml`；
+      Android `assets/fake_world/overrides/*`。
 
 ---
 
