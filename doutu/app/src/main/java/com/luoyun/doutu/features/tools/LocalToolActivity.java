@@ -1382,6 +1382,16 @@ public final class LocalToolActivity extends Activity {
             tv.setTextColor(0xff191919);
             tv.setPadding(dp(12), 0, 0, 0);
             row.addView(tv, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+            row.setOnClickListener(v -> new AlertDialog.Builder(this)
+                    .setTitle("收藏详情")
+                    .setMessage(f)
+                    .setNegativeButton("关闭", null)
+                    .setPositiveButton("删除", (d, w) -> {
+                        favItems.remove(f);
+                        saveList("favorites", favItems);
+                        renderFavorites();
+                    })
+                    .show());
             row.setOnLongClickListener(v -> {
                 new AlertDialog.Builder(this).setTitle("删除收藏").setMessage("只从本地收藏移除")
                         .setNegativeButton("取消", null)
@@ -1451,12 +1461,19 @@ public final class LocalToolActivity extends Activity {
                 tv.setTextColor(0xff191919);
                 tv.setPadding(dp(14), 0, 0, 0);
                 card.addView(tv, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
-                card.setOnClickListener(v -> new AlertDialog.Builder(this)
-                        .setTitle(c)
-                        .setMessage("本地卡券\n\n有效期：长期有效\n使用范围：仅本机演示")
-                        .setNegativeButton("关闭", null)
-                        .setPositiveButton("使用", (d, w) -> toast("已使用：" + c))
-                        .show());
+                card.setOnClickListener(v -> {
+                    String code = String.format("%08d", Math.abs(c.hashCode()) % 100000000);
+                    new AlertDialog.Builder(this)
+                            .setTitle(c)
+                            .setMessage("券码：" + code + "\n\n有效期：长期有效\n使用范围：仅本机演示")
+                            .setNegativeButton("复制券码", (d, w) -> {
+                                android.content.ClipboardManager cm = (android.content.ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
+                                cm.setPrimaryClip(android.content.ClipData.newPlainText("code", code));
+                                toast("券码已复制");
+                            })
+                            .setPositiveButton("使用", (d, w) -> toast("已使用：" + c))
+                            .show();
+                });
                 LinearLayout.LayoutParams clp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
                 clp.leftMargin = dp(8);
                 clp.rightMargin = dp(8);
