@@ -106,6 +106,8 @@ public final class ToolLauncherActivity extends Activity {
             } catch (Exception e) {
                 intent = new Intent(this, com.luoyun.doutu.features.tools.ReplaceHeaderListActivity.class);
             }
+        } else if ("groupsettings".equals(key)) {
+            intent = new Intent(this, com.luoyun.doutu.features.wx.WxGroupSettingsActivity.class);
         } else if ("avataradjust".equals(key)) {
             // 测试用：直接进「替换头像」选框页（用内置示例图当底图）
             try (java.io.InputStream in = getAssets().open("video_icons/avatar.png")) {
