@@ -30,6 +30,10 @@ public final class ToolLauncherActivity extends Activity {
             intent = new Intent(this, com.luoyun.doutu.features.qq.QqHomeActivity.class);
         } else if ("albumhome".equals(key)) {
             intent = new Intent(this, com.luoyun.doutu.features.album.AlbumHomeActivity.class);
+        } else if ("teamcreate".equals(key)) {
+            intent = new Intent(this, com.luoyun.doutu.features.album.CreateTeamActivity.class);
+        } else if ("teammine".equals(key)) {
+            intent = new Intent(this, com.luoyun.doutu.features.album.MyTeamActivity.class);
         } else if ("videohome".equals(key)) {
             intent = new Intent(this, com.luoyun.doutu.features.video.VideoHomeActivity.class);
         } else if ("mass".equals(key)) {

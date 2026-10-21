@@ -15,8 +15,6 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
 
-import com.luoyun.doutu.features.tools.LocalToolActivity;
-
 import java.io.InputStream;
 
 /**
@@ -172,23 +170,21 @@ public final class AlbumHomeActivity extends Activity {
             float y = e.getY() * 2388f / Math.max(1, getHeight());
             if (y <= 281) {
                 if (x < 100) finish();
-                else if (x > 720) openTeam();
+                else if (x > 720) startActivity(new Intent(AlbumHomeActivity.this,
+                        com.luoyun.doutu.features.album.CreateTeamActivity.class));
                 return true;
             }
             if (y > 282 && y <= 432) {
-                openTeam();
+                startActivity(new Intent(AlbumHomeActivity.this,
+                        com.luoyun.doutu.features.album.MyTeamActivity.class));
                 return true;
             }
             float dx = x - 1006, dy = y - 1218;
-            if (dx * dx + dy * dy <= 75 * 75) openTeam();
+            if (dx * dx + dy * dy <= 75 * 75) {
+                startActivity(new Intent(AlbumHomeActivity.this,
+                        com.luoyun.doutu.features.album.CreateTeamActivity.class));
+            }
             return true;
-        }
-
-        private void openTeam() {
-            Intent i = new Intent(AlbumHomeActivity.this, LocalToolActivity.class);
-            i.putExtra("key", "team");
-            i.putExtra("title", "我的团队");
-            startActivity(i);
         }
     }
 }

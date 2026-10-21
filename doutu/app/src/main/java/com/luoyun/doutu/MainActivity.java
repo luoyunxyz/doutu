@@ -1858,6 +1858,14 @@ static final class FeatureRow {
                     startActivity(new Intent(MainActivity.this,
                             com.luoyun.doutu.features.album.AlbumHomeActivity.class));
                     break;
+                case "teamcreate":
+                    startActivity(new Intent(MainActivity.this,
+                            com.luoyun.doutu.features.album.CreateTeamActivity.class));
+                    break;
+                case "teammine":
+                    startActivity(new Intent(MainActivity.this,
+                            com.luoyun.doutu.features.album.MyTeamActivity.class));
+                    break;
                 case "videohome":
                     // 视频分组标题：进黑底短视频主页（分类 / 上传 / 右侧互动栏 / 底部五格）。
                     startActivity(new Intent(MainActivity.this,

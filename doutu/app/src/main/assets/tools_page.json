@@ -272,12 +272,12 @@
       {
         "name": "创建团队",
         "icon": "plus",
-        "action": "local:team"
+        "action": "teamcreate"
       },
       {
         "name": "我的团队",
         "icon": "team",
-        "action": "local:team"
+        "action": "teammine"
       }
     ]
   },

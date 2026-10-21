@@ -191,6 +191,14 @@
             android:screenOrientation="portrait"
             android:exported="false" />
         <activity
+            android:name=".features.album.CreateTeamActivity"
+            android:screenOrientation="portrait"
+            android:exported="false" />
+        <activity
+            android:name=".features.album.MyTeamActivity"
+            android:screenOrientation="portrait"
+            android:exported="false" />
+        <activity
             android:name=".features.video.VideoHomeActivity"
             android:screenOrientation="portrait"
             android:exported="false" />
