@@ -1281,6 +1281,120 @@ public final class LocalToolActivity extends Activity {
         }
     }
 
+    private void buildCards() {
+        content.setBackgroundColor(0xfff5f5f5);
+        content.setPadding(0, 0, 0, 0);
+
+        LinearLayout bar = new LinearLayout(this);
+        bar.setGravity(Gravity.CENTER_VERTICAL);
+        bar.setBackgroundColor(0xffededed);
+        ImageView back = assetIcon("ic_wx_chat_title_back", 21);
+        back.setOnClickListener(v -> finish());
+        bar.addView(back, new LinearLayout.LayoutParams(dp(43), dp(43)));
+        TextView title = new TextView(this);
+        title.setText("卡包");
+        title.setTextSize(16);
+        title.setTextColor(0xff191919);
+        title.setGravity(Gravity.CENTER);
+        bar.addView(title, new LinearLayout.LayoutParams(0, dp(43), 1f));
+        bar.addView(new View(this), new LinearLayout.LayoutParams(dp(43), dp(43)));
+        content.addView(bar);
+
+        List<String> cards = split("cards");
+        if (cards.isEmpty()) {
+            TextView empty = new TextView(this);
+            empty.setText("暂无卡券\n\n点击下方按钮添加一张本地卡券");
+            empty.setTextSize(14);
+            empty.setTextColor(0xff999999);
+            empty.setGravity(Gravity.CENTER);
+            empty.setPadding(dp(20), dp(70), dp(20), dp(20));
+            content.addView(empty);
+        } else {
+            for (String c : cards) {
+                LinearLayout card = new LinearLayout(this);
+                card.setGravity(Gravity.CENTER_VERTICAL);
+                card.setBackgroundColor(Color.WHITE);
+                card.setPadding(dp(16), dp(18), dp(16), dp(18));
+                card.addView(assetIcon("ic_wx_me_card_bg", 36), new LinearLayout.LayoutParams(dp(36), dp(36)));
+                TextView tv = new TextView(this);
+                tv.setText(c);
+                tv.setTextSize(15);
+                tv.setTextColor(0xff191919);
+                tv.setPadding(dp(14), 0, 0, 0);
+                card.addView(tv, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+                LinearLayout.LayoutParams clp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                clp.leftMargin = dp(8);
+                clp.rightMargin = dp(8);
+                clp.topMargin = dp(8);
+                content.addView(card, clp);
+            }
+        }
+        TextView add = new TextView(this);
+        add.setText("＋ 添加卡券");
+        add.setTextSize(15);
+        add.setTextColor(Color.WHITE);
+        add.setGravity(Gravity.CENTER);
+        android.graphics.drawable.GradientDrawable g = new android.graphics.drawable.GradientDrawable();
+        g.setColor(0xff07c160);
+        g.setCornerRadius(dp(4));
+        add.setBackground(g);
+        LinearLayout.LayoutParams alp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(46));
+        alp.leftMargin = dp(16);
+        alp.rightMargin = dp(16);
+        alp.topMargin = dp(20);
+        content.addView(add, alp);
+        add.setOnClickListener(v -> {
+            List<String> cs = split("cards");
+            cs.add(0, "本地卡券 " + (cs.size() + 1));
+            saveList("cards", cs);
+            recreate();
+        });
+    }
+
+    private void buildStickers() {
+        content.setBackgroundColor(0xfff5f5f5);
+        content.setPadding(0, 0, 0, 0);
+
+        LinearLayout bar = new LinearLayout(this);
+        bar.setGravity(Gravity.CENTER_VERTICAL);
+        bar.setBackgroundColor(0xffededed);
+        ImageView back = assetIcon("ic_wx_chat_title_back", 21);
+        back.setOnClickListener(v -> finish());
+        bar.addView(back, new LinearLayout.LayoutParams(dp(43), dp(43)));
+        TextView title = new TextView(this);
+        title.setText("表情");
+        title.setTextSize(16);
+        title.setTextColor(0xff191919);
+        title.setGravity(Gravity.CENTER);
+        bar.addView(title, new LinearLayout.LayoutParams(0, dp(43), 1f));
+        bar.addView(new View(this), new LinearLayout.LayoutParams(dp(43), dp(43)));
+        content.addView(bar);
+
+        String[] emojis = {"😀", "😁", "😂", "🤣", "😊", "😍", "😘", "😎", "🤔", "😭", "😡", "👍", "👏", "🙏", "🎉", "❤️", "🌹", "☕", "🐶", "🐱"};
+        LinearLayout grid = new LinearLayout(this);
+        grid.setOrientation(LinearLayout.VERTICAL);
+        grid.setPadding(dp(12), dp(12), dp(12), dp(12));
+        content.addView(grid);
+        LinearLayout row = null;
+        for (int i = 0; i < emojis.length; i++) {
+            if (i % 5 == 0) {
+                row = new LinearLayout(this);
+                row.setOrientation(LinearLayout.HORIZONTAL);
+                grid.addView(row);
+            }
+            TextView tv = new TextView(this);
+            tv.setText(emojis[i]);
+            tv.setTextSize(28);
+            tv.setGravity(Gravity.CENTER);
+            tv.setBackgroundColor(Color.WHITE);
+            final String e = emojis[i];
+            tv.setOnClickListener(v -> toast("已选择 " + e));
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, dp(64), 1f);
+            lp.setMargins(dp(4), dp(4), dp(4), dp(4));
+            row.addView(tv, lp);
+        }
+    }
+
     private void buildService() {
         content.setBackgroundColor(0xffededed);
         content.setPadding(0, 0, 0, 0);
