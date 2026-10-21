@@ -2017,7 +2017,9 @@ static final class FeatureRow {
                             com.luoyun.doutu.features.ali.AliMsgActivity.class));
                     break;
                 case "act:licai":
-                    startActivity(com.luoyun.doutu.features.zhi.LicaiActivity.intentFor(MainActivity.this));
+                    // 财富：真机 ACTION_ALIPAY_TREASURE 打开的就是支付宝首页
+                    startActivity(com.luoyun.doutu.features.zhi.ZhiHomeActivity.intentFor(MainActivity.this));
+                    overridePendingTransition(0, 0);
                     break;
                 case "act:balance":
                     // 余额：按真机 activity_ali_balance 重画（资金安全/可用余额/提现·充值/上传截图/变动明细）
@@ -2037,9 +2039,9 @@ static final class FeatureRow {
                             com.luoyun.doutu.features.ali.AliMineActivity.class));
                     break;
                 case "act:paymsg":
-                    // 支付助手：真机是「消息盒子」（服务消息 / 支付消息 / 暂无消息）
+                    // 支付助手：真机是独立页（我的账单 / 退款查询 / 支付设置）
                     startActivity(new Intent(MainActivity.this,
-                            com.luoyun.doutu.features.ali.AliMsgBoxActivity.class));
+                            com.luoyun.doutu.features.ali.AliPayAssistantActivity.class));
                     break;
                 case "act:billstats":
                     // 年账单：按真机 activity_ali_year_bill 重画（碳减排 / 这一年你在支付宝 / 收支分析）
