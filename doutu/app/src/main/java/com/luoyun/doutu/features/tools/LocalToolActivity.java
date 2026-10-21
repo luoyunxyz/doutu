@@ -340,7 +340,6 @@ public final class LocalToolActivity extends Activity {
             tab.setGravity(Gravity.CENTER);
             boolean on = active.equals(d[2]);
             ImageView icon = assetIcon(d[0], 25);
-            icon.setColorFilter(on ? 0xff07c160 : 0xff7a7a7a);
             tab.addView(icon, new LinearLayout.LayoutParams(dp(25), dp(25)));
             TextView label = new TextView(this);
             label.setText(d[1]);
