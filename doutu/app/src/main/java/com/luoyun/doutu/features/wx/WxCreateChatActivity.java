@@ -155,14 +155,12 @@ public final class WxCreateChatActivity extends Activity {
                     + "s.chats=s.chats||{};s.chats['" + safe + "']={unreadCount:0,unread:false,unreadOverride:true};"
                     + "localStorage.setItem('fake-world.wechat.chat-actions.v1',JSON.stringify(s));"
                     + "return true;}catch(e){return false;}})()";
-            // 克隆包的通讯录/会话不支持外部写入（实测写 allProfiles 不显示、直链会话报错），
-            // 这里回到原生聊天页：能正常聊天、支持左右滑切换发送者。
-            Intent intent = new Intent(this, WxChatGreetingActivity.class);
-            intent.putExtra("name", name);
-            intent.putExtra("avatar", avatarPath);
-            intent.putExtra("avatarUrl", avatarUrl);
-            intent.putExtra("isNew", isNewValue[0]);
-            startActivity(intent);
+            // 走克隆「添加朋友」同一条落库路径（__fwAddFriend → state.contacts + saveState），
+            // 加完后回到通讯录，结果和手动添加好友完全一致
+            String addJs = "window.__fwAddFriend && window.__fwAddFriend('" + safe + "','" + avatar + "')";
+            startActivity(com.luoyun.doutu.features.wei.WeiHomeActivity
+                    .intentFor(this, "#/wechat/contacts"));
+            com.luoyun.doutu.features.wei.WeiHomeActivity.scheduleBridge(addJs, "#/wechat/contacts");
             finish();
         });
         buttons.addView(cancel, new LinearLayout.LayoutParams(0, dp(56), 1f));

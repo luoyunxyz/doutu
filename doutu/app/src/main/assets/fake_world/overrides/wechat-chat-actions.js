@@ -4528,6 +4528,43 @@
     }
   };
 
+  /**
+   * 供原生「创建单聊」调用：和「添加朋友」完全同一条落库路径（写 state.contacts + 持久化），
+   * 所以结果与手动添加好友一致（通讯录、会话都能看到）。
+   */
+  window.__fwAddFriend = function (name, avatar, wechatId) {
+    try {
+      name = String(name || '').trim();
+      if (!name) return '';
+      state.contacts = Array.isArray(state.contacts) ? state.contacts : [];
+      const friend = {
+        id: 'friend-' + Date.now(),
+        name: name,
+        wechatId: String(wechatId || ('wx' + Date.now())),
+        gender: 'unknown',
+        remark: '',
+        realName: '',
+        phone: '',
+        region: '',
+        verification: '',
+        source: '',
+        requestMessage: '我是' + name,
+        avatar: String(avatar || ''),
+        starred: false,
+        createdAt: Date.now()
+      };
+      friend.avatar = freezeRemoteAvatar(friend.avatar);
+      state.contacts.unshift(friend);
+      saveState();
+      applyState();
+      setTimeout(applyState, 80);
+      window.dispatchEvent(new CustomEvent('fw:contacts-updated', { detail: { contact: friend } }));
+      return friend.id;
+    } catch (e) {
+      return '';
+    }
+  };
+
   function openAddFriendDialog() {
     const host = addOverlay('add-friend', 'fw-overlay--add-friend');
     const page = document.createElement('section');

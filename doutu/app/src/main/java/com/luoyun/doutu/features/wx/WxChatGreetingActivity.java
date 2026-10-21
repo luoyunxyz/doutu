@@ -319,11 +319,11 @@ public final class WxChatGreetingActivity extends Activity implements SensorEven
         }
     }
 
-    /** 昵称临时改成「对方正在输入......」，3 秒后恢复；不写任何存储。 */
+    /** 点一次变「对方正在输入......」，再点一次变回昵称；不写任何存储。 */
+    private boolean typing;
     private void showTyping() {
-        title.setText("对方正在输入......");
-        handler.removeCallbacks(restoreTitle);
-        handler.postDelayed(restoreTitle, 3000);
+        typing = !typing;
+        title.setText(typing ? "对方正在输入......" : name);
     }
 
     @Override
