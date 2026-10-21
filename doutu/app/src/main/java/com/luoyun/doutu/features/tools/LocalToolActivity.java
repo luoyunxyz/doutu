@@ -78,7 +78,7 @@ public final class LocalToolActivity extends Activity {
         tv.setGravity(Gravity.CENTER);
         bar.addView(tv, new LinearLayout.LayoutParams(0, dp(50), 1f));
         bar.addView(new View(this), new LinearLayout.LayoutParams(dp(88), dp(50)));
-        if (!("home".equals(key) || "contacts".equals(key) || "moments".equals(key) || "profile".equals(key) || "discover".equals(key) || "chat".equals(key) || "wallet".equals(key) || "transfer".equals(key) || "redpacket".equals(key) || "paysuccess".equals(key) || "pay".equals(key) || "billstats".equals(key) || "service".equals(key) || "favorites".equals(key) || "cards".equals(key) || "stickers".equals(key) || "redpackets".equals(key) || "broadcast".equals(key))) root.addView(bar);
+        if (!("home".equals(key) || "contacts".equals(key) || "moments".equals(key) || "profile".equals(key) || "discover".equals(key) || "chat".equals(key) || "wallet".equals(key) || "transfer".equals(key) || "redpacket".equals(key) || "paysuccess".equals(key) || "pay".equals(key) || "billstats".equals(key) || "service".equals(key) || "favorites".equals(key) || "cards".equals(key) || "stickers".equals(key) || "redpackets".equals(key) || "broadcast".equals(key) || "payee".equals(key))) root.addView(bar);
 
         ScrollView scroll = new ScrollView(this);
         content = new LinearLayout(this);
@@ -99,6 +99,7 @@ public final class LocalToolActivity extends Activity {
         else if ("profile".equals(key)) buildProfile();
         else if ("chat".equals(key)) buildChat();
         else if ("wallet".equals(key)) buildWallet();
+        else if ("payee".equals(key)) buildPayee();
         else if ("favorites".equals(key)) buildFavorites();
         else if ("cards".equals(key)) buildCards();
         else if ("stickers".equals(key)) buildStickers();
@@ -1473,6 +1474,94 @@ public final class LocalToolActivity extends Activity {
             final int ii = i;
             cell.setOnClickListener(v -> LocalToolActivity.open(this, keys[ii], names[ii]));
             row.addView(cell, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        }
+    }
+
+    private void buildPayee() {
+        content.setBackgroundColor(0xffededed);
+        content.setPadding(0, 0, 0, 0);
+
+        LinearLayout bar = new LinearLayout(this);
+        bar.setGravity(Gravity.CENTER_VERTICAL);
+        bar.setBackgroundColor(0xffededed);
+        ImageView back = assetIcon("ic_wx_chat_title_back", 21);
+        back.setOnClickListener(v -> finish());
+        bar.addView(back, new LinearLayout.LayoutParams(dp(43), dp(43)));
+        TextView title = new TextView(this);
+        title.setText("微信收款助手");
+        title.setTextSize(16);
+        title.setTextColor(0xff191919);
+        title.setGravity(Gravity.CENTER);
+        bar.addView(title, new LinearLayout.LayoutParams(0, dp(43), 1f));
+        bar.addView(new View(this), new LinearLayout.LayoutParams(dp(43), dp(43)));
+        content.addView(bar);
+
+        double total = 0;
+        int count = 0;
+        for (String b : bills) {
+            if (b.contains("收款")) {
+                count++;
+                int i = b.indexOf("+¥");
+                if (i >= 0) {
+                    int j = i + 2;
+                    while (j < b.length() && (Character.isDigit(b.charAt(j)) || b.charAt(j) == '.')) j++;
+                    try { total += Double.parseDouble(b.substring(i + 2, j)); } catch (Exception ignored) { }
+                }
+            }
+        }
+
+        LinearLayout head = new LinearLayout(this);
+        head.setOrientation(LinearLayout.VERTICAL);
+        head.setGravity(Gravity.CENTER);
+        head.setBackgroundColor(Color.WHITE);
+        head.setPadding(0, dp(24), 0, dp(24));
+        TextView tip = new TextView(this);
+        tip.setText("收款记录");
+        tip.setTextSize(13);
+        tip.setTextColor(0xff888888);
+        head.addView(tip);
+        TextView sum = new TextView(this);
+        sum.setText("¥" + String.format("%.2f", total));
+        sum.setTextSize(36);
+        sum.setTextColor(0xff191919);
+        sum.setGravity(Gravity.CENTER);
+        sum.setPadding(0, dp(8), 0, 0);
+        head.addView(sum);
+        TextView cnt = new TextView(this);
+        cnt.setText("共 " + count + " 笔收款");
+        cnt.setTextSize(12);
+        cnt.setTextColor(0xff888888);
+        cnt.setPadding(0, dp(4), 0, 0);
+        head.addView(cnt);
+        content.addView(head);
+
+        if (count == 0) {
+            TextView empty = new TextView(this);
+            empty.setText("还没有收款记录\n\n在「收付款」页模拟收款试试");
+            empty.setTextSize(14);
+            empty.setTextColor(0xff999999);
+            empty.setGravity(Gravity.CENTER);
+            empty.setPadding(dp(20), dp(50), dp(20), dp(20));
+            content.addView(empty);
+        } else {
+            LinearLayout card = new LinearLayout(this);
+            card.setOrientation(LinearLayout.VERTICAL);
+            card.setBackgroundColor(Color.WHITE);
+            LinearLayout.LayoutParams clp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            clp.topMargin = dp(8);
+            content.addView(card, clp);
+            for (String b : bills) {
+                if (!b.contains("收款")) continue;
+                TextView row = new TextView(this);
+                row.setText(b);
+                row.setTextSize(14);
+                row.setTextColor(0xff191919);
+                row.setPadding(dp(15), dp(14), dp(15), dp(14));
+                card.addView(row);
+                View line = new View(this);
+                line.setBackgroundColor(0xffe5e5e5);
+                card.addView(line, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(1)));
+            }
         }
     }
 
