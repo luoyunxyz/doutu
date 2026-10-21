@@ -26,14 +26,14 @@ def debugApi = (project.findProperty('doutuDebugApi') ?: 'https://tdapi.luoyun.x
  *   调试包：用下面这份开发用公钥/盐（公钥本来就公开，写死没有安全问题）
  */
 def devDtwPublicKey = '-----BEGIN PUBLIC KEY-----\\n' +
-        'MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAhd9TKjhtxZ6bGsSel1nT\\n' +
-        'CmV4D1oqalbv6sTK3M/3VBbfj1OnXMe8A0RAh4o0z5xHpOy6HQh8lTx/5AjAKqWy\\n' +
-        'bB8iGtQlZRcJh+TsmvvmWDGftWzPPoOcudCZWlK1JEqGC0P/558JlO+34TPkZ0lp\\n' +
-        'i/lmVkkdQriY4zSpPFkvZz/4v3PMGbblJjMS7MyW1u1uC81q3AizA369sTlke76q\\n' +
-        'kpry36olorGzQiCnluJjmoH5hKRewi4T3JlpIvh6h+JlfAOL6Wyb9Ax+r7KL8uUL\\n' +
-        'SU4M/PN4Pggg72K3oIH/FHRoHvQTB0jvRr9aV57gSnnnepqwAkussQ/Z15005/x4\\n' +
-        'VwIDAQAB\\n-----END PUBLIC KEY-----'
-def devDtwSalt = 'dev-salt-please-generate-your-own'
+        'MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAzHubijhtQRickqOZNcyY\\n' +
+        'l+8nAByna6J52mXXMO0NLSg4kfEqaDnlmuD12BFLLCX23/8e+CbAaah2Li0JfAYL\\n' +
+        '37Hnp5Yd2eDsHkjKza9Zmqn9bHBc5MCAb3n0vcIjrtfWjqnhJ8VegUSI/FdpYlzF\\n' +
+        'dXcEYLH+Fm0Em/BDwDsHm0b26oPTEMkc1368nbZRiUluhGNTynBLXWZp/F9aR9q0\\n' +
+        'IStEXtjALYWs1fBJ3LzIgpV3uA5GfdXkTikH7gFL9Pirp+U6jYbpL1ONh3GSkr2O\\n' +
+        'hmR1SZOQryskSYABbT5wBfpYXCEHUaXoaflKNStrqTzevZOVl77BSeeWhdVscvw2\\n' +
+        'ZwIDAQAB\\n-----END PUBLIC KEY-----'
+def devDtwSalt = '91d6150dc950806de414df9a3751382d63dc6afd1d1eda10c3b7842fd9c721b4'
 
 def releaseDtwPublicKey = (project.findProperty('dtwPublicKey') ?: '').toString().trim()
 // 多行 PEM 从命令行传很容易被 shell 打散（PowerShell 尤其），所以也支持从文件读
