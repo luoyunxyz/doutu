@@ -102,10 +102,10 @@ public final class VideoHomeActivity extends Activity {
             drawLive(c);
             for (int i = 0; i < tabs.length; i++) {
                 boolean on = i == tab;
-                textCentered(c, tabs[i], tabX[i], 203, 38, on ? Color.WHITE : 0xffb5b5b5, on);
+                textCentered(c, tabs[i], tabX[i], 224, 58, on ? Color.WHITE : 0xffb5b5b5, on);
                 if (on) {
                     p.setColor(Color.WHITE);
-                    c.drawRect(tabX[i] - 48, 216, tabX[i] + 48, 221, p);
+                    c.drawRect(tabX[i] - 33, 240, tabX[i] + 33, 246, p);
                 }
             }
             // 关注上的 99
@@ -141,13 +141,13 @@ public final class VideoHomeActivity extends Activity {
             text(c, "@唯一创作的音乐原声", 82, 2118, 34, Color.WHITE, false);
 
             // ── 底部导航 ───────────────────────────────────────
-            textCentered(c, "首页", 82, 2286, 42, Color.WHITE, true);
-            textCentered(c, "朋友", 300, 2286, 42, 0xff9a9a9a, false);
+            textCentered(c, "首页", 82, 2268, 48, Color.WHITE, true);
+            textCentered(c, "朋友", 300, 2268, 48, 0xff9a9a9a, false);
             p.setColor(0xffffd84d);
-            c.drawRoundRect(792, 2200, 872, 2244, 22, 22, p);
-            textCentered(c, "99", 832, 2236, 26, 0xff1a1a1a, false);
-            textCentered(c, "消息", 742, 2286, 42, 0xff9a9a9a, false);
-            textCentered(c, "我", 953, 2286, 42, 0xff9a9a9a, false);
+            c.drawRoundRect(792, 2196, 872, 2240, 22, 22, p);
+            textCentered(c, "99", 832, 2232, 26, 0xff1a1a1a, false);
+            textCentered(c, "消息", 742, 2268, 48, 0xff9a9a9a, false);
+            textCentered(c, "我", 953, 2268, 48, 0xff9a9a9a, false);
             // 中间加号
             p.setColor(Color.TRANSPARENT);
             p.setStyle(Paint.Style.STROKE);
@@ -173,7 +173,7 @@ public final class VideoHomeActivity extends Activity {
             p.setStrokeWidth(5f);
             c.drawLine(52, 200, 126, 200, p);
             p.setStyle(Paint.Style.FILL);
-            textCentered(c, "直播", 90, 218, 24, 0xffcfcfcf, false);
+            textCentered(c, "直播", 90, 222, 28, 0xffcfcfcf, false);
         }
 
         private void drawSearch(Canvas c) {
