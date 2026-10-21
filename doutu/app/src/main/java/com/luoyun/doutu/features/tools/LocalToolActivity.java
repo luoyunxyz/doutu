@@ -529,7 +529,7 @@ public final class LocalToolActivity extends Activity {
         String[][] rows = {
                 {"pyq", "圈", "0xff07c160", "朋友圈", "moments", "朋友圈"},
                 {"sph", "视", "0xffff9f1c", "视频号", "video", "视频号"},
-                {"", "播", "0xffff5a5f", "直播", "video", "直播"},
+                {"live", "播", "0xffff5a5f", "直播", "video", "直播"},
                 {"sao", "扫", "0xff2f7bff", "扫一扫", "pay", "扫一扫"},
                 {"yao", "摇", "0xff2f7bff", "摇一摇", "generic", "摇一摇"},
                 {"kan", "看", "0xffffb400", "看一看", "articles", "看一看"},
