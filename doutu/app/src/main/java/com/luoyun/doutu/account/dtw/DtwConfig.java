@@ -7,7 +7,14 @@ import com.luoyun.doutu.account.Session;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
+import java.security.SecureRandom;
+import java.security.cert.X509Certificate;
+
 import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 
 /**
  * DTW/1 的客户端配置：全部来自编译期注入（{@code app/build.gradle}）。
@@ -51,16 +58,64 @@ public final class DtwConfig {
         return url;
     }
 
+    /**
+     * 直连 IP 时证书是 tdapi.luoyun.xyz 的，且部分老设备的系统信任库不认这条链，
+     * 会在别的手机上报 "A TLS error caused the secure connection to fail"。
+     *
+     * 这里只对 API 连接放宽 TLS 证书校验；服务器身份仍由 DTW 握手的内置公钥验签，
+     * TLS 不是唯一信任锚。HTTPS 之外的其他域名（头像等）不走这里。
+     */
+    private static volatile SSLSocketFactory trustAllFactory;
+
+    private static SSLSocketFactory trustAllFactory() {
+        if (trustAllFactory != null) return trustAllFactory;
+        synchronized (DtwConfig.class) {
+            if (trustAllFactory != null) return trustAllFactory;
+            try {
+                SSLContext ctx = SSLContext.getInstance("TLS");
+                ctx.init(null, new TrustManager[]{new X509TrustManager() {
+                    @Override
+                    public void checkClientTrusted(X509Certificate[] chain, String authType) {
+                    }
+
+                    @Override
+                    public void checkServerTrusted(X509Certificate[] chain, String authType) {
+                    }
+
+                    @Override
+                    public X509Certificate[] getAcceptedIssuers() {
+                        return new X509Certificate[0];
+                    }
+                }}, new SecureRandom());
+                trustAllFactory = ctx.getSocketFactory();
+            } catch (Exception e) {
+                trustAllFactory = null;
+            }
+            return trustAllFactory;
+        }
+    }
+
     /** IP direct: the certificate is still for the domain; allow the host name. */
     public static void prepare(HttpURLConnection conn) {
         if (conn == null) return;
-        try {
-            conn.setRequestProperty("Host", API_HOST);
-        } catch (Exception ignored) {
-        }
-        if (conn instanceof HttpsURLConnection) {
+        URL url = conn.getURL();
+        String host = url == null ? "" : url.getHost();
+        boolean api = API_IP.equals(host) || API_HOST.equalsIgnoreCase(host);
+        if (api) {
             try {
-                ((HttpsURLConnection) conn).setHostnameVerifier((hostname, session) ->
+                conn.setRequestProperty("Host", API_HOST);
+            } catch (Exception ignored) {
+            }
+        }
+        if (conn instanceof HttpsURLConnection && api) {
+            HttpsURLConnection https = (HttpsURLConnection) conn;
+            try {
+                SSLSocketFactory factory = trustAllFactory();
+                if (factory != null) https.setSSLSocketFactory(factory);
+            } catch (Exception ignored) {
+            }
+            try {
+                https.setHostnameVerifier((hostname, session) ->
                         API_IP.equals(hostname) || API_HOST.equalsIgnoreCase(hostname));
             } catch (Exception ignored) {
             }
