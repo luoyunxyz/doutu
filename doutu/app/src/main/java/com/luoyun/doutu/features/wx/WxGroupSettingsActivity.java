@@ -35,6 +35,7 @@ public final class WxGroupSettingsActivity extends Activity {
     private final List<String> members = new ArrayList<>();
     private LinearLayout memberRow;
     private LinearLayout countRow;
+    private LinearLayout nameRow;
     private String groupName = "再歪一点";
     private int displayCount = 100;
 
@@ -107,7 +108,8 @@ public final class WxGroupSettingsActivity extends Activity {
 
         body.addView(row("查看真实成员图", "›"));
         body.addView(divider());
-        body.addView(rowClickable("群聊名称", this::editName));
+        nameRow = rowClickable("群聊名称", this::editName);
+        body.addView(nameRow);
         body.addView(divider());
         countRow = rowClickable("群聊人数(显示人数)", this::editCount);
         body.addView(countRow);
@@ -126,6 +128,7 @@ public final class WxGroupSettingsActivity extends Activity {
                 ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
         setContentView(root);
         updateCountText();
+        updateNameText();
     }
 
     private void renderMembers() {
@@ -134,6 +137,12 @@ public final class WxGroupSettingsActivity extends Activity {
         memberRow.addView(actionCell("📇", "通讯录", v -> pickContacts()));
         memberRow.addView(actionCell("👤+", "自动获取", v -> autoGenerate()));
         // 「删除成员」按钮已按需求去掉；删除方式改为长按成员头像
+    }
+
+    private void updateNameText() {
+        if (nameRow == null) return;
+        TextView value = (TextView) nameRow.getChildAt(1);
+        value.setText(groupName);
     }
 
     private void updateCountText() {
@@ -248,6 +257,7 @@ public final class WxGroupSettingsActivity extends Activity {
                 .setView(input)
                 .setPositiveButton("确定", (d, w) -> {
                     groupName = input.getText().toString().trim();
+                    updateNameText();
                     Toast.makeText(this, "群名已改为：" + groupName, Toast.LENGTH_SHORT).show();
                 })
                 .setNegativeButton("取消", null)
