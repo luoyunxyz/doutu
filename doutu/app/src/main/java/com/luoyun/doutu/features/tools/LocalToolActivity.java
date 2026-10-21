@@ -258,7 +258,7 @@ public final class LocalToolActivity extends Activity {
         LinearLayout bar = new LinearLayout(this);
         bar.setGravity(Gravity.CENTER_VERTICAL);
         bar.setBackgroundColor(0xffededed);
-        ImageView back = assetIcon("icon_wx_left_top_float", 21);
+        ImageView back = assetIcon("ic_wx_chat_title_back", 21);
         back.setOnClickListener(v -> finish());
         LinearLayout.LayoutParams blp = new LinearLayout.LayoutParams(dp(21), dp(21));
         blp.leftMargin = dp(13);
@@ -403,7 +403,7 @@ public final class LocalToolActivity extends Activity {
         LinearLayout bar = new LinearLayout(this);
         bar.setGravity(Gravity.CENTER_VERTICAL);
         bar.setBackgroundColor(0xffededed);
-        ImageView back = assetIcon("icon_wx_left_top_float", 21);
+        ImageView back = assetIcon("ic_wx_chat_title_back", 21);
         back.setOnClickListener(v -> finish());
         LinearLayout.LayoutParams blp = new LinearLayout.LayoutParams(dp(21), dp(21));
         blp.leftMargin = dp(13);
@@ -653,7 +653,7 @@ public final class LocalToolActivity extends Activity {
         LinearLayout bar = new LinearLayout(this);
         bar.setGravity(Gravity.CENTER_VERTICAL);
         bar.setBackgroundColor(0xffededed);
-        ImageView back = assetIcon("icon_wx_left_top_float", 21);
+        ImageView back = assetIcon("ic_wx_chat_title_back", 21);
         back.setOnClickListener(v -> finish());
         LinearLayout.LayoutParams blp = new LinearLayout.LayoutParams(dp(21), dp(21));
         blp.leftMargin = dp(13);
@@ -1075,7 +1075,7 @@ public final class LocalToolActivity extends Activity {
         LinearLayout bar = new LinearLayout(this);
         bar.setGravity(Gravity.CENTER_VERTICAL);
         bar.setBackgroundColor(0xffededed);
-        ImageView back = assetIcon("icon_wx_left_top_float", 21);
+        ImageView back = assetIcon("ic_wx_chat_title_back", 21);
         back.setOnClickListener(v -> finish());
         LinearLayout.LayoutParams blp = new LinearLayout.LayoutParams(dp(21), dp(21));
         blp.leftMargin = dp(13);
@@ -1095,7 +1095,7 @@ public final class LocalToolActivity extends Activity {
         gg.setColor(0xff3bad6a);
         gg.setCornerRadius(dp(8));
         green.setBackground(gg);
-        green.setPadding(dp(6), dp(20), dp(6), dp(18));
+        green.setPadding(dp(6), dp(20), dp(6), dp(26));
         LinearLayout.LayoutParams glp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         glp.leftMargin = dp(7);
         glp.rightMargin = dp(7);
@@ -1176,7 +1176,7 @@ public final class LocalToolActivity extends Activity {
         LinearLayout bar = new LinearLayout(this);
         bar.setGravity(Gravity.CENTER_VERTICAL);
         bar.setBackgroundColor(Color.WHITE);
-        ImageView back = assetIcon("icon_wx_left_top_float", 21);
+        ImageView back = assetIcon("ic_wx_chat_title_back", 21);
         back.setOnClickListener(v -> finish());
         LinearLayout.LayoutParams blp = new LinearLayout.LayoutParams(dp(21), dp(21));
         blp.leftMargin = dp(13);
@@ -1320,6 +1320,7 @@ public final class LocalToolActivity extends Activity {
         bar.setGravity(Gravity.CENTER_VERTICAL);
         bar.setBackgroundColor(0xff3cb371);
         ImageView back = assetIcon("ic_wx_bill_back_dark", 16);
+        back.setColorFilter(Color.WHITE);
         back.setOnClickListener(v -> finish());
         LinearLayout.LayoutParams blp = new LinearLayout.LayoutParams(dp(13), dp(13));
         blp.leftMargin = dp(12);
@@ -1874,7 +1875,7 @@ public final class LocalToolActivity extends Activity {
         LinearLayout bar = new LinearLayout(this);
         bar.setGravity(Gravity.CENTER_VERTICAL);
         bar.setBackgroundColor(Color.WHITE);
-        ImageView back = assetIcon("icon_wx_left_top_float", 21);
+        ImageView back = assetIcon("ic_wx_chat_title_back", 21);
         back.setOnClickListener(v -> finish());
         LinearLayout.LayoutParams blp = new LinearLayout.LayoutParams(dp(21), dp(21));
         blp.leftMargin = dp(13);
