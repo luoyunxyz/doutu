@@ -142,6 +142,15 @@ public final class WeiHomeActivity extends Activity {
         }
         if (route != null) {
             pendingRoute = route;
+            // 直接改 hash 并补两次重试：SPA 路由刚建好时第一次可能被忽略
+            if (webView != null) {
+                String js = "(function(){var t='" + route.replace("'", "\\'") + "';"
+                        + "var f=function(){try{if(location.hash!==t){location.hash=t;}}catch(e){}};"
+                        + "f();setTimeout(f,600);setTimeout(f,1600);})()";
+                try {
+                    webView.evaluateJavascript(js, null);
+                } catch (Throwable ignored) { }
+            }
             applyPendingRoute();
         }
     }
