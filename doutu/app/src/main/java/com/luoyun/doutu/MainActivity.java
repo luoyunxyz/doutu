@@ -2132,6 +2132,11 @@ static final class FeatureRow {
                     startActivity(new Intent(MainActivity.this,
                             com.luoyun.doutu.features.ali.AliVoiceActivity.class));
                     break;
+                case "tool:auto":
+                    // 自动替换：头像网格 + 原始/替换头像 + 替换截图内其他头像 + 人工智能一键合成
+                    startActivity(new Intent(MainActivity.this,
+                            com.luoyun.doutu.features.tools.AutoReplaceActivity.class));
+                    break;
                 case "act:order":
                     // 淘宝账单详情：真机是「卖家已发货」订单详情（物流卡 + 商品卡 + 订单服务）
                     startActivity(new Intent(MainActivity.this,
