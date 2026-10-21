@@ -117,3 +117,43 @@
 
   setInterval(polish, 500);
 })();
+
+
+/* ── 创建单聊：原生写完好友后，由这里替他点进通讯录 → 找到好友 → 发消息 ── */
+(function () {
+  var KEY = 'fw-open-chat-after-create';
+  function leaf(text) {
+    var nodes = document.querySelectorAll('div,span');
+    for (var i = 0; i < nodes.length; i++) {
+      var el = nodes[i];
+      if (el.children && el.children.length) continue;
+      if ((el.textContent || '').trim() === text) return el;
+    }
+    return null;
+  }
+  function rowOf(el) {
+    var row = el;
+    for (var k = 0; k < 5 && row; k++) {
+      if (row.offsetHeight >= 40) return row;
+      row = row.parentElement;
+    }
+    return el;
+  }
+  function tick() {
+    var raw = null;
+    try { raw = localStorage.getItem(KEY); } catch (e) { return; }
+    if (!raw) return;
+    var name = '';
+    try { name = JSON.parse(raw).name || ''; } catch (e) { }
+    if (!name) { try { localStorage.removeItem(KEY); } catch (e) { } return; }
+    if (String(location.hash || '').indexOf('/wechat/contacts') < 0) {
+      location.hash = '#/wechat/contacts';
+      return;
+    }
+    var send = leaf('发消息');
+    if (send) { send.click(); try { localStorage.removeItem(KEY); } catch (e) { } return; }
+    var target = leaf(name);
+    if (target) rowOf(target).click();
+  }
+  setInterval(tick, 700);
+})();

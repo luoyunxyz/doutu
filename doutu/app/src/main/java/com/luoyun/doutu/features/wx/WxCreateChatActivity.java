@@ -155,11 +155,12 @@ public final class WxCreateChatActivity extends Activity {
                     + "s.chats=s.chats||{};s.chats['" + safe + "']={unreadCount:0,unread:false,unreadOverride:true};"
                     + "localStorage.setItem('fake-world.wechat.chat-actions.v1',JSON.stringify(s));"
                     + "return true;}catch(e){return false;}})()";
-            // 先进克隆首页；写入脚本 + 跳会话页都排队到页面加载完成之后执行（冷启动也可靠）
-            String conversationRoute = "#/wechat/conversation/" + friendId;
+            // 界面里也标记一次「待打开会话」，克隆页加载后由 override 负责点通讯录 → 发消息
+            js = js + ";localStorage.setItem('fw-open-chat-after-create',JSON.stringify({name:'" + safe + "'}));true;";
+            // 先进克隆首页；写入脚本执行完会整页重载，重载后 override 自动打开该好友的聊天
             startActivity(com.luoyun.doutu.features.wei.WeiHomeActivity
                     .intentFor(this, com.luoyun.doutu.features.wei.WeiHomeActivity.ROUTE_HOME));
-            com.luoyun.doutu.features.wei.WeiHomeActivity.scheduleBridge(js, conversationRoute);
+            com.luoyun.doutu.features.wei.WeiHomeActivity.scheduleBridge(js, null);
             finish();
         });
         buttons.addView(cancel, new LinearLayout.LayoutParams(0, dp(56), 1f));
