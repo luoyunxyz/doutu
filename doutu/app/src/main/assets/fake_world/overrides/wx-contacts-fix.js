@@ -165,16 +165,30 @@
   function headerTitle() {
     try {
       var nodes = document.querySelectorAll('div,span');
+      var best = '';
       for (var i = 0; i < nodes.length; i++) {
         var el = nodes[i];
         if (el.children && el.children.length) continue;
         var r = el.getBoundingClientRect();
-        if (r.top > 120 || r.top < 0 || r.width < 10) continue;
+        if (r.top < 0 || r.top > 140 || r.width < 8) continue;
         var text = (el.textContent || '').trim();
-        if (text) return text;
+        if (!text || text === '微信') continue;
+        // 顶栏标题一般在水平中间区域
+        if (r.left > 90 && r.left < 300) return text;
+        if (!best) best = text;
       }
+      return best;
     } catch (e) { }
     return '';
+  }
+
+  function isGroupTitle(title) {
+    if (!title) return false;
+    if (/[(（]\s*\d+\s*[)）]/.test(title)) return true;
+    try {
+      var list = JSON.parse(localStorage.getItem('fw-group-names') || '[]');
+      return Array.isArray(list) && list.indexOf(title) >= 0;
+    } catch (e) { return false; }
   }
 
   document.addEventListener('click', function (e) {
@@ -184,7 +198,7 @@
       var r = el && el.getBoundingClientRect ? el.getBoundingClientRect() : null;
       if (!r || r.top > 120 || r.left < 300) return;
       // 只有群聊才接管：群标题形如「再歪一点(100)」，一对一聊天交给克隆自己处理
-      if (!/[(（]\s*\d+\s*[)）]\s*$/.test(headerTitle())) return;
+      if (!isGroupTitle(headerTitle())) return;
       var bridge = window.DoutuApp;
       if (bridge && bridge.openGroupSettings) {
         e.preventDefault();

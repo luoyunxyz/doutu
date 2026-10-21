@@ -79,7 +79,10 @@ public final class WxCreateGroupActivity extends Activity {
             final String fullName = members.isEmpty() ? groupName : groupName + "(" + members + ")";
             String safe = fullName.replace("\\", "\\\\").replace("'", "\\'");
             // 走克隆自己的落库路径，建完后回微信首页，聊天列表里就能看到这个群
-            String js = "window.__fwAddFriend && window.__fwAddFriend('" + safe + "','')";
+            String js = "try{var g=JSON.parse(localStorage.getItem('fw-group-names')||'[]');"
+                    + "if(g.indexOf('" + safe + "')<0)g.push('" + safe + "');"
+                    + "localStorage.setItem('fw-group-names',JSON.stringify(g));}catch(e){}"
+                    + "window.__fwAddFriend && window.__fwAddFriend('" + safe + "','')";
             startActivity(com.luoyun.doutu.features.wei.WeiHomeActivity
                     .intentFor(this, "#/wechat"));
             com.luoyun.doutu.features.wei.WeiHomeActivity.scheduleBridge(js, "#/wechat");
