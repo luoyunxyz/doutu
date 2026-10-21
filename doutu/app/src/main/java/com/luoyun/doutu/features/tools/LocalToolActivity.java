@@ -78,7 +78,7 @@ public final class LocalToolActivity extends Activity {
         tv.setGravity(Gravity.CENTER);
         bar.addView(tv, new LinearLayout.LayoutParams(0, dp(50), 1f));
         bar.addView(new View(this), new LinearLayout.LayoutParams(dp(88), dp(50)));
-        if (!("home".equals(key) || "contacts".equals(key) || "moments".equals(key) || "profile".equals(key) || "discover".equals(key) || "chat".equals(key) || "wallet".equals(key) || "transfer".equals(key) || "redpacket".equals(key) || "paysuccess".equals(key) || "pay".equals(key) || "billstats".equals(key) || "service".equals(key) || "favorites".equals(key) || "cards".equals(key) || "stickers".equals(key) || "redpackets".equals(key))) root.addView(bar);
+        if (!("home".equals(key) || "contacts".equals(key) || "moments".equals(key) || "profile".equals(key) || "discover".equals(key) || "chat".equals(key) || "wallet".equals(key) || "transfer".equals(key) || "redpacket".equals(key) || "paysuccess".equals(key) || "pay".equals(key) || "billstats".equals(key) || "service".equals(key) || "favorites".equals(key) || "cards".equals(key) || "stickers".equals(key) || "redpackets".equals(key) || "broadcast".equals(key))) root.addView(bar);
 
         ScrollView scroll = new ScrollView(this);
         content = new LinearLayout(this);
@@ -2185,30 +2185,87 @@ public final class LocalToolActivity extends Activity {
     }
 
     private void buildBroadcast() {
+        content.setBackgroundColor(0xffededed);
+        content.setPadding(0, 0, 0, 0);
         final List<String> selected = new ArrayList<>();
-        TextView head = new TextView(this);
-        head.setText("选择要群发的联系人和内容（本地）");
-        head.setTextSize(14);
-        head.setTextColor(0xff5b6070);
-        content.addView(head);
+
+        LinearLayout bar = new LinearLayout(this);
+        bar.setGravity(Gravity.CENTER_VERTICAL);
+        bar.setBackgroundColor(0xffededed);
+        ImageView back = assetIcon("ic_wx_chat_title_back", 21);
+        back.setOnClickListener(v -> finish());
+        bar.addView(back, new LinearLayout.LayoutParams(dp(43), dp(43)));
+        TextView title = new TextView(this);
+        title.setText("群发助手");
+        title.setTextSize(16);
+        title.setTextColor(0xff191919);
+        title.setGravity(Gravity.CENTER);
+        bar.addView(title, new LinearLayout.LayoutParams(0, dp(43), 1f));
+        bar.addView(new View(this), new LinearLayout.LayoutParams(dp(43), dp(43)));
+        content.addView(bar);
+
         if (contacts.isEmpty()) { contacts.add("文件传输助手"); contacts.add("本地好友"); }
+        LinearLayout card = new LinearLayout(this);
+        card.setOrientation(LinearLayout.VERTICAL);
+        card.setBackgroundColor(Color.WHITE);
+        content.addView(card);
+        TextView sec = new TextView(this);
+        sec.setText("选择联系人");
+        sec.setTextSize(12);
+        sec.setTextColor(0xff888888);
+        sec.setPadding(dp(15), dp(10), 0, dp(6));
+        card.addView(sec);
         for (String c : contacts) {
+            LinearLayout row = new LinearLayout(this);
+            row.setGravity(Gravity.CENTER_VERTICAL);
+            row.setPadding(dp(15), dp(8), dp(15), dp(8));
+            row.addView(assetIcon("ic_wx_default_image", 36), new LinearLayout.LayoutParams(dp(36), dp(36)));
+            TextView name = new TextView(this);
+            name.setText(c);
+            name.setTextSize(15);
+            name.setTextColor(0xff191919);
+            name.setPadding(dp(12), 0, 0, 0);
+            row.addView(name, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
             android.widget.CheckBox cb = new android.widget.CheckBox(this);
-            cb.setText(c);
-            cb.setTextSize(14);
             cb.setOnCheckedChangeListener((b, checked) -> {
                 if (checked) { if (!selected.contains(c)) selected.add(c); }
                 else selected.remove(c);
             });
-            content.addView(cb);
+            row.addView(cb, new LinearLayout.LayoutParams(dp(40), dp(40)));
+            card.addView(row);
+            View line = new View(this);
+            line.setBackgroundColor(0xffe5e5e5);
+            LinearLayout.LayoutParams llp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(1));
+            llp.leftMargin = dp(63);
+            card.addView(line, llp);
         }
+
+        LinearLayout msgCard = new LinearLayout(this);
+        msgCard.setBackgroundColor(Color.WHITE);
+        msgCard.setPadding(dp(15), dp(12), dp(15), dp(12));
+        LinearLayout.LayoutParams mlp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        mlp.topMargin = dp(8);
+        content.addView(msgCard, mlp);
         EditText msg = new EditText(this);
         msg.setHint("群发内容");
         msg.setTextSize(14);
-        content.addView(msg);
-        Button send = new Button(this);
-        send.setText("发送群发");
-        send.setAllCaps(false);
+        msg.setMinLines(2);
+        msgCard.addView(msg, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
+        TextView send = new TextView(this);
+        send.setText("发送");
+        send.setTextSize(16);
+        send.setTextColor(Color.WHITE);
+        send.setGravity(Gravity.CENTER);
+        android.graphics.drawable.GradientDrawable g = new android.graphics.drawable.GradientDrawable();
+        g.setColor(0xff07c160);
+        g.setCornerRadius(dp(4));
+        send.setBackground(g);
+        LinearLayout.LayoutParams slp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(46));
+        slp.leftMargin = dp(15);
+        slp.rightMargin = dp(15);
+        slp.topMargin = dp(16);
+        content.addView(send, slp);
         send.setOnClickListener(v -> {
             if (selected.isEmpty()) { toast("请选择联系人"); return; }
             String text = msg.getText().toString().trim();
@@ -2219,23 +2276,28 @@ public final class LocalToolActivity extends Activity {
             toast("群发完成（本地）");
             finish();
         });
-        content.addView(send, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(48)));
+
         List<String> log = split("broadcast");
         if (!log.isEmpty()) {
+            LinearLayout hist = new LinearLayout(this);
+            hist.setOrientation(LinearLayout.VERTICAL);
+            hist.setBackgroundColor(Color.WHITE);
+            hist.setPadding(dp(15), dp(10), dp(15), dp(10));
+            LinearLayout.LayoutParams hlp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            hlp.topMargin = dp(16);
+            content.addView(hist, hlp);
             TextView h = new TextView(this);
             h.setText("群发记录");
-            h.setTextSize(13);
-            h.setTextColor(0xff8b90a0);
-            h.setPadding(0, dp(14), 0, dp(6));
-            content.addView(h);
+            h.setTextSize(12);
+            h.setTextColor(0xff888888);
+            hist.addView(h);
             for (String l : log) {
                 TextView tv = new TextView(this);
                 tv.setText(l);
                 tv.setTextSize(13);
                 tv.setTextColor(0xff333333);
-                tv.setBackgroundColor(Color.WHITE);
-                tv.setPadding(dp(10), dp(8), dp(10), dp(8));
-                content.addView(tv);
+                tv.setPadding(0, dp(8), 0, dp(8));
+                hist.addView(tv);
             }
         }
     }
