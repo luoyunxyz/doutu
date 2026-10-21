@@ -165,7 +165,7 @@
       {
         "name": "通讯录",
         "icon": "contacts",
-        "action": "local:contacts"
+        "action": "alicontacts"
       },
       {
         "name": "我的",

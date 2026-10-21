@@ -1921,6 +1921,11 @@ static final class FeatureRow {
                     startActivity(new Intent(MainActivity.this,
                             com.luoyun.doutu.features.qq.QqTransferActivity.class).putExtra("ali", true));
                     break;
+                case "alicontacts":
+                    // 支付宝通讯录：顶部快捷入口 + 按字母分组的联系人。
+                    startActivity(new Intent(MainActivity.this,
+                            com.luoyun.doutu.features.ali.AliContactsActivity.class));
+                    break;
                 case "act:licai":
                     startActivity(com.luoyun.doutu.features.zhi.LicaiActivity.intentFor(MainActivity.this));
                     break;
