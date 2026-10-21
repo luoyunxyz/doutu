@@ -4811,3 +4811,23 @@ body.fw-keyboard-open .fw-native-composer-root > .fw-native-chat-feature-panel {
 .fw-accounts__card--add .fw-accounts__copy { top: 29.6px; }
 .fw-accounts__card--add .fw-accounts__name { color: #737373; }
 
+/* gzh dialog (tools page official-account entry) */
+.fw-gzh-mask{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.36);display:flex;align-items:center;justify-content:center}
+.fw-gzh-dialog{width:282px;background:#fff;border-radius:8px;padding:14px 0 0;box-sizing:border-box;color:#333}
+.fw-gzh-icons{display:flex;align-items:flex-start;justify-content:space-between;padding:0 26px;height:96px;box-sizing:border-box}
+.fw-gzh-col{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:11px;color:#333}
+.fw-gzh-col img{width:42px;height:42px;display:block}
+.fw-gzh-col .fw-gzh-photo{width:45px;height:45px}
+.fw-gzh-avatar{width:79px;height:79px;display:block}
+.fw-gzh-field{display:flex;align-items:center;margin:18px 30px 0;height:35px;box-sizing:border-box;border:1px solid #d9d9d9;border-radius:4px;padding:0 8px}
+.fw-gzh-field input{flex:1;min-width:0;border:0;outline:0;background:transparent;font-size:13px;color:#333}
+.fw-gzh-field input::placeholder{color:#999}
+.fw-gzh-clear{width:16px;height:16px;border:0;border-radius:50%;background:#c9c9c9;color:#fff;font-size:12px;line-height:16px;text-align:center;padding:0}
+.fw-gzh-row{display:flex;align-items:center;justify-content:space-between;margin:18px 30px 0;height:35px;box-sizing:border-box;border:1px solid #d9d9d9;border-radius:4px;padding:0 8px 0 10px;font-size:13px}
+.fw-gzh-switch{width:40px;height:24px;border-radius:12px;background:#ccc;position:relative;display:inline-block;flex:0 0 auto}
+.fw-gzh-switch i{position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:#fff;transition:left .15s}
+.fw-gzh-switch.is-on{background:#07c160}
+.fw-gzh-switch.is-on i{left:18px}
+.fw-gzh-actions{display:flex;margin-top:16px;border-top:1px solid #eee;height:48px}
+.fw-gzh-actions button{flex:1;border:0;background:none;font-size:16px;color:#333}
+.fw-gzh-actions button[data-cancel]{color:#888}

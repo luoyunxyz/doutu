@@ -83,7 +83,7 @@
       {
         "name": "公众号",
         "icon": "official",
-        "action": "local:official"
+        "action": "wechat:tool:gzh"
       },
       {
         "name": "发出的红包",

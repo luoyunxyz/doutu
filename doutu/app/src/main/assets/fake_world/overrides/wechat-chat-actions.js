@@ -2772,6 +2772,60 @@
       return true;
     } catch (_) { return false; }
   };
+
+  /**
+   * 工具页「公众号」：在微信主页上弹出真机那套新建公众号表单
+   * （常用图标 / 头像 / 从相册获取 / 名称 / 消息内容 / 三个开关 / 取消·确定）。
+   */
+  window.__fwOpenGzhDialog = function () {
+    try {
+      let mask = document.querySelector('.fw-gzh-mask');
+      if (mask) { mask.remove(); }
+      mask = document.createElement('div');
+      mask.className = 'fw-gzh-mask';
+      const field = (placeholder) => '<div class="fw-gzh-field"><input type="text" placeholder="' + placeholder + '">'
+        + '<button type="button" class="fw-gzh-clear" aria-label="清空">×</button></div>';
+      const row = (label) => '<div class="fw-gzh-row"><span>' + label + '</span>'
+        + '<i class="fw-gzh-switch" role="switch" aria-checked="false"><i></i></i></div>';
+      mask.innerHTML = '<section class="fw-gzh-dialog" role="dialog" aria-label="公众号">'
+        + '<div class="fw-gzh-icons">'
+        + '<div class="fw-gzh-col"><img src="./assets/gzh/gzh_star.png" alt=""><b>常用图标</b></div>'
+        + '<img class="fw-gzh-avatar" src="./assets/gzh/gzh_avatar.png" alt="">'
+        + '<div class="fw-gzh-col"><img class="fw-gzh-photo" src="./assets/gzh/gzh_photo.png" alt=""><b>从相册获取</b></div>'
+        + '</div>'
+        + field('名称：') + field('消息内容：')
+        + row('设为蓝色字体') + row('免打扰') + row('消息置顶')
+        + '<div class="fw-gzh-actions"><button type="button" data-cancel>取消</button><button type="button" data-ok>确定</button></div>'
+        + '</section>';
+      document.body.appendChild(mask);
+      mask.addEventListener('click', (event) => { if (event.target === mask) mask.remove(); });
+      mask.querySelectorAll('.fw-gzh-clear').forEach(btn => btn.onclick = () => {
+        const input = btn.parentElement.querySelector('input');
+        if (input) { input.value = ''; input.focus(); }
+      });
+      mask.querySelectorAll('.fw-gzh-switch').forEach(sw => sw.onclick = () => {
+        const on = !sw.classList.contains('is-on');
+        sw.classList.toggle('is-on', on);
+        sw.setAttribute('aria-checked', String(on));
+      });
+      mask.querySelector('[data-cancel]').onclick = () => mask.remove();
+      mask.querySelector('[data-ok]').onclick = () => {
+        const inputs = [...mask.querySelectorAll('input')];
+        const draft = {
+          name: inputs[0] ? inputs[0].value.trim() : '',
+          content: inputs[1] ? inputs[1].value.trim() : '',
+          blue: !!mask.querySelectorAll('.fw-gzh-switch')[0].classList.contains('is-on'),
+          muted: !!mask.querySelectorAll('.fw-gzh-switch')[1].classList.contains('is-on'),
+          pinned: !!mask.querySelectorAll('.fw-gzh-switch')[2].classList.contains('is-on'),
+          at: Date.now(),
+        };
+        try { localStorage.setItem('fw-gzh-draft', JSON.stringify(draft)); } catch (_) { /* ignore */ }
+        mask.remove();
+        showToast('公众号消息已生成');
+      };
+      return true;
+    } catch (_) { return false; }
+  };
   function installChatPayActions(){if(document.documentElement.dataset.fwChatPayActions)return;document.documentElement.dataset.fwChatPayActions='1';document.addEventListener('click',event=>{const action=event.target instanceof Element?event.target.closest('[data-action="红包"], [data-action="转账"]'):null;if(!action)return;event.preventDefault();event.stopPropagation();event.stopImmediatePropagation();const panel=action.closest('.fw-native-chat-feature-panel');if(panel)closeNativeFeaturePanel(panel);else action.closest('.fw-chat-feature-panel')?.classList.remove('is-open');mountChatPayScreen(action.dataset.action==='转账'?'transfer':'redpacket')},true)}
   function installGalleryAction(){if(document.documentElement.dataset.fwGalleryAction)return;document.documentElement.dataset.fwGalleryAction='1';document.addEventListener('click',event=>{const action=event.target instanceof Element?event.target.closest('[data-action="相册"]'):null;if(!action)return;event.preventDefault();event.stopPropagation();event.stopImmediatePropagation();const page=document.querySelector('.fw-local-conversation');let friend=null;if(page){friend=(Array.isArray(state.contacts)?state.contacts:[]).find(x=>String(x.id)===page.dataset.friendId)||null}const panel=action.closest('.fw-chat-feature-panel');if(panel?.classList.contains('fw-native-chat-feature-panel'))closeNativeFeaturePanel(panel);if(page){const localPanel=page.querySelector('.fw-chat-feature-panel');if(localPanel)setFeaturesFromGallery(localPanel)}openChatGallery(friend)},true)}
 

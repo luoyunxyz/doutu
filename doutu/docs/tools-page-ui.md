@@ -89,6 +89,19 @@ QQ 主页、团队相册、视频模块）。
 头像方块直接从真机截图裁出来（`assets/wx_icons/sentrp_avatar.png`），颜色也取自截图：
 页头 `#E36855`、灰底 `#EFEFEF`、年份金色 `#BEA475`、按钮蓝灰 `#58668C`。
 
+## 3.5 公众号（2026-10-21 第五轮）
+
+真机上「公众号」不是在本地页里做的，而是在微信主页上弹一张表单。现在豆图也一样：
+
+- 工具页「公众号」→ `WeiHomeActivity` + `tool:gzh` 路由；
+- 微信页里的 `window.__fwOpenGzhDialog()`（`wechat-chat-actions.js`）创建遮罩 +
+  表单：常用图标（星星）/ 头像占位 / 从相册获取、名称、消息内容、设为蓝色字体、
+  免打扰、消息置顶、取消 / 确定；
+- 三个图标直接从真机截图裁出（`assets/fake_world/assets/gzh/`），
+  样式在 `wechat-chat-actions.css`（`fw-gzh-*`）；
+- 开关可切换，取消关闭；确定会把字段存进 `localStorage["fw-gzh-draft"]` 并提示
+  「公众号消息已生成」。
+
 ## 4. 教程页
 
 `ToolsTutorialActivity` 也已经按真机重做：黄色标题栏 + 返回、六个页签
