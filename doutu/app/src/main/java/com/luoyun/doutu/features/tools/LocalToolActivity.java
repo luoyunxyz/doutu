@@ -78,7 +78,7 @@ public final class LocalToolActivity extends Activity {
         tv.setGravity(Gravity.CENTER);
         bar.addView(tv, new LinearLayout.LayoutParams(0, dp(50), 1f));
         bar.addView(new View(this), new LinearLayout.LayoutParams(dp(88), dp(50)));
-        if (!("home".equals(key) || "contacts".equals(key) || "moments".equals(key) || "profile".equals(key) || "discover".equals(key) || "chat".equals(key) || "wallet".equals(key) || "transfer".equals(key) || "redpacket".equals(key) || "paysuccess".equals(key) || "pay".equals(key) || "billstats".equals(key) || "service".equals(key) || "favorites".equals(key) || "cards".equals(key) || "stickers".equals(key))) root.addView(bar);
+        if (!("home".equals(key) || "contacts".equals(key) || "moments".equals(key) || "profile".equals(key) || "discover".equals(key) || "chat".equals(key) || "wallet".equals(key) || "transfer".equals(key) || "redpacket".equals(key) || "paysuccess".equals(key) || "pay".equals(key) || "billstats".equals(key) || "service".equals(key) || "favorites".equals(key) || "cards".equals(key) || "stickers".equals(key) || "redpackets".equals(key))) root.addView(bar);
 
         ScrollView scroll = new ScrollView(this);
         content = new LinearLayout(this);
@@ -1745,10 +1745,104 @@ public final class LocalToolActivity extends Activity {
     }
 
     private void buildRedPackets() {
-        List<String> red = new ArrayList<>();
-        for (String b : bills) if (b.contains("红包")) red.add(b);
-        if (red.isEmpty()) red.add("还没有发出红包");
-        buildInfo("已发红包", red.toArray(new String[0]));
+        content.setBackgroundColor(Color.WHITE);
+        content.setPadding(0, 0, 0, 0);
+
+        LinearLayout bar = new LinearLayout(this);
+        bar.setGravity(Gravity.CENTER_VERTICAL);
+        bar.setBackgroundColor(0xfff55e4d);
+        ImageView back = assetIcon("ic_wx_chat_title_back", 21);
+        back.setColorFilter(Color.WHITE);
+        back.setOnClickListener(v -> finish());
+        bar.addView(back, new LinearLayout.LayoutParams(dp(43), dp(43)));
+        TextView title = new TextView(this);
+        title.setText("发出的红包");
+        title.setTextSize(15);
+        title.setTextColor(0xffffe2b1);
+        title.setGravity(Gravity.CENTER);
+        bar.addView(title, new LinearLayout.LayoutParams(0, dp(43), 1f));
+        bar.addView(new View(this), new LinearLayout.LayoutParams(dp(43), dp(43)));
+        content.addView(bar);
+
+        List<String> reds = new ArrayList<>();
+        double total = 0;
+        for (String b : bills) {
+            if (b.contains("红包")) {
+                reds.add(b);
+                int i = b.indexOf("-¥");
+                if (i >= 0) {
+                    int j = i + 2;
+                    while (j < b.length() && (Character.isDigit(b.charAt(j)) || b.charAt(j) == '.')) j++;
+                    try { total += Double.parseDouble(b.substring(i + 2, j)); } catch (Exception ignored) { }
+                }
+            }
+        }
+
+        LinearLayout sum = new LinearLayout(this);
+        sum.setOrientation(LinearLayout.VERTICAL);
+        sum.setGravity(Gravity.CENTER);
+        sum.setBackgroundColor(0xffefefef);
+        sum.setPadding(0, dp(24), 0, dp(24));
+        sum.addView(assetIcon("ic_wx_default_image", 72), new LinearLayout.LayoutParams(dp(72), dp(72)));
+        TextView name = new TextView(this);
+        name.setText("本地用户");
+        name.setTextSize(15);
+        name.setTextColor(0xff181818);
+        name.setPadding(0, dp(12), 0, 0);
+        sum.addView(name);
+        TextView money = new TextView(this);
+        money.setText(String.format("%.2f", total));
+        money.setTextSize(54);
+        money.setTextColor(0xff181818);
+        sum.addView(money);
+        TextView count = new TextView(this);
+        count.setText("发出红包总数 " + reds.size() + " 个");
+        count.setTextSize(15);
+        count.setTextColor(0xff979797);
+        count.setPadding(0, dp(10), 0, 0);
+        sum.addView(count);
+        content.addView(sum);
+
+        if (reds.isEmpty()) {
+            TextView empty = new TextView(this);
+            empty.setText("还没有发出红包\n\n在「红包」页发一个试试");
+            empty.setTextSize(14);
+            empty.setTextColor(0xff999999);
+            empty.setGravity(Gravity.CENTER);
+            empty.setPadding(dp(20), dp(50), dp(20), dp(20));
+            content.addView(empty);
+        } else {
+            for (String r : reds) {
+                LinearLayout row = new LinearLayout(this);
+                row.setGravity(Gravity.CENTER_VERTICAL);
+                row.setBackgroundColor(Color.WHITE);
+                row.setPadding(dp(14), dp(12), dp(14), dp(12));
+                LinearLayout texts = new LinearLayout(this);
+                texts.setOrientation(LinearLayout.VERTICAL);
+                TextView type = new TextView(this);
+                type.setText("本地红包");
+                type.setTextSize(15);
+                type.setTextColor(0xff191919);
+                texts.addView(type);
+                TextView time = new TextView(this);
+                time.setText("刚刚");
+                time.setTextSize(12.5f);
+                time.setTextColor(0xff979797);
+                time.setPadding(0, dp(3), 0, 0);
+                texts.addView(time);
+                row.addView(texts, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+                TextView amount = new TextView(this);
+                int i = r.indexOf("-¥");
+                amount.setText(i >= 0 ? r.substring(i + 2) : "");
+                amount.setTextSize(15);
+                amount.setTextColor(0xff191919);
+                row.addView(amount);
+                content.addView(row);
+                View line = new View(this);
+                line.setBackgroundColor(0xffe5e5e5);
+                content.addView(line, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(1)));
+            }
+        }
     }
 
     private void buildSuccess() {
