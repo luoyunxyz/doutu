@@ -36,6 +36,7 @@ public final class WxGroupSettingsActivity extends Activity {
     private LinearLayout memberRow;
     private LinearLayout countRow;
     private LinearLayout nameRow;
+    private String groupId;
     private String groupName = "再歪一点";
     private int displayCount = 100;
 
@@ -85,7 +86,19 @@ public final class WxGroupSettingsActivity extends Activity {
         FrameLayout.LayoutParams dlp = new FrameLayout.LayoutParams(dp(58), dp(30));
         dlp.gravity = Gravity.END | Gravity.CENTER_VERTICAL;
         dlp.rightMargin = dp(12);
-        done.setOnClickListener(v -> finish());
+        done.setOnClickListener(v -> {
+            GroupStore.Group group = GroupStore.get(this, groupId);
+            if (group == null) {
+                group = new GroupStore.Group();
+                group.id = groupId == null ? ("g" + System.currentTimeMillis()) : groupId;
+            }
+            group.name = groupName;
+            group.count = displayCount;
+            group.members.clear();
+            group.members.addAll(members);
+            GroupStore.save(this, group);
+            finish();
+        });
         bar.addView(done, dlp);
         root.addView(bar);
 
@@ -104,6 +117,13 @@ public final class WxGroupSettingsActivity extends Activity {
         card.addView(memberRow);
         body.addView(card);
 
+        groupId = getIntent().getStringExtra("groupId");
+        GroupStore.Group saved = GroupStore.get(this, groupId);
+        if (saved != null) {
+            groupName = saved.name;
+            displayCount = saved.count;
+            members.addAll(saved.members);
+        }
         renderMembers();
 
         body.addView(row("查看真实成员图", "›"));
@@ -136,6 +156,7 @@ public final class WxGroupSettingsActivity extends Activity {
         memberRow.addView(memberCell("微笑似…", true));
         memberRow.addView(actionCell("📇", "通讯录", v -> pickContacts()));
         memberRow.addView(actionCell("👤+", "自动获取", v -> autoGenerate()));
+        for (String m : members) memberRow.addView(memberCell(m, false));
         // 「删除成员」按钮已按需求去掉；删除方式改为长按成员头像
     }
 

@@ -349,6 +349,10 @@
             android:screenOrientation="portrait"
             android:exported="false" />
         <activity
+            android:name=".features.wx.WxGroupChatActivity"
+            android:screenOrientation="portrait"
+            android:exported="false" />
+        <activity
             android:name=".features.wx.WxChatGreetingActivity"
             android:screenOrientation="portrait"
             android:exported="false" />

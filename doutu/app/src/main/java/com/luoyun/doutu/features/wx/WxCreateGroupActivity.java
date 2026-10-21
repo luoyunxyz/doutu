@@ -76,17 +76,15 @@ public final class WxCreateGroupActivity extends Activity {
             String groupName = name.getText().toString().trim();
             if (groupName.isEmpty()) groupName = "再歪一点";
             String members = count.getText().toString().trim();
-            final String fullName = members.isEmpty() ? groupName : groupName + "(" + members + ")";
-            String safe = fullName.replace("\\", "\\\\").replace("'", "\\'");
-            // 走克隆自己的落库路径，建完后回微信首页，聊天列表里就能看到这个群
-            String js = "try{var g=JSON.parse(localStorage.getItem('fw-group-names')||'[]');"
-                    + "if(g.indexOf('" + safe + "')<0)g.push('" + safe + "');"
-                    + "localStorage.setItem('fw-group-names',JSON.stringify(g));}catch(e){}"
-                    + "window.__fwAddFriend && window.__fwAddFriend('" + safe + "','')";
-            startActivity(com.luoyun.doutu.features.wei.WeiHomeActivity
-                    .intentFor(this, "#/wechat"));
-            com.luoyun.doutu.features.wei.WeiHomeActivity.scheduleBridge(js, "#/wechat");
-            android.widget.Toast.makeText(this, "已创建群聊：" + fullName, android.widget.Toast.LENGTH_SHORT).show();
+            int people = 100;
+            try { people = Integer.parseInt(members); } catch (Exception ignored) { }
+            GroupStore.Group group = new GroupStore.Group();
+            group.id = "g" + System.currentTimeMillis();
+            group.name = groupName;
+            group.count = people;
+            GroupStore.save(this, group);
+            startActivity(new android.content.Intent(this, WxGroupChatActivity.class)
+                    .putExtra("groupId", group.id));
             finish();
         });
         buttons.addView(cancel, new LinearLayout.LayoutParams(0, dp(56), 1f));
