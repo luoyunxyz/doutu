@@ -178,7 +178,7 @@ public final class LocalToolActivity extends Activity {
         recharge.setOnClickListener(v -> {
             try {
                 double bal = Double.parseDouble(getBalance()) + 100;
-                getSharedPreferences(PREFS, 0).edit().putString("balance", String.format("%.2f", bal)).apply();
+                getSharedPreferences(PREFS, 0).edit().putString("balance", String.format("%.2f", newBal)).apply();
                 bills.add(0, "充值 +¥100.00");
                 saveList("bills", bills);
                 card.setText("本机零钱\n¥ " + getBalance());
@@ -248,7 +248,7 @@ public final class LocalToolActivity extends Activity {
                 double v2 = Double.parseDouble(a);
                 double bal = Double.parseDouble(getBalance());
                 bal -= v2;
-                getSharedPreferences(PREFS, 0).edit().putString("balance", String.format("%.2f", bal)).apply();
+                getSharedPreferences(PREFS, 0).edit().putString("balance", String.format("%.2f", newBal)).apply();
                 bills.add(0, (red ? "红包 -¥" : "转账 -¥") + String.format("%.2f", v2) + "  " + name.getText().toString().trim());
                 saveList("bills", bills);
                 toast(red ? "红包已发出（本地）" : "转账成功（本地）");
@@ -579,8 +579,8 @@ public final class LocalToolActivity extends Activity {
         receive.setAllCaps(false);
         receive.setOnClickListener(v -> {
             try {
-                double bal = Double.parseDouble(getBalance()) + 50;
-                getSharedPreferences(PREFS, 0).edit().putString("balance", String.format("%.2f", bal)).apply();
+                double newBal = Double.parseDouble(getBalance()) + 50;
+                getSharedPreferences(PREFS, 0).edit().putString("balance", String.format("%.2f", newBal)).apply();
                 bills.add(0, "收款 +¥50.00");
                 saveList("bills", bills);
                 bal.setText("当前零钱：¥ " + getBalance());
