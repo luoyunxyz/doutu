@@ -840,43 +840,115 @@ public final class LocalToolActivity extends Activity {
     }
 
     private void buildMoments() {
-        EditText post = new EditText(this);
-        post.setHint("这一刻的想法…");
-        post.setTextSize(14);
-        content.addView(post);
-        Button send = new Button(this);
-        send.setText("发表");
-        send.setAllCaps(false);
-        send.setOnClickListener(v -> {
-            String t = post.getText().toString().trim();
-            if (t.isEmpty()) return;
-            moments.add(0, t);
-            saveList("moments", moments);
-            post.setText("");
-            renderMoments();
-        });
-        content.addView(send, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(46)));
-        momentList = new LinearLayout(this);
-        momentList.setOrientation(LinearLayout.VERTICAL);
-        content.addView(momentList);
-        renderMoments();
-    }
+        content.setBackgroundColor(0xfff7f7f7);
+        content.setPadding(0, 0, 0, 0);
 
-    private void renderMoments() {
-        if (momentList == null) return;
-        momentList.removeAllViews();
-        if (moments.isEmpty()) moments.add("本地朋友圈：发一条只保存在本机的动态。");
-        for (String m : moments) {
-            TextView tv = new TextView(this);
-            tv.setText(m);
-            tv.setTextSize(14);
-            tv.setTextColor(0xff1d1f26);
-            tv.setBackgroundColor(Color.WHITE);
-            tv.setPadding(dp(14), dp(14), dp(14), dp(14));
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            lp.bottomMargin = dp(8);
-            momentList.addView(tv, lp);
+        LinearLayout bar = new LinearLayout(this);
+        bar.setGravity(Gravity.CENTER_VERTICAL);
+        bar.setBackgroundColor(0xffededed);
+        ImageView back = assetIcon("ic_wx_chat_title_back", 21);
+        back.setOnClickListener(v -> finish());
+        bar.addView(back, new LinearLayout.LayoutParams(dp(43), dp(43)));
+        TextView title = new TextView(this);
+        title.setText("朋友圈");
+        title.setTextSize(16);
+        title.setTextColor(0xff191919);
+        title.setGravity(Gravity.CENTER);
+        bar.addView(title, new LinearLayout.LayoutParams(0, dp(43), 1f));
+        TextView cam = new TextView(this);
+        cam.setText("📷");
+        cam.setTextSize(20);
+        cam.setGravity(Gravity.CENTER);
+        bar.addView(cam, new LinearLayout.LayoutParams(dp(43), dp(43)));
+        content.addView(bar);
+
+        LinearLayout cover = new LinearLayout(this);
+        cover.setBackgroundColor(0xff3b3b3b);
+        cover.setGravity(Gravity.BOTTOM | Gravity.END);
+        cover.setPadding(0, 0, dp(14), dp(12));
+        cover.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(210)));
+        LinearLayout who = new LinearLayout(this);
+        who.setGravity(Gravity.CENTER_VERTICAL);
+        TextView name = new TextView(this);
+        name.setText("本地用户");
+        name.setTextSize(16);
+        name.setTextColor(Color.WHITE);
+        who.addView(name);
+        ImageView av = assetIcon("ic_wx_default_image", 56);
+        LinearLayout.LayoutParams alp = new LinearLayout.LayoutParams(dp(56), dp(56));
+        alp.leftMargin = dp(10);
+        who.addView(av, alp);
+        cover.addView(who);
+        content.addView(cover);
+
+        LinearLayout list = new LinearLayout(this);
+        list.setOrientation(LinearLayout.VERTICAL);
+        content.addView(list);
+
+        if (moments.isEmpty()) {
+            TextView empty = new TextView(this);
+            empty.setText("还没有朋友圈内容\n\n点击右上角相机发布一条");
+            empty.setTextSize(14);
+            empty.setTextColor(0xff999999);
+            empty.setGravity(Gravity.CENTER);
+            empty.setPadding(dp(20), dp(60), dp(20), dp(20));
+            list.addView(empty);
         }
+        for (String m : moments) {
+            LinearLayout post = new LinearLayout(this);
+            post.setBackgroundColor(Color.WHITE);
+            post.setPadding(dp(11), dp(11), dp(11), dp(11));
+            ImageView pav = assetIcon("ic_wx_default_image", 36);
+            post.addView(pav, new LinearLayout.LayoutParams(dp(36), dp(36)));
+            LinearLayout body = new LinearLayout(this);
+            body.setOrientation(LinearLayout.VERTICAL);
+            body.setPadding(dp(8), 0, 0, 0);
+            TextView pname = new TextView(this);
+            pname.setText("本地用户");
+            pname.setTextSize(16);
+            pname.setTextColor(0xff586b95);
+            body.addView(pname);
+            TextView text = new TextView(this);
+            text.setText(m);
+            text.setTextSize(15);
+            text.setTextColor(0xff191919);
+            text.setPadding(0, dp(5), 0, 0);
+            body.addView(text);
+            TextView time = new TextView(this);
+            time.setText("刚刚");
+            time.setTextSize(10);
+            time.setTextColor(0xff808080);
+            time.setPadding(0, dp(10), 0, 0);
+            body.addView(time);
+            post.addView(body, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+            final String mm = m;
+            post.setOnLongClickListener(v -> {
+                new AlertDialog.Builder(this).setItems(new String[]{"删除这条朋友圈"}, (d, w) -> {
+                    moments.remove(mm);
+                    saveList("moments", moments);
+                    recreate();
+                }).show();
+                return true;
+            });
+            LinearLayout.LayoutParams plp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            plp.topMargin = dp(8);
+            list.addView(post, plp);
+        }
+
+        cam.setOnClickListener(v -> {
+            EditText input = new EditText(this);
+            input.setHint("这一刻的想法…");
+            new AlertDialog.Builder(this).setTitle("发表朋友圈").setView(input)
+                    .setNegativeButton("取消", null)
+                    .setPositiveButton("发表", (d, w) -> {
+                        String t = input.getText().toString().trim();
+                        if (!t.isEmpty()) {
+                            moments.add(0, t);
+                            saveList("moments", moments);
+                            recreate();
+                        }
+                    }).show();
+        });
     }
 
     private void buildAlbum() {
