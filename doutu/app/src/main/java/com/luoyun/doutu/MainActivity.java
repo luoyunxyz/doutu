@@ -1905,6 +1905,13 @@ static final class FeatureRow {
                     overridePendingTransition(0, 0);
                     return;
                 }
+                // 零钱明细：真机是「× / 零钱明细 / 2019年6月 ⌄ / 空列表」，不是完整账单页
+                if ("#/wechat/wallet/bills".equals(route)) {
+                    startActivity(new Intent(MainActivity.this,
+                            com.luoyun.doutu.features.wx.WxChangeDetailActivity.class));
+                    overridePendingTransition(0, 0);
+                    return;
+                }
                 // 微信收款助手：真机是「个人收款服务」消息卡 + 个人收款/经营收款/更多
                 if ("#/wechat/service".equals(route)) {
                     startActivity(new Intent(MainActivity.this,
