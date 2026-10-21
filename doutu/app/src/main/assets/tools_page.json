@@ -42,7 +42,7 @@
       {
         "name": "发现",
         "icon": "moments",
-        "action": "wechat:#/wechat/moments"
+        "action": "wechat"
       },
       {
         "name": "钱包",

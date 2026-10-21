@@ -1905,6 +1905,13 @@ static final class FeatureRow {
                     overridePendingTransition(0, 0);
                     return;
                 }
+                // 零钱提现：真机是「到账银行卡 + 提现金额 + 键盘」的提现页
+                if ("#/wechat/wallet/withdraw".equals(route)) {
+                    startActivity(new Intent(MainActivity.this,
+                            com.luoyun.doutu.features.wx.WxWithdrawActivity.class));
+                    overridePendingTransition(0, 0);
+                    return;
+                }
                 // 创建群聊：真机进入群聊页并弹出「切换发送者的 3 种方法」教程浮层
                 if ("feature:group-chat".equals(route)) {
                     startActivity(new Intent(MainActivity.this,
