@@ -78,7 +78,7 @@ public final class LocalToolActivity extends Activity {
         tv.setGravity(Gravity.CENTER);
         bar.addView(tv, new LinearLayout.LayoutParams(0, dp(50), 1f));
         bar.addView(new View(this), new LinearLayout.LayoutParams(dp(88), dp(50)));
-        if (!("home".equals(key) || "contacts".equals(key) || "moments".equals(key) || "profile".equals(key) || "discover".equals(key) || "chat".equals(key) || "wallet".equals(key) || "transfer".equals(key) || "redpacket".equals(key) || "paysuccess".equals(key) || "pay".equals(key) || "billstats".equals(key) || "service".equals(key) || "favorites".equals(key) || "cards".equals(key) || "stickers".equals(key) || "redpackets".equals(key) || "broadcast".equals(key) || "payee".equals(key))) root.addView(bar);
+        if (!("home".equals(key) || "contacts".equals(key) || "moments".equals(key) || "profile".equals(key) || "discover".equals(key) || "chat".equals(key) || "wallet".equals(key) || "transfer".equals(key) || "redpacket".equals(key) || "paysuccess".equals(key) || "pay".equals(key) || "billstats".equals(key) || "service".equals(key) || "favorites".equals(key) || "cards".equals(key) || "stickers".equals(key) || "redpackets".equals(key) || "broadcast".equals(key) || "payee".equals(key) || "walletdetail".equals(key) || "newfriends".equals(key))) root.addView(bar);
 
         ScrollView scroll = new ScrollView(this);
         content = new LinearLayout(this);
@@ -99,6 +99,8 @@ public final class LocalToolActivity extends Activity {
         else if ("profile".equals(key)) buildProfile();
         else if ("chat".equals(key)) buildChat();
         else if ("wallet".equals(key)) buildWallet();
+        else if ("walletdetail".equals(key)) buildWalletDetail();
+        else if ("newfriends".equals(key)) buildNewFriends();
         else if ("payee".equals(key)) buildPayee();
         else if ("favorites".equals(key)) buildFavorites();
         else if ("cards".equals(key)) buildCards();
@@ -621,7 +623,7 @@ public final class LocalToolActivity extends Activity {
         LinearLayout left = new LinearLayout(this);
         left.setOrientation(LinearLayout.VERTICAL);
 
-        left.addView(contactFeatureRow("ic_wx_contact_new_friend", "新的朋友", "contacts", "新的朋友"));
+        left.addView(contactFeatureRow("ic_wx_contact_new_friend", "新的朋友", "newfriends", "新的朋友"));
         left.addView(contactFeatureRow("ic_wx_contact_group_chat", "群聊", "chats", "群聊"));
         left.addView(contactFeatureRow("ic_wx_contact_label", "标签", "articles", "标签"));
         left.addView(contactFeatureRow("ic_wx_contact_public_number", "公众号", "articles", "公众号"));
@@ -1454,6 +1456,139 @@ public final class LocalToolActivity extends Activity {
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, dp(64), 1f);
             lp.setMargins(dp(4), dp(4), dp(4), dp(4));
             row.addView(tv, lp);
+        }
+    }
+
+    private void buildNewFriends() {
+        content.setBackgroundColor(0xfff5f5f8);
+        content.setPadding(0, 0, 0, 0);
+
+        LinearLayout bar = new LinearLayout(this);
+        bar.setGravity(Gravity.CENTER_VERTICAL);
+        bar.setBackgroundColor(0xffededed);
+        ImageView back = assetIcon("ic_wx_chat_title_back", 21);
+        back.setOnClickListener(v -> finish());
+        bar.addView(back, new LinearLayout.LayoutParams(dp(43), dp(43)));
+        TextView title = new TextView(this);
+        title.setText("新的朋友");
+        title.setTextSize(16);
+        title.setTextColor(0xff2b2b2b);
+        title.setGravity(Gravity.CENTER);
+        bar.addView(title, new LinearLayout.LayoutParams(0, dp(43), 1f));
+        bar.addView(new View(this), new LinearLayout.LayoutParams(dp(43), dp(43)));
+        content.addView(bar);
+
+        EditText search = new EditText(this);
+        search.setHint("搜索手机号 / 微信号");
+        search.setTextSize(14);
+        search.setSingleLine(true);
+        LinearLayout.LayoutParams slp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(44));
+        slp.leftMargin = dp(10);
+        slp.rightMargin = dp(10);
+        slp.topMargin = dp(10);
+        content.addView(search, slp);
+
+        LinearLayout addRow = new LinearLayout(this);
+        addRow.setGravity(Gravity.CENTER_VERTICAL);
+        addRow.setBackgroundColor(Color.WHITE);
+        addRow.setPadding(dp(14), dp(12), dp(14), dp(12));
+        addRow.addView(assetIcon("ic_wx_contact_new_friend", 36), new LinearLayout.LayoutParams(dp(36), dp(36)));
+        TextView addTv = new TextView(this);
+        addTv.setText("添加朋友");
+        addTv.setTextSize(15.45f);
+        addTv.setTextColor(0xff303030);
+        addTv.setPadding(dp(14), 0, 0, 0);
+        addRow.addView(addTv, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        content.addView(addRow);
+        addRow.setOnClickListener(v -> toast("本地添加朋友"));
+
+        List<String> reqs = split("friend_requests");
+        if (reqs.isEmpty()) {
+            TextView empty = new TextView(this);
+            empty.setText("暂无新的朋友\n\n可通过手机号或微信号添加");
+            empty.setTextSize(14);
+            empty.setTextColor(0xff999999);
+            empty.setGravity(Gravity.CENTER);
+            empty.setPadding(dp(20), dp(60), dp(20), dp(20));
+            content.addView(empty);
+        } else {
+            for (String r : reqs) {
+                LinearLayout row = new LinearLayout(this);
+                row.setGravity(Gravity.CENTER_VERTICAL);
+                row.setBackgroundColor(Color.WHITE);
+                row.setPadding(dp(14), dp(10), dp(14), dp(10));
+                row.addView(assetIcon("ic_wx_default_image", 40), new LinearLayout.LayoutParams(dp(40), dp(40)));
+                TextView name = new TextView(this);
+                name.setText(r);
+                name.setTextSize(15);
+                name.setTextColor(0xff191919);
+                name.setPadding(dp(12), 0, 0, 0);
+                row.addView(name, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+                TextView ok = new TextView(this);
+                ok.setText("接受");
+                ok.setTextSize(13);
+                ok.setTextColor(Color.WHITE);
+                ok.setGravity(Gravity.CENTER);
+                android.graphics.drawable.GradientDrawable g = new android.graphics.drawable.GradientDrawable();
+                g.setColor(0xff07c160);
+                g.setCornerRadius(dp(3));
+                ok.setBackground(g);
+                row.addView(ok, new LinearLayout.LayoutParams(dp(54), dp(28)));
+                content.addView(row);
+            }
+        }
+    }
+
+    private void buildWalletDetail() {
+        content.setBackgroundColor(0xffededed);
+        content.setPadding(0, 0, 0, 0);
+
+        LinearLayout bar = new LinearLayout(this);
+        bar.setGravity(Gravity.CENTER_VERTICAL);
+        bar.setBackgroundColor(0xffededed);
+        ImageView back = assetIcon("ic_wx_chat_title_back", 21);
+        back.setOnClickListener(v -> finish());
+        bar.addView(back, new LinearLayout.LayoutParams(dp(43), dp(43)));
+        TextView title = new TextView(this);
+        title.setText("零钱明细");
+        title.setTextSize(16);
+        title.setTextColor(0xff191919);
+        title.setGravity(Gravity.CENTER);
+        bar.addView(title, new LinearLayout.LayoutParams(0, dp(43), 1f));
+        bar.addView(new View(this), new LinearLayout.LayoutParams(dp(43), dp(43)));
+        content.addView(bar);
+
+        LinearLayout card = new LinearLayout(this);
+        card.setOrientation(LinearLayout.VERTICAL);
+        card.setBackgroundColor(Color.WHITE);
+        LinearLayout.LayoutParams clp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        clp.topMargin = dp(8);
+        content.addView(card, clp);
+        if (bills.isEmpty()) {
+            TextView empty = new TextView(this);
+            empty.setText("暂无零钱明细");
+            empty.setTextSize(14);
+            empty.setTextColor(0xff999999);
+            empty.setGravity(Gravity.CENTER);
+            empty.setPadding(0, dp(40), 0, dp(40));
+            card.addView(empty);
+        } else {
+            for (String b : bills) {
+                LinearLayout row = new LinearLayout(this);
+                row.setGravity(Gravity.CENTER_VERTICAL);
+                row.setPadding(dp(15), dp(14), dp(15), dp(14));
+                TextView tv = new TextView(this);
+                tv.setText(b);
+                tv.setTextSize(14);
+                tv.setTextColor(0xff191919);
+                row.addView(tv, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+                card.addView(row);
+                View line = new View(this);
+                line.setBackgroundColor(0xffe5e5e5);
+                LinearLayout.LayoutParams llp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(1));
+                llp.leftMargin = dp(15);
+                card.addView(line, llp);
+            }
         }
     }
 
