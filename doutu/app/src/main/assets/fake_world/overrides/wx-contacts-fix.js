@@ -20,6 +20,17 @@
     return null;
   }
 
+  function leafContaining(text) {
+    var nodes = document.querySelectorAll('body *');
+    for (var i = 0; i < nodes.length; i++) {
+      var el = nodes[i];
+      if (el.children && el.children.length) continue;
+      if (el.getBoundingClientRect().height < 1) continue;
+      if (norm(el.textContent).indexOf(text) >= 0) return el;
+    }
+    return null;
+  }
+
   function injectStyle() {
     if (document.getElementById('fw-contacts-style')) return;
     var style = document.createElement('style');
@@ -58,12 +69,48 @@
     topbar.appendChild(btn);
   }
 
+  /** 真机在功能行之后还有「我的企业及企业联系人 → 企业微信联系人」分组。 */
+  function addCompanyGroup() {
+    if (document.getElementById('fw-contacts-company')) return;
+    var anchorLeaf = leafWith('公众号') || leafContaining('公众号');
+    if (!anchorLeaf) return;
+    var host = anchorLeaf;
+    for (var i = 0; i < 5 && host; i++) {
+      if (host.offsetHeight >= 40) break;
+      host = host.parentElement;
+    }
+    if (!host) return;
+    var box = document.createElement('div');
+    box.id = 'fw-contacts-company';
+    box.style.cssText = 'background:#fff;';
+    box.innerHTML = '<div style="padding:7px 16px;font-size:12px;color:#888;background:#f7f7f7;">'
+      + '我的企业及企业联系人</div>'
+      + '<div style="display:flex;align-items:center;padding:11px 16px;border-bottom:1px solid #eee;">'
+      + '<span style="width:40px;height:40px;border-radius:6px;background:#2f7ff5;color:#fff;'
+      + 'display:flex;align-items:center;justify-content:center;font-size:20px;">💬</span>'
+      + '<span style="flex:1;margin-left:12px;font-size:16px;color:#111;">企业微信联系人</span>'
+      + '<span style="color:#bbb;font-size:16px;">›</span></div>';
+    // 找到纵向排列的行容器，把分组插在「公众号」这一行之后
+    var node = host;
+    for (var k = 0; k < 6 && node; k++) {
+      var parent = node.parentElement;
+      if (!parent) break;
+      if (getComputedStyle(parent).flexDirection === 'column' && parent.children.length >= 3) {
+        parent.insertBefore(box, node.nextSibling);
+        return;
+      }
+      node = parent;
+    }
+    host.insertAdjacentElement('afterend', box);
+  }
+
   function polish() {
     if (norm(document.body && document.body.innerText).indexOf('通讯录') < 0) return;
     if (!document.querySelector('.wechat-topbar')) return;
     injectStyle();
     hideRow('仅聊天的朋友');
     addPlus();
+    addCompanyGroup();
   }
 
   setInterval(polish, 500);
