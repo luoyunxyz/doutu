@@ -75,11 +75,6 @@
         "action": "mass"
       },
       {
-        "name": "替换头像",
-        "icon": "replace",
-        "action": "tool:avatar"
-      },
-      {
         "name": "公众号",
         "icon": "official",
         "action": "wechat:tool:gzh"

@@ -1623,16 +1623,7 @@ static final class FeatureRow {
         private void buildToolsLayout() {
             toolSections.clear();
             float y = TOOL_BAR_H;
-            // 顶部「替换头像」：单独一行，后面没有网格
-            ToolSection replace = new ToolSection();
-            replace.replaceRow = true;
-            replace.title = "替换头像";
-            replace.icon = "h_replace";
-            replace.action = "tool:avatar";
-            replace.top = y;
-            replace.height = TOOL_ROW_H;
-            toolSections.add(replace);
-            y += TOOL_ROW_H + 1.5f;
+            // 「替换头像」已按用户要求下线，不再生成顶部入口
             try (java.io.InputStream in = getContext().getAssets().open("tools_page.json")) {
                 java.io.ByteArrayOutputStream bos = new java.io.ByteArrayOutputStream();
                 byte[] buf = new byte[4096];
