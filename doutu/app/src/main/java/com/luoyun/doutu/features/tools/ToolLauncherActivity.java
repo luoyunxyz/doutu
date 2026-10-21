@@ -81,6 +81,13 @@ public final class ToolLauncherActivity extends Activity {
             intent = new Intent(this, com.luoyun.doutu.features.ali.AliBalanceActivity.class);
         } else if ("aliwithdraw".equals(key)) {
             intent = new Intent(this, com.luoyun.doutu.features.ali.AliWithdrawActivity.class);
+        } else if ("avataradjust".equals(key)) {
+            // 测试用：直接进「替换头像」选框页（用内置示例图当底图）
+            try (java.io.InputStream in = getAssets().open("video_icons/avatar.png")) {
+                com.luoyun.doutu.features.tools.AvatarAdjustActivity.source =
+                        android.graphics.BitmapFactory.decodeStream(in);
+            } catch (Exception ignored) { }
+            intent = new Intent(this, com.luoyun.doutu.features.tools.AvatarAdjustActivity.class);
         } else if ("alimine".equals(key)) {
             intent = new Intent(this, com.luoyun.doutu.features.ali.AliMineActivity.class);
         } else if ("alired".equals(key)) {

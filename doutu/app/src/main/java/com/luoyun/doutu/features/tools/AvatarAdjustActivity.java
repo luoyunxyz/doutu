@@ -286,15 +286,24 @@ public final class AvatarAdjustActivity extends Activity {
             resetBox();
         }
 
+        private boolean boxReady;
+
         void resetBox() {
             // 头像框固定为正方形：边长取图片短边的 55%，居中摆放
-            RectF base = img.isEmpty()
-                    ? new RectF(0, 0, Math.max(1, getWidth()), Math.max(1, getHeight()))
-                    : new RectF(img);
+            RectF base;
+            if (!img.isEmpty()) {
+                base = new RectF(img);
+            } else if (getWidth() > 0 && getHeight() > 0) {
+                base = new RectF(0, 0, getWidth(), getHeight());
+            } else {
+                boxReady = false;   // 还没有尺寸，等 onDraw 里图片铺好后重算
+                return;
+            }
             float side = Math.min(base.width(), base.height()) * 0.55f;
             if (side < 1f) side = Math.min(base.width(), base.height());
             box.set(base.centerX() - side / 2, base.centerY() - side / 2,
                     base.centerX() + side / 2, base.centerY() + side / 2);
+            boxReady = true;
             clamp();
             invalidate();
         }
@@ -363,7 +372,7 @@ public final class AvatarAdjustActivity extends Activity {
                 float w = source.getWidth() * k, h = source.getHeight() * k;
                 img.set((vw - w) / 2, areaTop + (vh - h) / 2,
                         (vw - w) / 2 + w, areaTop + (vh - h) / 2 + h);
-                if (box.isEmpty()) resetBox();
+                if (!boxReady || box.isEmpty()) resetBox();
                 src.set(0, 0, source.getWidth(), source.getHeight());
                 dst.set(img);
                 p.setFilterBitmap(true);

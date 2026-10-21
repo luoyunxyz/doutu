@@ -330,9 +330,12 @@ public final class MainActivity extends Activity {
                 android.graphics.Bitmap bmp = android.graphics.BitmapFactory.decodeStream(in);
                 if (bmp != null) {
                     com.luoyun.doutu.features.tools.AvatarAdjustActivity.source = bmp;
+                    // 用 NEW_TASK 起，避免被任务栈里残留的其它页面（微信转账等）顶掉
                     startActivity(new android.content.Intent(this,
                             com.luoyun.doutu.features.tools.AvatarAdjustActivity.class)
-                            .putExtra("chain", true));
+                            .putExtra("chain", true)
+                            .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK
+                                    | android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP));
                 }
             } catch (Exception ignored) {
                 android.widget.Toast.makeText(this, "读取图片失败", android.widget.Toast.LENGTH_SHORT).show();
