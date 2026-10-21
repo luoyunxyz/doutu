@@ -232,7 +232,7 @@
       {
         "name": "在线状态",
         "icon": "online",
-        "action": "local:status"
+        "action": "qqedit"
       },
       {
         "name": "未读消息红点",

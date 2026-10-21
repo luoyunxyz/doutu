@@ -1888,6 +1888,11 @@ static final class FeatureRow {
                     startActivity(new Intent(MainActivity.this,
                             com.luoyun.doutu.features.qq.QqHomeActivity.class).putExtra("gzh", true));
                     break;
+                case "qqedit":
+                    // QQ 在线状态：真机进的是「编辑个人资料」页。
+                    startActivity(new Intent(MainActivity.this,
+                            com.luoyun.doutu.features.qq.QqEditProfileActivity.class));
+                    break;
                 case "act:licai":
                     startActivity(com.luoyun.doutu.features.zhi.LicaiActivity.intentFor(MainActivity.this));
                     break;
