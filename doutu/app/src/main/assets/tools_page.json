@@ -7,7 +7,7 @@
       {
         "name": "创建单聊",
         "icon": "chat",
-        "action": "wechat:#/wechat"
+        "action": "wxcreatechat"
       },
       {
         "name": "创建群聊",

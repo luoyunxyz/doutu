@@ -1,0 +1,211 @@
+package com.luoyun.doutu.features.wx;
+
+import android.app.Activity;
+import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
+import android.os.Bundle;
+import android.view.Gravity;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.Window;
+import android.widget.EditText;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.Switch;
+import android.widget.TextView;
+
+import java.io.InputStream;
+import java.util.Random;
+
+/**
+ * 「创建单聊」弹窗 —— 覆盖在微信首页之上：
+ * 自动获取 / 头像预览 / 从相册获取 + 昵称输入 + 「是否为新好友」开关 + 取消 / 确定。
+ * 确定后进入打招呼的聊天页。
+ */
+public final class WxCreateChatActivity extends Activity {
+    private static final String[] NAMES = {"残阳€", "北方佳人.", "明晨紫月", "淡紫姑娘！", "云边小卖部", "日落收藏家"};
+    private static final String[] AVATARS = {
+            "fake_world/assets/user-avatar-1-CKPDcH57.jpg",
+            "fake_world/assets/user-avatar-4-Cmbgep_s.jpg",
+            "fake_world/assets/user-avatar-5-DMigR-cn.jpg",
+            "fake_world/assets/user-avatar-6-Cq95zrQT.jpg",
+            "fake_world/assets/user-avatar-7-C4bh6bYx.jpg",
+            "fake_world/assets/user-avatar-8-BysMeksY.jpg",
+    };
+
+    private final Random random = new Random();
+    private ImageView preview;
+    private EditText nameInput;
+    private String avatarPath = AVATARS[0];
+
+    @Override
+    protected void onCreate(Bundle state) {
+        super.onCreate(state);
+        Window w = getWindow();
+        w.setStatusBarColor(Color.TRANSPARENT);
+        w.setNavigationBarColor(0x66000000);
+
+        FrameLayout root = new FrameLayout(this);
+        View scrim = new View(this);
+        scrim.setBackgroundColor(0x8c000000);
+        root.addView(scrim, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+
+        LinearLayout card = new LinearLayout(this);
+        card.setOrientation(LinearLayout.VERTICAL);
+        GradientDrawable cbg = new GradientDrawable();
+        cbg.setColor(Color.WHITE);
+        cbg.setCornerRadius(dp(12));
+        card.setBackground(cbg);
+        card.setPadding(dp(20), dp(24), dp(20), dp(0));
+        FrameLayout.LayoutParams clp = new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        clp.leftMargin = dp(24);
+        clp.rightMargin = dp(24);
+        clp.topMargin = dp(150);
+        root.addView(card, clp);
+
+        // 头像行：自动获取 | 预览 | 从相册获取
+        LinearLayout head = new LinearLayout(this);
+        head.setGravity(Gravity.CENTER);
+        head.addView(sideAction("📅", "自动获取", v -> randomAvatar()));
+        preview = new ImageView(this);
+        preview.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        LinearLayout.LayoutParams plp = new LinearLayout.LayoutParams(dp(96), dp(96));
+        plp.leftMargin = dp(22);
+        plp.rightMargin = dp(22);
+        head.addView(preview, plp);
+        head.addView(sideAction("🖼", "从相册获取", v -> pickAvatar()));
+        card.addView(head);
+
+        // 昵称
+        nameInput = new EditText(this);
+        nameInput.setText(NAMES[random.nextInt(NAMES.length)]);
+        nameInput.setTextSize(15);
+        nameInput.setPadding(dp(12), 0, dp(12), 0);
+        GradientDrawable nbg = new GradientDrawable();
+        nbg.setColor(Color.WHITE);
+        nbg.setStroke(dp(1), 0xffdddddd);
+        nbg.setCornerRadius(dp(6));
+        nameInput.setBackground(nbg);
+        LinearLayout.LayoutParams nlp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(46));
+        nlp.topMargin = dp(26);
+        card.addView(nameInput, nlp);
+
+        // 是否为新好友
+        LinearLayout toggleRow = new LinearLayout(this);
+        toggleRow.setGravity(Gravity.CENTER_VERTICAL);
+        toggleRow.setPadding(dp(12), dp(6), dp(12), dp(6));
+        GradientDrawable tbg = new GradientDrawable();
+        tbg.setColor(Color.WHITE);
+        tbg.setStroke(dp(1), 0xffdddddd);
+        tbg.setCornerRadius(dp(6));
+        toggleRow.setBackground(tbg);
+        TextView label = new TextView(this);
+        label.setText("是否为新好友");
+        label.setTextSize(15);
+        label.setTextColor(0xff333333);
+        toggleRow.addView(label, new LinearLayout.LayoutParams(0,
+                ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        Switch isNew = new Switch(this);
+        isNew.setChecked(true);
+        toggleRow.addView(isNew);
+        LinearLayout.LayoutParams tlp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(46));
+        tlp.topMargin = dp(14);
+        card.addView(toggleRow, tlp);
+
+        // 取消 / 确定
+        LinearLayout buttons = new LinearLayout(this);
+        buttons.setGravity(Gravity.CENTER_VERTICAL);
+        LinearLayout.LayoutParams blp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(56));
+        blp.topMargin = dp(20);
+        TextView cancel = new TextView(this);
+        cancel.setText("取消");
+        cancel.setTextSize(16);
+        cancel.setTextColor(0xff666666);
+        cancel.setGravity(Gravity.CENTER);
+        cancel.setOnClickListener(v -> finish());
+        TextView ok = new TextView(this);
+        ok.setText("确定");
+        ok.setTextSize(16);
+        ok.setTextColor(0xff333333);
+        ok.setGravity(Gravity.CENTER);
+        ok.setOnClickListener(v -> {
+            Intent intent = new Intent(this, WxChatGreetingActivity.class);
+            intent.putExtra("name", nameInput.getText().toString().trim());
+            intent.putExtra("avatar", avatarPath);
+            intent.putExtra("isNew", isNew.isChecked());
+            startActivity(intent);
+            finish();
+        });
+        buttons.addView(cancel, new LinearLayout.LayoutParams(0, dp(56), 1f));
+        buttons.addView(ok, new LinearLayout.LayoutParams(0, dp(56), 1f));
+        card.addView(buttons, blp);
+
+        setContentView(root);
+        randomAvatar();
+    }
+
+    private LinearLayout sideAction(String icon, String text, View.OnClickListener click) {
+        LinearLayout box = new LinearLayout(this);
+        box.setOrientation(LinearLayout.VERTICAL);
+        box.setGravity(Gravity.CENTER);
+        box.setOnClickListener(click);
+        TextView iconView = new TextView(this);
+        iconView.setText(icon);
+        iconView.setTextSize(22);
+        iconView.setGravity(Gravity.CENTER);
+        GradientDrawable bg = new GradientDrawable();
+        bg.setColor(0xfffff7d6);
+        bg.setShape(GradientDrawable.OVAL);
+        iconView.setBackground(bg);
+        box.addView(iconView, new LinearLayout.LayoutParams(dp(52), dp(52)));
+        TextView label = new TextView(this);
+        label.setText(text);
+        label.setTextSize(12);
+        label.setTextColor(0xff333333);
+        label.setGravity(Gravity.CENTER);
+        label.setPadding(0, dp(8), 0, 0);
+        box.addView(label);
+        return box;
+    }
+
+    /** 自动获取：从内置头像里随机挑一张（真机是接口随机，这里做等价随机）。 */
+    private void randomAvatar() {
+        avatarPath = AVATARS[random.nextInt(AVATARS.length)];
+        loadAvatar();
+    }
+
+    private void loadAvatar() {
+        try (InputStream in = getAssets().open(avatarPath)) {
+            preview.setImageBitmap(BitmapFactory.decodeStream(in));
+        } catch (Exception ignored) { }
+    }
+
+    private void pickAvatar() {
+        Intent pick = new Intent(Intent.ACTION_GET_CONTENT);
+        pick.setType("image/*");
+        startActivityForResult(Intent.createChooser(pick, "选择头像"), 31);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode != 31 || resultCode != RESULT_OK || data == null || data.getData() == null) return;
+        try (InputStream in = getContentResolver().openInputStream(data.getData())) {
+            Bitmap bmp = BitmapFactory.decodeStream(in);
+            if (bmp != null) preview.setImageBitmap(bmp);
+        } catch (Exception ignored) { }
+    }
+
+    private int dp(int v) {
+        return Math.round(v * getResources().getDisplayMetrics().density);
+    }
+}

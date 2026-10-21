@@ -2157,6 +2157,14 @@ static final class FeatureRow {
                     startActivity(new Intent(MainActivity.this,
                             com.luoyun.doutu.features.ali.AliVoiceActivity.class));
                     break;
+                case "wxcreatechat":
+                    // 创建单聊：先进微信首页，再在其上弹出「自动获取/昵称/是否为新好友」对话框，
+                    // 确定后进入打招呼聊天页
+                    startActivity(com.luoyun.doutu.features.wei.WeiHomeActivity
+                            .intentFor(MainActivity.this, "#/wechat"));
+                    startActivity(new Intent(MainActivity.this,
+                            com.luoyun.doutu.features.wx.WxCreateChatActivity.class));
+                    break;
                 case "autoreplace":
                     // 自动替换：头像网格 + 原始/替换头像 + 替换截图内其他头像 + 人工智能一键合成
                     startActivity(new Intent(MainActivity.this,
