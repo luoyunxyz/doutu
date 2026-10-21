@@ -43,7 +43,10 @@ public final class WxChatGreetingActivity extends Activity implements SensorEven
         name = getIntent().getStringExtra("name");
         if (name == null || name.isEmpty()) name = "残阳€";
         String avatarPath = getIntent().getStringExtra("avatar");
+        String avatarUrl = getIntent().getStringExtra("avatarUrl");
         boolean isNew = getIntent().getBooleanExtra("isNew", true);
+        boolean skipTutorial = getSharedPreferences("wx_chat", MODE_PRIVATE)
+                .getBoolean("tutorial_hidden", false);
 
         Window w = getWindow();
         w.setStatusBarColor(0xffededed);
@@ -104,11 +107,12 @@ public final class WxChatGreetingActivity extends Activity implements SensorEven
         LinearLayout msg = new LinearLayout(this);
         msg.setGravity(Gravity.TOP);
         msg.setPadding(dp(14), dp(14), dp(14), 0);
-        ImageView avatar = new ImageView(this);
+        final ImageView avatar = new ImageView(this);
         avatar.setScaleType(ImageView.ScaleType.CENTER_CROP);
         Bitmap bmp = load(avatarPath);
         if (bmp != null) avatar.setImageBitmap(bmp);
         msg.addView(avatar, new LinearLayout.LayoutParams(dp(44), dp(44)));
+        if (avatarUrl != null && avatarUrl.startsWith("http")) loadNetworkAvatar(avatar, avatarUrl);
         TextView bubble = new TextView(this);
         bubble.setText("我是" + name);
         bubble.setTextSize(15);
@@ -122,7 +126,7 @@ public final class WxChatGreetingActivity extends Activity implements SensorEven
                 ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         blp.leftMargin = dp(10);
         msg.addView(bubble, blp);
-        page.addView(msg);
+        if (isNew) page.addView(msg);   // 非新好友：没有任何聊天记录
 
         if (isNew) {
             TextView t1 = new TextView(this);
@@ -177,6 +181,39 @@ public final class WxChatGreetingActivity extends Activity implements SensorEven
         input.addView(plus, plp);
         page.addView(input);
         root.addView(page);
+
+        // 左右滑动切换发送者（对方 / 我）
+        final boolean[] self = {false};
+        final TextView[] bubbleRef = {bubble};
+        bubble.setOnTouchListener(new View.OnTouchListener() {
+            private float downX;
+            private boolean moved;
+
+            @Override
+            public boolean onTouch(View v, android.view.MotionEvent e) {
+                switch (e.getAction()) {
+                    case android.view.MotionEvent.ACTION_DOWN:
+                        downX = e.getX();
+                        moved = false;
+                        return true;
+                    case android.view.MotionEvent.ACTION_MOVE:
+                        if (Math.abs(e.getX() - downX) > dp(40)) moved = true;
+                        return true;
+                    case android.view.MotionEvent.ACTION_UP:
+                        if (moved) {
+                            self[0] = !self[0];
+                            applySender(msg, bubbleRef[0], avatar, self[0]);
+                        }
+                        return true;
+                }
+                return false;
+            }
+        });
+
+        if (skipTutorial) {
+            setContentView(root);
+            return;
+        }
 
         // 教程浮层（只保留 1、2）
         View scrim = new View(this);
@@ -238,15 +275,40 @@ public final class WxChatGreetingActivity extends Activity implements SensorEven
         klp.topMargin = dp(10);
         sheet.addView(know, klp);
 
-        TextView noMore = new TextView(this);
-        noMore.setText("○ 不再提示");
-        noMore.setTextSize(14);
-        noMore.setTextColor(0xff666666);
+        // 「不再提示」：可勾选，勾上后下次不再弹这个提示
+        final boolean[] noMoreChecked = {false};
+        LinearLayout noMore = new LinearLayout(this);
         noMore.setGravity(Gravity.CENTER);
-        LinearLayout.LayoutParams nlp = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        nlp.topMargin = dp(10);
-        sheet.addView(noMore, nlp);
+        noMore.setPadding(0, dp(12), 0, 0);
+        final TextView circle = new TextView(this);
+        circle.setText("○");
+        circle.setTextSize(15);
+        circle.setTextColor(0xff666666);
+        noMore.addView(circle);
+        TextView noMoreText = new TextView(this);
+        noMoreText.setText("不再提示");
+        noMoreText.setTextSize(14);
+        noMoreText.setTextColor(0xff666666);
+        LinearLayout.LayoutParams tlp2 = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        tlp2.leftMargin = dp(6);
+        noMore.addView(noMoreText, tlp2);
+        noMore.setOnClickListener(v -> {
+            noMoreChecked[0] = !noMoreChecked[0];
+            circle.setText(noMoreChecked[0] ? "●" : "○");
+            circle.setTextColor(noMoreChecked[0] ? 0xff07c160 : 0xff666666);
+            noMoreText.setTextColor(noMoreChecked[0] ? 0xff07c160 : 0xff666666);
+        });
+        sheet.addView(noMore);
+        final boolean[] finalChecked = noMoreChecked;
+        know.setOnClickListener(v -> {
+            if (finalChecked[0]) {
+                getSharedPreferences("wx_chat", MODE_PRIVATE).edit()
+                        .putBoolean("tutorial_hidden", true).apply();
+            }
+            root.removeView(sheet);
+            root.removeView(scrim);
+        });
 
         setContentView(root);
 
@@ -352,6 +414,46 @@ public final class WxChatGreetingActivity extends Activity implements SensorEven
         } catch (Exception e) {
             return null;
         }
+    }
+
+    /** 切换发送者：气泡换边、换色，头像跟着换到另一侧。 */
+    private void applySender(LinearLayout msg, TextView bubble, ImageView avatar, boolean self) {
+        msg.removeAllViews();
+        msg.setGravity(self ? Gravity.END : Gravity.START);
+        GradientDrawable bg = new GradientDrawable();
+        bg.setColor(self ? 0xff95ec69 : Color.WHITE);
+        bg.setCornerRadius(dp(6));
+        bubble.setBackground(bg);
+        LinearLayout.LayoutParams alp = new LinearLayout.LayoutParams(dp(44), dp(44));
+        LinearLayout.LayoutParams blp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        if (self) {
+            blp.rightMargin = dp(10);
+            msg.addView(bubble, blp);
+            msg.addView(avatar, alp);
+        } else {
+            blp.leftMargin = dp(10);
+            msg.addView(avatar, alp);
+            msg.addView(bubble, blp);
+        }
+    }
+
+    private void loadNetworkAvatar(final ImageView view, final String url) {
+        new Thread(() -> {
+            try {
+                java.net.HttpURLConnection c = (java.net.HttpURLConnection)
+                        new java.net.URL(url).openConnection();
+                c.setConnectTimeout(8000);
+                c.setReadTimeout(8000);
+                if (c.getResponseCode() == 200) {
+                    final Bitmap bmp;
+                    try (InputStream in = c.getInputStream()) {
+                        bmp = BitmapFactory.decodeStream(in);
+                    }
+                    if (bmp != null) runOnUiThread(() -> view.setImageBitmap(bmp));
+                }
+            } catch (Exception ignored) { }
+        }, "wx-avatar-load").start();
     }
 
     private int dp(int v) {

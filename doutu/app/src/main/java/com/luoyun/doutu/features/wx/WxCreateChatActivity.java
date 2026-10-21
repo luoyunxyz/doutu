@@ -41,6 +41,8 @@ public final class WxCreateChatActivity extends Activity {
     private ImageView preview;
     private EditText nameInput;
     private String avatarPath = AVATARS[0];
+    /** 接口返回的头像网络地址；为空时用内置头像。 */
+    private String avatarUrl;
 
     @Override
     protected void onCreate(Bundle state) {
@@ -112,9 +114,9 @@ public final class WxCreateChatActivity extends Activity {
         label.setTextColor(0xff333333);
         toggleRow.addView(label, new LinearLayout.LayoutParams(0,
                 ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
-        Switch isNew = new Switch(this);
-        isNew.setChecked(true);
-        toggleRow.addView(isNew);
+        final boolean[] isNewValue = {true};
+        FrameLayout toggle = customToggle(isNewValue);
+        toggleRow.addView(toggle);
         LinearLayout.LayoutParams tlp = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, dp(46));
         tlp.topMargin = dp(14);
@@ -141,7 +143,8 @@ public final class WxCreateChatActivity extends Activity {
             Intent intent = new Intent(this, WxChatGreetingActivity.class);
             intent.putExtra("name", nameInput.getText().toString().trim());
             intent.putExtra("avatar", avatarPath);
-            intent.putExtra("isNew", isNew.isChecked());
+            intent.putExtra("avatarUrl", avatarUrl);
+            intent.putExtra("isNew", isNewValue[0]);
             startActivity(intent);
             finish();
         });
@@ -151,6 +154,37 @@ public final class WxCreateChatActivity extends Activity {
 
         setContentView(root);
         randomAvatar();
+    }
+
+    /** 黄色 iOS 风格开关（真机就是这种样式）。 */
+    private FrameLayout customToggle(final boolean[] value) {
+        final FrameLayout box = new FrameLayout(this);
+        final View track = new View(this);
+        GradientDrawable bg = new GradientDrawable();
+        bg.setColor(0xffffda43);
+        bg.setCornerRadius(dp(16));
+        track.setBackground(bg);
+        box.addView(track, new FrameLayout.LayoutParams(dp(52), dp(32)));
+        final View knob = new View(this);
+        GradientDrawable kbg = new GradientDrawable();
+        kbg.setColor(Color.WHITE);
+        kbg.setShape(GradientDrawable.OVAL);
+        knob.setBackground(kbg);
+        FrameLayout.LayoutParams klp = new FrameLayout.LayoutParams(dp(28), dp(28));
+        klp.leftMargin = dp(22);
+        klp.topMargin = dp(2);
+        box.addView(knob, klp);
+        box.setOnClickListener(v -> {
+            value[0] = !value[0];
+            GradientDrawable g = new GradientDrawable();
+            g.setColor(value[0] ? 0xffffda43 : 0xffe0e0e0);
+            g.setCornerRadius(dp(16));
+            track.setBackground(g);
+            FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) knob.getLayoutParams();
+            lp.leftMargin = dp(value[0] ? 22 : 2);
+            knob.setLayoutParams(lp);
+        });
+        return box;
     }
 
     private LinearLayout sideAction(String icon, String text, View.OnClickListener click) {
@@ -177,9 +211,51 @@ public final class WxCreateChatActivity extends Activity {
         return box;
     }
 
-    /** 自动获取：从内置头像里随机挑一张（真机是接口随机，这里做等价随机）。 */
+    /** 自动获取：调用 xxapi 随机头像接口，失败时退回内置头像。 */
     private void randomAvatar() {
+        avatarPath = null;
+        new Thread(() -> {
+            try {
+                java.net.HttpURLConnection conn = (java.net.HttpURLConnection)
+                        new java.net.URL("https://v2.xxapi.cn/api/head").openConnection();
+                conn.setConnectTimeout(8000);
+                conn.setReadTimeout(8000);
+                conn.setRequestProperty("User-Agent", "okhttp/3.12.0");
+                if (conn.getResponseCode() == 200) {
+                    java.io.ByteArrayOutputStream bos = new java.io.ByteArrayOutputStream();
+                    try (InputStream in = conn.getInputStream()) {
+                        byte[] buf = new byte[4096];
+                        int n;
+                        while ((n = in.read(buf)) > 0) bos.write(buf, 0, n);
+                    }
+                    String body = bos.toString("UTF-8");
+                    String imgUrl = new org.json.JSONObject(body).optString("data", "");
+                    if (imgUrl.startsWith("http")) {
+                        java.net.HttpURLConnection c2 = (java.net.HttpURLConnection)
+                                new java.net.URL(imgUrl).openConnection();
+                        c2.setConnectTimeout(8000);
+                        c2.setReadTimeout(8000);
+                        if (c2.getResponseCode() == 200) {
+                            final Bitmap bmp;
+                            try (InputStream in2 = c2.getInputStream()) {
+                                bmp = BitmapFactory.decodeStream(in2);
+                            }
+                            if (bmp != null) {
+                                avatarUrl = imgUrl;
+                                runOnUiThread(() -> preview.setImageBitmap(bmp));
+                                return;
+                            }
+                        }
+                    }
+                }
+            } catch (Exception ignored) { }
+            runOnUiThread(this::localRandomAvatar);
+        }, "wx-avatar-api").start();
+    }
+
+    private void localRandomAvatar() {
         avatarPath = AVATARS[random.nextInt(AVATARS.length)];
+        avatarUrl = null;
         loadAvatar();
     }
 
