@@ -683,8 +683,31 @@ public final class QqHomeActivity extends Activity {
         }
 
         private void navItem(Canvas c, Bitmap icon, String label, float cx, int color, boolean selected) {
-            art(c, icon, cx - 31.5f, 2180, 63);
+            if (icon == navMsg) {
+                // 消息气泡用代码画：真机图标上带着角标，裁图会把角标一起带进来
+                drawMsgBubble(c, cx, 2211.5f, 63);
+            } else {
+                art(c, icon, cx - 31.5f, 2180, 63);
+            }
             text(c, label, cx - textWidth(label, 30, false) / 2f, 2300, 30, color, false);
+        }
+
+        private void drawMsgBubble(Canvas c, float cx, float cy, float size) {
+            p.setColor(0xff12b7f5);
+            float w = size * 0.86f, h = size * 0.64f;
+            float left = cx - w / 2, top = cy - h / 2 - size * 0.07f;
+            android.graphics.RectF r = new android.graphics.RectF(left, top, left + w, top + h);
+            c.drawRoundRect(r, h * 0.46f, h * 0.46f, p);
+            android.graphics.Path tail = new android.graphics.Path();
+            tail.moveTo(cx - w * 0.30f, r.bottom - size * 0.02f);
+            tail.lineTo(cx - w * 0.44f, r.bottom + size * 0.16f);
+            tail.lineTo(cx - w * 0.10f, r.bottom - size * 0.02f);
+            tail.close();
+            c.drawPath(tail, p);
+            p.setColor(Color.WHITE);
+            for (int i = -1; i <= 1; i++) {
+                c.drawCircle(cx + i * w * 0.26f, r.centerY(), size * 0.075f, p);
+            }
         }
 
         @Override

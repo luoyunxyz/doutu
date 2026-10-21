@@ -17,7 +17,9 @@ public final class ToolLauncherActivity extends Activity {
         if (key == null) key = "chat";
         if (title == null) title = key;
         Intent intent;
-        if ("avatar".equals(key) || "auto".equals(key) || "ai".equals(key)) {
+        if ("wechat".equals(key)) {
+            intent = new Intent(this, com.luoyun.doutu.features.wei.WeiHomeActivity.class);
+        } else if ("avatar".equals(key) || "auto".equals(key) || "ai".equals(key)) {
             intent = new Intent(this, ToolImageActivity.class);
             intent.putExtra("mode", key);
         } else if ("localavatars".equals(key)) {

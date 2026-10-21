@@ -1760,7 +1760,19 @@ static final class FeatureRow {
                     }
                 }
                 if (s.dark) {
-                    drawToolArt(c, "i_dark", 312, s.darkTop + 15f, 96, 0);
+                    // 深色模式图标：黑圆 + 左半黄 + 中间白线（真机是同一个图形）
+                    float dcx = 360, dcy = s.darkTop + 63f;
+                    p.setColor(0xff1a1a1a);
+                    c.drawCircle(dcx, dcy, 46, p);
+                    p.setColor(0xfff9db61);
+                    p.setStyle(Paint.Style.FILL);
+                    c.drawArc(new android.graphics.RectF(dcx - 38, dcy - 38, dcx + 38, dcy + 38),
+                            90, 180, true, p);
+                    p.setColor(0xffffffff);
+                    p.setStyle(Paint.Style.STROKE);
+                    p.setStrokeWidth(3);
+                    c.drawLine(dcx, dcy - 38, dcx, dcy + 38, p);
+                    p.setStyle(Paint.Style.FILL);
                     text(c, "深色模式", 438, s.darkTop + 72f, 39, ink, false);
                     drawToolsSwitch(c, 666, s.darkTop + 28f, toolsDark);
                 }
