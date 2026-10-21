@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 1.0.0(73)：iOS ATS 放行直连 IP，修别人设备 TLS 登录失败`  
-> 最新代码版本：`1.0.0 / 73`（已推送，待 Codemagic 构建）；Android `1.0.2`  
+> 最新提交：`本轮 1.0.0(74)：小微「我」页收藏/朋友圈/卡包/表情/设置`  
+> 最新代码版本：`1.0.0 / 74`（已推送，待 Codemagic 构建）；Android `1.0.3`  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -1780,6 +1780,28 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
       - 已构建并 adb 安装（1.0.2 / 10002）；
     - 版本 1.0.0(73)（iOS）/ 1.0.2（Android）。
       改动文件：iOS `project.yml`；Android `DtwConfig.java`。
+
+167. **1.0.0(74) / Android 1.0.3：小微「我」页五个入口**
+    - 现状（浏览器实测）：
+      - `#/wechat/my` 的 收藏/朋友圈/卡包/表情/设置 点击后 URL 不变，全是 no-op；
+      - `#/wechat/favorites|cars|stickers|settings` 全部 404；
+      - 只有 `#/wechat/moments` 是真页面。
+    - 74 新增共享 Web 覆盖层（iOS 与 Android 同一套文件）：
+      - `overrides/wechat-me-pages.js` / `.css`，由两个 `index.html` 引入；
+      - 「我」页五个入口用 document 捕获点击接管：
+        - 收藏 → `#/wechat/me/favorites`（搜索/筛选/详情/删除，localStorage）
+        - 朋友圈 → 现有 `#/wechat/moments`（入口指向）
+        - 卡包 → `#/wechat/me/cards`（会员卡/优惠券/礼品卡、条码详情、移除）
+        - 表情 → `#/wechat/me/stickers`（我的表情/商店、表情包详情、添加/预览）
+        - 设置 → `#/wechat/me/settings`（账号与安全/青少年/关怀/消息通知/聊天/
+          隐私/通用/帮助与反馈/关于微信/切换账号/退出登录，开关和弹窗可用）
+      - 顶部状态栏（时间/信号/WiFi/电池）、微信风格头部、返回按钮、hash 路由、
+        iOS 边缘返回与 Android WebView 返回都走浏览器历史；
+      - iOS 14.3 没有 flexbox `gap`：已全部改成 margin，保留 grid gap；
+      - 页面数据用 localStorage 持久化。
+    - 版本 1.0.0(74)（iOS）/ 1.0.3（Android）。
+      改动文件：`wechat-me-pages.js`、`wechat-me-pages.css`、两个 `index.html`、
+      iOS `project.yml`；Android `assets/fake_world/overrides/*`。
 
 ---
 
