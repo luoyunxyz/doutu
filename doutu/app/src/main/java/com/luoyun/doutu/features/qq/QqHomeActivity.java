@@ -128,11 +128,16 @@ public final class QqHomeActivity extends Activity {
             art(c, avatar, 58, 132, 76);
 
             text(c, "微笑似年华々", 180, 184, 39, 0xff1a1a1a, false);
-            // Q我吧
+            // Q我吧：黄色笑脸 + 深色描边
             p.setColor(0xffffd84d);
             c.drawCircle(192, 200, 12, p);
-            p.setColor(0xff333333);
+            p.setColor(0xff5a4a00);
+            c.drawCircle(188, 198, 1.6f, p);
+            c.drawCircle(196, 198, 1.6f, p);
             p.setStyle(Paint.Style.STROKE);
+            p.setStrokeWidth(1.6f);
+            c.drawArc(new RectF(186.5f, 196.5f, 197.5f, 205.5f), 20, 140, false, p);
+            p.setColor(0xff333333);
             p.setStrokeWidth(2.5f);
             c.drawCircle(192, 200, 12, p);
             p.setStyle(Paint.Style.FILL);
