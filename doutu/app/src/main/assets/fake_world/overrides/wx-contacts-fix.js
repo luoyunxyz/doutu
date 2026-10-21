@@ -112,7 +112,6 @@
     injectStyle();
     hideRow('仅聊天的朋友');
     addPlus();
-    addCompanyGroup();
   }
 
   setInterval(polish, 500);

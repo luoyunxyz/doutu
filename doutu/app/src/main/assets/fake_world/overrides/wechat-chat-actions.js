@@ -4559,6 +4559,10 @@
       applyState();
       setTimeout(applyState, 80);
       window.dispatchEvent(new CustomEvent('fw:contacts-updated', { detail: { contact: friend } }));
+      // 添加完成后直接进入这个好友的聊天页
+      setTimeout(function () {
+        try { location.hash = '#/wechat/conversation/' + friend.id; } catch (e) { }
+      }, 260);
       return friend.id;
     } catch (e) {
       return '';
