@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 1.0.0(75)：按真机截图重做「我」页 + 聊天收藏`  
-> 最新代码版本：`1.0.0 / 75`（已推送，待 Codemagic 构建）；Android `1.0.4`  
+> 最新提交：`本轮 1.0.0(76)：「我」页不再绘制任务栏`  
+> 最新代码版本：`1.0.0 / 76`（已推送，待 Codemagic 构建）；Android `1.0.5`  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -1830,6 +1830,18 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
       改动文件：`wechat-me-pages.js/.css`、`wechat-chat-actions.js`、
       `overrides/me/*.png`、两个 `index.html`、iOS `project.yml`；
       Android `assets/fake_world/overrides/*`。
+
+169. **1.0.0(76) / Android 1.0.5：「我」页不画任务栏**
+    - 用户：页面可以，但要忽视任务栏（顶部状态栏）里的东西；
+    - 76：
+      - `statusBar()` 只返回 44px 安全区 `<div class="fwm-status"></div>`，
+        不再画时间、信号、WiFi、电池；
+      - 头部、内容、截图区、收藏卡片均不变；
+      - 真机任务栏交给系统（Android 显示系统状态栏，iOS 由 App 隐藏）；
+      - 状态栏安全区高度保留，头部不会顶到刘海；
+    - 版本 1.0.0(76)（iOS）/ 1.0.5（Android）。
+      改动文件：`wechat-me-pages.js`、两个 `index.html`、iOS `project.yml`；
+      Android `assets/fake_world/overrides/wechat-me-pages.js`。
 
 ---
 

@@ -130,12 +130,9 @@
     }[name] || '';
     return '<svg class="fwm-icon" viewBox="0 0 24 24" aria-hidden="true">' + p + '</svg>';
   }
+  // 顶部任务栏/状态栏交给系统：这里只留 44px 安全区，不画时间、信号、电量。
   function statusBar() {
-    return '<div class="fwm-status"><span class="fwm-time">' + nowTime() + '</span><span class="fwm-status-icons">' +
-      '<svg viewBox="0 0 18 12" aria-hidden="true"><rect x="0" y="7" width="3" height="5" rx="1"/><rect x="4.4" y="5" width="3" height="7" rx="1"/><rect x="8.8" y="2.7" width="3" height="9.3" rx="1"/><rect x="13.2" y="0" width="3" height="12" rx="1"/></svg>' +
-      '<svg viewBox="0 0 17 12" aria-hidden="true"><path d="M8.5 10.6 1.2 4.2a10.6 10.6 0 0 1 14.6 0Z" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8.5 11.4 3.4 6.8a7 7 0 0 1 10.2 0Z"/></svg>' +
-      '<svg viewBox="0 0 25 12" aria-hidden="true"><rect x="0.7" y="0.7" width="20" height="10.6" rx="2.6" fill="none" stroke="currentColor" stroke-width="1.3"/><rect x="2.4" y="2.4" width="13" height="7.2" rx="1.4"/><path d="M22.5 4.2v3.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>' +
-      '</span></div>';
+    return '<div class="fwm-status"></div>';
   }
   function header(title, right, backHash) {
     return '<header class="fwm-header"><button type="button" class="fwm-back" data-back="' + esc(backHash || '') + '" aria-label="返回">' + icon('back') + '</button>' +
