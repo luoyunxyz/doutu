@@ -90,7 +90,12 @@ public final class LocalToolActivity extends Activity {
     }
 
     private void build() {
-        if ("chat".equals(key)) buildChat();
+        if ("home".equals(key)) buildHome();
+        else if ("chats".equals(key)) buildChats();
+        else if ("broadcast".equals(key)) buildBroadcast();
+        else if ("banktransfer".equals(key)) buildBankTransfer();
+        else if ("profile".equals(key)) buildProfile();
+        else if ("chat".equals(key)) buildChat();
         else if ("wallet".equals(key)) buildWallet();
         else if ("redpacket".equals(key) || "transfer".equals(key)) buildPay();
         else if ("contacts".equals(key)) buildContacts();
