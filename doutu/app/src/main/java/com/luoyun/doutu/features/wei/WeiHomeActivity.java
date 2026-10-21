@@ -643,6 +643,12 @@ public final class WeiHomeActivity extends Activity {
      * <p>页面还没起来时（预热阶段）所有调用都走安全默认值：读接口返回空、写接口什么也不做。
      */
     private static final class ForwardingBridge {
+        @android.webkit.JavascriptInterface
+        public void openGroupSettings() {
+            AppNavigationBridge b = target();
+            if (b != null) b.openGroupSettings();
+        }
+
         private static AppNavigationBridge target() {
             WeiHomeActivity host = liveInstance;
             if (host == null) return null;
@@ -745,6 +751,14 @@ public final class WeiHomeActivity extends Activity {
     }
 
     private final class AppNavigationBridge {
+        @android.webkit.JavascriptInterface
+        public void openGroupSettings() {
+            WeiHomeActivity host = liveInstance;
+            if (host == null) return;
+            host.startActivity(new android.content.Intent(host,
+                    com.luoyun.doutu.features.wx.WxGroupSettingsActivity.class));
+        }
+
         @JavascriptInterface
         public String downloadAvatarCacheUrl(String sourceUrl) {
             HttpURLConnection connection = null;

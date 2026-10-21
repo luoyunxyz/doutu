@@ -156,3 +156,23 @@
   }
   setInterval(tick, 700);
 })();
+
+/* 群聊右上角「…」→ 打开原生「群组设置」页 */
+(function () {
+  if (window.__fwGroupSettingsHook) return;
+  window.__fwGroupSettingsHook = true;
+  document.addEventListener('click', function (e) {
+    try {
+      if (String(location.hash || '').indexOf('/wechat/conversation/') < 0) return;
+      var el = e.target;
+      var r = el && el.getBoundingClientRect ? el.getBoundingClientRect() : null;
+      if (!r || r.top > 120 || r.left < 300) return;
+      var bridge = window.DoutuApp;
+      if (bridge && bridge.openGroupSettings) {
+        e.preventDefault();
+        e.stopPropagation();
+        bridge.openGroupSettings();
+      }
+    } catch (err) { }
+  }, true);
+})();
