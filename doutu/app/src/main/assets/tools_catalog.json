@@ -22,7 +22,7 @@
       {"name": "单聊", "key": "chat"},
       {"name": "微信零钱", "key": "wallet"},
       {"name": "支付消息", "key": "notices"},
-      {"name": "商城钱包", "key": "wallet"},
+      {"name": "商城钱包", "key": "mallwallet"},
       {"name": "新的朋友", "key": "contacts"},
       {"name": "商城首页", "key": "shop"},
       {"name": "零钱提现", "key": "transfer"},

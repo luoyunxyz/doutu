@@ -105,14 +105,15 @@ public final class LocalToolActivity extends Activity {
         else if ("video".equals(key)) buildVideo();
         else if ("call".equals(key)) buildCall();
         else if ("articles".equals(key)) buildInfo("公众号", new String[]{"本地公众号\n\n这是一篇只保存在本机的示例文章，不联网。", "工具更新说明\n\n工具页全部功能均为本地处理。"});
-        else if ("shop".equals(key)) buildInfo("本地商城", new String[]{"示例商品 A  ¥9.90", "示例商品 B  ¥19.90", "示例商品 C  ¥29.90"});
+        else if ("shop".equals(key)) buildShop();
+        else if ("mallwallet".equals(key)) buildMallWallet();
         else if ("pay".equals(key)) buildPayPage();
         else if ("billstats".equals(key)) buildBillStats();
         else if ("redpackets".equals(key)) buildRedPackets();
         else if ("paysuccess".equals(key)) buildSuccess();
         else if ("settings".equals(key) || "status".equals(key)) buildSwitches("状态与显示", new String[]{"显示未读红点", "在线状态", "悬浮窗快捷入口"});
         else if ("voice".equals(key)) buildSwitches("语音播报", new String[]{"收款语音播报", "红包到账播报", "转账到账播报"});
-        else if ("order".equals(key)) buildInfo("淘订单", new String[]{"订单 20261021001\n\n本地示例订单 · 待发货", "订单 20261021002\n\n本地示例订单 · 已完成"});
+        else if ("order".equals(key)) buildOrders();
         else if ("assets".equals(key)) buildAssets();
         else if ("comment".equals(key)) buildComment();
         else if ("login".equals(key)) buildLogin();
@@ -431,11 +432,27 @@ public final class LocalToolActivity extends Activity {
         if (teams.isEmpty()) teams.add("我的团队（本地）");
         for (String t : teams) {
             TextView tv = new TextView(this);
-            tv.setText(t);
+            java.util.List<String> members = split("members_" + t);
+            tv.setText(t + "   成员 " + members.size() + " 人");
             tv.setTextSize(15);
             tv.setTextColor(0xff1d1f26);
             tv.setBackgroundColor(Color.WHITE);
             tv.setPadding(dp(14), dp(14), dp(14), dp(14));
+            tv.setOnClickListener(v -> {
+                EditText input = new EditText(this);
+                input.setHint("成员名称");
+                new AlertDialog.Builder(this).setTitle("添加成员到 " + t).setView(input)
+                        .setNegativeButton("取消", null)
+                        .setPositiveButton("添加", (d, w) -> {
+                            String n = input.getText().toString().trim();
+                            if (!n.isEmpty()) {
+                                java.util.List<String> mm = split("members_" + t);
+                                mm.add(n);
+                                saveList("members_" + t, mm);
+                                renderTeams();
+                            }
+                        }).show();
+            });
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
             lp.bottomMargin = dp(6);
             teamList.addView(tv, lp);
@@ -557,6 +574,19 @@ public final class LocalToolActivity extends Activity {
         bal.setTextColor(0xff5b6070);
         bal.setPadding(0, dp(14), 0, 0);
         content.addView(bal);
+        Button receive = new Button(this);
+        receive.setText("模拟收款 ¥50（本地）");
+        receive.setAllCaps(false);
+        receive.setOnClickListener(v -> {
+            try {
+                double bal = Double.parseDouble(getBalance()) + 50;
+                getSharedPreferences(PREFS, 0).edit().putString("balance", String.format("%.2f", bal)).apply();
+                bills.add(0, "收款 +¥50.00");
+                saveList("bills", bills);
+                bal.setText("当前零钱：¥ " + getBalance());
+            } catch (Exception ignored) { }
+        });
+        content.addView(receive, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(44)));
         Button save = new Button(this);
         save.setText("保存收款码");
         save.setAllCaps(false);
@@ -872,6 +902,79 @@ public final class LocalToolActivity extends Activity {
             lp.topMargin = dp(8);
             content.addView(tv, lp);
         }
+    }
+
+
+    private void buildShop() {
+        final String[][] products = {{"示例商品 A", "9.90"}, {"示例商品 B", "19.90"}, {"示例商品 C", "29.90"}};
+        TextView head = new TextView(this);
+        head.setText("本地商城 · 下单只记账不联网");
+        head.setTextSize(13);
+        head.setTextColor(0xff8b90a0);
+        head.setPadding(0, 0, 0, dp(8));
+        content.addView(head);
+        for (String[] pr : products) {
+            LinearLayout row = new LinearLayout(this);
+            row.setGravity(Gravity.CENTER_VERTICAL);
+            row.setBackgroundColor(Color.WHITE);
+            row.setPadding(dp(14), dp(12), dp(14), dp(12));
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            lp.bottomMargin = dp(8);
+            row.setLayoutParams(lp);
+            TextView name = new TextView(this);
+            name.setText(pr[0] + "\n¥" + pr[1]);
+            name.setTextSize(14);
+            name.setTextColor(0xff1d1f26);
+            row.addView(name, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+            Button buy = new Button(this);
+            buy.setText("购买");
+            buy.setAllCaps(false);
+            buy.setOnClickListener(v -> buyProduct(pr[0], pr[1]));
+            row.addView(buy, new LinearLayout.LayoutParams(dp(80), dp(44)));
+            content.addView(row);
+        }
+    }
+
+    private void buyProduct(String name, String price) {
+        try {
+            double p = Double.parseDouble(price);
+            double bal = Double.parseDouble(getBalance());
+            if (bal < p) { toast("余额不足"); return; }
+            getSharedPreferences(PREFS, 0).edit().putString("balance", String.format("%.2f", bal - p)).apply();
+            bills.add(0, "购买 " + name + " -¥" + String.format("%.2f", p));
+            saveList("bills", bills);
+            List<String> orders = new ArrayList<>(split("orders"));
+            orders.add(0, "订单 " + System.currentTimeMillis() + "\\n" + name + " · 待发货");
+            saveList("orders", orders);
+            toast("下单成功（本地）");
+        } catch (Exception e) {
+            toast("下单失败");
+        }
+    }
+
+    private void buildMallWallet() {
+        List<String> orders = split("orders");
+        TextView card = new TextView(this);
+        card.setText("商城钱包（本地）\\n\\n可用余额  ¥" + getBalance() + "\\n订单数量  " + orders.size() + " 笔\\n积分  0");
+        card.setTextSize(17);
+        card.setTextColor(0xff1d1f26);
+        card.setBackgroundColor(Color.WHITE);
+        card.setPadding(dp(18), dp(18), dp(18), dp(18));
+        content.addView(card);
+        Button ordersBtn = new Button(this);
+        ordersBtn.setText("查看淘订单");
+        ordersBtn.setAllCaps(false);
+        ordersBtn.setOnClickListener(v -> LocalToolActivity.open(this, "order", "淘订单"));
+        content.addView(ordersBtn, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(46)));
+    }
+
+    private void buildOrders() {
+        List<String> orders = new ArrayList<>(split("orders"));
+        if (orders.isEmpty()) {
+            orders.add("订单 20261021001\\n\\n本地示例订单 · 待发货");
+            orders.add("订单 20261021002\\n\\n本地示例订单 · 已完成");
+        }
+        buildInfo("淘订单", orders.toArray(new String[0]));
     }
 
     private int dp(int v) {
