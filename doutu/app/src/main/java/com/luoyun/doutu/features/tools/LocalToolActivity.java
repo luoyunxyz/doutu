@@ -2166,6 +2166,7 @@ public final class LocalToolActivity extends Activity {
     }
 
     private void buildGroupQr() {
+        final String groupName = title;
         content.setBackgroundColor(0xffededed);
         content.setPadding(0, 0, 0, 0);
 
@@ -2198,7 +2199,7 @@ public final class LocalToolActivity extends Activity {
         iv.setImageBitmap(qr);
         card.addView(iv, new LinearLayout.LayoutParams(dp(220), dp(220)));
         TextView name = new TextView(this);
-        name.setText(title);
+        name.setText(groupName);
         name.setTextSize(15);
         name.setTextColor(0xff191919);
         name.setGravity(Gravity.CENTER);
