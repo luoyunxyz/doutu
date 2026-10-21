@@ -157,7 +157,11 @@ public final class WxCreateChatActivity extends Activity {
                     + "return true;}catch(e){return false;}})()";
             // 走克隆「添加朋友」同一条落库路径（__fwAddFriend → state.contacts + saveState），
             // 加完后回到通讯录，结果和手动添加好友完全一致
-            String addJs = "window.__fwAddFriend && window.__fwAddFriend('" + safe + "','" + avatar + "')";
+            // 先按克隆自己的「添加朋友」路径落库，再让 override 从通讯录点进这个好友 → 发消息，
+            // 由克隆自己打开聊天页（直链会话会报「出错啦」，这条路才稳）
+            String addJs = "window.__fwAddFriend && window.__fwAddFriend('" + safe + "','" + avatar + "');"
+                    + "try{localStorage.setItem('fw-open-chat-after-create',JSON.stringify({name:'"
+                    + safe + "'}));}catch(e){}";
             startActivity(com.luoyun.doutu.features.wei.WeiHomeActivity
                     .intentFor(this, "#/wechat/contacts"));
             com.luoyun.doutu.features.wei.WeiHomeActivity.scheduleBridge(addJs, "#/wechat/contacts");

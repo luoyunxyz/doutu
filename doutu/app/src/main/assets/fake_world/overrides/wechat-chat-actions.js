@@ -4371,7 +4371,7 @@
     const already = state.contacts.some(friend => String(friend.name || '').trim() === request.name);
     if (!already) {
       const friend = {
-        id: 'friend-' + Date.now(),
+        id: String(fixedId || ('friend-' + Date.now())),
         name: request.name,
         wechatId: 'wx' + Math.random().toString(36).slice(2, 12),
         gender: ['女', '男', '未知'][Math.floor(Math.random() * 3)],
@@ -4532,7 +4532,7 @@
    * 供原生「创建单聊」调用：和「添加朋友」完全同一条落库路径（写 state.contacts + 持久化），
    * 所以结果与手动添加好友一致（通讯录、会话都能看到）。
    */
-  window.__fwAddFriend = function (name, avatar, wechatId) {
+  window.__fwAddFriend = function (name, avatar, wechatId, fixedId) {
     try {
       name = String(name || '').trim();
       if (!name) return '';
@@ -4559,10 +4559,6 @@
       applyState();
       setTimeout(applyState, 80);
       window.dispatchEvent(new CustomEvent('fw:contacts-updated', { detail: { contact: friend } }));
-      // 添加完成后直接进入这个好友的聊天页
-      setTimeout(function () {
-        try { location.hash = '#/wechat/conversation/' + friend.id; } catch (e) { }
-      }, 260);
       return friend.id;
     } catch (e) {
       return '';

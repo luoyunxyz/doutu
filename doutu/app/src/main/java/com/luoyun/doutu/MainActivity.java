@@ -1937,11 +1937,12 @@ static final class FeatureRow {
                     overridePendingTransition(0, 0);
                     return;
                 }
-                // 创建群聊：真机进入群聊页并弹出「切换发送者的 3 种方法」教程浮层
+                // 创建群聊：进微信首页，并在其上弹出「群名称 / 人数」对话框
                 if ("feature:group-chat".equals(route)) {
+                    startActivity(com.luoyun.doutu.features.wei.WeiHomeActivity
+                            .intentFor(MainActivity.this, "#/wechat"));
                     startActivity(new Intent(MainActivity.this,
-                            com.luoyun.doutu.features.wx.WxGroupChatTutorialActivity.class));
-                    overridePendingTransition(0, 0);
+                            com.luoyun.doutu.features.wx.WxCreateGroupActivity.class));
                     return;
                 }
                 // 新的朋友：真机是「添加朋友 / 账号手机号搜索 / 添加手机联系人 / 近三天」列表

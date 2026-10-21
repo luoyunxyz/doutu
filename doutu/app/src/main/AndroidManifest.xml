@@ -340,6 +340,11 @@
             android:theme="@android:style/Theme.Translucent.NoTitleBar"
             android:exported="false" />
         <activity
+            android:name=".features.wx.WxCreateGroupActivity"
+            android:screenOrientation="portrait"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar"
+            android:exported="false" />
+        <activity
             android:name=".features.wx.WxChatGreetingActivity"
             android:screenOrientation="portrait"
             android:exported="false" />
