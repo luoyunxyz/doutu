@@ -1905,6 +1905,13 @@ static final class FeatureRow {
                     overridePendingTransition(0, 0);
                     return;
                 }
+                // 新的朋友：真机是「添加朋友 / 账号手机号搜索 / 添加手机联系人 / 近三天」列表
+                if ("feature:new-friends".equals(route)) {
+                    startActivity(new Intent(MainActivity.this,
+                            com.luoyun.doutu.features.wx.WxNewFriendsActivity.class));
+                    overridePendingTransition(0, 0);
+                    return;
+                }
                 // 上传截图：真机打开的是「收付款」页（付款码 / 二维码收款 / 确认演示）
                 if ("#/wechat/receive-pay".equals(route)) {
                     startActivity(new Intent(MainActivity.this,
