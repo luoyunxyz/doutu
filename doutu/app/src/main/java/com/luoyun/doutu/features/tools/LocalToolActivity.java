@@ -78,7 +78,7 @@ public final class LocalToolActivity extends Activity {
         tv.setGravity(Gravity.CENTER);
         bar.addView(tv, new LinearLayout.LayoutParams(0, dp(50), 1f));
         bar.addView(new View(this), new LinearLayout.LayoutParams(dp(88), dp(50)));
-        if (!("home".equals(key) || "contacts".equals(key) || "moments".equals(key) || "profile".equals(key) || "discover".equals(key) || "chat".equals(key) || "wallet".equals(key) || "transfer".equals(key) || "redpacket".equals(key) || "paysuccess".equals(key) || "pay".equals(key) || "billstats".equals(key) || "service".equals(key))) root.addView(bar);
+        if (!("home".equals(key) || "contacts".equals(key) || "moments".equals(key) || "profile".equals(key) || "discover".equals(key) || "chat".equals(key) || "wallet".equals(key) || "transfer".equals(key) || "redpacket".equals(key) || "paysuccess".equals(key) || "pay".equals(key) || "billstats".equals(key) || "service".equals(key) || "favorites".equals(key))) root.addView(bar);
 
         ScrollView scroll = new ScrollView(this);
         content = new LinearLayout(this);
@@ -99,6 +99,7 @@ public final class LocalToolActivity extends Activity {
         else if ("profile".equals(key)) buildProfile();
         else if ("chat".equals(key)) buildChat();
         else if ("wallet".equals(key)) buildWallet();
+        else if ("favorites".equals(key)) buildFavorites();
         else if ("service".equals(key)) buildService();
         else if ("redpacket".equals(key) || "transfer".equals(key)) buildPay();
         else if ("contacts".equals(key)) buildContacts();
@@ -1068,6 +1069,98 @@ public final class LocalToolActivity extends Activity {
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
             lp.bottomMargin = dp(8);
             content.addView(tv, lp);
+        }
+    }
+
+    private void buildFavorites() {
+        content.setBackgroundColor(0xfff7f7f7);
+        content.setPadding(0, 0, 0, 0);
+
+        LinearLayout bar = new LinearLayout(this);
+        bar.setGravity(Gravity.CENTER_VERTICAL);
+        bar.setBackgroundColor(0xfff7f7f7);
+        ImageView back = assetIcon("ic_wx_chat_title_back", 21);
+        back.setOnClickListener(v -> finish());
+        LinearLayout.LayoutParams blp = new LinearLayout.LayoutParams(dp(43), dp(43));
+        bar.addView(back, blp);
+        TextView title = new TextView(this);
+        title.setText("我的收藏");
+        title.setTextSize(16);
+        title.setTextColor(0xff191919);
+        title.setGravity(Gravity.CENTER);
+        bar.addView(title, new LinearLayout.LayoutParams(0, dp(43), 1f));
+        bar.addView(new View(this), new LinearLayout.LayoutParams(dp(43), dp(43)));
+        content.addView(bar);
+
+        LinearLayout tabRow = new LinearLayout(this);
+        tabRow.setBackgroundColor(Color.WHITE);
+        tabRow.setPadding(0, 0, 0, 0);
+        String[] tabs = {"全部", "图片", "链接", "文件", "语音"};
+        for (int i = 0; i < tabs.length; i++) {
+            TextView tab = new TextView(this);
+            tab.setText(tabs[i]);
+            tab.setTextSize(14);
+            tab.setTextColor(0xff576b95);
+            tab.setGravity(Gravity.CENTER);
+            final int idx2 = i;
+            tab.setOnClickListener(v -> {
+                for (int k = 0; k < tabRow.getChildCount(); k++) {
+                    TextView t = (TextView) tabRow.getChildAt(k);
+                    t.setTypeface(null, k == idx2 ? android.graphics.Typeface.BOLD : android.graphics.Typeface.NORMAL);
+                }
+                toast("已筛选：" + tabs[idx2]);
+            });
+            if (i == 0) tab.setTypeface(null, android.graphics.Typeface.BOLD);
+            tabRow.addView(tab, new LinearLayout.LayoutParams(0, dp(52), 1f));
+        }
+        content.addView(tabRow);
+        View line = new View(this);
+        line.setBackgroundColor(0xffe5e5e5);
+        content.addView(line, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(1)));
+
+        List<String> favs = split("favorites");
+        LinearLayout list = new LinearLayout(this);
+        list.setOrientation(LinearLayout.VERTICAL);
+        content.addView(list);
+        if (favs.isEmpty()) {
+            TextView empty = new TextView(this);
+            empty.setText("暂无收藏\n\n在聊天中长按消息即可收藏到这里");
+            empty.setTextSize(14);
+            empty.setTextColor(0xff999999);
+            empty.setGravity(Gravity.CENTER);
+            empty.setPadding(dp(20), dp(60), dp(20), dp(20));
+            list.addView(empty, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        } else {
+            for (String f : favs) {
+                LinearLayout row = new LinearLayout(this);
+                row.setGravity(Gravity.CENTER_VERTICAL);
+                row.setBackgroundColor(Color.WHITE);
+                row.setPadding(dp(15), dp(14), dp(15), dp(14));
+                View icon = assetIcon("ic_wx_me_favor", 24);
+                row.addView(icon, new LinearLayout.LayoutParams(dp(24), dp(24)));
+                TextView tv = new TextView(this);
+                tv.setText(f);
+                tv.setTextSize(15);
+                tv.setTextColor(0xff191919);
+                tv.setPadding(dp(12), 0, 0, 0);
+                row.addView(tv, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+                row.setOnLongClickListener(v -> {
+                    new AlertDialog.Builder(this).setTitle("删除收藏").setMessage("只从本地收藏移除")
+                            .setNegativeButton("取消", null)
+                            .setPositiveButton("删除", (d, w) -> {
+                                favs.remove(f);
+                                saveList("favorites", favs);
+                                recreate();
+                            }).show();
+                    return true;
+                });
+                list.addView(row);
+                View d = new View(this);
+                d.setBackgroundColor(0xffe5e5e5);
+                LinearLayout.LayoutParams dlp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(1));
+                dlp.leftMargin = dp(51);
+                list.addView(d, dlp);
+            }
         }
     }
 
