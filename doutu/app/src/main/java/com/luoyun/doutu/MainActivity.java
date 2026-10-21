@@ -1930,6 +1930,14 @@ static final class FeatureRow {
                     overridePendingTransition(0, 0);
                     return;
                 }
+                // 通讯录：进微信 clone 后等页面就绪再切到「通讯录」标签
+                if ("#/wechat/contacts".equals(route)) {
+                    startActivity(com.luoyun.doutu.features.wei.WeiHomeActivity
+                            .intentFor(MainActivity.this, "#/wechat"));
+                    com.luoyun.doutu.features.wei.WeiHomeActivity.scheduleBridge(null, "#/wechat/contacts");
+                    overridePendingTransition(0, 0);
+                    return;
+                }
                 // 零钱提现：真机是「到账银行卡 + 提现金额 + 键盘」的提现页
                 if ("#/wechat/wallet/withdraw".equals(route)) {
                     startActivity(new Intent(MainActivity.this,
