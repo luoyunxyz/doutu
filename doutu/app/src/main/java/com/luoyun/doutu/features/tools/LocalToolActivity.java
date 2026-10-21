@@ -921,6 +921,62 @@ public final class LocalToolActivity extends Activity {
             time.setTextColor(0xff808080);
             time.setPadding(0, dp(10), 0, 0);
             body.addView(time);
+
+            final String postText = m;
+            List<String> likes = split("likes");
+            boolean liked = likes.contains(postText);
+            LinearLayout actions = new LinearLayout(this);
+            actions.setPadding(0, dp(6), 0, 0);
+            TextView like = new TextView(this);
+            like.setText(liked ? "取消赞" : "赞");
+            like.setTextSize(12);
+            like.setTextColor(0xff576b95);
+            like.setPadding(0, 0, dp(18), 0);
+            like.setOnClickListener(v -> {
+                List<String> ls = split("likes");
+                if (ls.contains(postText)) ls.remove(postText); else ls.add(postText);
+                saveList("likes", ls);
+                recreate();
+            });
+            actions.addView(like);
+            TextView commentBtn = new TextView(this);
+            commentBtn.setText("评论");
+            commentBtn.setTextSize(12);
+            commentBtn.setTextColor(0xff576b95);
+            commentBtn.setOnClickListener(v -> {
+                EditText input = new EditText(this);
+                input.setHint("写评论…");
+                new AlertDialog.Builder(this).setTitle("评论").setView(input)
+                        .setNegativeButton("取消", null)
+                        .setPositiveButton("发送", (d, w) -> {
+                            String t = input.getText().toString().trim();
+                            if (t.isEmpty()) return;
+                            List<String> cs = split("comments_" + Math.abs(postText.hashCode()));
+                            cs.add(t);
+                            saveList("comments_" + Math.abs(postText.hashCode()), cs);
+                            recreate();
+                        }).show();
+            });
+            actions.addView(commentBtn);
+            body.addView(actions);
+
+            List<String> postComments = split("comments_" + Math.abs(postText.hashCode()));
+            if (!postComments.isEmpty()) {
+                LinearLayout cbox = new LinearLayout(this);
+                cbox.setOrientation(LinearLayout.VERTICAL);
+                cbox.setBackgroundColor(0xfff7f7f7);
+                cbox.setPadding(dp(8), dp(5), dp(8), dp(5));
+                LinearLayout.LayoutParams cblp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                cblp.topMargin = dp(6);
+                for (String c : postComments) {
+                    TextView ct = new TextView(this);
+                    ct.setText("本地用户：" + c);
+                    ct.setTextSize(12);
+                    ct.setTextColor(0xff333333);
+                    cbox.addView(ct);
+                }
+                body.addView(cbox, cblp);
+            }
             post.addView(body, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
             final String mm = m;
             post.setOnLongClickListener(v -> {
@@ -1322,6 +1378,12 @@ public final class LocalToolActivity extends Activity {
                 tv.setTextColor(0xff191919);
                 tv.setPadding(dp(14), 0, 0, 0);
                 card.addView(tv, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+                card.setOnClickListener(v -> new AlertDialog.Builder(this)
+                        .setTitle(c)
+                        .setMessage("本地卡券\n\n有效期：长期有效\n使用范围：仅本机演示")
+                        .setNegativeButton("关闭", null)
+                        .setPositiveButton("使用", (d, w) -> toast("已使用：" + c))
+                        .show());
                 LinearLayout.LayoutParams clp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
                 clp.leftMargin = dp(8);
                 clp.rightMargin = dp(8);
