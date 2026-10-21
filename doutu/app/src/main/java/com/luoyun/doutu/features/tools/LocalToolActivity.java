@@ -993,7 +993,7 @@ public final class LocalToolActivity extends Activity {
             bills.add(0, "购买 " + name + " -¥" + String.format("%.2f", p));
             saveList("bills", bills);
             List<String> orders = new ArrayList<>(split("orders"));
-            orders.add(0, "订单 " + System.currentTimeMillis() + "\\n" + name + " · 待发货");
+            orders.add(0, "订单 " + System.currentTimeMillis() + "\n" + name + " · 待发货");
             saveList("orders", orders);
             getSharedPreferences(PREFS, 0).edit().putString("last_pay", "本地商城 · " + name + "|" + String.format("%.2f", p)).apply();
             toast("下单成功（本地）");
@@ -1005,7 +1005,7 @@ public final class LocalToolActivity extends Activity {
     private void buildMallWallet() {
         List<String> orders = split("orders");
         TextView card = new TextView(this);
-        card.setText("商城钱包（本地）\\n\\n可用余额  ¥" + getBalance() + "\\n订单数量  " + orders.size() + " 笔\\n积分  0");
+        card.setText("商城钱包（本地）\n\n可用余额  ¥" + getBalance() + "\n订单数量  " + orders.size() + " 笔\n积分  0");
         card.setTextSize(17);
         card.setTextColor(0xff1d1f26);
         card.setBackgroundColor(Color.WHITE);
@@ -1021,8 +1021,8 @@ public final class LocalToolActivity extends Activity {
     private void buildOrders() {
         List<String> orders = new ArrayList<>(split("orders"));
         if (orders.isEmpty()) {
-            orders.add("订单 20261021001\\n\\n本地示例订单 · 待发货");
-            orders.add("订单 20261021002\\n\\n本地示例订单 · 已完成");
+            orders.add("订单 20261021001\n\n本地示例订单 · 待发货");
+            orders.add("订单 20261021002\n\n本地示例订单 · 已完成");
         }
         buildInfo("淘订单", orders.toArray(new String[0]));
     }
