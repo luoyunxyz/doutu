@@ -88,6 +88,22 @@ public final class CropImageActivity extends Activity {
         plus.setAllCaps(false);
         plus.setOnClickListener(v -> cropView.scaleBox(1.12f));
         tools.addView(plus, new LinearLayout.LayoutParams(dp(70), dp(46)));
+        Button color = new Button(this);
+        color.setText("切换颜色");
+        color.setAllCaps(false);
+        color.setTextSize(12);
+        color.setOnClickListener(v -> cropView.toggleBorder());
+        tools.addView(color, new LinearLayout.LayoutParams(dp(96), dp(46)));
+        Button previewBtn = new Button(this);
+        previewBtn.setText("按住预览");
+        previewBtn.setAllCaps(false);
+        previewBtn.setTextSize(12);
+        previewBtn.setOnTouchListener((v, e) -> {
+            if (e.getAction() == MotionEvent.ACTION_DOWN) { cropView.setPreview(true); return true; }
+            if (e.getAction() == MotionEvent.ACTION_UP || e.getAction() == MotionEvent.ACTION_CANCEL) { cropView.setPreview(false); return true; }
+            return false;
+        });
+        tools.addView(previewBtn, new LinearLayout.LayoutParams(dp(96), dp(46)));
         root.addView(tools);
         setContentView(root);
     }
@@ -104,6 +120,8 @@ public final class CropImageActivity extends Activity {
         private float scale = 1f;
         private float downX, downY;
         private boolean dragging;
+        private int borderColor = Color.WHITE;
+        private boolean preview = false;
         private ScaleGestureDetector scaleDetector;
 
         CropView(Context context) {
@@ -135,6 +153,15 @@ public final class CropImageActivity extends Activity {
             invalidate();
         }
 
+        void toggleBorder() {
+            if (borderColor == Color.WHITE) borderColor = 0xffffda43;
+            else if (borderColor == 0xffffda43) borderColor = 0xff00e0c6;
+            else borderColor = Color.WHITE;
+            invalidate();
+        }
+
+        void setPreview(boolean on) { preview = on; invalidate(); }
+
         void scaleBox(float factor) {
             if (image.isEmpty()) return;
             float side = Math.max(Math.min(120f, Math.min(image.width(), image.height())), Math.min(box.width() * factor, Math.min(image.width(), image.height())));
@@ -155,14 +182,16 @@ public final class CropImageActivity extends Activity {
             super.onDraw(c);
             if (bitmap == null) return;
             c.drawBitmap(bitmap, null, image, paint);
-            paint.setColor(0x99000000);
-            c.drawRect(0, 0, getWidth(), box.top, paint);
-            c.drawRect(0, box.bottom, getWidth(), getHeight(), paint);
-            c.drawRect(0, box.top, box.left, box.bottom, paint);
-            c.drawRect(box.right, box.top, getWidth(), box.bottom, paint);
+            if (!preview) {
+                paint.setColor(0x99000000);
+                c.drawRect(0, 0, getWidth(), box.top, paint);
+                c.drawRect(0, box.bottom, getWidth(), getHeight(), paint);
+                c.drawRect(0, box.top, box.left, box.bottom, paint);
+                c.drawRect(box.right, box.top, getWidth(), box.bottom, paint);
+            }
             paint.setStyle(Paint.Style.STROKE);
             paint.setStrokeWidth(2f);
-            paint.setColor(Color.WHITE);
+            paint.setColor(borderColor);
             c.drawRect(box, paint);
             paint.setColor(0x55ffffff);
             paint.setStrokeWidth(1f);
