@@ -140,12 +140,34 @@ public final class WxCreateChatActivity extends Activity {
         ok.setTextColor(0xff333333);
         ok.setGravity(Gravity.CENTER);
         ok.setOnClickListener(v -> {
-            Intent intent = new Intent(this, WxChatGreetingActivity.class);
-            intent.putExtra("name", nameInput.getText().toString().trim());
-            intent.putExtra("avatar", avatarPath);
-            intent.putExtra("avatarUrl", avatarUrl);
-            intent.putExtra("isNew", isNewValue[0]);
-            startActivity(intent);
+            String name = nameInput.getText().toString().trim();
+            if (name.isEmpty()) name = "残阳€";
+            String friendId = "wx" + System.currentTimeMillis();
+            String avatar = (avatarUrl != null && avatarUrl.startsWith("http"))
+                    ? avatarUrl : "https://cdn-fakeworld.azureedge.net/fakeworld/ppf3dl.jpg";
+            String safe = name.replace("\\", "\\\\").replace("'", "\\'");
+            String js = "(function(){try{"
+                    + "var p=JSON.parse(localStorage.getItem('allProfiles')||'[]');"
+                    + "p.push({id:'" + friendId + "',nickname:'" + safe + "',avatarInfo:'" + avatar + "',"
+                    + "wechat:'" + friendId + "',gender:'female',area:'',signature:'',privacy:'all'});"
+                    + "localStorage.setItem('allProfiles',JSON.stringify(p));"
+                    + "var s=JSON.parse(localStorage.getItem('fake-world.wechat.chat-actions.v1')||'{}');"
+                    + "s.chats=s.chats||{};s.chats['" + safe + "']={unreadCount:0,unread:false,unreadOverride:true};"
+                    + "localStorage.setItem('fake-world.wechat.chat-actions.v1',JSON.stringify(s));"
+                    + "return true;}catch(e){return false;}})()";
+            boolean injected = com.luoyun.doutu.features.wei.WeiHomeActivity.execJs(js);
+            if (injected) {
+                // 直接进克隆自己的聊天页：左右滑切换发送者、底部输入栏都是原生的
+                startActivity(com.luoyun.doutu.features.wei.WeiHomeActivity
+                        .intentFor(this, "#/wechat/conversation/" + friendId));
+            } else {
+                Intent intent = new Intent(this, WxChatGreetingActivity.class);
+                intent.putExtra("name", name);
+                intent.putExtra("avatar", avatarPath);
+                intent.putExtra("avatarUrl", avatarUrl);
+                intent.putExtra("isNew", isNewValue[0]);
+                startActivity(intent);
+            }
             finish();
         });
         buttons.addView(cancel, new LinearLayout.LayoutParams(0, dp(56), 1f));

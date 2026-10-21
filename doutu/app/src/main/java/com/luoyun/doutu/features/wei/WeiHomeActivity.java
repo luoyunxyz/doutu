@@ -104,6 +104,23 @@ public final class WeiHomeActivity extends Activity {
     private static final java.util.LinkedHashMap<String,String> GALLERY_CACHE = new java.util.LinkedHashMap<>();
     private static WebView cachedWebView;
     private static boolean preloadStarted;
+
+    /**
+     * 给原生页面用的执行 JS 入口：在克隆页面里写入数据或跳转。
+     * 没有存活的 WebView 时返回 false，调用方自己兜底。
+     */
+    public static boolean execJs(String script) {
+        if (script == null) return false;
+        WeiHomeActivity inst = liveInstance;
+        final WebView view = (inst != null && inst.webView != null) ? inst.webView : cachedWebView;
+        if (view == null) return false;
+        view.post(() -> {
+            try {
+                view.evaluateJavascript(script, null);
+            } catch (Throwable ignored) { }
+        });
+        return true;
+    }
     /**
      * 当前活着的页面实例。preload 是在 MainActivity 里做的，那时候还没有 WeiHomeActivity，
      * 所以注入给 WebView 的是一个静态转发桥，它每次调用都来这里取「现在真正在用的那一份」。
