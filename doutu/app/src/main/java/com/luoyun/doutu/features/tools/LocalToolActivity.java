@@ -694,6 +694,181 @@ public final class LocalToolActivity extends Activity {
         buildInfo("支付消息", list.toArray(new String[0]));
     }
 
+
+    private void buildHome() {
+        TextView head = new TextView(this);
+        head.setText(title + "\n本地独立模块");
+        head.setTextSize(18);
+        head.setTextColor(0xff1d1f26);
+        head.setPadding(0, dp(6), 0, dp(14));
+        content.addView(head);
+        String[][] rows = {{"聊天", "chat"}, {"通讯录", "contacts"}, {"朋友圈", "moments"}, {"零钱", "wallet"}, {"账单", "billstats"}, {"设置", "settings"}};
+        for (String[] r : rows) {
+            TextView tv = new TextView(this);
+            tv.setText(r[0] + "  ›");
+            tv.setTextSize(15);
+            tv.setTextColor(0xff1d1f26);
+            tv.setBackgroundColor(Color.WHITE);
+            tv.setPadding(dp(16), dp(16), dp(16), dp(16));
+            tv.setOnClickListener(v -> LocalToolActivity.open(this, r[1], r[0]));
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            lp.bottomMargin = dp(6);
+            content.addView(tv, lp);
+        }
+    }
+
+    private void buildChats() {
+        TextView head = new TextView(this);
+        head.setText("选择联系人开始聊天");
+        head.setTextSize(14);
+        head.setTextColor(0xff5b6070);
+        head.setPadding(0, 0, 0, dp(8));
+        content.addView(head);
+        if (contacts.isEmpty()) { contacts.add("文件传输助手"); contacts.add("本地好友"); }
+        for (String c : contacts) {
+            TextView tv = new TextView(this);
+            tv.setText(c);
+            tv.setTextSize(15);
+            tv.setTextColor(0xff1d1f26);
+            tv.setBackgroundColor(Color.WHITE);
+            tv.setPadding(dp(14), dp(16), dp(14), dp(16));
+            tv.setOnClickListener(v -> LocalToolActivity.open(this, "chat", c));
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            lp.bottomMargin = dp(6);
+            content.addView(tv, lp);
+        }
+        Button add = new Button(this);
+        add.setText("＋ 新建聊天");
+        add.setAllCaps(false);
+        add.setOnClickListener(v -> {
+            EditText input = new EditText(this);
+            input.setHint("联系人名称");
+            new AlertDialog.Builder(this).setTitle("新建聊天").setView(input)
+                    .setNegativeButton("取消", null)
+                    .setPositiveButton("开始", (d, w) -> {
+                        String n = input.getText().toString().trim();
+                        if (!n.isEmpty()) {
+                            if (!contacts.contains(n)) { contacts.add(n); saveList("contacts", contacts); }
+                            LocalToolActivity.open(this, "chat", n);
+                        }
+                    }).show();
+        });
+        content.addView(add, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(46)));
+    }
+
+    private void buildBroadcast() {
+        final List<String> selected = new ArrayList<>();
+        TextView head = new TextView(this);
+        head.setText("选择要群发的联系人和内容（本地）");
+        head.setTextSize(14);
+        head.setTextColor(0xff5b6070);
+        content.addView(head);
+        if (contacts.isEmpty()) { contacts.add("文件传输助手"); contacts.add("本地好友"); }
+        for (String c : contacts) {
+            android.widget.CheckBox cb = new android.widget.CheckBox(this);
+            cb.setText(c);
+            cb.setTextSize(14);
+            cb.setOnCheckedChangeListener((b, checked) -> {
+                if (checked) { if (!selected.contains(c)) selected.add(c); }
+                else selected.remove(c);
+            });
+            content.addView(cb);
+        }
+        EditText msg = new EditText(this);
+        msg.setHint("群发内容");
+        msg.setTextSize(14);
+        content.addView(msg);
+        Button send = new Button(this);
+        send.setText("发送群发");
+        send.setAllCaps(false);
+        send.setOnClickListener(v -> {
+            if (selected.isEmpty()) { toast("请选择联系人"); return; }
+            String text = msg.getText().toString().trim();
+            if (text.isEmpty()) { toast("请输入内容"); return; }
+            List<String> log = new ArrayList<>(split("broadcast"));
+            log.add(0, "群发给 " + selected.size() + " 人：" + text);
+            saveList("broadcast", log);
+            toast("群发完成（本地）");
+            finish();
+        });
+        content.addView(send, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(48)));
+        List<String> log = split("broadcast");
+        if (!log.isEmpty()) {
+            TextView h = new TextView(this);
+            h.setText("群发记录");
+            h.setTextSize(13);
+            h.setTextColor(0xff8b90a0);
+            h.setPadding(0, dp(14), 0, dp(6));
+            content.addView(h);
+            for (String l : log) {
+                TextView tv = new TextView(this);
+                tv.setText(l);
+                tv.setTextSize(13);
+                tv.setTextColor(0xff333333);
+                tv.setBackgroundColor(Color.WHITE);
+                tv.setPadding(dp(10), dp(8), dp(10), dp(8));
+                content.addView(tv);
+            }
+        }
+    }
+
+    private void buildBankTransfer() {
+        EditText card = new EditText(this);
+        card.setHint("银行卡号");
+        card.setInputType(InputType.TYPE_CLASS_NUMBER);
+        content.addView(card);
+        EditText name = new EditText(this);
+        name.setHint("收款人姓名");
+        content.addView(name);
+        EditText amount = new EditText(this);
+        amount.setHint("金额（元）");
+        amount.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
+        content.addView(amount);
+        Button ok = new Button(this);
+        ok.setText("确认转账到银行卡");
+        ok.setAllCaps(false);
+        ok.setOnClickListener(v -> {
+            if (card.getText().toString().trim().length() < 8) { toast("请输入正确卡号"); return; }
+            String a = amount.getText().toString().trim();
+            if (a.isEmpty()) { toast("请输入金额"); return; }
+            try {
+                double v2 = Double.parseDouble(a);
+                double bal = Double.parseDouble(getBalance());
+                if (bal < v2) { toast("余额不足"); return; }
+                getSharedPreferences(PREFS, 0).edit().putString("balance", String.format("%.2f", bal - v2)).apply();
+                bills.add(0, "转账到银行卡 -¥" + String.format("%.2f", v2) + "  " + name.getText().toString().trim());
+                saveList("bills", bills);
+                toast("转账成功（本地）");
+                finish();
+            } catch (Exception e) { toast("金额格式不正确"); }
+        });
+        content.addView(ok, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(48)));
+    }
+
+    private void buildProfile() {
+        TextView card = new TextView(this);
+        card.setText("本地用户\n\n零钱  ¥" + getBalance() + "\n手机号  138****0000");
+        card.setTextSize(17);
+        card.setTextColor(0xff1d1f26);
+        card.setBackgroundColor(Color.WHITE);
+        card.setPadding(dp(18), dp(18), dp(18), dp(18));
+        content.addView(card);
+        String[] rows = {"我的账单", "总资产", "设置"};
+        for (String r : rows) {
+            TextView tv = new TextView(this);
+            tv.setText(r + "  ›");
+            tv.setTextSize(15);
+            tv.setTextColor(0xff1d1f26);
+            tv.setBackgroundColor(Color.WHITE);
+            tv.setPadding(dp(16), dp(16), dp(16), dp(16));
+            String k = r.contains("账单") ? "billstats" : r.contains("资产") ? "assets" : "settings";
+            tv.setOnClickListener(v -> LocalToolActivity.open(this, k, r));
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            lp.topMargin = dp(8);
+            content.addView(tv, lp);
+        }
+    }
+
     private int dp(int v) {
         return Math.round(v * getResources().getDisplayMetrics().density);
     }

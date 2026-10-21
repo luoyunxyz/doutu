@@ -13,9 +13,9 @@
   {
     "title": "小微",
     "items": [
-      {"name": "微信", "key": "chat"},
-      {"name": "创建单聊", "key": "chat"},
-      {"name": "创建群聊", "key": "chat"},
+      {"name": "微信", "key": "home"},
+      {"name": "创建单聊", "key": "chats"},
+      {"name": "创建群聊", "key": "chats"},
       {"name": "发现", "key": "moments"},
       {"name": "通讯录", "key": "contacts"},
       {"name": "公众号", "key": "articles"},
@@ -31,7 +31,7 @@
       {"name": "年度账单", "key": "billstats"},
       {"name": "已发红包", "key": "redpackets"},
       {"name": "支付成功", "key": "paysuccess"},
-      {"name": "群发助手", "key": "chat"},
+      {"name": "群发助手", "key": "broadcast"},
       {"name": "悬浮窗", "key": "settings"},
       {"name": "编辑红包", "key": "redpacket"},
       {"name": "编辑转账", "key": "transfer"},
@@ -43,14 +43,14 @@
   {
     "title": "阿宝",
     "items": [
-      {"name": "支付宝", "key": "chat"},
-      {"name": "创建单聊", "key": "chat"},
+      {"name": "支付宝", "key": "home"},
+      {"name": "创建单聊", "key": "chats"},
       {"name": "余额宝", "key": "assets"},
       {"name": "口碑", "key": "shop"},
       {"name": "我的", "key": "profile"},
       {"name": "公众号", "key": "articles"},
       {"name": "余额", "key": "wallet"},
-      {"name": "转账到银行卡", "key": "transfer"},
+      {"name": "转账到银行卡", "key": "banktransfer"},
       {"name": "账单", "key": "wallet"},
       {"name": "通讯录", "key": "contacts"},
       {"name": "余额明细", "key": "wallet"},
@@ -68,8 +68,8 @@
   {
     "title": "小Q",
     "items": [
-      {"name": "QQ", "key": "chat"},
-      {"name": "创建单聊", "key": "chat"},
+      {"name": "QQ", "key": "home"},
+      {"name": "创建单聊", "key": "chats"},
       {"name": "未读红点", "key": "status"},
       {"name": "公众号", "key": "articles"},
       {"name": "在线状态", "key": "status"},
