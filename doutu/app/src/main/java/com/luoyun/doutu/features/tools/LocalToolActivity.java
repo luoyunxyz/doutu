@@ -79,7 +79,7 @@ public final class LocalToolActivity extends Activity {
         tv.setGravity(Gravity.CENTER);
         bar.addView(tv, new LinearLayout.LayoutParams(0, dp(50), 1f));
         bar.addView(new View(this), new LinearLayout.LayoutParams(dp(88), dp(50)));
-        if (!("home".equals(key) || "contacts".equals(key) || "moments".equals(key) || "profile".equals(key) || "discover".equals(key) || "chat".equals(key) || "wallet".equals(key) || "transfer".equals(key) || "redpacket".equals(key) || "paysuccess".equals(key) || "pay".equals(key) || "billstats".equals(key) || "service".equals(key) || "favorites".equals(key) || "cards".equals(key) || "stickers".equals(key) || "redpackets".equals(key) || "broadcast".equals(key) || "payee".equals(key) || "walletdetail".equals(key) || "newfriends".equals(key) || "pickchat".equals(key) || "pickgroup".equals(key) || "official".equals(key) || "withdraw".equals(key) || "group".equals(key) || "upload".equals(key))) root.addView(bar);
+        if (!("home".equals(key) || "contacts".equals(key) || "moments".equals(key) || "profile".equals(key) || "discover".equals(key) || "chat".equals(key) || "wallet".equals(key) || "transfer".equals(key) || "redpacket".equals(key) || "paysuccess".equals(key) || "pay".equals(key) || "billstats".equals(key) || "service".equals(key) || "favorites".equals(key) || "cards".equals(key) || "stickers".equals(key) || "redpackets".equals(key) || "broadcast".equals(key) || "payee".equals(key) || "walletdetail".equals(key) || "newfriends".equals(key) || "pickchat".equals(key) || "pickgroup".equals(key) || "official".equals(key) || "withdraw".equals(key) || "group".equals(key) || "upload".equals(key) || "groupsettings".equals(key))) root.addView(bar);
 
         ScrollView scroll = new ScrollView(this);
         content = new LinearLayout(this);
@@ -100,6 +100,7 @@ public final class LocalToolActivity extends Activity {
         else if ("profile".equals(key)) buildProfile();
         else if ("chat".equals(key)) buildChat();
         else if ("group".equals(key)) buildGroup();
+        else if ("groupsettings".equals(key)) buildGroupSettings();
         else if ("upload".equals(key)) buildUpload();
         else if ("wallet".equals(key)) buildWallet();
         else if ("official".equals(key)) buildOfficial();
@@ -1837,7 +1838,9 @@ public final class LocalToolActivity extends Activity {
         title.setTextColor(0xff181818);
         title.setGravity(Gravity.CENTER);
         bar.addView(title, new LinearLayout.LayoutParams(0, dp(43), 1f));
-        bar.addView(assetIcon("ic_wx_chat_title_more", 22), new LinearLayout.LayoutParams(dp(43), dp(43)));
+        ImageView more = assetIcon("ic_wx_chat_title_more", 22);
+        more.setOnClickListener(v -> LocalToolActivity.open(this, "groupsettings", chatName));
+        bar.addView(more, new LinearLayout.LayoutParams(dp(43), dp(43)));
         content.addView(bar);
         View line = new View(this);
         line.setBackgroundColor(0xffd9d9d9);
@@ -1979,6 +1982,108 @@ public final class LocalToolActivity extends Activity {
         plp.topMargin = dp(16);
         content.addView(pick, plp);
         pick.setOnClickListener(v -> pickAlbum());
+    }
+
+    private void buildGroupSettings() {
+        content.setBackgroundColor(0xffededed);
+        content.setPadding(0, 0, 0, 0);
+
+        LinearLayout bar = new LinearLayout(this);
+        bar.setGravity(Gravity.CENTER_VERTICAL);
+        bar.setBackgroundColor(0xffededed);
+        ImageView back = assetIcon("ic_wx_chat_title_back", 21);
+        back.setOnClickListener(v -> finish());
+        bar.addView(back, new LinearLayout.LayoutParams(dp(43), dp(43)));
+        TextView title = new TextView(this);
+        title.setText("聊天信息");
+        title.setTextSize(16);
+        title.setTextColor(0xff191919);
+        title.setGravity(Gravity.CENTER);
+        bar.addView(title, new LinearLayout.LayoutParams(0, dp(43), 1f));
+        bar.addView(new View(this), new LinearLayout.LayoutParams(dp(43), dp(43)));
+        content.addView(bar);
+
+        LinearLayout members = new LinearLayout(this);
+        members.setBackgroundColor(Color.WHITE);
+        members.setPadding(dp(10), dp(12), dp(10), dp(12));
+        for (int i = 0; i < 5; i++) {
+            ImageView av = assetIcon("ic_wx_default_image", 48);
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(dp(48), dp(48));
+            lp.rightMargin = dp(10);
+            members.addView(av, lp);
+        }
+        TextView plus = new TextView(this);
+        plus.setText("＋");
+        plus.setTextSize(22);
+        plus.setTextColor(0xff999999);
+        plus.setGravity(Gravity.CENTER);
+        android.graphics.drawable.GradientDrawable pg = new android.graphics.drawable.GradientDrawable();
+        pg.setColor(0xfff2f2f2);
+        pg.setCornerRadius(dp(4));
+        plus.setBackground(pg);
+        members.addView(plus, new LinearLayout.LayoutParams(dp(48), dp(48)));
+        content.addView(members);
+
+        String[] rows = {"群聊名称", "群二维码", "群公告", "我在本群的昵称"};
+        for (String r : rows) {
+            LinearLayout row = new LinearLayout(this);
+            row.setGravity(Gravity.CENTER_VERTICAL);
+            row.setBackgroundColor(Color.WHITE);
+            row.setPadding(dp(15), dp(14), dp(15), dp(14));
+            TextView tv = new TextView(this);
+            tv.setText(r);
+            tv.setTextSize(15);
+            tv.setTextColor(0xff191919);
+            row.addView(tv, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+            TextView arrow = new TextView(this);
+            arrow.setText("›");
+            arrow.setTextSize(20);
+            arrow.setTextColor(0xffc7c7cc);
+            row.addView(arrow);
+            LinearLayout.LayoutParams rlp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            rlp.topMargin = dp(1);
+            content.addView(row, rlp);
+        }
+
+        String[] switches = {"消息免打扰", "置顶聊天", "保存到通讯录"};
+        for (String sw : switches) {
+            LinearLayout row = new LinearLayout(this);
+            row.setGravity(Gravity.CENTER_VERTICAL);
+            row.setBackgroundColor(Color.WHITE);
+            row.setPadding(dp(15), dp(10), dp(15), dp(10));
+            TextView tv = new TextView(this);
+            tv.setText(sw);
+            tv.setTextSize(15);
+            tv.setTextColor(0xff191919);
+            row.addView(tv, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+            android.widget.Switch toggle = new android.widget.Switch(this);
+            toggle.setChecked(getSharedPreferences(PREFS, 0).getBoolean("grp_" + sw, false));
+            toggle.setOnCheckedChangeListener((b, checked) -> getSharedPreferences(PREFS, 0).edit().putBoolean("grp_" + sw, checked).apply());
+            row.addView(toggle);
+            LinearLayout.LayoutParams rlp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            rlp.topMargin = dp(1);
+            content.addView(row, rlp);
+        }
+
+        TextView quit = new TextView(this);
+        quit.setText("删除并退出");
+        quit.setTextSize(16);
+        quit.setTextColor(0xffe64340);
+        quit.setGravity(Gravity.CENTER);
+        quit.setBackgroundColor(Color.WHITE);
+        quit.setOnClickListener(v -> new AlertDialog.Builder(this)
+                .setTitle("删除并退出")
+                .setMessage("退出后不会通知群聊中的其他成员")
+                .setNegativeButton("取消", null)
+                .setPositiveButton("退出", (d, w) -> {
+                    List<String> gs = split("groups");
+                    gs.remove(title);
+                    saveList("groups", gs);
+                    finish();
+                }).show());
+        LinearLayout.LayoutParams qlp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(50));
+        qlp.topMargin = dp(20);
+        content.addView(quit, qlp);
     }
 
     private void buildService() {
