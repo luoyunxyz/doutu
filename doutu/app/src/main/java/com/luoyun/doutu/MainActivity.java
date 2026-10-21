@@ -2051,7 +2051,9 @@ static final class FeatureRow {
                             com.luoyun.doutu.features.ali.AliWithdrawActivity.class));
                     break;
                 case "act:receipt":
-                    startActivity(com.luoyun.doutu.features.zhi.ReceiptActivity.intentFor(MainActivity.this));
+                    // 商家收款记录：真机是「收款记录 / 统计 / 自定义查询」的空列表页
+                    startActivity(new Intent(MainActivity.this,
+                            com.luoyun.doutu.features.ali.AliReceiptActivity.class));
                     break;
                 case "act:paysuccess":
                     // 支付成功：真机是对勾 + 支付成功 + ¥金额 + 交易方式 + 上传真实截图
