@@ -2109,6 +2109,21 @@ public final class LocalToolActivity extends Activity {
             row.setOnClickListener(v -> {
                 if ("群二维码".equals(rr)) {
                     LocalToolActivity.open(this, "groupqr", groupName);
+                } else if ("群聊名称".equals(rr)) {
+                    EditText input = new EditText(this);
+                    input.setText(groupName);
+                    new AlertDialog.Builder(this).setTitle("群聊名称").setView(input)
+                            .setNegativeButton("取消", null)
+                            .setPositiveButton("保存", (d, w) -> {
+                                String nn = input.getText().toString().trim();
+                                if (nn.isEmpty()) return;
+                                List<String> gs = split("groups");
+                                int idx = gs.indexOf(groupName);
+                                if (idx >= 0) gs.set(idx, nn);
+                                saveList("groups", gs);
+                                toast("群名称已修改");
+                                finish();
+                            }).show();
                 } else {
                     EditText input = new EditText(this);
                     input.setText(getSharedPreferences(PREFS, 0).getString("grp_" + rr, ""));
