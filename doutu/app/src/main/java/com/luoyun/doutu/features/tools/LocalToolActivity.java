@@ -77,7 +77,7 @@ public final class LocalToolActivity extends Activity {
         tv.setGravity(Gravity.CENTER);
         bar.addView(tv, new LinearLayout.LayoutParams(0, dp(50), 1f));
         bar.addView(new View(this), new LinearLayout.LayoutParams(dp(88), dp(50)));
-        if (!("home".equals(key) || "contacts".equals(key) || "moments".equals(key) || "profile".equals(key) || "discover".equals(key))) root.addView(bar);
+        if (!("home".equals(key) || "contacts".equals(key) || "moments".equals(key) || "profile".equals(key) || "discover".equals(key) || "chat".equals(key))) root.addView(bar);
 
         ScrollView scroll = new ScrollView(this);
         content = new LinearLayout(this);
@@ -125,21 +125,87 @@ public final class LocalToolActivity extends Activity {
     }
 
     private void buildChat() {
+        content.setBackgroundColor(0xffededed);
+
+        LinearLayout header = new LinearLayout(this);
+        header.setGravity(Gravity.CENTER_VERTICAL);
+        header.setBackgroundColor(0xffededed);
+        ImageView back = assetIcon("ic_wx_chat_title_back", 22);
+        back.setOnClickListener(v -> finish());
+        header.addView(back, new LinearLayout.LayoutParams(dp(40), dp(43)));
+        TextView title = new TextView(this);
+        title.setText(chatName);
+        title.setTextSize(15);
+        title.setTextColor(0xff181818);
+        title.setGravity(Gravity.CENTER);
+        header.addView(title, new LinearLayout.LayoutParams(0, dp(43), 1f));
+        ImageView more = assetIcon("ic_wx_chat_title_more", 22);
+        header.addView(more, new LinearLayout.LayoutParams(dp(40), dp(43)));
+        content.addView(header);
+        View line = new View(this);
+        line.setBackgroundColor(0xffd9d9d9);
+        content.addView(line, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(1)));
+
         chatList = new LinearLayout(this);
         chatList.setOrientation(LinearLayout.VERTICAL);
+        chatList.setPadding(dp(4), dp(6), dp(4), dp(6));
+        chatList.setMinimumHeight(dp(380));
         content.addView(chatList);
         for (String m : messages) addBubble(m, true);
         if (messages.isEmpty()) addBubble("你好，这是本地聊天工具，消息只保存在本机。", false);
-        LinearLayout inputRow = new LinearLayout(this);
-        inputRow.setGravity(Gravity.CENTER_VERTICAL);
-        inputRow.setPadding(0, dp(12), 0, 0);
+
+        View line2 = new View(this);
+        line2.setBackgroundColor(0xffd2d2d2);
+        content.addView(line2, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(1)));
+
+        LinearLayout footer = new LinearLayout(this);
+        footer.setGravity(Gravity.CENTER_VERTICAL);
+        footer.setBackgroundColor(0xfff7f7f7);
+        footer.setPadding(dp(9), 0, dp(8), 0);
+        footer.addView(assetIcon("ic_wx_chat_footer_voice", 25), new LinearLayout.LayoutParams(dp(25), dp(25)));
         EditText input = new EditText(this);
-        input.setHint("输入消息");
         input.setTextSize(14);
-        inputRow.addView(input, new LinearLayout.LayoutParams(0, dp(48), 1f));
-        Button send = new Button(this);
+        input.setSingleLine(true);
+        android.graphics.drawable.GradientDrawable bg = new android.graphics.drawable.GradientDrawable();
+        bg.setColor(Color.WHITE);
+        bg.setCornerRadius(dp(6));
+        input.setBackground(bg);
+        input.setPadding(dp(8), 0, dp(8), 0);
+        LinearLayout.LayoutParams ilp = new LinearLayout.LayoutParams(0, dp(36), 1f);
+        ilp.leftMargin = dp(9);
+        ilp.rightMargin = dp(9);
+        footer.addView(input, ilp);
+        footer.addView(assetIcon("ic_wx_chat_footer_sticker", 25), new LinearLayout.LayoutParams(dp(25), dp(25)));
+        LinearLayout rightBox = new LinearLayout(this);
+        rightBox.setGravity(Gravity.CENTER_VERTICAL);
+        LinearLayout.LayoutParams rlp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, dp(50));
+        rlp.leftMargin = dp(8);
+        ImageView plus = assetIcon("ic_wx_chat_footer_add", 25);
+        TextView send = new TextView(this);
         send.setText("发送");
-        send.setAllCaps(false);
+        send.setTextSize(14);
+        send.setTextColor(Color.WHITE);
+        send.setGravity(Gravity.CENTER);
+        android.graphics.drawable.GradientDrawable sbg = new android.graphics.drawable.GradientDrawable();
+        sbg.setColor(0xff07c160);
+        sbg.setCornerRadius(dp(4));
+        send.setBackground(sbg);
+        send.setVisibility(View.GONE);
+        rightBox.addView(plus, new LinearLayout.LayoutParams(dp(25), dp(25)));
+        rightBox.addView(send, new LinearLayout.LayoutParams(dp(54), dp(29)));
+        footer.addView(rightBox, rlp);
+        footer.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(50)));
+        content.addView(footer);
+
+        input.addTextChangedListener(new android.text.TextWatcher() {
+            public void beforeTextChanged(CharSequence s, int st, int c, int a2) { }
+            public void onTextChanged(CharSequence s, int st, int b2, int c) {
+                boolean has = s.toString().trim().length() > 0;
+                plus.setVisibility(has ? View.GONE : View.VISIBLE);
+                send.setVisibility(has ? View.VISIBLE : View.GONE);
+            }
+            public void afterTextChanged(android.text.Editable s) { }
+        });
         send.setOnClickListener(v -> {
             String text = input.getText().toString().trim();
             if (text.isEmpty()) return;
@@ -148,23 +214,39 @@ public final class LocalToolActivity extends Activity {
             addBubble(text, true);
             input.setText("");
         });
-        inputRow.addView(send, new LinearLayout.LayoutParams(dp(76), dp(48)));
-        content.addView(inputRow);
     }
 
     private void addBubble(String text, boolean mine) {
         TextView tv = new TextView(this);
         tv.setText(text);
-        tv.setTextSize(14);
-        tv.setTextColor(mine ? Color.WHITE : 0xff1d1f26);
-        tv.setBackgroundColor(mine ? 0xff4a7bf7 : Color.WHITE);
-        tv.setPadding(dp(12), dp(9), dp(12), dp(9));
+        tv.setTextSize(15);
+        tv.setTextColor(0xff191919);
+        android.graphics.drawable.GradientDrawable bg = new android.graphics.drawable.GradientDrawable();
+        bg.setColor(mine ? 0xff95ec69 : Color.WHITE);
+        bg.setCornerRadius(dp(4));
+        tv.setBackground(bg);
+        tv.setPadding(dp(10), dp(8), dp(10), dp(8));
+        tv.setMaxWidth(dp(250));
+        ImageView avatar = new ImageView(this);
+        try (java.io.InputStream in = getAssets().open("wx_icons/ic_wx_default_image.png")) {
+            avatar.setImageBitmap(android.graphics.BitmapFactory.decodeStream(in));
+        } catch (Exception ignored) { }
+        avatar.setScaleType(ImageView.ScaleType.CENTER_CROP);
         LinearLayout row = new LinearLayout(this);
         row.setGravity(mine ? Gravity.END : Gravity.START);
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        lp.topMargin = dp(8);
-        row.addView(tv, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-        if (chatList != null) chatList.addView(row, lp);
+        row.setPadding(dp(6), dp(6), dp(6), dp(6));
+        if (mine) {
+            row.addView(tv, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            LinearLayout.LayoutParams alp = new LinearLayout.LayoutParams(dp(36), dp(36));
+            alp.leftMargin = dp(8);
+            row.addView(avatar, alp);
+        } else {
+            LinearLayout.LayoutParams alp = new LinearLayout.LayoutParams(dp(36), dp(36));
+            alp.rightMargin = dp(8);
+            row.addView(avatar, alp);
+            row.addView(tv, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        }
+        if (chatList != null) chatList.addView(row, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
     }
 
     private void buildWallet() {
