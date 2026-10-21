@@ -1934,14 +1934,11 @@ static final class FeatureRow {
                 if ("#/wechat/contacts".equals(route)) {
                     // 直接点克隆底部「通讯录」标签，比改 hash 稳（哈希会被首页路由覆盖）
                     String tapContacts = "(function(){var n=0;var iv=setInterval(function(){"
-                            + "try{var els=document.querySelectorAll('div,span');"
-                            + "for(var i=0;i<els.length;i++){var el=els[i];"
-                            + "if(el.children&&el.children.length)continue;"
-                            + "if((el.textContent||'').trim()!=='\u901a\u8baf\u5f55')continue;"
-                            + "var row=el;for(var k=0;k<5&&row;k++){"
-                            + "if(String(row.className||'').indexOf('nav')>=0){row.click();clearInterval(iv);return;}"
-                            + "row=row.parentElement;}}}catch(e){}"
-                            + "if(++n>40)clearInterval(iv);},250);})()";
+                            + "try{var items=document.querySelectorAll('[class*=\"navbar__item\"]');"
+                            + "for(var i=0;i<items.length;i++){var el=items[i];"
+                            + "if((el.textContent||'').trim()==='\u901a\u8baf\u5f55'){el.click();clearInterval(iv);return;}}}"
+                            + "catch(e){}"
+                            + "if(++n>60)clearInterval(iv);},250);})()";
                     startActivity(com.luoyun.doutu.features.wei.WeiHomeActivity
                             .intentFor(MainActivity.this, "#/wechat"));
                     com.luoyun.doutu.features.wei.WeiHomeActivity.scheduleBridge(tapContacts, null);
