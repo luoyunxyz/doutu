@@ -1687,11 +1687,13 @@ static final class FeatureRow {
         }
 
         private void openTool(ToolEntry e) {
-            if (e.action != null && e.action.startsWith("local:")) {
-                com.luoyun.doutu.features.tools.LocalToolActivity.open(MainActivity.this, e.action.substring(6), e.name);
+            String toolKey = e.action == null ? "" : e.action;
+            if (toolKey.startsWith("local:")) toolKey = toolKey.substring(6);
+            if (!("avatar".equals(toolKey) || "auto".equals(toolKey) || "ai".equals(toolKey) || "localavatars".equals(toolKey) || "edit".equals(toolKey) || "tutorial".equals(toolKey))) {
+                com.luoyun.doutu.features.tools.LocalToolActivity.open(MainActivity.this, toolKey, e.name);
                 return;
             }
-            switch (e.action) {
+            switch (toolKey) {
                 case "avatar":
                     com.luoyun.doutu.features.tools.ToolImageActivity.open(MainActivity.this, "avatar");
                     break;
