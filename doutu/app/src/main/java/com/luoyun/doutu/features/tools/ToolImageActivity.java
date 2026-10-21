@@ -41,7 +41,7 @@ import java.util.List;
  * 全部本机处理，不访问网络、不调用本软件其它模块。
  */
 public final class ToolImageActivity extends Activity {
-    private static final int REQ_BASE = 51, REQ_AVATAR = 52, REQ_AI = 53, REQ_CROP = 54;
+    private static final int REQ_BASE = 51, REQ_AVATAR = 52, REQ_AI = 53, REQ_CROP = 54, REQ_ADJUST = 55;
     private static final int MODE_AVATAR = 0, MODE_AUTO = 1, MODE_AI = 2;
 
     private int mode;
@@ -136,6 +136,16 @@ public final class ToolImageActivity extends Activity {
             cropBtn.setAllCaps(false);
             cropBtn.setOnClickListener(v -> openCrop());
             col.addView(cropBtn, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(44)));
+            Button adjustBtn = new Button(this);
+            adjustBtn.setText("调整选区（放大 / 方向键 / 圆角）");
+            adjustBtn.setAllCaps(false);
+            adjustBtn.setOnClickListener(v -> {
+                if (base == null) { toast("请先选择底图"); return; }
+                AvatarAdjustActivity.source = base;
+                AvatarAdjustActivity.resultRect = null;
+                startActivityForResult(new Intent(this, AvatarAdjustActivity.class), REQ_ADJUST);
+            });
+            col.addView(adjustBtn, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(44)));
             watermark = new CheckBox(this);
             watermark.setText("保存时添加水印");
             watermark.setTextSize(13);
@@ -267,6 +277,10 @@ public final class ToolImageActivity extends Activity {
             }
             return;
         }
+        if (request == REQ_ADJUST) {
+            if (result == RESULT_OK && AvatarAdjustActivity.resultRect != null) toast("选区已调整");
+            return;
+        }
         if (result != RESULT_OK || data == null) return;
         if (request == REQ_AI) {
             sources.clear();
@@ -283,8 +297,19 @@ public final class ToolImageActivity extends Activity {
             if (uri == null) return;
             try {
                 Bitmap bmp = AvatarUpload.decode(this, uri);
-                if (request == REQ_BASE) { base = bmp; basePreview.setImageBitmap(bmp); }
-                else { avatar = bmp; avatarPreview.setImageBitmap(bmp); }
+                if (request == REQ_BASE) {
+                    base = bmp;
+                    basePreview.setImageBitmap(bmp);
+                    // 和真机一样：选完截图先进「调整选区」页（放大/缩小/方向键/圆角滑杆）。
+                    if (mode == MODE_AVATAR || mode == MODE_AUTO) {
+                        AvatarAdjustActivity.source = bmp;
+                        AvatarAdjustActivity.resultRect = null;
+                        startActivityForResult(new Intent(this, AvatarAdjustActivity.class), REQ_ADJUST);
+                    }
+                } else {
+                    avatar = bmp;
+                    avatarPreview.setImageBitmap(bmp);
+                }
             } catch (Exception e) {
                 toast("图片读取失败");
             }

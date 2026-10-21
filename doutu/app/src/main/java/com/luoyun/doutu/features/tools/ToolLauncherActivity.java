@@ -54,6 +54,11 @@ public final class ToolLauncherActivity extends Activity {
         } else if ("qqgz".equals(key)) {
             intent = new Intent(this, com.luoyun.doutu.features.qq.QqHomeActivity.class);
             intent.putExtra("gzh", true);
+        } else if ("adjust".equals(key)) {
+            try (java.io.InputStream in = getAssets().open("fake_world/assets/user-avatar-1-CKPDcH57.jpg")) {
+                AvatarAdjustActivity.source = android.graphics.BitmapFactory.decodeStream(in);
+            } catch (Exception ignored) { }
+            intent = new Intent(this, AvatarAdjustActivity.class);
         } else {
             intent = new Intent(this, LocalToolActivity.class);
             intent.putExtra("key", key);

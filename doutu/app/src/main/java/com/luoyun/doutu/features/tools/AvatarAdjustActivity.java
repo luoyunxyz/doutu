@@ -1,0 +1,407 @@
+package com.luoyun.doutu.features.tools;
+
+import android.app.Activity;
+import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.DashPathEffect;
+import android.graphics.Paint;
+import android.graphics.Path;
+import android.graphics.Rect;
+import android.graphics.RectF;
+import android.graphics.drawable.GradientDrawable;
+import android.os.Bundle;
+import android.view.Gravity;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.Window;
+import android.widget.FrameLayout;
+import android.widget.LinearLayout;
+import android.widget.SeekBar;
+import android.widget.TextView;
+
+/**
+ * 「换头像 → 调整选区」页 —— 按真机布局 fragment_tool_replace_shot.xml 重画：
+ * 黄色标题栏（返回 / ✔完成）、黑底照片 + 黄色虚线圆角选框，底部是
+ * 放大/缩小、方向键、按住预览/切换颜色、圆角弧度滑杆、还原。
+ */
+public final class AvatarAdjustActivity extends Activity {
+    /** 由 ToolImageActivity 放进来的截图与返回的选框。 */
+    public static Bitmap source;
+    public static RectF resultRect;
+
+    private ClipView clip;
+    private int radiusDp = 24;
+    private int colorIndex = 0;
+    private final int[] colors = {0xffffd400, 0xffffffff, 0xff4cd964, 0xffff3b30};
+
+    @Override
+    protected void onCreate(Bundle state) {
+        super.onCreate(state);
+        Window w = getWindow();
+        w.setStatusBarColor(0xfff9db61);
+        w.setNavigationBarColor(Color.BLACK);
+        w.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+
+        FrameLayout root = new FrameLayout(this);
+        root.setBackgroundColor(Color.BLACK);
+
+        clip = new ClipView();
+        root.addView(clip, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+
+        // 底部控件
+        LinearLayout bottom = new LinearLayout(this);
+        bottom.setOrientation(LinearLayout.VERTICAL);
+        bottom.setPadding(dp(12), 0, dp(12), dp(18));
+
+        LinearLayout actions = new LinearLayout(this);
+        actions.setGravity(Gravity.BOTTOM);
+        LinearLayout leftCol = new LinearLayout(this);
+        leftCol.setOrientation(LinearLayout.VERTICAL);
+        leftCol.addView(pill("放大", v -> clip.zoom(1.1f)));
+        TextView reduce = pill("缩小", v -> clip.zoom(0.9f));
+        LinearLayout.LayoutParams rlp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        rlp.topMargin = dp(10);
+        leftCol.addView(reduce, rlp);
+        actions.addView(leftCol, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
+        LinearLayout pad = new LinearLayout(this);
+        pad.setOrientation(LinearLayout.VERTICAL);
+        pad.setGravity(Gravity.CENTER_HORIZONTAL);
+        pad.setPadding(dp(30), 0, dp(30), 0);
+        TextView up = arrow("⌃", v -> clip.move(0, -dp(10)));
+        pad.addView(up, new LinearLayout.LayoutParams(dp(34), dp(34)));
+        LinearLayout mid = new LinearLayout(this);
+        mid.setGravity(Gravity.CENTER);
+        mid.addView(arrow("‹", v -> clip.move(-dp(10), 0)), new LinearLayout.LayoutParams(dp(34), dp(34)));
+        TextView down = arrow("⌄", v -> clip.move(0, dp(10)));
+        LinearLayout.LayoutParams dlp = new LinearLayout.LayoutParams(dp(34), dp(34));
+        dlp.leftMargin = dp(14);
+        dlp.rightMargin = dp(14);
+        mid.addView(down, dlp);
+        mid.addView(arrow("›", v -> clip.move(dp(10), 0)), new LinearLayout.LayoutParams(dp(34), dp(34)));
+        pad.addView(mid);
+        actions.addView(pad, new LinearLayout.LayoutParams(0,
+                ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+
+        LinearLayout rightCol = new LinearLayout(this);
+        rightCol.setOrientation(LinearLayout.VERTICAL);
+        TextView preview = pill("按住预览", null);
+        preview.setOnTouchListener((v, e) -> {
+            if (e.getAction() == MotionEvent.ACTION_DOWN) { clip.setPreview(true); return true; }
+            if (e.getAction() == MotionEvent.ACTION_UP || e.getAction() == MotionEvent.ACTION_CANCEL) {
+                clip.setPreview(false);
+                return true;
+            }
+            return false;
+        });
+        rightCol.addView(preview);
+        LinearLayout.LayoutParams clp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        clp.topMargin = dp(10);
+        rightCol.addView(pill("切换颜色", v -> clip.cycleColor()), clp);
+        actions.addView(rightCol, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
+        bottom.addView(actions);
+
+        // 圆角弧度滑杆
+        LinearLayout seekRow = new LinearLayout(this);
+        seekRow.setGravity(Gravity.CENTER_VERTICAL);
+        LinearLayout.LayoutParams seekLp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        seekLp.topMargin = dp(14);
+        seekRow.addView(seekIcon("‹"), new LinearLayout.LayoutParams(dp(28), dp(28)));
+        SeekBar bar = new SeekBar(this);
+        bar.setMax(180);
+        bar.setProgress(24);
+        bar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                radiusDp = progress;
+                clip.setRadius(progress);
+            }
+            @Override public void onStartTrackingTouch(SeekBar seekBar) { }
+            @Override public void onStopTrackingTouch(SeekBar seekBar) { }
+        });
+        LinearLayout.LayoutParams blp = new LinearLayout.LayoutParams(0,
+                ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+        blp.leftMargin = dp(10);
+        blp.rightMargin = dp(10);
+        seekRow.addView(bar, blp);
+        seekRow.addView(seekIcon("›"), new LinearLayout.LayoutParams(dp(28), dp(28)));
+        bottom.addView(seekRow, seekLp);
+
+        // 当前角度：N + 还原（和真机一样在同一行）
+        LinearLayout footer = new LinearLayout(this);
+        footer.setGravity(Gravity.CENTER);
+        LinearLayout.LayoutParams flp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        flp.topMargin = dp(8);
+        final TextView angleLabel = new TextView(this);
+        angleLabel.setText("当前角度：24");
+        angleLabel.setTextSize(15);
+        angleLabel.setTextColor(Color.WHITE);
+        footer.addView(angleLabel);
+        TextView reset = new TextView(this);
+        reset.setText("还原");
+        reset.setTextSize(15);
+        reset.setTextColor(Color.WHITE);
+        reset.setPadding(dp(16), dp(4), dp(16), dp(4));
+        GradientDrawable resetBg = new GradientDrawable();
+        resetBg.setColor(0xff2a2a2a);
+        resetBg.setCornerRadius(dp(4));
+        reset.setBackground(resetBg);
+        LinearLayout.LayoutParams resetLp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        resetLp.leftMargin = dp(10);
+        footer.addView(reset, resetLp);
+        reset.setOnClickListener(v -> {
+            clip.reset();
+            bar.setProgress(24);
+            colorIndex = 0;
+            clip.cycleColorTo(colors[0]);
+        });
+        bottom.addView(footer, flp);
+        bar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                radiusDp = progress;
+                clip.setRadius(progress);
+                angleLabel.setText("当前角度：" + progress);
+            }
+            @Override public void onStartTrackingTouch(SeekBar seekBar) { }
+            @Override public void onStopTrackingTouch(SeekBar seekBar) { }
+        });
+
+        FrameLayout.LayoutParams blp2 = new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        blp2.gravity = Gravity.BOTTOM;
+        root.addView(bottom, blp2);
+
+        // 顶部黄栏
+        LinearLayout top = new LinearLayout(this);
+        top.setGravity(Gravity.CENTER_VERTICAL);
+        top.setBackgroundColor(0xfff9db61);
+        top.setPadding(dp(10), 0, dp(10), 0);
+        TextView back = new TextView(this);
+        back.setText("‹");
+        back.setTextSize(30);
+        back.setTextColor(0xff333333);
+        back.setGravity(Gravity.CENTER);
+        back.setOnClickListener(v -> finish());
+        top.addView(back, new LinearLayout.LayoutParams(dp(44), ViewGroup.LayoutParams.MATCH_PARENT));
+        top.addView(new View(this), new LinearLayout.LayoutParams(0, 1, 1f));
+        TextView done = new TextView(this);
+        done.setText("✔ 完成");
+        done.setTextSize(17);
+        done.setTextColor(0xff333333);
+        done.setGravity(Gravity.CENTER);
+        done.setPadding(dp(12), 0, dp(6), 0);
+        done.setOnClickListener(v -> {
+            resultRect = clip.boxInImage();
+            setResult(RESULT_OK, new Intent());
+            finish();
+        });
+        top.addView(done, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        FrameLayout.LayoutParams tlp = new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(56));
+        root.addView(top, tlp);
+
+        setContentView(root);
+    }
+
+    private TextView pill(String text, View.OnClickListener onClick) {
+        TextView tv = new TextView(this);
+        tv.setText(text);
+        tv.setTextSize(14);
+        tv.setTextColor(0xff666666);
+        tv.setGravity(Gravity.CENTER);
+        tv.setPadding(dp(12), dp(10), dp(12), dp(10));
+        GradientDrawable bg = new GradientDrawable();
+        bg.setColor(0xfffefefe);
+        bg.setCornerRadius(dp(4));
+        tv.setBackground(bg);
+        if (onClick != null) tv.setOnClickListener(onClick);
+        return tv;
+    }
+
+    private TextView arrow(String glyph, View.OnClickListener onClick) {
+        TextView tv = new TextView(this);
+        tv.setText(glyph);
+        tv.setTextSize(16);
+        tv.setTextColor(0xff666666);
+        tv.setGravity(Gravity.CENTER);
+        GradientDrawable bg = new GradientDrawable();
+        bg.setColor(0xffd8d8d8);
+        bg.setShape(GradientDrawable.OVAL);
+        tv.setBackground(bg);
+        tv.setOnClickListener(onClick);
+        return tv;
+    }
+
+    private TextView seekIcon(String glyph) {
+        TextView tv = new TextView(this);
+        tv.setText(glyph);
+        tv.setTextSize(18);
+        tv.setTextColor(0xff666666);
+        tv.setGravity(Gravity.CENTER);
+        GradientDrawable bg = new GradientDrawable();
+        bg.setColor(0xffeeeeee);
+        bg.setShape(GradientDrawable.OVAL);
+        tv.setBackground(bg);
+        return tv;
+    }
+
+    private int dp(int v) {
+        return Math.round(v * getResources().getDisplayMetrics().density);
+    }
+
+    /** 照片 + 虚线圆角选框。 */
+    private final class ClipView extends View {
+        private final Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
+        private final RectF img = new RectF();
+        private final Rect src = new Rect();
+        private final RectF dst = new RectF();
+        private final RectF box = new RectF();
+        private float borderRadius = 24 * getResources().getDisplayMetrics().density;
+        private int borderColor = colors[0];
+        private boolean preview;
+        private float downX, downY;
+        private boolean drag;
+
+        ClipView() {
+            super(AvatarAdjustActivity.this);
+            resetBox();
+        }
+
+        void resetBox() {
+            box.set(img.isEmpty() ? new RectF(200, 400, 800, 1400) : img);
+            float w = box.width() * 0.55f, h = box.height() * 0.75f;
+            box.set(box.centerX() - w / 2, box.centerY() - h / 2,
+                    box.centerX() + w / 2, box.centerY() + h / 2);
+            invalidate();
+        }
+
+        void reset() {
+            resetBox();
+            borderRadius = 24 * getResources().getDisplayMetrics().density;
+            invalidate();
+        }
+
+        void zoom(float factor) {
+            float w = box.width() * factor / 2, h = box.height() * factor / 2;
+            float cx = box.centerX(), cy = box.centerY();
+            box.set(cx - w, cy - h, cx + w, cy + h);
+            clamp();
+            invalidate();
+        }
+
+        void move(float dx, float dy) {
+            box.offset(dx, dy);
+            clamp();
+            invalidate();
+        }
+
+        void setRadius(int dpRadius) {
+            borderRadius = dpRadius * getResources().getDisplayMetrics().density / 2f;
+            invalidate();
+        }
+
+        void cycleColor() {
+            colorIndex = (colorIndex + 1) % colors.length;
+            borderColor = colors[colorIndex];
+            invalidate();
+        }
+
+        void cycleColorTo(int color) {
+            borderColor = color;
+            invalidate();
+        }
+
+        void setPreview(boolean on) {
+            preview = on;
+            invalidate();
+        }
+
+        RectF boxInImage() {
+            return new RectF(box);
+        }
+
+        private void clamp() {
+            if (img.isEmpty()) return;
+            if (box.left < img.left) box.offset(img.left - box.left, 0);
+            if (box.top < img.top) box.offset(0, img.top - box.top);
+            if (box.right > img.right) box.offset(img.right - box.right, 0);
+            if (box.bottom > img.bottom) box.offset(0, img.bottom - box.bottom);
+        }
+
+        @Override
+        protected void onDraw(Canvas c) {
+            c.drawColor(Color.BLACK);
+            if (source != null) {
+                float areaTop = dp(56);
+                float areaBottom = getHeight() - dp(300);
+                float vw = getWidth(), vh = areaBottom - areaTop;
+                float k = Math.min(vw / source.getWidth(), vh / source.getHeight());
+                float w = source.getWidth() * k, h = source.getHeight() * k;
+                img.set((vw - w) / 2, areaTop + (vh - h) / 2,
+                        (vw - w) / 2 + w, areaTop + (vh - h) / 2 + h);
+                if (box.isEmpty()) resetBox();
+                src.set(0, 0, source.getWidth(), source.getHeight());
+                dst.set(img);
+                p.setFilterBitmap(true);
+                c.drawBitmap(source, src, dst, p);
+            }
+
+            p.setStyle(Paint.Style.STROKE);
+            p.setStrokeWidth(dp(2));
+            p.setColor(borderColor);
+            p.setPathEffect(new DashPathEffect(new float[]{dp(5), dp(4)}, 0));
+            c.drawRoundRect(box, borderRadius, borderRadius, p);
+            p.setPathEffect(null);
+            p.setStyle(Paint.Style.FILL);
+
+            if (preview) {
+                float pw = dp(150), ph = dp(150);
+                RectF pv = new RectF(getWidth() / 2 - pw / 2, dp(80),
+                        getWidth() / 2 + pw / 2, dp(80) + ph);
+                if (box.width() > 0 && box.height() > 0) {
+                    src.set((int) box.left, (int) box.top, (int) box.right, (int) box.bottom);
+                    p.setColor(0xffffffff);
+                    c.drawRoundRect(new RectF(pv.left - dp(3), pv.top - dp(3),
+                            pv.right + dp(3), pv.bottom + dp(3)), dp(6), dp(6), p);
+                    c.drawBitmap(source, src, pv, p);
+                }
+            }
+        }
+
+        @Override
+        public boolean onTouchEvent(MotionEvent e) {
+            switch (e.getAction()) {
+                case MotionEvent.ACTION_DOWN:
+                    downX = e.getX();
+                    downY = e.getY();
+                    drag = box.contains(downX, downY);
+                    return true;
+                case MotionEvent.ACTION_MOVE:
+                    if (drag) {
+                        float dx = e.getX() - downX, dy = e.getY() - downY;
+                        box.offset(dx, dy);
+                        clamp();
+                        downX = e.getX();
+                        downY = e.getY();
+                        invalidate();
+                    }
+                    return true;
+                default:
+                    drag = false;
+                    return true;
+            }
+        }
+    }
+}
