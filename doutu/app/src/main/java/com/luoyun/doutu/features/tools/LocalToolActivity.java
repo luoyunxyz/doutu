@@ -79,7 +79,7 @@ public final class LocalToolActivity extends Activity {
         tv.setGravity(Gravity.CENTER);
         bar.addView(tv, new LinearLayout.LayoutParams(0, dp(50), 1f));
         bar.addView(new View(this), new LinearLayout.LayoutParams(dp(88), dp(50)));
-        if (!("home".equals(key) || "contacts".equals(key) || "moments".equals(key) || "profile".equals(key) || "discover".equals(key) || "chat".equals(key) || "wallet".equals(key) || "transfer".equals(key) || "redpacket".equals(key) || "paysuccess".equals(key) || "pay".equals(key) || "billstats".equals(key) || "service".equals(key) || "favorites".equals(key) || "cards".equals(key) || "stickers".equals(key) || "redpackets".equals(key) || "broadcast".equals(key) || "payee".equals(key) || "walletdetail".equals(key) || "newfriends".equals(key) || "pickchat".equals(key) || "pickgroup".equals(key) || "official".equals(key) || "withdraw".equals(key) || "group".equals(key) || "upload".equals(key) || "groupsettings".equals(key))) root.addView(bar);
+        if (!("home".equals(key) || "contacts".equals(key) || "moments".equals(key) || "profile".equals(key) || "discover".equals(key) || "chat".equals(key) || "wallet".equals(key) || "transfer".equals(key) || "redpacket".equals(key) || "paysuccess".equals(key) || "pay".equals(key) || "billstats".equals(key) || "service".equals(key) || "favorites".equals(key) || "cards".equals(key) || "stickers".equals(key) || "redpackets".equals(key) || "broadcast".equals(key) || "payee".equals(key) || "walletdetail".equals(key) || "newfriends".equals(key) || "pickchat".equals(key) || "pickgroup".equals(key) || "official".equals(key) || "withdraw".equals(key) || "group".equals(key) || "upload".equals(key) || "groupsettings".equals(key) || "video".equals(key))) root.addView(bar);
 
         ScrollView scroll = new ScrollView(this);
         content = new LinearLayout(this);
@@ -1155,17 +1155,63 @@ public final class LocalToolActivity extends Activity {
     }
 
     private void buildVideo() {
-        String[] names = {"本地视频 1", "本地视频 2", "本地视频 3"};
-        for (String n : names) {
-            TextView tv = new TextView(this);
-            tv.setText("▶ " + n + "\n短视频演示 · 仅本地展示");
-            tv.setTextSize(14);
-            tv.setTextColor(0xff1d1f26);
-            tv.setBackgroundColor(Color.WHITE);
-            tv.setPadding(dp(14), dp(22), dp(14), dp(22));
+        content.setBackgroundColor(0xff111111);
+        content.setPadding(0, 0, 0, 0);
+
+        LinearLayout bar = new LinearLayout(this);
+        bar.setGravity(Gravity.CENTER_VERTICAL);
+        bar.setBackgroundColor(0xff111111);
+        ImageView back = assetIcon("ic_wx_chat_title_back", 21);
+        back.setColorFilter(Color.WHITE);
+        back.setOnClickListener(v -> finish());
+        bar.addView(back, new LinearLayout.LayoutParams(dp(43), dp(43)));
+        TextView title = new TextView(this);
+        title.setText("视频号");
+        title.setTextSize(16);
+        title.setTextColor(Color.WHITE);
+        title.setGravity(Gravity.CENTER);
+        bar.addView(title, new LinearLayout.LayoutParams(0, dp(43), 1f));
+        bar.addView(new View(this), new LinearLayout.LayoutParams(dp(43), dp(43)));
+        content.addView(bar);
+
+        String[] titles = {"本地视频 1", "本地视频 2", "本地视频 3"};
+        String[] authors = {"本地用户", "豆图助手", "本地用户"};
+        for (int i = 0; i < titles.length; i++) {
+            LinearLayout card = new LinearLayout(this);
+            card.setOrientation(LinearLayout.VERTICAL);
+            card.setBackgroundColor(0xff1c1c1c);
+
+            FrameLayout cover = new FrameLayout(this);
+            cover.setBackgroundColor(0xff2b2b2b);
+            LinearLayout.LayoutParams clp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(200));
+            card.addView(cover, clp);
+            TextView play = new TextView(this);
+            play.setText("▶");
+            play.setTextSize(34);
+            play.setTextColor(0xccffffff);
+            play.setGravity(Gravity.CENTER);
+            cover.addView(play, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+
+            LinearLayout info = new LinearLayout(this);
+            info.setOrientation(LinearLayout.VERTICAL);
+            info.setPadding(dp(12), dp(10), dp(12), dp(10));
+            TextView t = new TextView(this);
+            t.setText(titles[i]);
+            t.setTextSize(15);
+            t.setTextColor(Color.WHITE);
+            info.addView(t);
+            TextView a = new TextView(this);
+            a.setText(authors[i] + " · 本地演示");
+            a.setTextSize(12);
+            a.setTextColor(0xff9a9a9a);
+            a.setPadding(0, dp(5), 0, 0);
+            info.addView(a);
+            card.addView(info);
+
+            card.setOnClickListener(v -> toast("本地视频播放（演示）"));
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            lp.bottomMargin = dp(8);
-            content.addView(tv, lp);
+            lp.bottomMargin = dp(1);
+            content.addView(card, lp);
         }
     }
 
