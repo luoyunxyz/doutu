@@ -55,6 +55,7 @@ public final class LocalToolActivity extends Activity {
         title = getIntent().getStringExtra("title");
         if (key == null) key = "chat";
         if (title == null) title = "工具";
+        android.util.Log.d("DoutuTool", "key=" + key + " title=" + title);
         String n = getIntent().getStringExtra("name");
         if (n != null && !n.isEmpty()) chatName = n;
         else if ("chat".equals(key) && title != null && !title.isEmpty() && !"工具".equals(title)) chatName = title;
