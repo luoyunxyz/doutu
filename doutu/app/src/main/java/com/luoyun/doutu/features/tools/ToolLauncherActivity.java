@@ -73,6 +73,12 @@ public final class ToolLauncherActivity extends Activity {
             intent = new Intent(this, com.luoyun.doutu.features.ali.AliContactsActivity.class);
         } else if ("aliassets".equals(key)) {
             intent = new Intent(this, com.luoyun.doutu.features.ali.AliAssetsActivity.class);
+        } else if ("alibalance".equals(key)) {
+            intent = new Intent(this, com.luoyun.doutu.features.ali.AliBalanceActivity.class);
+        } else if ("aliwithdraw".equals(key)) {
+            intent = new Intent(this, com.luoyun.doutu.features.ali.AliWithdrawActivity.class);
+        } else if ("alimine".equals(key)) {
+            intent = new Intent(this, com.luoyun.doutu.features.ali.AliMineActivity.class);
         } else if ("alired".equals(key)) {
             intent = new Intent(this, com.luoyun.doutu.features.ali.AliRedPacketActivity.class);
         } else if ("alimsg".equals(key)) {

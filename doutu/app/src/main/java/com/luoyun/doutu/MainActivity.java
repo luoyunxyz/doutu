@@ -2020,7 +2020,9 @@ static final class FeatureRow {
                     startActivity(com.luoyun.doutu.features.zhi.LicaiActivity.intentFor(MainActivity.this));
                     break;
                 case "act:balance":
-                    startActivity(com.luoyun.doutu.features.zhi.BalanceActivity.intentFor(MainActivity.this));
+                    // 余额：按真机 activity_ali_balance 重画（资金安全/可用余额/提现·充值/上传截图/变动明细）
+                    startActivity(new Intent(MainActivity.this,
+                            com.luoyun.doutu.features.ali.AliBalanceActivity.class));
                     break;
                 case "act:bill":
                     startActivity(com.luoyun.doutu.features.zhi.BillActivity.intentFor(MainActivity.this));
@@ -2031,7 +2033,8 @@ static final class FeatureRow {
                             com.luoyun.doutu.features.ali.AliAssetsActivity.class));
                     break;
                 case "act:me":
-                    startActivity(com.luoyun.doutu.features.zhi.MeActivity.intentFor(MainActivity.this));
+                    startActivity(new Intent(MainActivity.this,
+                            com.luoyun.doutu.features.ali.AliMineActivity.class));
                     break;
                 case "act:paymsg":
                     startActivity(com.luoyun.doutu.features.zhi.PayMsgActivity.intentFor(MainActivity.this));
@@ -2040,7 +2043,8 @@ static final class FeatureRow {
                     startActivity(com.luoyun.doutu.features.zhi.BillAnalyticsActivity.intentFor(MainActivity.this));
                     break;
                 case "act:withdraw":
-                    startActivity(com.luoyun.doutu.features.zhi.WithdrawActivity.intentFor(MainActivity.this));
+                    startActivity(new Intent(MainActivity.this,
+                            com.luoyun.doutu.features.ali.AliWithdrawActivity.class));
                     break;
                 case "act:receipt":
                     startActivity(com.luoyun.doutu.features.zhi.ReceiptActivity.intentFor(MainActivity.this));

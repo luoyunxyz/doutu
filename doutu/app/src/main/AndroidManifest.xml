@@ -207,6 +207,18 @@
             android:screenOrientation="portrait"
             android:exported="false" />
         <activity
+            android:name=".features.ali.AliBalanceActivity"
+            android:screenOrientation="portrait"
+            android:exported="false" />
+        <activity
+            android:name=".features.ali.AliWithdrawActivity"
+            android:screenOrientation="portrait"
+            android:exported="false" />
+        <activity
+            android:name=".features.ali.AliMineActivity"
+            android:screenOrientation="portrait"
+            android:exported="false" />
+        <activity
             android:name=".features.album.AlbumHomeActivity"
             android:screenOrientation="portrait"
             android:exported="false" />
