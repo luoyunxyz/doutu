@@ -126,6 +126,16 @@ public final class WeiHomeActivity extends Activity {
     private static volatile String pendingRouteAfterReload;
 
     /** 页面加载完成后，按 pendingNavTap 点一次克隆底部对应标签。 */
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // 页面可能早就加载完了（activity 被复用），此时 onPageFinished 不会再触发，
+        // 所以在 onResume 里补一次底部标签点击。
+        if (pendingNavTap != null) {
+            webView.postDelayed(this::tapPendingNavBar, 120);
+        }
+    }
+
     private void tapPendingNavBar() {
         final String label = pendingNavTap;
         if (label == null || webView == null) return;
@@ -135,7 +145,7 @@ public final class WeiHomeActivity extends Activity {
                 + "for(var i=0;i<items.length;i++){var el=items[i];"
                 + "if((el.textContent||'').trim()==='" + label.replace("'", "\\'") + "'){"
                 + "el.click();clearInterval(iv);return;}}}catch(e){}"
-                + "if(++n>60)clearInterval(iv);},250);})()";
+                + "if(++n>80)clearInterval(iv);},60);})()";
         try {
             webView.evaluateJavascript(js, null);
         } catch (Throwable ignored) { }

@@ -1934,8 +1934,9 @@ static final class FeatureRow {
                 if ("#/wechat/contacts".equals(route)) {
                     // 交给 WeiHomeActivity 在 onPageFinished 里点「通讯录」标签，最可靠
                     com.luoyun.doutu.features.wei.WeiHomeActivity.pendingNavTap = "\u901a\u8baf\u5f55";
+                    // 直接把目标路由带进 intent，避免先看到首页再切换
                     startActivity(com.luoyun.doutu.features.wei.WeiHomeActivity
-                            .intentFor(MainActivity.this, "#/wechat"));
+                            .intentFor(MainActivity.this, "#/wechat/contacts"));
                     overridePendingTransition(0, 0);
                     return;
                 }
