@@ -2132,7 +2132,7 @@ static final class FeatureRow {
                     startActivity(new Intent(MainActivity.this,
                             com.luoyun.doutu.features.ali.AliVoiceActivity.class));
                     break;
-                case "tool:auto":
+                case "autoreplace":
                     // 自动替换：头像网格 + 原始/替换头像 + 替换截图内其他头像 + 人工智能一键合成
                     startActivity(new Intent(MainActivity.this,
                             com.luoyun.doutu.features.tools.AutoReplaceActivity.class));
