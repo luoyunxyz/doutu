@@ -845,7 +845,7 @@ public final class LocalToolActivity extends Activity {
         row.addView(tv, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         if ("pyq".equals(asset) || "sph".equals(asset)) {
             FrameLayout thumb = new FrameLayout(this);
-            ImageView th = assetIcon("ic_wx_default_image", 29);
+            ImageView th = assetIcon("wx_thumb", 29);
             thumb.addView(th, new FrameLayout.LayoutParams(dp(29), dp(29)));
             View red = new View(this);
             android.graphics.drawable.GradientDrawable rg = new android.graphics.drawable.GradientDrawable();
@@ -1183,16 +1183,9 @@ public final class LocalToolActivity extends Activity {
             card.setOrientation(LinearLayout.VERTICAL);
             card.setBackgroundColor(0xff1c1c1c);
 
-            FrameLayout cover = new FrameLayout(this);
-            cover.setBackgroundColor(0xff2b2b2b);
-            LinearLayout.LayoutParams clp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(200));
-            card.addView(cover, clp);
-            TextView play = new TextView(this);
-            play.setText("▶");
-            play.setTextSize(34);
-            play.setTextColor(0xccffffff);
-            play.setGravity(Gravity.CENTER);
-            cover.addView(play, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+            ImageView cover = assetIcon("cover" + (i + 1), 200);
+            cover.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            card.addView(cover, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(200)));
 
             LinearLayout info = new LinearLayout(this);
             info.setOrientation(LinearLayout.VERTICAL);
