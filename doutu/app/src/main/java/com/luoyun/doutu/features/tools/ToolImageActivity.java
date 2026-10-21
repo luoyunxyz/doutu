@@ -51,6 +51,11 @@ public final class ToolImageActivity extends Activity {
     private ImageView basePreview, avatarPreview, preview;
     private TextView hint;
     private CheckBox watermark, replaceAvatar;
+    private LinearLayout slotList;
+    private final List<RectF> slots = new ArrayList<>();
+    private final List<Boolean> slotEnabled = new ArrayList<>();
+    private Bitmap workBase;
+    private boolean slotsShown = false, synthesized = false;
     private LinearLayout styleBar;
     private int style = 0;
     private Button processBtn, saveBtn;
@@ -121,6 +126,14 @@ public final class ToolImageActivity extends Activity {
             watermark.setTextSize(13);
             watermark.setVisibility(mode == MODE_AUTO ? View.VISIBLE : View.GONE);
             col.addView(watermark);
+            slotList = new LinearLayout(this);
+            slotList.setOrientation(LinearLayout.VERTICAL);
+            col.addView(slotList);
+            Button addSlot = new Button(this);
+            addSlot.setText("＋ 替换截图内其他头像");
+            addSlot.setAllCaps(false);
+            addSlot.setOnClickListener(v -> addManualSlot());
+            col.addView(addSlot, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(44)));
             hint.setText(mode == MODE_AUTO
                     ? "选底图和头像后点「开始替换」，会检测全部人脸并批量替换。"
                     : "选底图和头像后点「开始替换」，会检测最大的人脸并替换。");
@@ -141,7 +154,7 @@ public final class ToolImageActivity extends Activity {
         processBtn = new Button(this);
         processBtn.setText(mode == MODE_AI ? "生成" : "开始替换");
         processBtn.setAllCaps(false);
-        processBtn.setOnClickListener(v -> process());
+        processBtn.setOnClickListener(v -> handleProcess());
         actions.addView(processBtn, new LinearLayout.LayoutParams(0, dp(50), 1f));
         saveBtn = new Button(this);
         saveBtn.setText("保存到相册");
@@ -236,28 +249,157 @@ public final class ToolImageActivity extends Activity {
         } catch (Exception ignored) { }
     }
 
+    private void handleProcess() {
+        if (mode == MODE_AI) {
+            process();
+            return;
+        }
+        if (synthesized) {
+            synthesized = false;
+            slotsShown = true;
+            preview.setImageBitmap(null);
+            processBtn.setText("人工智能一键合成");
+            saveBtn.setEnabled(false);
+            renderSlots();
+            return;
+        }
+        if (!slotsShown) {
+            detectSlots();
+            return;
+        }
+        synthesize();
+    }
+
+    private void detectSlots() {
+        if (base == null || avatar == null) { toast("请先选择底图和头像"); return; }
+        int max = 1600;
+        float scale = Math.min(1f, (float) max / Math.max(base.getWidth(), base.getHeight()));
+        int w = Math.max(1, Math.round(base.getWidth() * scale));
+        int h = Math.max(1, Math.round(base.getHeight() * scale));
+        workBase = Bitmap.createScaledBitmap(base, w, h, true);
+        slots.clear();
+        slotEnabled.clear();
+        List<RectF> found = detectFaces(workBase);
+        slots.addAll(found);
+        for (int i = 0; i < slots.size(); i++) slotEnabled.add(true);
+        if (slots.isEmpty()) {
+            addManualSlot();
+            return;
+        }
+        slotsShown = true;
+        processBtn.setText("人工智能一键合成");
+        renderSlots();
+        toast("识别到 " + slots.size() + " 个头像，可逐项开关");
+    }
+
+    private void addManualSlot() {
+        if (workBase == null) { toast("请先选择底图和头像"); return; }
+        int w = workBase.getWidth(), h = workBase.getHeight();
+        slots.add(new RectF(w * 0.04f, h * 0.04f, w * 0.18f, h * 0.04f + w * 0.14f));
+        slotEnabled.add(true);
+        slotsShown = true;
+        processBtn.setText("人工智能一键合成");
+        renderSlots();
+    }
+
+    private void renderSlots() {
+        if (slotList == null) return;
+        slotList.removeAllViews();
+        for (int i = 0; i < slots.size(); i++) {
+            final int index = i;
+            RectF r = slots.get(i);
+            LinearLayout row = new LinearLayout(this);
+            row.setGravity(Gravity.CENTER_VERTICAL);
+            row.setBackgroundColor(Color.WHITE);
+            row.setPadding(dp(8), dp(8), dp(8), dp(8));
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            lp.bottomMargin = dp(8);
+            row.setLayoutParams(lp);
+            ImageView old = new ImageView(this);
+            old.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            old.setImageBitmap(cropSlot(workBase, r));
+            row.addView(old, new LinearLayout.LayoutParams(dp(56), dp(56)));
+            TextView arrow = new TextView(this);
+            arrow.setText("→");
+            arrow.setTextSize(16);
+            arrow.setGravity(Gravity.CENTER);
+            row.addView(arrow, new LinearLayout.LayoutParams(dp(34), dp(56)));
+            ImageView now = new ImageView(this);
+            now.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            now.setImageBitmap(avatar);
+            row.addView(now, new LinearLayout.LayoutParams(dp(56), dp(56)));
+            CheckBox cb = new CheckBox(this);
+            cb.setText("替换");
+            cb.setTextSize(13);
+            cb.setChecked(slotEnabled.get(index));
+            cb.setOnCheckedChangeListener((b, checked) -> slotEnabled.set(index, checked));
+            LinearLayout.LayoutParams clp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+            clp.leftMargin = dp(8);
+            row.addView(cb, clp);
+            Button del = new Button(this);
+            del.setText("删除");
+            del.setAllCaps(false);
+            del.setTextSize(12);
+            del.setOnClickListener(v -> {
+                if (index < slots.size()) {
+                    slots.remove(index);
+                    slotEnabled.remove(index);
+                    renderSlots();
+                }
+            });
+            row.addView(del, new LinearLayout.LayoutParams(dp(64), dp(40)));
+            slotList.addView(row);
+        }
+    }
+
+    private Bitmap cropSlot(Bitmap src, RectF r) {
+        try {
+            int x = Math.max(0, (int) r.left);
+            int y = Math.max(0, (int) r.top);
+            int w = Math.min(src.getWidth() - x, Math.max(1, (int) r.width()));
+            int h = Math.min(src.getHeight() - y, Math.max(1, (int) r.height()));
+            return Bitmap.createBitmap(src, x, y, w, h);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private void synthesize() {
+        if (workBase == null || avatar == null) { toast("请先选择底图和头像"); return; }
+        try {
+            Bitmap out = workBase.copy(Bitmap.Config.ARGB_8888, true);
+            Canvas c = new Canvas(out);
+            for (int i = 0; i < slots.size() && i < slotEnabled.size(); i++) {
+                if (Boolean.TRUE.equals(slotEnabled.get(i))) drawAvatar(c, avatar, slots.get(i));
+            }
+            if (mode == MODE_AUTO && watermark.isChecked()) drawWatermark(out);
+            results.clear();
+            results.add(out);
+            preview.setImageBitmap(out);
+            saveBtn.setEnabled(true);
+            synthesized = true;
+            processBtn.setText("返回修改");
+            if (slotList != null) slotList.removeAllViews();
+            toast("合成完成，可返回修改或保存");
+        } catch (Exception e) {
+            toast("合成失败：" + e.getMessage());
+        }
+    }
+
     private void process() {
         results.clear();
         try {
-            if (mode == MODE_AI) {
-                for (Bitmap src : sources) {
-                    if (replaceAvatar != null && replaceAvatar.isChecked() && avatar != null) {
-                        Bitmap done = replaceFaces(src, avatar, true);
-                        results.add(done != null ? done : src.copy(Bitmap.Config.ARGB_8888, true));
-                    } else {
-                        results.add(src.copy(Bitmap.Config.ARGB_8888, true));
-                    }
+            for (Bitmap src : sources) {
+                if (replaceAvatar != null && replaceAvatar.isChecked() && avatar != null) {
+                    Bitmap done = replaceFaces(src, avatar, true);
+                    results.add(done != null ? done : src.copy(Bitmap.Config.ARGB_8888, true));
+                } else {
+                    results.add(src.copy(Bitmap.Config.ARGB_8888, true));
                 }
-            } else {
-                if (base == null || avatar == null) { toast("请先选择底图和头像"); return; }
-                Bitmap out = replaceFaces(base, avatar, mode == MODE_AUTO);
-                if (out == null) { toast("处理失败"); return; }
-                results.add(out);
-                if (mode == MODE_AUTO && watermark.isChecked()) drawWatermark(out);
             }
             preview.setImageBitmap(results.get(0));
             saveBtn.setEnabled(true);
-            toast(mode == MODE_AI ? "已生成 " + results.size() + " 张，点「保存到相册」" : "替换完成，点保存");
+            toast("已生成 " + results.size() + " 张，点「保存到相册」");
         } catch (Exception e) {
             toast("处理失败：" + e.getMessage());
         }
