@@ -1,17 +1,16 @@
-/* WeChat "我" secondary pages: 收藏 / 朋友圈入口 / 卡包 / 表情 / 设置.
+/* WeChat "我" pages: 收藏 / 朋友圈入口 / 卡包 / 表情 / 设置.
  *
- * The bundled Fake World app renders 收藏/朋友圈/卡包/表情/设置 rows on #/wechat/my
- * but does not wire them (they are no-ops), and has no routes for them. This override
- * keeps the single React app untouched and paints real WeChat-style pages for:
+ * 卡包 / 表情 / 设置 use the real WeChat screenshots as the content image (the user
+ * asked for pixel-identical pages and allowed image crops). 收藏 is dynamic: its
+ * content is randomised (never the user's own data) and chat long-press 收藏 writes
+ * into the same localStorage list.
  *
- *   #/wechat/me/favorites[/id]
- *   #/wechat/me/cards[/id]
- *   #/wechat/me/stickers[/pack]
- *   #/wechat/me/settings[/key]
- *
- * 朋友圈 is an entry to the app's existing #/wechat/moments page.
- *
- * Loaded by both iOS (Resources/web) and Android (assets/fake_world).
+ * Routes:
+ *   #/wechat/me/favorites[/new|/:id]
+ *   #/wechat/me/cards[/coupon|/member|/transit|/ticket]
+ *   #/wechat/me/stickers[/:pack]
+ *   #/wechat/me/settings[/:key]
+ *   #/wechat/moments (existing app page)
  */
 (function () {
   'use strict';
@@ -19,436 +18,396 @@
   window.__fwMePagesLoaded = true;
 
   var HOST_ID = 'fw-me-pages-host';
-  var LS = {
-    fav: 'fw-me-favorites-v1',
-    cards: 'fw-me-cards-v1',
-    stickers: 'fw-me-stickers-v1',
-    settings: 'fw-me-settings-v1'
+  var FAV_KEY = 'fw-me-favorites-v2';
+  var STICKER_KEY = 'fw-me-stickers-v2';
+  var SETTINGS_KEY = 'fw-me-settings-v2';
+  var SHOT = {
+    cards: './overrides/me/cards.png?v=75',
+    settings: './overrides/me/settings.png?v=75',
+    stickers: './overrides/me/stickers.png?v=75'
   };
+  var PHOTOS = [
+    './assets/user-avatar-1-CKPDcH57.jpg',
+    './assets/user-avatar-4-Cmbgep_s.jpg',
+    './assets/user-avatar-5-DMigR-cn.jpg',
+    './assets/user-avatar-6-Cq95zrQT.jpg',
+    './assets/user-avatar-7-C4bh6bYx.jpg',
+    './assets/user-avatar-8-BysMeksY.jpg',
+    './assets/user-avatar-10-ZKj7tiz_.jpg'
+  ];
+  var CONTACTS = ['陈默', '林知夏', '周予安', '苏晚', '顾言', '江屿', '沈星', '许棠', '陆川', '曹磊', '宋清和', '叶知秋'];
+  var TAGS = ['家人', '工作', '旅行', '生活', '学习'];
+  var PDF_NAMES = [
+    'dzfp_25312000000080552781_20260701.pdf',
+    '项目周报_2026W42.pdf',
+    '护照扫描件_2026.pdf',
+    '合同_终版_已签.pdf',
+    '体检报告_2026.pdf',
+    '学习资料_第3章.pdf'
+  ];
+  var STICKER_PACKS = [
+    ['鱼烧哥窝囊篇', '🐟'], ['呆猫八条9', '🐱'], ['水豚噜噜14', '🦫'], ['月薪喵3', '😾'],
+    ['瞅他', '👀'], ['奶龙③', '🐣'], ['高雅人士②', '🐧'], ['高情商聊天', '💬'],
+    ['可爱小猫喵呜', '🐈'], ['撩人情话', '💌'], ['鱼烧哥第一弹', '🐟'], ['骂人不含脏字1', '🤬'],
+    ['水豚噜噜15', '🦫'], ['呆猫八条6', '🐱'], ['月薪喵1', '😾'], ['奶龙①', '🐣'],
+    ['恶搞聊天信息', '❗'], ['这狗30', '🐶'], ['子羊子浩第1弹', '😏'], ['小墨的可爱表情包', '🧸'],
+    ['大额红包', '🧧'], ['大肥猪', '🐷']
+  ];
+
   var host = null;
-  var view = { favTab: 'all', cardTab: 'member', stickerTab: 'mine', favQuery: '' };
+  var view = { favTab: 'recent', favQuery: '', favSort: 'time' };
+  var dialog = null;
+  var toastTimer = 0;
 
-  /* ------------------------------------------------------------------ data */
+  /* ---------------------------------------------------------------- storage */
 
-  var FAV_SEED = [
-    { id: 'f1', type: 'link', title: '微信公众平台：如何高效整理手机相册', source: '微信公众平台', time: '2026-10-20 21:14', body: '手机相册越来越满，其实只需要三步：先按时间归档，再删除重复截图，最后把重要照片备份到电脑或云端。本文整理了 12 个实用小技巧。' },
-    { id: 'f2', type: 'image', title: '秋天的第一杯奶茶', source: '文件传输助手', time: '2026-10-18 15:02', body: '图片收藏 · 共 3 张', images: 3 },
-    { id: 'f3', type: 'video', title: '周末露营记录', source: '朋友圈', time: '2026-10-15 19:40', body: '视频收藏 · 02:18', duration: '02:18' },
-    { id: 'f4', type: 'file', title: '产品需求文档 V2.3.pdf', source: '工作群', time: '2026-10-12 10:26', body: 'PDF · 2.4 MB', size: '2.4 MB' },
-    { id: 'f5', type: 'music', title: '晚风（Live）', source: 'QQ 音乐', time: '2026-10-10 22:08', body: '音乐收藏 · 04:12', duration: '04:12' },
-    { id: 'f6', type: 'link', title: '一文看懂：手机去水印的正确姿势', source: '豆图公众号', time: '2026-10-08 09:30', body: '处理自己创作或拥有版权的素材是合规的；请勿去除他人作品版权水印、搬运或二次发布。' }
-  ];
-  var CARD_SEED = [
-    { id: 'c1', kind: 'member', name: '星巴克星享卡', level: '金卡', no: '6208 8890 1200 0431', tone: 'green', brand: '☕' },
-    { id: 'c2', kind: 'member', name: '麦当劳会员卡', level: '麦乐卡', no: '8812 0043 7712 9006', tone: 'red', brand: 'M' },
-    { id: 'c3', kind: 'coupon', name: '瑞幸咖啡 9.9 元券', level: '全场饮品', no: 'LK-2026-88120', tone: 'blue', brand: '☕' },
-    { id: 'c4', kind: 'coupon', name: '美团外卖 5 元券', level: '满 20 可用', no: 'MT-5-66201', tone: 'yellow', brand: '券' },
-    { id: 'c5', kind: 'gift', name: '京东 E 卡', level: '面值 ¥100', no: 'JD-E-3006 9912', tone: 'purple', brand: 'JD' }
-  ];
-  var STICKER_SEED = [
-    { id: 'p1', name: '默认表情', cover: '😀', tone: 'green', emoji: ['😀', '😁', '😂', '🤣', '😊', '😍', '🤔', '😎', '😭', '😡', '👍', '🙏', '👏', '🎉', '❤️', '💔', '🌹', '☕', '🍺', '🎂', '🐶', '🐱', '🌞', '🌙'], added: true },
-    { id: 'p2', name: '小黄脸', cover: '🙂', tone: 'yellow', emoji: ['🙂', '🙃', '😉', '😌', '😔', '😢', '😤', '😱', '🤗', '🤭', '🤫', '🙄', '😴', '🤤', '😷', '🤒'], added: true },
-    { id: 'p3', name: '打工人日常', cover: '💼', tone: 'blue', emoji: ['💼', '💻', '📊', '📞', '⏰', '☕', '🍜', '😮‍💨', '🫠', '🙃', '💤', '🧋'], added: false },
-    { id: 'p4', name: '萌宠日常', cover: '🐱', tone: 'pink', emoji: ['🐱', '🐶', '🐰', '🐼', '🦊', '🐻', '🐨', '🐯', '🐷', '🐸', '🐵', '🦄'], added: false }
-  ];
-  var SETTINGS_SEED = {
-    youth: false, care: false,
-    notify: true, notifyDetail: true, notifySound: true, notifyVibrate: true,
-    font: '标准', language: '简体中文', chatBg: '默认'
-  };
-
-  function load(key, fallback) {
-    try {
-      var raw = localStorage.getItem(key);
-      if (!raw) return fallback;
-      var v = JSON.parse(raw);
-      return v == null ? fallback : v;
-    } catch (e) { return fallback; }
+  function read(key, fallback) {
+    try { var raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : fallback; } catch (e) { return fallback; }
   }
-  function save(key, value) {
+  function write(key, value) {
     try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) {}
   }
-  var favorites = load(LS.fav, FAV_SEED);
-  var cards = load(LS.cards, CARD_SEED);
-  var stickers = load(LS.stickers, STICKER_SEED);
-  var settings = load(LS.settings, SETTINGS_SEED);
-
-  /* --------------------------------------------------------------- helpers */
-
+  function pick(list) { return list[Math.floor(Math.random() * list.length)]; }
+  function rid() { return 'f-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 6); }
+  function pad(n) { return n < 10 ? '0' + n : String(n); }
+  function nowTime() { var d = new Date(); return pad(d.getHours()) + ':' + pad(d.getMinutes()); }
+  function shortDate(ts) {
+    var d = new Date(ts || Date.now());
+    var now = new Date();
+    if (d.toDateString() === now.toDateString()) return '今天';
+    if (d.getFullYear() === now.getFullYear()) return (d.getMonth() + 1) + '月' + d.getDate() + '日';
+    return d.getFullYear() + '年' + (d.getMonth() + 1) + '月' + d.getDate() + '日';
+  }
+  function randomDate() {
+    var ts = Date.now() - Math.floor(Math.random() * 1000 * 60 * 60 * 24 * 900);
+    return { ts: ts, date: shortDate(ts) };
+  }
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
     });
   }
-  function currentRoute() {
-    var h = location.hash || '';
-    return h.split('?')[0];
+
+  function seedFavorites() {
+    var items = [];
+    var f = randomDate();
+    items.push({ id: rid(), kind: 'file', title: pick(PDF_NAMES), size: (Math.random() * 3 + 0.2).toFixed(1) + 'MB', source: pick(CONTACTS), ts: f.ts, date: f.date });
+    for (var i = 0; i < 3; i++) {
+      var d = randomDate();
+      items.push({ id: rid(), kind: 'image', image: pick(PHOTOS), title: '图片', source: pick(CONTACTS), ts: d.ts, date: d.date, tag: pick(TAGS) });
+    }
+    var t = randomDate();
+    items.push({ id: rid(), kind: 'text', title: '这周的待办和想法', body: '把相册按时间归档；删掉重复截图；重要的照片备份到电脑。周末整理一下，别再拖了。', source: pick(CONTACTS), ts: t.ts, date: t.date });
+    var l = randomDate();
+    items.push({ id: rid(), kind: 'link', title: '微信公众平台：如何高效整理手机相册', body: '手机相册越来越满，其实只需要三步：先按时间归档，再删除重复截图，最后把重要照片备份到电脑或云端。', source: pick(CONTACTS), ts: l.ts, date: l.date });
+    var v = randomDate();
+    items.push({ id: rid(), kind: 'video', image: pick(PHOTOS), duration: '02:18', title: '周末露营记录', source: pick(CONTACTS), ts: v.ts, date: v.date });
+    items.sort(function (a, b) { return b.ts - a.ts; });
+    return items;
   }
-  function pad(n) { return n < 10 ? '0' + n : String(n); }
-  function nowTime() {
-    var d = new Date();
-    return pad(d.getHours()) + ':' + pad(d.getMinutes());
+
+  var favorites = read(FAV_KEY, null);
+  if (!Array.isArray(favorites) || !favorites.length) {
+    favorites = seedFavorites();
+    write(FAV_KEY, favorites);
   }
-  function icon(name, cls) {
+  var addedPacks = read(STICKER_KEY, []);
+  if (!Array.isArray(addedPacks)) addedPacks = [];
+  var settings = read(SETTINGS_KEY, { youth: false, care: false, notify: true });
+
+  /* ------------------------------------------------------------------ ui kit */
+
+  function icon(name) {
     var p = {
       back: '<path d="M15 4 7 12l8 8" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/>',
-      more: '<circle cx="5" cy="12" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="19" cy="12" r="1.9"/>',
-      plus: '<path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>',
+      plus: '<circle cx="12" cy="12" r="9.2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M12 7.5v9M7.5 12h9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>',
       search: '<circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="m16 16 4 4" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>',
       chevron: '<path d="m9 5 7 7-7 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>',
-      gear: '<circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 2.8v2.4M12 18.8v2.4M21.2 12h-2.4M5.2 12H2.8M18.5 5.5l-1.7 1.7M7.2 16.8l-1.7 1.7M18.5 18.5l-1.7-1.7M7.2 7.2 5.5 5.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>',
-      link: '<path d="M10.6 13.4a4 4 0 0 1 0-5.7l2.1-2.1a4 4 0 0 1 5.7 5.7l-1.2 1.2M13.4 10.6a4 4 0 0 1 0 5.7l-2.1 2.1a4 4 0 0 1-5.7-5.7l1.2-1.2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>',
-      image: '<rect x="3.5" y="4.5" width="17" height="15" rx="2.4" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="9" cy="10" r="1.6"/><path d="m5 18 5.2-5 3.1 3 2.7-2.6L20 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>',
-      video: '<rect x="3" y="6" width="13" height="12" rx="2.2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m16 10 5-3v10l-5-3z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>',
-      file: '<path d="M6 3.5h7l5 5v12H6z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M13 3.5V9h5" fill="none" stroke="currentColor" stroke-width="1.8"/>',
-      music: '<path d="M9 18V6l10-2v11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="6.5" cy="18" r="2.6" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="16.5" cy="15" r="2.6" fill="none" stroke="currentColor" stroke-width="1.8"/>',
-      trash: '<path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 13h9l1-13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>'
+      more: '<circle cx="5" cy="12" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="19" cy="12" r="1.9"/>',
+      tag: '<path d="M3.5 11.2 11 3.7h7.3v7.3l-7.5 7.5z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="15.6" cy="7.9" r="1.2" fill="currentColor"/>',
+      down: '<path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>',
+      play: '<circle cx="12" cy="12" r="10" fill="rgba(0,0,0,.45)"/><path d="M10 8.5v7l6-3.5z" fill="#fff"/>'
     }[name] || '';
-    return '<svg class="fwm-icon ' + (cls || '') + '" viewBox="0 0 24 24" aria-hidden="true">' + p + '</svg>';
-  }
-  function typeIcon(type) {
-    var map = { link: 'link', image: 'image', video: 'video', file: 'file', music: 'music' };
-    var label = { link: '链接', image: '图片', video: '视频', file: '文件', music: '音乐' };
-    return '<span class="fwm-fav-icon fwm-tone-' + type + '">' + icon(map[type] || 'link') + '</span>' +
-      '<span class="fwm-visually-hidden">' + label[type] + '</span>';
+    return '<svg class="fwm-icon" viewBox="0 0 24 24" aria-hidden="true">' + p + '</svg>';
   }
   function statusBar() {
-    return '<div class="fwm-status">' +
-      '<span class="fwm-time" data-clock>' + nowTime() + '</span>' +
-      '<span class="fwm-status-icons">' +
+    return '<div class="fwm-status"><span class="fwm-time">' + nowTime() + '</span><span class="fwm-status-icons">' +
       '<svg viewBox="0 0 18 12" aria-hidden="true"><rect x="0" y="7" width="3" height="5" rx="1"/><rect x="4.4" y="5" width="3" height="7" rx="1"/><rect x="8.8" y="2.7" width="3" height="9.3" rx="1"/><rect x="13.2" y="0" width="3" height="12" rx="1"/></svg>' +
       '<svg viewBox="0 0 17 12" aria-hidden="true"><path d="M8.5 10.6 1.2 4.2a10.6 10.6 0 0 1 14.6 0Z" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8.5 11.4 3.4 6.8a7 7 0 0 1 10.2 0Z"/></svg>' +
       '<svg viewBox="0 0 25 12" aria-hidden="true"><rect x="0.7" y="0.7" width="20" height="10.6" rx="2.6" fill="none" stroke="currentColor" stroke-width="1.3"/><rect x="2.4" y="2.4" width="13" height="7.2" rx="1.4"/><path d="M22.5 4.2v3.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>' +
       '</span></div>';
   }
   function header(title, right, backHash) {
-    return '<header class="fwm-header">' +
-      '<button type="button" class="fwm-back" data-back="' + esc(backHash || '') + '" aria-label="返回">' + icon('back') + '</button>' +
-      '<h1>' + esc(title) + '</h1>' +
-      '<div class="fwm-header-right">' + (right || '') + '</div>' +
-      '</header>';
+    return '<header class="fwm-header"><button type="button" class="fwm-back" data-back="' + esc(backHash || '') + '" aria-label="返回">' + icon('back') + '</button>' +
+      '<h1>' + esc(title) + '</h1><div class="fwm-header-right">' + (right || '') + '</div></header>';
   }
   function pageShell(title, right, body, backHash) {
     return '<div class="fwm-page">' + statusBar() + header(title, right, backHash) + '<div class="fwm-scroll">' + body + '</div></div>';
   }
-  function group(rows, extra) {
-    return '<section class="fwm-group ' + (extra || '') + '">' + rows + '</section>';
-  }
-  function row(opts) {
-    var right = opts.right == null ? icon('chevron', 'fwm-chevron') : opts.right;
-    var attr = '';
-    if (opts.set) attr = ' data-set="' + esc(opts.set) + '"';
-    if (opts.act) attr = ' data-act="' + esc(opts.act) + '"';
-    if (opts.dialog) attr = ' data-dialog="' + esc(opts.dialog) + '"';
-    var cls = 'fwm-row' + (opts.danger ? ' fwm-danger' : '') + (opts.attrClass ? ' ' + opts.attrClass : '');
-    return '<button type="button" class="' + cls + '"' + attr + '>' +
-      (opts.icon ? '<span class="fwm-row-icon ' + (opts.tone ? 'fwm-tone-' + opts.tone : '') + '">' + opts.icon + '</span>' : '') +
-      '<span class="fwm-row-main">' +
-      '<span class="fwm-row-title">' + esc(opts.title) + '</span>' +
-      (opts.sub ? '<span class="fwm-row-sub">' + esc(opts.sub) + '</span>' : '') +
-      '</span>' +
-      (opts.value ? '<span class="fwm-row-value">' + esc(opts.value) + '</span>' : '') +
-      '<span class="fwm-row-tail">' + right + '</span>' +
-      '</button>';
-  }
-  function switchRow(title, key, on, sub) {
-    return '<div class="fwm-row">' +
-      '<span class="fwm-row-main"><span class="fwm-row-title">' + esc(title) + '</span>' +
-      (sub ? '<span class="fwm-row-sub">' + esc(sub) + '</span>' : '') + '</span>' +
-      '<label class="fwm-switch"><input type="checkbox" data-toggle="' + esc(key) + '"' + (on ? ' checked' : '') + '><i></i></label>' +
-      '</div>';
-  }
-  function empty(title, sub) {
-    return '<div class="fwm-empty"><div class="fwm-empty-art">🗂️</div><b>' + esc(title) + '</b><p>' + esc(sub || '') + '</p></div>';
-  }
-
-  /* -------------------------------------------------------------- favorites */
-
-  var FAV_TABS = [['all', '全部'], ['image', '图片'], ['video', '视频'], ['link', '链接'], ['file', '文件'], ['music', '音乐']];
-  var FAV_LABEL = { link: '链接', image: '图片', video: '视频', file: '文件', music: '音乐' };
-
-  function favoriteMatches(item) {
-    if (view.favTab !== 'all' && item.type !== view.favTab) return false;
-    var q = (view.favQuery || '').trim().toLowerCase();
-    if (!q) return true;
-    return (item.title + ' ' + item.source + ' ' + FAV_LABEL[item.type]).toLowerCase().indexOf(q) >= 0;
-  }
-  function favoritesPage() {
-    var list = favorites.filter(favoriteMatches);
-    var body = '<div class="fwm-search"><span class="fwm-search-icon">' + icon('search') + '</span>' +
-      '<input data-fav-search value="' + esc(view.favQuery) + '" placeholder="搜索收藏" autocomplete="off"></div>' +
-      '<div class="fwm-tabs fwm-tabs-scroll">' + FAV_TABS.map(function (t) {
-        return '<button type="button" data-fav-tab="' + t[0] + '" class="' + (view.favTab === t[0] ? 'is-active' : '') + '">' + t[1] + '</button>';
-      }).join('') + '</div>' +
-      '<div class="fwm-fav-list" data-fav-list>' + favList(list) + '</div>';
-    return pageShell('收藏', '<button type="button" class="fwm-header-btn" data-toast="长按可多选">' + icon('more') + '</button>', body);
-  }
-  function favList(list) {
-    if (!list.length) return empty('暂无收藏', '在聊天或朋友圈里点「收藏」就会出现在这里');
-    return list.map(function (it) {
-      return '<button type="button" class="fwm-fav-row" data-fav="' + esc(it.id) + '">' +
-        typeIcon(it.type) +
-        '<span class="fwm-fav-copy"><span class="fwm-fav-title">' + esc(it.title) + '</span>' +
-        '<span class="fwm-fav-meta">' + esc(it.source) + ' · ' + esc(it.time) + '</span></span>' +
-        icon('chevron', 'fwm-chevron') + '</button>';
-    }).join('');
-  }
-  function favoriteDetail(id) {
-    var it = favorites.filter(function (x) { return x.id === id; })[0];
-    if (!it) return pageShell('收藏', '', empty('收藏不存在', '可能已被删除'), '#/wechat/me/favorites');
-    var visual = '';
-    if (it.type === 'image') {
-      visual = '<div class="fwm-detail-image">🍂</div>';
-    } else if (it.type === 'video') {
-      visual = '<div class="fwm-detail-image fwm-detail-video"><span>▶</span><em>' + esc(it.duration || '') + '</em></div>';
-    } else if (it.type === 'music') {
-      visual = '<div class="fwm-detail-audio"><span>♫</span><b>' + esc(it.title) + '</b><em>' + esc(it.duration || '') + '</em></div>';
-    } else if (it.type === 'file') {
-      visual = '<div class="fwm-detail-file"><span>📄</span><b>' + esc(it.title) + '</b><em>' + esc(it.size || '') + '</em></div>';
-    }
-    var body = '<article class="fwm-detail">' +
-      '<div class="fwm-detail-meta">' + typeIcon(it.type) + '<span>' + esc(FAV_LABEL[it.type] || '') + ' · ' + esc(it.source) + ' · ' + esc(it.time) + '</span></div>' +
-      '<h2>' + esc(it.title) + '</h2>' +
-      visual +
-      '<p class="fwm-detail-body">' + esc(it.body || '') + '</p>' +
-      '<div class="fwm-detail-actions">' +
-      '<button type="button" class="fwm-btn fwm-btn-light" data-del-fav="' + esc(it.id) + '">' + icon('trash') + ' 删除</button>' +
-      '<button type="button" class="fwm-btn fwm-btn-primary" data-toast="已打开（演示）">打开</button>' +
-      '</div></article>';
-    return pageShell('收藏', '', body, '#/wechat/me/favorites');
-  }
-
-  /* ------------------------------------------------------------------ cards */
-
-  var CARD_TABS = [['member', '会员卡'], ['coupon', '优惠券'], ['gift', '礼品卡']];
-  function cardsPage() {
-    var list = cards.filter(function (c) { return c.kind === view.cardTab; });
-    var body = '<div class="fwm-tabs">' + CARD_TABS.map(function (t) {
-      return '<button type="button" data-card-tab="' + t[0] + '" class="' + (view.cardTab === t[0] ? 'is-active' : '') + '">' + t[1] + '</button>';
-    }).join('') + '</div>' +
-      '<div class="fwm-card-list">' + (list.length ? list.map(function (c) {
-        return '<button type="button" class="fwm-card fwm-tone-' + esc(c.tone) + '" data-card="' + esc(c.id) + '">' +
-          '<span class="fwm-card-brand">' + esc(c.brand || '') + '</span>' +
-          '<span class="fwm-card-copy"><b>' + esc(c.name) + '</b><em>' + esc(c.level || '') + '</em></span>' +
-          '<span class="fwm-card-no">' + esc(c.no.replace(/\s+\S{4}$/, ' ****')) + '</span>' +
-          '</button>';
-      }).join('') : empty('还没有' + ({ member: '会员卡', coupon: '优惠券', gift: '礼品卡' }[view.cardTab] || '卡券'), '领取后会出现在这里')) + '</div>';
-    return pageShell('卡包', '<button type="button" class="fwm-header-btn" data-toast="扫一扫添加卡券">' + icon('plus') + '</button>', body);
-  }
-  function barcode(seed) {
-    var bars = '';
-    for (var i = 0; i < 46; i++) {
-      var w = ((seed.charCodeAt(i % seed.length) + i * 7) % 3) + 1;
-      bars += '<i style="width:' + w + 'px"></i>';
-    }
-    return '<div class="fwm-barcode" aria-hidden="true">' + bars + '</div>';
-  }
-  function cardDetail(id) {
-    var c = cards.filter(function (x) { return x.id === id; })[0];
-    if (!c) return pageShell('卡包', '', empty('卡券不存在', '可能已被移除'), '#/wechat/me/cards');
-    var body = '<div class="fwm-card-detail fwm-tone-' + esc(c.tone) + '">' +
-      '<span class="fwm-card-brand">' + esc(c.brand || '') + '</span>' +
-      '<b>' + esc(c.name) + '</b><em>' + esc(c.level || '') + '</em>' +
-      '<span class="fwm-card-no">' + esc(c.no) + '</span></div>' +
-      '<div class="fwm-barcode-wrap">' + barcode(c.no) + '<p>向商家出示此码</p></div>' +
-      '<div class="fwm-group">' +
-      row({ title: '卡券详情', value: c.kind === 'member' ? '会员权益' : '使用说明', act: 'toast' }) +
-      row({ title: '适用门店', value: '查看', act: 'toast' }) +
-      '</div>' +
-      '<div class="fwm-detail-actions fwm-detail-actions-pad">' +
-      '<button type="button" class="fwm-btn fwm-btn-danger" data-del-card="' + esc(c.id) + '">移除卡券</button>' +
-      '</div>';
-    return pageShell('卡包', '', body, '#/wechat/me/cards');
-  }
-
-  /* --------------------------------------------------------------- stickers */
-
-  function packCover(p, cls) {
-    return '<span class="fwm-pack-cover fwm-tone-' + esc(p.tone) + (cls ? ' ' + cls : '') + '">' + esc(p.cover) + '</span>';
-  }
-  function stickersPage() {
-    var mine = stickers.filter(function (p) { return p.added; });
-    var store = stickers.filter(function (p) { return !p.added; });
-    var list = view.stickerTab === 'mine' ? mine : store;
-    var body = '<div class="fwm-tabs">' +
-      '<button type="button" data-sticker-tab="mine" class="' + (view.stickerTab === 'mine' ? 'is-active' : '') + '">我的表情</button>' +
-      '<button type="button" data-sticker-tab="store" class="' + (view.stickerTab === 'store' ? 'is-active' : '') + '">表情商店</button>' +
-      '</div>' +
-      '<div class="fwm-pack-list">' + (list.length ? list.map(function (p) {
-        return '<button type="button" class="fwm-pack" data-pack="' + esc(p.id) + '">' +
-          packCover(p) +
-          '<span class="fwm-pack-copy"><b>' + esc(p.name) + '</b><em>' + p.emoji.length + ' 个表情</em></span>' +
-          '<span class="fwm-pack-btn">' + (p.added ? '查看' : '添加') + '</span>' +
-          '</button>';
-      }).join('') : empty('还没有添加表情', '去表情商店挑一套吧')) + '</div>';
-    return pageShell('表情', '<button type="button" class="fwm-header-btn" data-toast="表情设置">' + icon('gear') + '</button>', body);
-  }
-  function packDetail(id) {
-    var p = stickers.filter(function (x) { return x.id === id; })[0];
-    if (!p) return pageShell('表情', '', empty('表情包不存在', ''), '#/wechat/me/stickers');
-    var body = '<div class="fwm-pack-hero">' + packCover(p, 'fwm-pack-cover-lg') +
-      '<b>' + esc(p.name) + '</b><em>' + p.emoji.length + ' 个表情</em>' +
-      '<button type="button" class="fwm-btn ' + (p.added ? 'fwm-btn-light' : 'fwm-btn-primary') + ' fwm-pack-add" data-toggle-pack="' + esc(p.id) + '">' + (p.added ? '已添加' : '添加到我的表情') + '</button></div>' +
-      '<div class="fwm-emoji-grid">' + p.emoji.map(function (e) {
-        return '<button type="button" class="fwm-emoji" data-emoji="' + esc(e) + '">' + esc(e) + '</button>';
-      }).join('') + '</div>';
-    return pageShell('表情', '', body, '#/wechat/me/stickers');
-  }
-
-  /* --------------------------------------------------------------- settings */
-
-  function settingsPage() {
-    var body = '<div class="fwm-group">' +
-      row({ title: '账号与安全', set: 'account', icon: '🔐', tone: 'blue' }) +
-      switchRow('青少年模式', 'youth', settings.youth, '未开启') +
-      switchRow('关怀模式', 'care', settings.care, '字体更大、色彩更强') +
-      '</div><div class="fwm-group">' +
-      row({ title: '消息通知', set: 'notify', icon: '🔔', tone: 'green' }) +
-      row({ title: '聊天', set: 'chat', icon: '💬', tone: 'green' }) +
-      row({ title: '隐私', set: 'privacy', icon: '🛡️', tone: 'blue' }) +
-      row({ title: '通用', set: 'general', icon: '⚙️', tone: 'gray' }) +
-      '</div><div class="fwm-group">' +
-      row({ title: '帮助与反馈', set: 'help', icon: '❓', tone: 'blue' }) +
-      row({ title: '关于微信', set: 'about', icon: 'ℹ️', tone: 'green', value: '8.0.50' }) +
-      '</div><div class="fwm-group">' +
-      row({ title: '切换账号', dialog: 'switch' }) +
-      row({ title: '退出登录', dialog: 'logout', danger: true, right: '' }) +
-      '</div>';
-    return pageShell('设置', '', body);
-  }
-  function settingsDetail(key) {
-    var body = '';
-    var title = '设置';
-    var back = '#/wechat/me/settings';
-    if (key === 'account') {
-      title = '账号与安全';
-      body = '<div class="fwm-group">' +
-        row({ title: '微信号', value: 'link' }) +
-        row({ title: '手机号', value: '138****0164' }) +
-        row({ title: '微信密码', value: '已设置' }) +
-        row({ title: '声音锁', value: '未设置' }) +
-        row({ title: '应急联系人', value: '未设置' }) +
-        row({ title: '登录设备管理', value: '2 台' }) +
-        '</div>';
-    } else if (key === 'notify') {
-      title = '消息通知';
-      body = '<div class="fwm-group">' +
-        switchRow('接收新消息通知', 'notify', settings.notify) +
-        switchRow('通知显示消息详情', 'notifyDetail', settings.notifyDetail) +
-        '</div><div class="fwm-group">' +
-        switchRow('声音', 'notifySound', settings.notifySound) +
-        switchRow('振动', 'notifyVibrate', settings.notifyVibrate) +
-        '</div><p class="fwm-note">关闭后，将不再收到新消息提醒。</p>';
-    } else if (key === 'chat') {
-      title = '聊天';
-      body = '<div class="fwm-group">' +
-        row({ title: '聊天记录迁移与备份', value: '未备份', act: 'toast' }) +
-        row({ title: '聊天记录备份', value: '未开启', act: 'toast' }) +
-        row({ title: '字体大小', value: settings.font, act: 'font' }) +
-        row({ title: '聊天背景', value: settings.chatBg, act: 'toast' }) +
-        '</div>';
-    } else if (key === 'privacy') {
-      title = '隐私';
-      body = '<div class="fwm-group">' +
-        row({ title: '朋友权限', value: '全部', act: 'toast' }) +
-        row({ title: '个人信息与权限', act: 'toast' }) +
-        row({ title: '添加我的方式', value: '微信号、手机号', act: 'toast' }) +
-        row({ title: '朋友圈和视频动态', value: '全部可见', act: 'toast' }) +
-        '</div>';
-    } else if (key === 'general') {
-      title = '通用';
-      body = '<div class="fwm-group">' +
-        row({ title: '多语言', value: settings.language, act: 'toast' }) +
-        row({ title: '字体大小', value: settings.font, act: 'font' }) +
-        row({ title: '聊天背景', value: settings.chatBg, act: 'toast' }) +
-        '</div><div class="fwm-group">' +
-        row({ title: '清空聊天记录', dialog: 'clear', danger: true, right: '' }) +
-        '</div>';
-    } else if (key === 'help') {
-      title = '帮助与反馈';
-      body = '<div class="fwm-group">' +
-        row({ title: '常见问题', value: '12 个', act: 'toast' }) +
-        row({ title: '意见反馈', act: 'toast' }) +
-        row({ title: '联系客服', act: 'toast' }) +
-        '</div><p class="fwm-note">本软件仅用于处理您自己创作或拥有版权的素材。</p>';
-    } else if (key === 'about') {
-      title = '关于微信';
-      body = '<div class="fwm-about"><span class="fwm-about-logo">💬</span><b>微信</b><em>版本 8.0.50</em>' +
-        '<button type="button" class="fwm-btn fwm-btn-primary" data-toast="已是最新版本">检查更新</button></div>' +
-        '<div class="fwm-group">' +
-        row({ title: '功能介绍', act: 'toast' }) +
-        row({ title: '隐私保护指引', act: 'toast' }) +
-        '</div>';
-    } else {
-      return pageShell('设置', '', empty('页面不存在', ''), '#/wechat/me/settings');
-    }
-    return pageShell(title, '', body, back);
-  }
-
-  /* ---------------------------------------------------------------- dialogs */
-
-  var dialog = null;
-  function openDialog(opts) {
-    dialog = opts;
-    var host = document.getElementById(HOST_ID);
-    if (!host) return;
-    var el = host.querySelector('.fwm-dialog');
-    if (!el) {
-      el = document.createElement('div');
-      el.className = 'fwm-dialog';
-      host.appendChild(el);
-    }
-    el.innerHTML = '<div class="fwm-dialog-mask"></div><div class="fwm-dialog-panel">' +
-      '<h3>' + esc(opts.title || '') + '</h3>' +
-      (opts.text ? '<p>' + esc(opts.text) + '</p>' : '') +
-      '<div class="fwm-dialog-actions">' +
-      (opts.cancel === false ? '' : '<button type="button" data-dialog-cancel>' + esc(opts.cancelText || '取消') + '</button>') +
-      '<button type="button" data-dialog-ok class="' + (opts.danger ? 'fwm-danger' : 'fwm-primary') + '">' + esc(opts.okText || '确定') + '</button>' +
-      '</div></div>';
-    el.classList.add('is-open');
-  }
-  function closeDialog() {
-    var host = document.getElementById(HOST_ID);
-    var el = host && host.querySelector('.fwm-dialog');
-    if (el) el.classList.remove('is-open');
-    dialog = null;
-  }
-  var toastTimer = 0;
   function toast(text) {
-    var host = document.getElementById(HOST_ID);
     if (!host) return;
     var el = host.querySelector('.fwm-toast');
-    if (!el) {
-      el = document.createElement('div');
-      el.className = 'fwm-toast';
-      host.appendChild(el);
-    }
+    if (!el) { el = document.createElement('div'); el.className = 'fwm-toast'; host.appendChild(el); }
     el.textContent = text;
     el.classList.add('is-open');
     clearTimeout(toastTimer);
     toastTimer = setTimeout(function () { el.classList.remove('is-open'); }, 1600);
   }
-
-  /* ------------------------------------------------------------------ pages */
-
-  function page(kind, id) {
-    if (kind === 'favorites') return id ? favoriteDetail(id) : favoritesPage();
-    if (kind === 'cards') return id ? cardDetail(id) : cardsPage();
-    if (kind === 'stickers') return id ? packDetail(id) : stickersPage();
-    if (kind === 'settings') return id ? settingsDetail(id) : settingsPage();
-    return pageShell('收藏', '', empty('页面不存在', ''), '#/wechat/my');
+  function openDialog(opts) {
+    dialog = opts;
+    if (!host) return;
+    var el = host.querySelector('.fwm-dialog');
+    if (!el) { el = document.createElement('div'); el.className = 'fwm-dialog'; host.appendChild(el); }
+    el.innerHTML = '<div class="fwm-dialog-mask"></div><div class="fwm-dialog-panel"><h3>' + esc(opts.title || '') + '</h3>' +
+      (opts.text ? '<p>' + esc(opts.text) + '</p>' : '') +
+      '<div class="fwm-dialog-actions">' + (opts.cancel === false ? '' : '<button type="button" data-dialog-cancel>' + esc(opts.cancelText || '取消') + '</button>') +
+      '<button type="button" data-dialog-ok class="' + (opts.danger ? 'fwm-danger' : 'fwm-primary') + '">' + esc(opts.okText || '确定') + '</button></div></div>';
+    el.classList.add('is-open');
+  }
+  function closeDialog() {
+    if (!host) return;
+    var el = host.querySelector('.fwm-dialog');
+    if (el) el.classList.remove('is-open');
+    dialog = null;
   }
 
-  function render() {
-    if (!host) {
-      host = document.createElement('div');
-      host.id = HOST_ID;
-      document.documentElement.appendChild(host);
+  /* -------------------------------------------------------------- favorites */
+
+  function favFilter(item) {
+    if (view.favTab === 'media' && item.kind !== 'image' && item.kind !== 'video') return false;
+    if (view.favTab === 'files' && item.kind !== 'file') return false;
+    var q = view.favQuery.trim().toLowerCase();
+    if (q && (item.title + ' ' + (item.source || '') + ' ' + (item.body || '')).toLowerCase().indexOf(q) < 0) return false;
+    return true;
+  }
+  function favSorted() {
+    var list = favorites.filter(favFilter);
+    if (view.favSort === 'time') list.sort(function (a, b) { return (b.ts || 0) - (a.ts || 0); });
+    return list;
+  }
+  function pdfIcon() { return '<span class="fwm-pdf"><i>PDF</i></span>'; }
+  function favCard(item) {
+    var head = '';
+    if (item.kind === 'file') {
+      head = '<div class="fwm-fav-card fwm-fav-card-file" data-fav="' + esc(item.id) + '">' +
+        '<div class="fwm-fav-file-title">' + esc(item.title) + '</div>' +
+        '<div class="fwm-fav-file-sub">PDF ' + esc(item.size || '') + '</div>' + pdfIcon() + '</div>';
+    } else if (item.kind === 'image') {
+      head = '<div class="fwm-fav-card fwm-fav-card-image" data-fav="' + esc(item.id) + '">' +
+        '<img class="fwm-fav-photo" src="' + esc(item.image) + '" alt="">' +
+        (item.tag ? '<div class="fwm-fav-tag">' + icon('tag') + esc(item.tag) + '</div>' : '') + '</div>';
+    } else if (item.kind === 'video') {
+      head = '<div class="fwm-fav-card fwm-fav-card-image" data-fav="' + esc(item.id) + '">' +
+        '<div class="fwm-fav-video"><img class="fwm-fav-photo" src="' + esc(item.image) + '" alt="">' +
+        '<span class="fwm-fav-play">' + icon('play') + '</span><em>' + esc(item.duration || '') + '</em></div></div>';
+    } else if (item.kind === 'text') {
+      head = '<div class="fwm-fav-card fwm-fav-card-text" data-fav="' + esc(item.id) + '">' +
+        '<div class="fwm-fav-text-title">' + esc(item.title) + '</div>' +
+        '<div class="fwm-fav-text-body">' + esc((item.body || '').slice(0, 90)) + '</div></div>';
+    } else {
+      head = '<div class="fwm-fav-card fwm-fav-card-link" data-fav="' + esc(item.id) + '">' +
+        '<div class="fwm-fav-link-title">' + esc(item.title) + '</div>' +
+        '<div class="fwm-fav-text-body">' + esc((item.body || '').slice(0, 80)) + '</div></div>';
     }
+    return '<div class="fwm-fav-item">' + head +
+      '<div class="fwm-fav-foot"><span class="fwm-fav-source">' + esc(item.source || '') + '</span>' +
+      '<span class="fwm-fav-date">' + esc(item.date || '') + '</span></div></div>';
+  }
+  function favoritesPage() {
+    var list = favSorted();
+    var body = '<div class="fwm-fav-search"><span>' + icon('search') + '</span><input data-fav-search value="' + esc(view.favQuery) + '" placeholder="搜索" autocomplete="off"></div>' +
+      '<div class="fwm-fav-tabs">' +
+      ['recent|最近使用', 'media|图片与视频', 'files|文件'].map(function (t) {
+        var p = t.split('|');
+        return '<button type="button" data-favtab="' + p[0] + '" class="' + (view.favTab === p[0] ? 'is-active' : '') + '">' + p[1] + '</button>';
+      }).join('') +
+      '<button type="button" class="fwm-fav-drop" data-favdrop aria-label="筛选">' + icon('down') + '</button></div>' +
+      '<div class="fwm-fav-list" data-fav-list>' +
+      (list.length ? list.map(favCard).join('') : '<div class="fwm-empty"><div class="fwm-empty-art">🗂️</div><b>暂无收藏</b><p>在聊天里长按消息，点「收藏」就会出现在这里</p></div>') +
+      '</div>';
+    return pageShell('收藏', '<button type="button" class="fwm-header-btn" data-favnew aria-label="新建笔记">' + icon('plus') + '</button>', body);
+  }
+  function favoriteDetail(id) {
+    var item = favorites.filter(function (x) { return x.id === id; })[0];
+    if (!item) return pageShell('收藏', '', '<div class="fwm-empty"><b>收藏不存在</b></div>', '#/wechat/me/favorites');
+    var content = '';
+    if (item.kind === 'file') {
+      content = '<div class="fwm-fav-detail-file">' + pdfIcon() + '<b>' + esc(item.title) + '</b><em>PDF ' + esc(item.size || '') + '</em></div>';
+    } else if (item.kind === 'image' || item.kind === 'video') {
+      content = '<img class="fwm-fav-detail-photo" src="' + esc(item.image) + '" alt="">';
+    } else {
+      content = '<p class="fwm-fav-detail-text">' + esc(item.body || item.title) + '</p>';
+    }
+    var body = '<div class="fwm-fav-detail">' +
+      '<div class="fwm-fav-detail-meta"><span>' + esc(item.source || '') + '</span><span>' + esc(item.date || '') + '</span></div>' +
+      (item.kind !== 'file' ? '<h2>' + esc(item.title) + '</h2>' : '') +
+      content +
+      (item.tag ? '<div class="fwm-fav-tag fwm-fav-tag-detail">' + icon('tag') + esc(item.tag) + '</div>' : '') +
+      '<div class="fwm-fav-detail-actions">' +
+      '<button type="button" class="fwm-btn fwm-btn-light" data-favdel="' + esc(item.id) + '">删除</button>' +
+      '<button type="button" class="fwm-btn fwm-btn-primary" data-toast="已打开（演示）">打开</button>' +
+      '</div></div>';
+    return pageShell('收藏', '', body, '#/wechat/me/favorites');
+  }
+  function favoriteNew() {
+    var body = '<div class="fwm-note"><textarea data-note placeholder="写点什么…" autofocus></textarea>' +
+      '<div class="fwm-note-actions"><button type="button" class="fwm-btn fwm-btn-primary" data-notesave>保存到收藏</button></div></div>';
+    return pageShell('新建笔记', '', body, '#/wechat/me/favorites');
+  }
+
+  /* --------------------------------------------------------------- 卡包 shot */
+
+  function hot(x, y, w, h, act, label) {
+    return '<button type="button" class="fwm-hot" style="left:' + x + '%;top:' + y + '%;width:' + w + '%;height:' + h + '%" data-hot="' + act + '" aria-label="' + esc(label || '') + '"></button>';
+  }
+  function shotPage(title, right, src, hotspots, backHash) {
+    return pageShell(title, right, '<div class="fwm-shotwrap"><img class="fwm-shot" src="' + src + '" alt="">' + hotspots + '</div>', backHash);
+  }
+  var CARDS_HOT =
+    hot(0, 0, 100, 13.2, 'cards:coupon', '优惠券') +
+    hot(0, 18, 100, 14.7, 'cards:member', '会员卡') +
+    hot(0, 32.7, 100, 13.7, 'cards:transit', '交通卡') +
+    hot(0, 80, 100, 13, 'cards:ticket', '票证');
+  function cardsPage() {
+    return shotPage('卡包', '<button type="button" class="fwm-header-btn" data-toast="更多">' + icon('more') + '</button>', SHOT.cards, CARDS_HOT, '#/wechat/my');
+  }
+  var CARD_KIND = {
+    coupon: { title: '优惠券', empty: '暂无优惠券' },
+    member: { title: '会员卡', empty: '暂无会员卡' },
+    transit: { title: '交通卡', empty: '暂无交通卡' },
+    ticket: { title: '票证', empty: '暂无票证' }
+  };
+  function cardKindPage(kind) {
+    var meta = CARD_KIND[kind] || CARD_KIND.coupon;
+    var body = '<div class="fwm-empty"><div class="fwm-empty-art">💳</div><b>' + meta.empty + '</b><p>在支持「卡包」的小程序或商家处领取后会出现在这里</p></div>';
+    return pageShell(meta.title, '', body, '#/wechat/me/cards');
+  }
+
+  /* ------------------------------------------------------------- 设置 shot */
+
+  var SET_HOT =
+    hot(0, 1.5, 100, 3.2, 'set:search', '搜索') +
+    hot(0, 7.2, 100, 2.4, 'set:profile', '个人资料') +
+    hot(0, 11.2, 100, 2.3, 'set:account', '账号安全') +
+    hot(0, 15.0, 100, 2.3, 'set:privacy', '个人信息与权限') +
+    hot(0, 20.7, 100, 2.3, 'set:notify', '通知') +
+    hot(0, 24.6, 100, 2.3, 'set:general', '界面与显示') +
+    hot(0, 28.5, 100, 2.3, 'set:privacy', '朋友权限') +
+    hot(0, 32.4, 100, 2.3, 'set:storage', '存储空间') +
+    hot(0, 36.2, 100, 2.3, 'set:more', '更多') +
+    hot(0, 42.0, 100, 2.3, 'set:chat', '聊天') +
+    hot(0, 45.9, 100, 2.3, 'set:call', '音视频通话') +
+    hot(0, 49.8, 100, 2.3, 'set:chat', '聊天记录管理') +
+    hot(0, 53.7, 100, 2.3, 'set:other', '其他功能') +
+    hot(0, 57.5, 100, 2.3, 'set:plugin', '插件') +
+    hot(0, 63.3, 100, 2.3, 'set:help', '帮助与反馈') +
+    hot(0, 67.2, 100, 2.3, 'set:about', '关于微信') +
+    hot(0, 71.5, 100, 2.6, 'set:switch', '切换账号') +
+    hot(0, 75.6, 100, 2.6, 'set:logout', '退出登录') +
+    hot(0, 82.6, 100, 2.5, 'set:collect', '个人信息收集清单') +
+    hot(50, 82.6, 50, 2.5, 'set:share', '第三方信息共享清单');
+  function settingsPage() {
+    return shotPage('设置', '', SHOT.settings, SET_HOT, '#/wechat/my');
+  }
+  function settingsDetail(key) {
+    var title = '设置';
+    var body = '';
+    if (key === 'account') {
+      title = '账号与安全';
+      body = '<div class="fwm-group">' +
+        '<div class="fwm-row"><span class="fwm-row-main"><span class="fwm-row-title">微信号</span></span><span class="fwm-row-value">link</span><span class="fwm-row-tail">' + icon('chevron') + '</span></div>' +
+        '<div class="fwm-row"><span class="fwm-row-main"><span class="fwm-row-title">手机号</span></span><span class="fwm-row-value">138****0164</span><span class="fwm-row-tail">' + icon('chevron') + '</span></div>' +
+        '<div class="fwm-row"><span class="fwm-row-main"><span class="fwm-row-title">微信密码</span></span><span class="fwm-row-value">已设置</span><span class="fwm-row-tail">' + icon('chevron') + '</span></div>' +
+        '<div class="fwm-row"><span class="fwm-row-main"><span class="fwm-row-title">声音锁</span></span><span class="fwm-row-value">未设置</span><span class="fwm-row-tail">' + icon('chevron') + '</span></div></div>';
+    } else if (key === 'notify') {
+      title = '通知';
+      body = '<div class="fwm-group"><label class="fwm-row"><span class="fwm-row-main"><span class="fwm-row-title">接收新消息通知</span></span><span class="fwm-switch"><input type="checkbox" data-settoggle="notify"' + (settings.notify ? ' checked' : '') + '><i></i></span></label></div>';
+    } else if (key === 'privacy') {
+      title = '朋友权限';
+      body = '<div class="fwm-group">' +
+        '<div class="fwm-row"><span class="fwm-row-main"><span class="fwm-row-title">添加我的方式</span></span><span class="fwm-row-value">微信号、手机号</span><span class="fwm-row-tail">' + icon('chevron') + '</span></div>' +
+        '<div class="fwm-row"><span class="fwm-row-main"><span class="fwm-row-title">朋友圈和视频动态</span></span><span class="fwm-row-value">全部可见</span><span class="fwm-row-tail">' + icon('chevron') + '</span></div></div>';
+    } else if (key === 'chat') {
+      title = '聊天';
+      body = '<div class="fwm-group">' +
+        '<div class="fwm-row"><span class="fwm-row-main"><span class="fwm-row-title">聊天记录迁移与备份</span></span><span class="fwm-row-value">未备份</span><span class="fwm-row-tail">' + icon('chevron') + '</span></div>' +
+        '<div class="fwm-row"><span class="fwm-row-main"><span class="fwm-row-title">聊天记录管理</span></span><span class="fwm-row-tail">' + icon('chevron') + '</span></div></div>';
+    } else if (key === 'general') {
+      title = '界面与显示';
+      body = '<div class="fwm-group">' +
+        '<div class="fwm-row"><span class="fwm-row-main"><span class="fwm-row-title">字体大小</span></span><span class="fwm-row-value">标准</span><span class="fwm-row-tail">' + icon('chevron') + '</span></div>' +
+        '<div class="fwm-row"><span class="fwm-row-main"><span class="fwm-row-title">聊天背景</span></span><span class="fwm-row-value">默认</span><span class="fwm-row-tail">' + icon('chevron') + '</span></div></div>';
+    } else if (key === 'help') {
+      title = '帮助与反馈';
+      body = '<div class="fwm-group">' +
+        '<div class="fwm-row"><span class="fwm-row-main"><span class="fwm-row-title">常见问题</span></span><span class="fwm-row-value">12 个</span><span class="fwm-row-tail">' + icon('chevron') + '</span></div>' +
+        '<div class="fwm-row"><span class="fwm-row-main"><span class="fwm-row-title">意见反馈</span></span><span class="fwm-row-tail">' + icon('chevron') + '</span></div></div>';
+    } else if (key === 'about') {
+      title = '关于微信';
+      body = '<div class="fwm-about"><span class="fwm-about-logo">💬</span><b>微信</b><em>版本 8.0.78</em><button type="button" class="fwm-btn fwm-btn-primary" data-toast="已是最新版本">检查更新</button></div>';
+    } else {
+      return pageShell('设置', '', '<div class="fwm-empty"><b>演示页面</b><p>该入口暂未接入更多内容</p></div>', '#/wechat/me/settings');
+    }
+    return pageShell(title, '', body, '#/wechat/me/settings');
+  }
+
+  /* ------------------------------------------------------------ 表情 shot */
+
+  function stickerHotspots() {
+    var out = '';
+    for (var i = 0; i < STICKER_PACKS.length; i++) {
+      var top = 9.6 + i * 4.05;
+      out += hot(0, top, 72, 3.7, 'sticker:pack:' + i, STICKER_PACKS[i][0]);
+      out += hot(71, top + 0.35, 25, 3.0, 'sticker:add:' + i, '添加');
+    }
+    out += hot(0, 0, 100, 4, 'sticker:search', '搜索');
+    out += hot(0, 4.2, 100, 6, 'sticker:banner', '精选推荐');
+    return out;
+  }
+  function stickerHeader() {
+    return '<header class="fwm-header fwm-header-tabs"><button type="button" class="fwm-back" data-back="#/wechat/my" aria-label="返回">' + icon('back') + '</button>' +
+      '<div class="fwm-top-tabs"><button type="button" class="is-active" data-stickertab="featured">精选表情</button>' +
+      '<button type="button" data-stickertab="more">更多表情</button></div>' +
+      '<div class="fwm-header-right"><button type="button" class="fwm-header-btn" data-toast="更多">' + icon('more') + '</button></div></header>';
+  }
+  function stickersPage() {
+    var overlays = addedPacks.map(function (i) {
+      var top = 9.6 + Number(i) * 4.05 + 0.35;
+      return '<span class="fwm-added" style="top:' + top + '%">已添加</span>';
+    }).join('');
+    return '<div class="fwm-page">' + statusBar() + stickerHeader() +
+      '<div class="fwm-scroll"><div class="fwm-shotwrap"><img class="fwm-shot" src="' + SHOT.stickers + '" alt="">' +
+      stickerHotspots() + overlays + '</div></div></div>';
+  }
+  function packPage(idx) {
+    var pack = STICKER_PACKS[Number(idx)] || STICKER_PACKS[0];
+    var emoji = ['😀', '😁', '😂', '🤣', '😊', '😍', '🤔', '😎', '😭', '😡', '👍', '🙏', '👏', '🎉', '❤️', '💔'];
+    var isAdded = addedPacks.indexOf(String(idx)) >= 0;
+    var body = '<div class="fwm-pack-hero"><span class="fwm-pack-cover fwm-tone-green">' + pack[1] + '</span><b>' + esc(pack[0]) + '</b><em>' + emoji.length + ' 个表情</em>' +
+      '<button type="button" class="fwm-btn ' + (isAdded ? 'fwm-btn-light' : 'fwm-btn-primary') + ' fwm-pack-add" data-stickeradd="' + idx + '">' + (isAdded ? '已添加' : '添加') + '</button></div>' +
+      '<div class="fwm-emoji-grid">' + emoji.map(function (e) { return '<button type="button" class="fwm-emoji" data-toast="' + e + '">' + e + '</button>'; }).join('') + '</div>';
+    return pageShell('表情', '', body, '#/wechat/me/stickers');
+  }
+
+  /* ------------------------------------------------------------------ router */
+
+  function currentRoute() { return (location.hash || '').split('?')[0]; }
+  function isMe(route) { return route.indexOf('#/wechat/me/') === 0; }
+  function page(kind, id) {
+    if (kind === 'favorites') {
+      if (id === 'new') return favoriteNew();
+      return id ? favoriteDetail(id) : favoritesPage();
+    }
+    if (kind === 'cards') return id ? cardKindPage(id) : cardsPage();
+    if (kind === 'stickers') return id ? packPage(id) : stickersPage();
+    if (kind === 'settings') return id ? settingsDetail(id) : settingsPage();
+    return pageShell('收藏', '', '<div class="fwm-empty"><b>页面不存在</b></div>', '#/wechat/my');
+  }
+  function render() {
+    if (!host) { host = document.createElement('div'); host.id = HOST_ID; document.documentElement.appendChild(host); }
     var r = currentRoute();
-    var isMe = r.indexOf('#/wechat/me/') === 0;
     var root = document.getElementById('root');
-    if (!isMe) {
+    if (!isMe(r)) {
       host.style.display = 'none';
       if (root) root.style.display = '';
       return;
@@ -459,22 +418,73 @@
     host.innerHTML = page(seg[2] || '', seg[3] || '');
     var sc = host.querySelector('.fwm-scroll');
     if (sc) sc.scrollTop = 0;
-    var t = host.querySelector('[data-clock]');
-    if (t) t.textContent = nowTime();
   }
-
-  /* --------------------------------------------------------------- handlers */
-
   function nav(hash) { if (location.hash === hash) render(); else location.hash = hash; }
   function back(fallback) {
     if (fallback) { nav(fallback); return; }
-    if (history.length > 1) history.back();
-    else nav('#/wechat/my');
+    if (history.length > 1) history.back(); else nav('#/wechat/my');
   }
 
-  function bindOnce() {
+  /* ---------------------------------------------------------------- handlers */
+
+  function saveFavorites() { write(FAV_KEY, favorites); }
+  function addPack(idx) {
+    var key = String(idx);
+    if (addedPacks.indexOf(key) >= 0) { toast('已在表情包中'); return; }
+    addedPacks.push(key);
+    write(STICKER_KEY, addedPacks);
+    render();
+    toast('已添加到表情');
+  }
+  window.__fwAddFavoriteFromChat = function (payload) {
+    if (!payload) return;
+    var kind = (payload.kind === 'image' || payload.kind === 'video' || payload.kind === 'file' || payload.kind === 'music') ? payload.kind : 'text';
+    var now = Date.now();
+    favorites.unshift({
+      id: rid(), kind: kind, title: payload.title || '聊天内容',
+      body: payload.body || '', image: payload.image || '', size: payload.size || '',
+      duration: payload.duration || '', source: payload.source || '聊天', ts: now, date: '今天 ' + nowTime(), fromChat: true
+    });
+    if (favorites.length > 80) favorites = favorites.slice(0, 80);
+    saveFavorites();
+    toast('已收藏');
+  };
+
+  function handleHot(act) {
+    var parts = act.split(':');
+    var head = parts[0];
+    var tail = parts.slice(1).join(':');
+    if (head === 'cards') { nav('#/wechat/me/cards/' + tail); return; }
+    if (head === 'sticker') {
+      if (parts[1] === 'add') { addPack(parts[2]); return; }
+      if (parts[1] === 'pack') { nav('#/wechat/me/stickers/' + parts[2]); return; }
+      if (parts[1] === 'search') { toast('搜索表情（演示）'); return; }
+      toast('精选表情（演示）');
+      return;
+    }
+    if (head === 'set') {
+      if (tail === 'search') { toast('搜索设置（演示）'); return; }
+      if (tail === 'switch') { openDialog({ title: '切换账号', text: '当前账号：link', okText: '添加账号', onOk: function () { toast('演示环境暂不支持添加账号'); } }); return; }
+      if (tail === 'logout') { openDialog({ title: '退出登录', text: '退出后，本机将不再接收该账号的新消息。', danger: true, okText: '退出', onOk: function () { toast('已退出登录（演示）'); } }); return; }
+      if (tail === 'collect') { openDialog({ title: '个人信息收集清单', text: '本软件仅用于处理您自己创作或拥有版权的素材。', cancel: false, okText: '知道了' }); return; }
+      if (tail === 'share') { openDialog({ title: '第三方信息共享清单', text: '演示环境不连接第三方服务。', cancel: false, okText: '知道了' }); return; }
+      if (tail === 'storage') { toast('存储空间：演示'); return; }
+      if (tail === 'more') { toast('更多设置（演示）'); return; }
+      if (tail === 'call') { toast('音视频通话（演示）'); return; }
+      if (tail === 'other') { toast('其他功能（演示）'); return; }
+      if (tail === 'plugin') { toast('插件（演示）'); return; }
+      if (tail === 'profile') { toast('个人资料（演示）'); return; }
+      if (['help', 'about', 'account', 'notify', 'chat', 'privacy', 'general'].indexOf(tail) >= 0) {
+        nav('#/wechat/me/settings/' + tail); return;
+      }
+      nav('#/wechat/me/settings');
+      return;
+    }
+    toast('演示');
+  }
+
+  function bind() {
     document.addEventListener('click', function (e) {
-      /* 1) "我" page rows: the bundled app renders them without handlers. */
       if (currentRoute() === '#/wechat/my') {
         var n = e.target;
         for (var i = 0; n && i < 9; i++, n = n.parentElement) {
@@ -483,8 +493,7 @@
           if (map[t]) {
             var rect = n.getBoundingClientRect();
             if (rect.height >= 36 && rect.height <= 96) {
-              e.preventDefault();
-              e.stopPropagation();
+              e.preventDefault(); e.stopPropagation();
               if (t === '朋友圈') nav('#/wechat/moments');
               else nav('#/wechat/me/' + map[t]);
               return;
@@ -492,121 +501,66 @@
           }
         }
       }
-
-      var el = e.target.closest ? e.target.closest('[data-back],[data-fav],[data-card],[data-pack],[data-set],[data-dialog],[data-del-fav],[data-del-card],[data-toggle-pack],[data-emoji],[data-toast],[data-fav-tab],[data-card-tab],[data-sticker-tab],[data-act],[data-dialog-ok],[data-dialog-cancel],[data-copy]') : null;
+      var el = e.target.closest ? e.target.closest('[data-back],[data-hot],[data-fav],[data-favnew],[data-favtab],[data-favdrop],[data-favdel],[data-stickeradd],[data-stickertab],[data-notesave],[data-dialog-ok],[data-dialog-cancel],[data-toast]') : null;
       if (!el) return;
-
-      var r = currentRoute();
-      if (el.hasAttribute('data-back')) {
-        var fb = el.getAttribute('data-back') || '';
-        e.preventDefault();
-        back(fb);
-        return;
-      }
+      if (el.hasAttribute('data-back')) { e.preventDefault(); back(el.getAttribute('data-back')); return; }
+      if (el.hasAttribute('data-hot')) { e.preventDefault(); handleHot(el.getAttribute('data-hot')); return; }
+      if (el.hasAttribute('data-favnew')) { e.preventDefault(); nav('#/wechat/me/favorites/new'); return; }
       if (el.hasAttribute('data-fav')) { e.preventDefault(); nav('#/wechat/me/favorites/' + el.getAttribute('data-fav')); return; }
-      if (el.hasAttribute('data-card')) { e.preventDefault(); nav('#/wechat/me/cards/' + el.getAttribute('data-card')); return; }
-      if (el.hasAttribute('data-pack')) { e.preventDefault(); nav('#/wechat/me/stickers/' + el.getAttribute('data-pack')); return; }
-      if (el.hasAttribute('data-set')) { e.preventDefault(); nav('#/wechat/me/settings/' + el.getAttribute('data-set')); return; }
-      if (el.hasAttribute('data-fav-tab')) { e.preventDefault(); view.favTab = el.getAttribute('data-fav-tab'); render(); return; }
-      if (el.hasAttribute('data-card-tab')) { e.preventDefault(); view.cardTab = el.getAttribute('data-card-tab'); render(); return; }
-      if (el.hasAttribute('data-sticker-tab')) { e.preventDefault(); view.stickerTab = el.getAttribute('data-sticker-tab'); render(); return; }
-      if (el.hasAttribute('data-toast')) { e.preventDefault(); toast(el.getAttribute('data-toast')); return; }
-      if (el.hasAttribute('data-copy')) {
+      if (el.hasAttribute('data-favtab')) { e.preventDefault(); view.favTab = el.getAttribute('data-favtab'); render(); return; }
+      if (el.hasAttribute('data-favdrop')) {
         e.preventDefault();
-        var text = el.getAttribute('data-copy');
-        try { navigator.clipboard.writeText(text); toast('已复制'); } catch (err) { toast(text); }
+        openDialog({ title: '排序方式', text: '最近使用 / 按时间', okText: '按时间', onOk: function () { view.favSort = 'time'; render(); } });
         return;
       }
-      if (el.hasAttribute('data-emoji')) {
+      if (el.hasAttribute('data-favdel')) {
         e.preventDefault();
-        var em = el.getAttribute('data-emoji');
-        openDialog({ title: '表情预览', text: em, cancel: false, okText: '添加到表情', onOk: function () { toast('已添加到表情'); } });
-        return;
-      }
-      if (el.hasAttribute('data-toggle-pack')) {
-        e.preventDefault();
-        var pid = el.getAttribute('data-toggle-pack');
-        stickers = stickers.map(function (p) { return p.id === pid ? Object.assign({}, p, { added: !p.added }) : p; });
-        save(LS.stickers, stickers);
-        render();
-        toast(stickers.filter(function (p) { return p.id === pid; })[0].added ? '已添加' : '已移除');
-        return;
-      }
-      if (el.hasAttribute('data-del-fav')) {
-        e.preventDefault();
-        var fid = el.getAttribute('data-del-fav');
+        var fid = el.getAttribute('data-favdel');
         openDialog({ title: '删除收藏', text: '删除后无法恢复。', danger: true, okText: '删除', onOk: function () {
           favorites = favorites.filter(function (x) { return x.id !== fid; });
-          save(LS.fav, favorites);
-          nav('#/wechat/me/favorites');
-          toast('已删除');
+          saveFavorites(); nav('#/wechat/me/favorites'); toast('已删除');
         }});
         return;
       }
-      if (el.hasAttribute('data-del-card')) {
+      if (el.hasAttribute('data-notesave')) {
         e.preventDefault();
-        var cid = el.getAttribute('data-del-card');
-        openDialog({ title: '移除卡券', text: '移除后可在卡包重新添加。', danger: true, okText: '移除', onOk: function () {
-          cards = cards.filter(function (x) { return x.id !== cid; });
-          save(LS.cards, cards);
-          nav('#/wechat/me/cards');
-          toast('已移除');
-        }});
+        var ta = document.querySelector('[data-note]');
+        var text = ta ? ta.value.trim() : '';
+        if (!text) { toast('写点什么再保存'); return; }
+        var now = Date.now();
+        favorites.unshift({ id: rid(), kind: 'text', title: text.slice(0, 40), body: text, source: '我', ts: now, date: '今天 ' + nowTime() });
+        saveFavorites();
+        nav('#/wechat/me/favorites');
+        toast('已保存到收藏');
         return;
       }
-      if (el.hasAttribute('data-dialog')) {
+      if (el.hasAttribute('data-stickeradd')) { e.preventDefault(); addPack(el.getAttribute('data-stickeradd')); return; }
+      if (el.hasAttribute('data-stickertab')) {
         e.preventDefault();
-        var kind = el.getAttribute('data-dialog');
-        if (kind === 'switch') {
-          openDialog({ title: '切换账号', text: '当前账号：link\n添加账号后可在两个账号之间切换。', okText: '添加账号', onOk: function () { toast('演示环境暂不支持添加账号'); } });
-        } else if (kind === 'logout') {
-          openDialog({ title: '退出登录', text: '退出后，本机将不再接收该账号的新消息。', danger: true, okText: '退出', onOk: function () {
-            toast('已退出登录（演示）');
-          }});
-        } else if (kind === 'clear') {
-          openDialog({ title: '清空聊天记录', text: '清空后不可恢复。', danger: true, okText: '清空', onOk: function () { toast('已清空（演示）'); } });
-        }
+        if (el.getAttribute('data-stickertab') === 'more') toast('更多表情（演示）');
         return;
       }
-      if (el.hasAttribute('data-act')) {
-        e.preventDefault();
-        var act = el.getAttribute('data-act');
-        if (act === 'font') {
-          openDialog({ title: '字体大小', text: '标准 / 大 / 超大（演示）', okText: '标准', onOk: function () { settings.font = '标准'; save(LS.settings, settings); render(); } });
-        } else {
-          toast('演示环境');
-        }
-        return;
-      }
-      if (el.hasAttribute('data-dialog-ok')) {
-        e.preventDefault();
-        var d = dialog;
-        closeDialog();
-        if (d && d.onOk) d.onOk();
-        return;
-      }
-      if (el.hasAttribute('data-dialog-cancel')) {
-        e.preventDefault();
-        closeDialog();
-      }
+      if (el.hasAttribute('data-toast')) { e.preventDefault(); toast(el.getAttribute('data-toast')); return; }
+      if (el.hasAttribute('data-dialog-ok')) { e.preventDefault(); var d = dialog; closeDialog(); if (d && d.onOk) d.onOk(); return; }
+      if (el.hasAttribute('data-dialog-cancel')) { e.preventDefault(); closeDialog(); }
     }, true);
 
     document.addEventListener('change', function (e) {
       var t = e.target;
-      if (!t || !t.hasAttribute || !t.hasAttribute('data-toggle')) return;
-      var key = t.getAttribute('data-toggle');
-      settings[key] = !!t.checked;
-      save(LS.settings, settings);
-      if (key === 'notify') toast(t.checked ? '已开启消息通知' : '已关闭消息通知');
+      if (!t || !t.hasAttribute || !t.hasAttribute('data-settoggle')) return;
+      settings[t.getAttribute('data-settoggle')] = !!t.checked;
+      write(SETTINGS_KEY, settings);
     });
 
     document.addEventListener('input', function (e) {
       var t = e.target;
       if (!t || !t.hasAttribute || !t.hasAttribute('data-fav-search')) return;
       view.favQuery = t.value || '';
-      var list = favorites.filter(favoriteMatches);
-      var box = document.querySelector('[data-fav-list]');
-      if (box) box.innerHTML = favList(list);
+      var list = document.querySelector('[data-fav-list]');
+      if (list) {
+        var items = favSorted();
+        list.innerHTML = items.length ? items.map(favCard).join('') : '<div class="fwm-empty"><div class="fwm-empty-art">🗂️</div><b>暂无收藏</b><p>换个关键词试试</p></div>';
+      }
     });
 
     window.addEventListener('hashchange', render);
@@ -614,17 +568,13 @@
   }
 
   function start() {
-    bindOnce();
+    bind();
     render();
     setInterval(function () {
-      var t = document.querySelector('#fw-me-pages-host [data-clock]');
+      var t = document.querySelector('#fw-me-pages-host .fwm-time');
       if (t) t.textContent = nowTime();
     }, 30000);
   }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', start);
-  } else {
-    start();
-  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+  else start();
 })();

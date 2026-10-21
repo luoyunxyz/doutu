@@ -58,3 +58,5 @@ _ios/shots/
 # iOS v2 资源图片（Assets.xcassets / 我的页截图）
 !ios_v2/Resources/Assets.xcassets/**/*.png
 !ios_v2/Resources/me_content.png
+
+!ios_v2/Resources/web/overrides/me/**/*.png

@@ -217,3 +217,67 @@
 
 #fw-me-pages-host .fwm-card-detail b { margin-top: 2px; }
 #fw-me-pages-host .fwm-card-detail em { margin-top: 4px; }
+
+/* ================= 1.0.0(75): screenshot-based pages + dynamic favorites ===== */
+
+#fw-me-pages-host .fwm-shotwrap { position: relative; width: 100%; background: #ededed; }
+#fw-me-pages-host .fwm-shot { display: block; width: 100%; height: auto; }
+#fw-me-pages-host .fwm-hot { position: absolute; display: block; margin: 0; padding: 0; border: 0; background: transparent; z-index: 2; cursor: pointer; }
+#fw-me-pages-host .fwm-hot:active { background: rgba(0,0,0,.045); }
+#fw-me-pages-host .fwm-added { position: absolute; right: 4.2%; width: 19%; height: 3.0%; display: flex; align-items: center; justify-content: center; font-size: 13px; color: #07c160; background: #f2f2f2; border-radius: 4px; z-index: 3; pointer-events: none; }
+
+#fw-me-pages-host .fwm-header-tabs { display: flex; align-items: center; padding: 0 10px 0 8px; }
+#fw-me-pages-host .fwm-header-tabs .fwm-back { width: 36px; }
+#fw-me-pages-host .fwm-top-tabs { flex: 1; display: flex; align-items: center; justify-content: center; gap: 0; }
+#fw-me-pages-host .fwm-top-tabs button { font-size: 17px; color: #666; padding: 8px 10px; position: relative; }
+#fw-me-pages-host .fwm-top-tabs button.is-active { color: #191919; font-weight: 600; }
+
+/* favorites */
+#fw-me-pages-host .fwm-fav-search { display: flex; align-items: center; margin: 2px 12px 8px; height: 38px; padding: 0 12px; background: #fff; border-radius: 8px; color: #b2b2b2; }
+#fw-me-pages-host .fwm-fav-search .fwm-icon { width: 18px; height: 18px; margin-right: 8px; }
+#fw-me-pages-host .fwm-fav-search input { flex: 1; height: 100%; font-size: 15px; color: #191919; }
+#fw-me-pages-host .fwm-fav-search input::placeholder { color: #b2b2b2; }
+#fw-me-pages-host .fwm-fav-tabs { display: flex; align-items: center; padding: 2px 12px 8px; }
+#fw-me-pages-host .fwm-fav-tabs > button { font-size: 15px; color: #666; padding: 4px 14px 4px 0; }
+#fw-me-pages-host .fwm-fav-tabs > button.is-active { color: #576b95; font-weight: 500; }
+#fw-me-pages-host .fwm-fav-drop { margin-left: auto; width: 30px; height: 30px; display: grid; place-items: center; color: #999; background: #e3e3e6; border-radius: 50%; }
+#fw-me-pages-host .fwm-fav-drop .fwm-icon { width: 16px; height: 16px; }
+#fw-me-pages-host .fwm-fav-list { padding: 0 12px; }
+#fw-me-pages-host .fwm-fav-item { background: #fff; border-radius: 12px; margin-bottom: 10px; overflow: hidden; }
+#fw-me-pages-host .fwm-fav-foot { display: flex; align-items: center; justify-content: space-between; padding: 0 14px 12px; }
+#fw-me-pages-host .fwm-fav-source { font-size: 13px; color: #999; }
+#fw-me-pages-host .fwm-fav-date { font-size: 13px; color: #b2b2b2; }
+#fw-me-pages-host .fwm-fav-card { position: relative; padding: 14px 14px 10px; cursor: pointer; }
+#fw-me-pages-host .fwm-fav-file-title { font-size: 17px; line-height: 1.35; color: #191919; padding-right: 78px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#fw-me-pages-host .fwm-fav-file-sub { font-size: 13px; color: #999; margin-top: 6px; }
+#fw-me-pages-host .fwm-pdf { position: absolute; right: 14px; top: 16px; width: 54px; height: 62px; border-radius: 7px; background: #e8402e; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 8px; overflow: hidden; }
+#fw-me-pages-host .fwm-pdf::before { content: ''; position: absolute; right: 0; top: 0; width: 17px; height: 17px; background: #fff; clip-path: polygon(0 0, 100% 100%, 0 100%); }
+#fw-me-pages-host .fwm-pdf i { font-size: 14px; font-weight: 700; color: #fff; font-style: normal; letter-spacing: .5px; }
+#fw-me-pages-host .fwm-fav-photo { display: block; width: 132px; height: 132px; object-fit: cover; border-radius: 4px; background: #f2f3f5; }
+#fw-me-pages-host .fwm-fav-tag { display: inline-flex; align-items: center; margin-top: 10px; font-size: 13px; color: #576b95; padding: 2px 8px 2px 4px; background: #f2f4f8; border-radius: 4px; }
+#fw-me-pages-host .fwm-fav-tag .fwm-icon { width: 14px; height: 14px; margin-right: 4px; }
+#fw-me-pages-host .fwm-fav-text-title { font-size: 17px; line-height: 1.4; color: #191919; }
+#fw-me-pages-host .fwm-fav-text-body { font-size: 14px; line-height: 1.55; color: #888; margin-top: 6px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+#fw-me-pages-host .fwm-fav-link-title { font-size: 17px; line-height: 1.4; color: #191919; }
+#fw-me-pages-host .fwm-fav-video { position: relative; width: 132px; height: 132px; }
+#fw-me-pages-host .fwm-fav-video .fwm-fav-photo { width: 132px; height: 132px; }
+#fw-me-pages-host .fwm-fav-play { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 34px; height: 34px; }
+#fw-me-pages-host .fwm-fav-play .fwm-icon { width: 34px; height: 34px; }
+#fw-me-pages-host .fwm-fav-video em { position: absolute; right: 6px; bottom: 5px; font-size: 11px; color: #fff; font-style: normal; background: rgba(0,0,0,.4); padding: 1px 5px; border-radius: 3px; }
+#fw-me-pages-host .fwm-fav-detail { padding: 14px 16px 24px; }
+#fw-me-pages-host .fwm-fav-detail-meta { display: flex; justify-content: space-between; font-size: 13px; color: #999; }
+#fw-me-pages-host .fwm-fav-detail h2 { font-size: 20px; line-height: 1.4; margin: 14px 0; font-weight: 600; }
+#fw-me-pages-host .fwm-fav-detail-photo { display: block; width: 100%; border-radius: 8px; }
+#fw-me-pages-host .fwm-fav-detail-text { font-size: 15px; line-height: 1.8; color: #333; }
+#fw-me-pages-host .fwm-fav-detail-file { background: #fff; border-radius: 10px; padding: 18px; position: relative; min-height: 100px; }
+#fw-me-pages-host .fwm-fav-detail-file b { display: block; font-size: 16px; font-weight: 500; padding-right: 80px; line-height: 1.4; }
+#fw-me-pages-host .fwm-fav-detail-file em { display: block; margin-top: 8px; font-size: 13px; color: #999; font-style: normal; }
+#fw-me-pages-host .fwm-fav-tag-detail { margin-top: 14px; }
+#fw-me-pages-host .fwm-fav-detail-actions { display: flex; gap: 0; margin-top: 24px; }
+#fw-me-pages-host .fwm-fav-detail-actions .fwm-btn { flex: 1; }
+#fw-me-pages-host .fwm-fav-detail-actions .fwm-btn + .fwm-btn { margin-left: 10px; }
+
+/* note */
+#fw-me-pages-host .fwm-note { padding: 12px 16px; }
+#fw-me-pages-host .fwm-note textarea { width: 100%; min-height: 320px; border: 0; outline: 0; resize: none; background: #fff; border-radius: 10px; padding: 16px; font-size: 16px; line-height: 1.7; color: #191919; }
+#fw-me-pages-host .fwm-note-actions { margin-top: 14px; }

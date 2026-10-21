@@ -66,6 +66,29 @@
   const BATCH_HANDLE_SEEDS = ["今天也要开心","橘子海","晚风知我意","山野有雾","小岛来信","月亮失约了","云朵收藏家","把日子过慢","汽水半糖","在逃小熊","春日限定","听风看海","小岛晴天","不知名的某某","月光便利店","小狗困了","正在充电中","一颗椰子","青柠气泡","风吹麦浪","半熟芝士","桃桃乌龙","今天不熬夜","宇宙漫游指南","睡不醒星球","山茶与海","快乐研究所","小猫打盹","月光维修站","窗边听雨","普通小孩","心动贩卖机","向阳而生","慢慢喜欢你","一页山河","海盐冰淇淋","晚风邮差","人间观察员","云边小卖部","夏天不散场","月亮邮递员","软糖研究员","日落收藏家","晴天放映机","小熊在发呆","请叫我阿喵","风里有点甜","清醒梦境","平凡浪漫","想去看日出","快乐不打烊","桃子汽水","听雨的人","南方小土豆","今天也很哇塞","保持可爱","海边拾贝壳","星星掉进海里","不吃香菜","小小探险家","喜欢散步","柠檬不萌","有空一起玩","一直在路上","慢热选手","日子甜一点","一只糯米团","糯叽叽本人","小城故事多","向晚而行","风里有诗","有猫就幸福","蓝莓味晚风","认真生活中","周末逃跑计划","晚霞贩卖机","小熊软糖","一颗小行星","晴天见面","今天喝热牛奶","山水有相逢","落日与晚风","自在如风","温柔收藏家","别叫我起床","可乐要加冰","一只小海豹","云朵上的猫","遇见好天气","有趣的灵魂","做个好梦","向快乐出发","月亮不打烊","风也温柔","桃子味汽水","浪漫收藏家","打翻了晚霞","银河散步中","小狗观察日记"];
 
   let state = loadState();
+
+  // 旧版演示数据把第一条会话默认置顶（isPinned:true），导致“老婆”总在最上面。
+  // 只做一次迁移：清掉持久化里的默认 isPinned，并清掉 state 里的 pinnedAt。
+  try {
+    const PIN_CLEARED_KEY = 'fake-world.wechat.default-pin-cleared.v1';
+    if (!localStorage.getItem(PIN_CLEARED_KEY)) {
+      for (let i = 0; i < localStorage.length; i += 1) {
+        const key = localStorage.key(i);
+        if (!key) continue;
+        const value = localStorage.getItem(key) || '';
+        if (value.indexOf('"isPinned":true') !== -1) {
+          localStorage.setItem(key, value.replace(/"isPinned":true/g, '"isPinned":false'));
+        }
+      }
+      if (state.chats && typeof state.chats === 'object') {
+        Object.keys(state.chats).forEach(key => {
+          if (state.chats[key] && state.chats[key].pinnedAt) state.chats[key].pinnedAt = null;
+        });
+      }
+      localStorage.setItem(PIN_CLEARED_KEY, '1');
+      try { saveState(); } catch (_) {}
+    }
+  } catch (_) { /* localStorage 不可用时忽略 */ }
   // 2026-10-11: random friend nicknames come from the 随机昵称网名[百万昵称库] API the user
   // asked for (https://api.aa1.cn/doc/sjwm.html -> GET https://cn.apihz.cn/api/zici/sjwm.php).
   // It answers {"code":200,"msg":"网名"} and sends Access-Control-Allow-Origin: *, so the
@@ -74,8 +97,8 @@
   const NICKNAME_API_QUERY = 'id=88888888&key=88888888';
   // The shared demo id/key is rate limited (the API answers code 400 「调用频次过快」), so the
   // fetcher runs two workers with a gap and backs off instead of hammering the endpoint.
-  const NICKNAME_REQUEST_GAP = 500;
-  const NICKNAME_BATCH_DEADLINE = 20000;
+  const NICKNAME_REQUEST_GAP = 120;
+  const NICKNAME_BATCH_DEADLINE = 6000;
   function nicknameDelay(ms) { return new Promise(resolve => setTimeout(resolve, Math.max(0, ms))); }
   async function fetchRandomNicknames(count, onProgress) {
     const want = Math.max(1, Math.min(200, Number(count) || 1));
@@ -90,7 +113,7 @@
       let timer = 0;
       try {
         controller = typeof AbortController === 'function' ? new AbortController() : null;
-        if (controller) timer = setTimeout(() => controller.abort(), 8000);
+        if (controller) timer = setTimeout(() => controller.abort(), 4000);
         const response = await fetch(NICKNAME_API + '?' + NICKNAME_API_QUERY + '&t=' + Date.now() + Math.random().toString(36).slice(2), {
           cache: 'no-store',
           signal: controller ? controller.signal : undefined,
@@ -119,7 +142,13 @@
         await nicknameDelay(NICKNAME_REQUEST_GAP);
       }
     };
-    await Promise.all(Array.from({ length: Math.min(2, want) }, worker));
+    await Promise.all(Array.from({ length: Math.min(6, want) }, worker));
+    // 公共 ID/KEY 被限流时不要继续卡住：用随包的昵称池即时补齐。
+    const pool = (window.__fwNamePools && window.__fwNamePools.nicknames) || [];
+    while (names.length < want && pool.length) {
+      const name = String(pool[Math.floor(Math.random() * pool.length)] || '').trim();
+      if (name && !seen.has(name)) { seen.add(name); names.push(name); }
+    }
     return names;
   }
   let activePress = null;
@@ -197,7 +226,7 @@
   const NATIVE_PROFILES_KEY = 'allProfiles';
   function nativeProfileFromFriend(friend, previousById) {
     const id = String(friend?.id || '');
-    const nickname = String(friend?.realName || friend?.name || '').trim();
+    const nickname = String(friend?.name || friend?.realName || '').trim();
     if (!id || !nickname) return null;
     let previous = previousById?.get(id);
     if (!previous && !previousById) {
@@ -237,6 +266,8 @@
       } catch (_) { /* initialize below */ }
       const previousById = new Map(savedProfiles.filter(profile => profile?.id != null).map(profile => [String(profile.id), profile]));
       const profiles = friends.map(friend => nativeProfileFromFriend(friend, previousById)).filter(Boolean);
+      // 原生模拟来电页直接读这份缓存，不依赖隐藏 WebView 的 origin。
+      try { window.webkit?.messageHandlers?.FwContacts?.postMessage(profiles); } catch (_) {}
       if (typeof window.__fwSyncNativeProfiles === 'function') {
         nativeSyncQueued = false;
         return window.__fwSyncNativeProfiles(profiles);
@@ -573,7 +604,7 @@
     if (!group || document.querySelector('.fw-text-edit-layer')) return;
     const layer = document.createElement('div');
     layer.className = 'fw-text-edit-layer';
-    layer.style.cssText = 'position:fixed;inset:0;z-index:20250;display:flex;align-items:flex-start;justify-content:center;background:rgba(0,0,0,.35);font-family:inherit';
+    layer.style.cssText = 'position:fixed;top:0;right:0;bottom:0;left:0;z-index:20250;display:flex;align-items:flex-start;justify-content:center;background:rgba(0,0,0,.35);font-family:inherit';
     layer.innerHTML = '<div style="margin-top:120px;width:calc(100% - 64px);max-width:420px;background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 6px 24px rgba(0,0,0,.2)">'
       + '<div style="padding:14px 16px 4px;text-align:center;font-size:16px;font-weight:500;color:#111">修改群聊名称</div>'
       + '<input maxlength="40" placeholder="请输入群聊名称" style="display:block;width:100%;box-sizing:border-box;padding:4px 18px 16px;border:0;outline:0;font-family:inherit;font-size:16px;color:#111;text-align:center">'
@@ -812,15 +843,70 @@
   try { window.__fwAvatarPlaceholder = PLACEHOLDER_AVATAR; } catch (_) { /* 非浏览器环境忽略 */ }
 
   const AVATAR_POOL_SIZE = 400;
+  // 远程随机头像接口每次请求都可能换脸，且 iOS 原生层没有实现头像缓存桥。
+  // 这里改成随包内的固定头像池：同一个 seed 永远同一张脸，重启不变。
+  // aa1 头像 API 的固定 CDN 图片池：同一个 seed 永远同一张头像，
+  // 图片本身仍由 api.aa1.cn 提供，不再每次打开随机换脸。
+  // xxapi 头像 API 的 CDN 图片池；图片由接口返回，按 seed 固定映射。
+  const AVATAR_API_POOL = [
+    'https://images.xxapi.cn/images/head/7610375774.jpg',
+    'https://images.xxapi.cn/images/head/3436398854.jpg',
+    'https://images.xxapi.cn/images/head/3048837505.jpg',
+    'https://images.xxapi.cn/images/head/6595148448.jpg',
+    'https://images.xxapi.cn/images/head/1495778864.jpg',
+    'https://images.xxapi.cn/images/head/7688549202.jpg',
+    'https://images.xxapi.cn/images/head/6090430902.jpg',
+    'https://images.xxapi.cn/images/head/1521764924.jpg',
+    'https://images.xxapi.cn/images/head/4064787026.jpg',
+    'https://images.xxapi.cn/images/head/7962170974.jpg',
+    'https://images.xxapi.cn/images/head/3264184319.jpg',
+    'https://images.xxapi.cn/images/head/2066770470.jpg',
+    'https://images.xxapi.cn/images/head/2739863757.jpg',
+    'https://images.xxapi.cn/images/head/3445248961.jpg',
+    'https://images.xxapi.cn/images/head/9450039731.jpg',
+    'https://images.xxapi.cn/images/head/1894834391.jpg',
+    'https://images.xxapi.cn/images/head/8835187396.jpg',
+    'https://images.xxapi.cn/images/head/0532241039.jpg',
+    'https://images.xxapi.cn/images/head/5841001491.jpg',
+    'https://images.xxapi.cn/images/head/3342078749.jpg',
+    'https://images.xxapi.cn/images/head/9845564794.jpg',
+    'https://images.xxapi.cn/images/head/2556022004.jpg',
+    'https://images.xxapi.cn/images/head/9137570530.jpg',
+    'https://images.xxapi.cn/images/head/2848519259.jpg',
+  ];
+  const BUNDLED_AVATAR_FILES = [
+    './assets/user-avatar-1-CKPDcH57.jpg',
+    './assets/user-avatar-4-Cmbgep_s.jpg',
+    './assets/user-avatar-5-DMigR-cn.jpg',
+    './assets/user-avatar-6-Cq95zrQT.jpg',
+    './assets/user-avatar-7-C4bh6bYx.jpg',
+    './assets/user-avatar-8-BysMeksY.jpg',
+    './assets/user-avatar-10-ZKj7tiz_.jpg',
+  ];
   // 群成员 / 随机生成的联系人：同一个 index 永远拿到同一张脸（API 结果按 seed 缓存）
   function avatarUrl(index) {
     return apiAvatarFor('member-' + String(index));
   }
   // 所有远程头像都失败时的最后一层：内联占位（以前指向打包的那批图片）
   function bundledAvatarFor(seed) {
-    void seed;
-    return PLACEHOLDER_AVATAR;
+    const hash = avatarSeedHash(seed);
+    const palette = ['#5b8def', '#e28a5b', '#55a87a', '#b276c9', '#d35f75', '#4f9fb2', '#b58b4a'];
+    const color = palette[Math.abs(hash) % palette.length];
+    const raw = String(seed == null ? '' : seed).trim();
+    const text = (raw.charAt(0) || '微').replace(/[&<>"']/g, ch => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[ch]));
+    const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96">'
+      + '<rect width="96" height="96" rx="5" fill="' + color + '"/>'
+      + '<text x="48" y="61" text-anchor="middle" font-size="42" font-family="-apple-system,BlinkMacSystemFont,sans-serif" fill="#fff">'
+      + text + '</text></svg>';
+    return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
   }
+  function apiAvatarFor(seed) {
+    const hash = avatarSeedHash(seed);
+    return AVATAR_API_POOL[Math.abs(hash) % AVATAR_API_POOL.length];
+  }
+
   function makeAvatarUrl() { return remoteAvatarUrl(); }
   const AVATAR_API = 'https://v2.xxapi.cn/api/head';
   const AVATAR_API_JSON = AVATAR_API + '?return=json';
@@ -829,13 +915,14 @@
     const text = String(seed == null ? '' : seed);
     let hash = 11;
     for (let i = 0; i < text.length; i += 1) hash = (hash * 31 + text.charCodeAt(i)) >>> 0;
-    return hash.toString(36);
+    return hash;
   }
   // 2026-10-11: member pictures come from the 随机头像 API the user asked for
   // (https://xxapi.cn/doc/head). The nonce is derived from the member's name, so the
   // same person keeps the same face across renders; the app's avatar cache freezes the
   // 302 redirect into a local file so it stays put on later opens.
-  function apiAvatarFor(seed) {
+  function apiAvatarForLegacy(seed) {
+    return bundledAvatarFor(seed);
     const key = 'fake-world.wechat.head-avatar.' + avatarSeedHash(seed);
     try {
       const remembered = localStorage.getItem(key) || '';
@@ -856,9 +943,7 @@
     return url;
   }
   function makeBatchAvatarUrl() {
-    // 以前这里还会从一个打包图片 id 池里抽一张，其实 id 压根没用上（返回的是 API 地址）。
-    // 本地图片删掉之后，这里就是纯 API 了。
-    return remoteAvatarUrl();
+    return apiAvatarFor('batch-' + Date.now() + Math.random().toString(36).slice(2));
   }
 
     function migrateGeneratedProfiles() {
@@ -871,7 +956,7 @@
       const oldName = String(friend.name || '');
       const nextName = candidates.find(name => !used.has(name.toLocaleLowerCase()));
       if (!nextName) break;
-      used.add(nextName.toLocaleLowerCase()); friend.name = nextName; friend.realName = ''; friend.avatar = makeBatchAvatarUrl(); friend.generatedProfileVersion = 2; friend.starred = false;
+      used.add(nextName.toLocaleLowerCase()); friend.name = nextName; friend.realName = ''; friend.avatar = apiAvatarFor(friend.name); friend.generatedProfileVersion = 2; friend.starred = false;
       const oldRecord = state.chats?.[oldName];
       if (oldRecord && !state.chats[nextName]) { state.chats[nextName] = oldRecord; delete state.chats[oldName]; }
       const record = chatRecord(nextName); record.pinnedAt = null; record.unreadCount = 0; record.unread = false; record.unreadOverride = true; record.generatedDefaultsApplied = true;
@@ -879,6 +964,32 @@
     saveState();
   }
   migrateGeneratedProfiles();
+
+  // 老版本把远程随机头像 URL 存进了 state，启动时统一迁回本地固定头像。
+  (function normalizeRemoteAvatars() {
+    let changed = false;
+    const legacyRemote = value => typeof value === 'string'
+      && /^https?:\/\//i.test(value)
+      && !/api\.dicebear\.com/i.test(value);
+    (Array.isArray(state.contacts) ? state.contacts : []).forEach(friend => {
+      if (friend && friend.source === '随机生成' && /api\.aa1\.cn/i.test(String(friend.avatar || ''))) {
+        friend.avatar = apiAvatarFor(friend.name || friend.id || 'contact');
+        changed = true;
+      } else if (friend && (!friend.avatar || legacyRemote(friend.avatar))) {
+        friend.avatar = apiAvatarFor(String(friend.name || friend.id || 'contact'));
+        changed = true;
+      }
+    });
+    (Array.isArray(state.groups) ? state.groups : []).forEach(group => {
+      if (!group || !Array.isArray(group.memberAvatars)) return;
+      group.memberAvatars = group.memberAvatars.map((value, index) => {
+        if (!local(value)) return value;
+        changed = true;
+        return bundledAvatarFor(String(group.id || group.name || 'group') + '|' + index);
+      });
+    });
+    if (changed) saveState();
+  })();
   // 2026-10-11: contacts and group members created by an earlier build carried a bundled
   // cartoon avatar. They now take a real picture from the 随机头像 API instead.
   (function migrateBundledAvatars() {
@@ -924,20 +1035,30 @@
     });
   }
   function closeLocalConversation() {
-    const page = document.querySelector('.fw-local-conversation');
-    if (!page || page.dataset.fwClosing === '1') return;
-    page.dataset.fwClosing = '1';
-    page.classList.add('fw-local-conversation--exit');
+    // 2026-10-19: 收款/转账流程会再次打开同一个会话。以前只 remove 第一个页面，
+    // 旧的会话页留在 DOM 里，叠出两三层「打招呼 + 转账卡片」的残影。
+    // 这里一次关掉所有会话页，保证返回后页面干净。
+    const pages = Array.from(document.querySelectorAll('.fw-local-conversation'));
+    if (!pages.length) return;
+    const page = pages[pages.length - 1];
+    if (page.dataset.fwClosing === '1') return;
+    let finished = false;
+    pages.forEach(item => {
+      item.dataset.fwClosing = '1';
+      item.classList.add('fw-local-conversation--exit');
+    });
     const finish = () => {
+      if (finished) return;
+      finished = true;
       if (selfAvatarSyncTimer) { clearInterval(selfAvatarSyncTimer); selfAvatarSyncTimer = null; }
       openMessageMenuForRow = null;
-      page.remove();
+      pages.forEach(item => item.remove());
       document.body.classList.remove('fw-local-conversation-open');
       applyConversationFontScale();
       syncChatSystemBars();
     };
     page.addEventListener('animationend', finish, { once: true });
-    setTimeout(() => { if (page.isConnected) finish(); }, 150);
+    setTimeout(finish, 150);
   }
   window.__fwCloseConversation = function () { const open = !!document.querySelector('.fw-local-conversation'); if (open) closeLocalConversation(); return open; };
   /**
@@ -978,7 +1099,8 @@
     getStableFriendAvatar(friend, friend.avatar || CONTACT_FALLBACKS[0].avatar);
     // Defer contact-list serialization until the chat entrance animation is underway.
     setTimeout(saveState, 180);
-    document.querySelector('.fw-local-conversation')?.remove();
+    // 打开会话前清掉所有旧会话页，避免收款/转账后重复打开时页面叠在一起。
+    document.querySelectorAll('.fw-local-conversation').forEach(page => page.remove());
 
     const page = document.createElement('section');
     page.className = 'fw-local-conversation';
@@ -1100,6 +1222,89 @@
       }, true);
     };
     const makeTime = text => { const el=document.createElement('div'); el.className='fw-chat-time'; el.textContent=text; messages.appendChild(el); };
+    // 2026-10-19: 聊天里「我」的头像必须和「我」页显示的是同一张。
+    // 「我」页把 profile.avatarInfo 交给应用的 __fwResolveProfileAvatar 解析（旧的
+    // fakeworld URL 会被映射成内置头像）；聊天页以前直接拒绝 fakeworld 并换随机头像池，
+    // 于是两边永远不是同一张脸。现在统一走同一个解析器，并缓存解析结果。
+    let selfAvatarSource = '';
+    let selfAvatarSourceKey = null;
+    let selfAvatarSourceTask = null;
+    const selfAvatarRawValue = () => {
+      const value = getSelfAvatarValue();
+      return typeof value === 'string' ? value.trim() : '';
+    };
+    const resolveSelfAvatarSource = () => {
+      const raw = selfAvatarRawValue();
+      const key = raw + '|' + getSelfName();
+      if (selfAvatarSource && selfAvatarSourceKey === key) return Promise.resolve(selfAvatarSource);
+      if (selfAvatarSourceTask && selfAvatarSourceKey === key) return selfAvatarSourceTask;
+      selfAvatarSourceKey = key;
+      selfAvatarSourceTask = Promise.resolve(resolveSelfAvatar(raw))
+        .then(src => {
+          const next = String(src || '').trim();
+          if (next) selfAvatarSource = next;
+          return selfAvatarSource;
+        })
+        .catch(() => selfAvatarSource);
+      return selfAvatarSourceTask;
+    };
+    // 所有「我」发出的头像只走这一个入口：先显示内置占位（绝不先闪一张别人的脸），
+    // 再用「我」页同一个解析结果替换。
+    const applySelfAvatar = (img, preferred) => {
+      if (!img) return;
+      const fallback = bundledAvatarFor('self-avatar');
+      img.referrerPolicy = 'no-referrer';
+      img.alt = getSelfName();
+      img.title = img.alt;
+      img.dataset.fwSelfAvatar = '1';
+      img.dataset.fwAvatarValue = getSelfAvatar();
+      img.onerror = () => {
+        img.onerror = null;
+        if (img.src !== fallback) img.src = fallback;
+      };
+      // 只有解析缓存和当前资料一致时才直接复用，避免资料页换了头像后聊天里还先闪旧脸。
+      const currentKey = selfAvatarRawValue() + '|' + getSelfName();
+      const cached = selfAvatarSource && selfAvatarSourceKey === currentKey ? selfAvatarSource : '';
+      const initial = cached || preferred || PLACEHOLDER_AVATAR;
+      if (img.src !== initial) img.src = initial;
+      if (img.__fwAvatarTimer) clearTimeout(img.__fwAvatarTimer);
+      img.onload = () => { if (img.__fwAvatarTimer) { clearTimeout(img.__fwAvatarTimer); img.__fwAvatarTimer = 0; } };
+      img.__fwAvatarTimer = setTimeout(() => {
+        if (img.isConnected && !img.naturalWidth) img.src = fallback;
+      }, 1800);
+      resolveSelfAvatarSource().then(src => {
+        if (src && img.isConnected && img.dataset.fwAvatarSide !== 'incoming') img.src = src;
+      });
+    };
+    // 所有消息头像都走这一个入口：incoming 用对方资料图，outgoing 用「我」页同款头像。
+    const paintMessageAvatar = (img, side, preferred) => {
+      if (!img) return;
+      const incoming = side === 'incoming';
+      img.referrerPolicy = 'no-referrer';
+      img.dataset.fwAvatarSide = side;
+      if (!incoming) {
+        applySelfAvatar(img, preferred);
+        return;
+      }
+      const seed = String(friend.name || friend.id || 'friend');
+      const fallback = bundledAvatarFor(seed);
+      const primary = preferred || friendAvatar || apiAvatarFor(seed);
+      img.dataset.fwFriendAvatar = '1';
+      delete img.dataset.fwSelfAvatar;
+      img.onerror = () => {
+        img.onerror = null;
+        if (img.src !== fallback) img.src = fallback;
+      };
+      img.src = primary || fallback;
+      if (img.__fwAvatarTimer) clearTimeout(img.__fwAvatarTimer);
+      img.onload = () => { if (img.__fwAvatarTimer) { clearTimeout(img.__fwAvatarTimer); img.__fwAvatarTimer = 0; } };
+      img.__fwAvatarTimer = setTimeout(() => {
+        if (img.isConnected && !img.naturalWidth && img.src !== fallback) img.src = fallback;
+      }, 1800);
+      if (img.complete && img.naturalWidth === 0 && img.src !== fallback) img.src = fallback;
+      img.alt = String(friend.remark || friend.name || '对方');
+      img.title = img.alt;
+    };
     const makeBubble = (text, side, avatar, message) => {
       const line=document.createElement('div'); line.className='fw-chat-message fw-chat-message--'+side;
       // Rows tied to a stored message can be re-assigned to the other speaker by swiping.
@@ -1127,24 +1332,7 @@
         },true);
         if (groupPress) attachGroupAvatarPress(img, message, groupPress);
       }
-      img.src=side==='outgoing' ? fallbackSelfAvatar : (groupSender ? (groupMemberAvatar(groupSender) || avatar) : avatar);
-      if(side==='outgoing') { img.title=getSelfName(); img.dataset.fwSelfAvatar='1'; img.dataset.fwAvatarValue=getSelfAvatar(); resolveSelfAvatar(getSelfAvatarValue()).then(src=>{if(src&&img.isConnected)img.src=src;}); }
-      // Keep the exact profile image URL. Replacing a failed URL with a stock avatar
-      // made chat differ from the native profile page; both should represent same source.
-      // Incoming group members are the exception: their photo often lives on a retired
-      // CDN, so a failure swaps in a bundled avatar instead of a broken-image glyph.
-      img.onerror=()=>{
-        if(side==='outgoing'){ img.dataset.fwAvatarLoadError='1'; return; }
-        const stage=img.dataset.fwAvatarStage||'origin';
-        if(stage==='origin'){
-          img.dataset.fwAvatarStage='api';
-          const api=apiAvatarFor(groupSender||friend.name||'');
-          if(api&&api!==img.src){ img.src=api; return; }
-        }
-        if(stage!=='bundled'){ img.dataset.fwAvatarStage='bundled'; img.src=bundledAvatarFor(groupSender||friend.name||''); return; }
-        img.dataset.fwAvatarFallback='1';
-        img.dataset.fwAvatarLoadError='1';
-      };
+      paintMessageAvatar(img, side, groupSender ? groupMemberAvatar(groupSender) : null);
       const bubble=document.createElement('div'); bubble.className='fw-chat-message__bubble';
       if(isImageSource(text)){
         const photo=document.createElement('img');
@@ -1265,11 +1453,7 @@
           avatar.onerror=()=>{avatar.onerror=null;avatar.src=bundledAvatarFor(groupSender||friend.name||'');};
           avatar.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();openFriendProfile(friend);},true);
         }else{
-          avatar.alt=getSelfName();
-          avatar.dataset.fwSelfAvatar='1';
-          avatar.dataset.fwAvatarValue=getSelfAvatar();
-          avatar.src=fallbackSelfAvatar;
-          resolveSelfAvatar(getSelfAvatarValue()).then(src=>{if(src&&avatar.isConnected)avatar.src=src;});
+          applySelfAvatar(avatar);
         }
         if(incoming){
           if(groupSender){
@@ -1318,8 +1502,7 @@
           openFriendProfile(friend);
         },true);
       }else{
-        img.alt=getSelfName(); img.dataset.fwSelfAvatar='1'; img.dataset.fwAvatarValue=getSelfAvatar(); img.src=fallbackSelfAvatar;
-        resolveSelfAvatar(getSelfAvatarValue()).then(src=>{if(src&&img.isConnected)img.src=src});
+        applySelfAvatar(img);
       }
       if(incoming){
         if(groupSender){
@@ -1390,11 +1573,7 @@
           openFriendProfile(friend);
         }, true);
       } else {
-        avatar.alt = getSelfName();
-        avatar.dataset.fwSelfAvatar = '1';
-        avatar.dataset.fwAvatarValue = getSelfAvatar();
-        avatar.src = fallbackSelfAvatar;
-        resolveSelfAvatar(getSelfAvatarValue()).then(src => { if (src && avatar.isConnected) avatar.src = src; });
+        applySelfAvatar(avatar);
       }
       if (incoming) {
         if (groupSender) {
@@ -1454,17 +1633,29 @@
         avatar.onerror = () => { avatar.onerror = null; avatar.src = bundledAvatarFor(friend.name || ''); };
         avatar.addEventListener('click', event => { event.preventDefault(); event.stopPropagation(); openFriendProfile(friend); }, true);
       } else {
-        avatar.alt = getSelfName();
-        avatar.dataset.fwSelfAvatar = '1';
-        avatar.dataset.fwAvatarValue = getSelfAvatar();
-        avatar.src = fallbackSelfAvatar;
-        resolveSelfAvatar(getSelfAvatarValue()).then(src => { if (src && avatar.isConnected) avatar.src = src; });
+        applySelfAvatar(avatar);
       }
       if (incoming) line.append(avatar, bubble); else line.append(bubble, avatar);
       messages.appendChild(line);
     };
     const drawMessages = (keepScrollTop=false) => {
+      // 2026-10-19: 收款/转账后可能残留旧会话页。每次重绘前只保留当前页，
+      // 防止旧页面的「打招呼 + 转账卡片」叠在当前页下面，看起来像消息重复。
+      document.querySelectorAll('.fw-local-conversation').forEach(other => {
+        if (other !== page) other.remove();
+      });
       const previousScrollTop=messages.scrollTop;
+      // 打招呼消息只由 greeting.mine / greeting.friend 渲染一次；
+      // friend.messages 里任何同文案的旧副本都在这里清掉。
+      const greetingTexts = new Set([
+        String(greeting.mine.text || ('我是' + getSelfName())),
+        String(greeting.friend.text || '我通过了你的朋友验证请求，现在我们可以开始聊天了'),
+        '以上是打招呼的消息',
+      ]);
+      friend.messages = friend.messages.filter(item => item
+        && item !== greeting.mine && item !== greeting.friend
+        && item.type !== 'greeting'
+        && !greetingTexts.has(String(item.text || '')));
       messages.replaceChildren();
       // 两条消息之间的最小间隔：不足这个时间就不插新的时间（微信的做法）。
       // 想改成 5 分钟只动这一个数字。
@@ -1477,12 +1668,12 @@
       } else {
         if (!greeting.mine.deleted) {
           makeTime('9月16日 14:11');
-          // Once edited the opening lines carry their own text.
           makeBubble(greeting.mine.text || ('我是' + getSelfName()), messageSide(greeting.mine), friendAvatar, greeting.mine);
         }
         if (!greeting.friend.deleted) {
           makeTime('9月16日 14:23');
-          const notice=document.createElement('div'); notice.className='fw-chat-notice'; notice.textContent='以上是打招呼的消息'; messages.appendChild(notice);
+          const notice=document.createElement('div'); notice.className='fw-chat-notice';
+          notice.textContent='以上是打招呼的消息'; messages.appendChild(notice);
           makeBubble(greeting.friend.text || '我通过了你的朋友验证请求，现在我们可以开始聊天了', messageSide(greeting.friend), friendAvatar, greeting.friend);
         }
       }
@@ -1491,7 +1682,9 @@
       // 现在的规则：距上一条消息在 TIME_GAP_MS（3 分钟）之内就不再显示时间。
       let lastMessageAt = 0;
       for (const message of friend.messages) {
-        if (message.createdAt) {
+        if (message.timeLabel) {
+          makeTime(message.timeLabel);
+        } else if (message.createdAt) {
           const at = new Date(message.createdAt).getTime();
           if (Number.isFinite(at)) {
             // lastMessageAt=0 表示这是第一条（没有任何可比较的对象）→ 照常显示时间。
@@ -1502,6 +1695,13 @@
             }
             lastMessageAt = at;
           }
+        }
+        if (message.type === 'notice') {
+          const notice = document.createElement('div');
+          notice.className = 'fw-chat-notice';
+          notice.textContent = message.text || '';
+          messages.appendChild(notice);
+          continue;
         }
         const side=messageSide(message);
         if(message.type==='transfer')makeTransferBubble(message,side);
@@ -1521,7 +1721,17 @@
       messages.querySelectorAll('img').forEach(image=>{if(!image.complete)image.addEventListener('load',settle,{once:true});});
     };
     page.__fwDrawMessages=drawMessages;
-    setTimeout(drawMessages, 0);
+    // 先把「我」页同款头像解析出来再画第一屏，避免打开聊天时先闪一张随机脸；
+    // 解析失败/超时也必须画，不能让会话空着。
+    const paintFirstScreen = () => {
+      if (!page.isConnected || messages.childElementCount) return;
+      drawMessages();
+    };
+    Promise.race([
+      resolveSelfAvatarSource(),
+      new Promise(resolve => setTimeout(resolve, 300)),
+    ]).then(paintFirstScreen, paintFirstScreen);
+    setTimeout(paintFirstScreen, 350);
     // Swipe any message sideways to hand it to the other speaker: right keeps it
     // with "我" (the default), left moves it to the friend. The side is written onto
     // the stored message, so it is still there next time the conversation opens.
@@ -1544,6 +1754,7 @@
       const row=event.target instanceof Element?event.target.closest('.fw-chat-message'):null;
       if(!row||!row.__fwMessage)return;
       swipeState={row,message:row.__fwMessage,id:event.pointerId,x:event.clientX,y:event.clientY,dx:0,active:false};
+      try { row.setPointerCapture(event.pointerId); } catch (_) {}
       cancelPress();
       const timer=setTimeout(()=>{
         pressState=null;
@@ -1568,6 +1779,49 @@
       swipeState.row.style.transform='translateX('+Math.max(-72,Math.min(72,dx*0.55)).toFixed(1)+'px)';
       if(event.cancelable)event.preventDefault();
     },{passive:false});
+    // 2026-10-19: 滑动只改一行时，CSS 尾巴会跟着 row class 变，但转账/红包/通话
+    // 卡片的方向是创建时写死的（背景图、状态 class、图标顺序）。这里在改边之后
+    // 把卡片自己的方向也同步过来，避免「人已经到左边了，箭头还朝右」。
+    const syncMessageRowSide = (row, side) => {
+      const incoming = side === 'incoming';
+      const message = row.__fwMessage || {};
+      const transferArt = row.querySelector('.fw-transfer-chat-card__artwork');
+      if (transferArt) {
+        transferArt.src = incoming
+          ? './assets/wechat-transfer-card-bg-incoming.png'
+          : './assets/wechat-transfer-card-bg.png';
+        const desc = row.querySelector('.fw-transfer-chat-card__content span');
+        if (desc && !String(message.note || '').trim()) {
+          desc.textContent = incoming ? '转账给你' : '你发起了一笔转账';
+        }
+      }
+      const stateCard = row.querySelector('.fw-tf-state');
+      if (stateCard) {
+        stateCard.classList.toggle('fw-tf-state--in', incoming);
+        const status = String(message.status || 'accepted');
+        const em = stateCard.querySelector('em');
+        if (em) em.textContent = status === 'returned'
+          ? (incoming ? '已退还' : '已被退还')
+          : (incoming ? '已收款' : '已被接收');
+      }
+      const redPacketArt = row.querySelector('.fw-hb-card__artwork');
+      if (redPacketArt) {
+        const claimed = !!message.claim;
+        redPacketArt.src = './assets/' + (claimed
+          ? (incoming ? 'wechat-redpacket-card-bg-light-incoming.png' : 'wechat-redpacket-card-bg-light.png')
+          : (incoming ? 'wechat-redpacket-card-bg-incoming.png' : 'wechat-redpacket-card-bg.png'));
+        const stateText = row.querySelector('.fw-hb-card__state');
+        if (stateText) stateText.textContent = incoming ? '已领取' : '已被领完';
+      }
+      const call = row.querySelector('.fw-call-msg');
+      if (call) {
+        const icon = call.querySelector('.fw-call-msg__icon');
+        const text = call.querySelector('.fw-call-msg__text');
+        if (icon && text) {
+          if (incoming) call.insertBefore(icon, text); else call.appendChild(icon);
+        }
+      }
+    };
     const finishSwipe=(event,cancelled)=>{
       cancelPress();
       const swipe=swipeState;
@@ -1578,7 +1832,18 @@
       if(cancelled||Math.abs(dx)<SWIPE_TRIGGER)return;
       const target=dx<0?'incoming':'outgoing';
       if(!setMessageSide(swipe.message,target))return;
-      drawMessages(true);
+      // 原地只改这一条：不重绘整个消息列表，不可能多出副本。
+      const row=swipe.row;
+      row.classList.toggle('fw-chat-message--incoming', target==='incoming');
+      row.classList.toggle('fw-chat-message--outgoing', target==='outgoing');
+      const avatar=row.querySelector('.fw-chat-message__avatar');
+      const content=[...row.children].find(el=>el!==avatar);
+      if(avatar&&content){
+        if(target==='incoming'){ row.prepend(avatar); avatar.after(content); }
+        else { row.append(content,avatar); }
+        paintMessageAvatar(avatar, target);
+      }
+      syncMessageRowSide(row, target);
       showToast(target==='incoming'?'已改为对方发送':'已改为我发送');
     };
     messages.addEventListener('pointerup',event=>finishSwipe(event,false));
@@ -1815,8 +2080,47 @@
       renderQuoteBar();
       focusComposer();
     };
+    // Long-press → 收藏: save into the same list the 我 → 收藏 page renders.
+    const saveMessageToFavorites=(message)=>{
+      if(!message)return;
+      const type=String(message.type||'text');
+      const source=String(friend.remark||friend.name||friendLabel(friend)||'聊天');
+      const payload={kind:'text',title:'',body:'',image:'',size:'',duration:'',source:source};
+      if(type==='image'){
+        payload.kind='image';
+        payload.title='图片';
+        payload.image=String(message.text||'');
+      }else if(type==='video'){
+        payload.kind='video';
+        payload.title='视频';
+        payload.image=String(message.poster||message.thumb||message.cover||'');
+        payload.duration=String(message.duration||'');
+      }else if(type==='file'){
+        payload.kind='file';
+        payload.title=String(message.name||message.fileName||message.text||'文件');
+        payload.size=String(message.size||'');
+      }else{
+        const text=messageQuoteText(message);
+        payload.kind='text';
+        payload.title=text.slice(0,40);
+        payload.body=text;
+      }
+      if(typeof window.__fwAddFavoriteFromChat==='function'){
+        window.__fwAddFavoriteFromChat(payload);
+        return;
+      }
+      try{
+        const KEY='fw-me-favorites-v2';
+        const list=JSON.parse(localStorage.getItem(KEY)||'[]');
+        const now=Date.now();
+        list.unshift(Object.assign({id:'f-'+now,ts:now,date:'今天'},payload));
+        localStorage.setItem(KEY,JSON.stringify(list.slice(0,80)));
+        showToast('已收藏');
+      }catch(_){ showToast('收藏失败'); }
+    };
     const handleMessageAction=(action,message)=>{
       if(!message)return;
+      if(action==='收藏'){ saveMessageToFavorites(message); return; }
       if(action==='复制'){
         const text=messageQuoteText(message);
         const finish=ok=>showToast(ok?'已复制':'复制失败');
@@ -1941,10 +2245,13 @@
       page.querySelectorAll('img.fw-chat-message__avatar[data-fw-self-avatar="1"]').forEach(img => {
         const savedAvatar = img.dataset.fwAvatarValue || '';
         if (savedAvatar !== currentAvatar) {
+          // 资料页改了头像：清掉解析缓存，让聊天里所有的「我」立刻重新解析成同一张。
+          // 这里只换解析结果，不先铺占位图，避免把全局监听刚设好的新头像又盖回旧图。
+          selfAvatarSource = '';
+          selfAvatarSourceKey = null;
+          selfAvatarSourceTask = null;
           img.dataset.fwAvatarValue = currentAvatar;
-          img.dataset.fwAvatarLoadError = '';
-          img.src = fallbackSelfAvatar;
-          resolveSelfAvatar(getSelfAvatarValue()).then(src=>{if(src&&img.isConnected&&img.dataset.fwAvatarValue===getSelfAvatar())img.src=src;});
+          resolveSelfAvatarSource().then(src => { if (src && img.isConnected) img.src = src; });
         }
         img.alt = currentName;
         img.title = currentName;
@@ -2034,7 +2341,7 @@
       if (template) {
         row = template.cloneNode(true);
         const img = row.querySelector('img');
-        if (img) { img.src = getStableFriendAvatar(friend, friend.avatar || makeAvatarUrl()); img.onerror = () => { img.onerror = null; img.src = CONTACT_FALLBACKS[0].avatar; }; }
+        if (img) { img.src = getStableFriendAvatar(friend, friend.avatar || bundledAvatarFor(String(friend.id || friend.name || "friend"))); img.onerror = () => { img.onerror = null; img.src = bundledAvatarFor(String(friend.name || friend.id || "friend")); }; }
         const leaves = [...row.querySelectorAll('span,div')].filter(el => el.children.length === 0);
         const templateName = getChatInfo(template)?.name;
         const nameNode = leaves.find(el => el.textContent.trim() === templateName) || leaves.find(el => el.textContent.trim() && el.textContent.trim().length < 40);
@@ -2048,8 +2355,8 @@
         row = document.createElement('button'); row.type = 'button';
         row.className = 'fw-local-friend-row fw-local-friend-row--fallback';
         row.innerHTML = '<img alt=""><span class="fw-local-friend-copy"><strong></strong><small></small></span><time></time>';
-        const img = row.querySelector('img'); img.src = getStableFriendAvatar(friend, friend.avatar || makeAvatarUrl());
-        img.onerror = () => { img.onerror = null; img.src = CONTACT_FALLBACKS[0].avatar; };
+        const img = row.querySelector('img'); img.src = getStableFriendAvatar(friend, friend.avatar || bundledAvatarFor(String(friend.id || friend.name || "friend")));
+        img.onerror = () => { img.onerror = null; img.src = bundledAvatarFor(String(friend.name || friend.id || "friend")); };
         row.querySelector('strong').textContent = label;
         row.querySelector('small').textContent = chatListPreview(friend);
         row.querySelector('time').textContent = chatListStamp(friend);
@@ -2205,6 +2512,9 @@
       record.addedNodes.forEach(node => { if (node.nodeType === 1) normalizeMoreIconGeometry(node); });
     }
     syncChatSystemBars();
+    // 朋友圈是 body 上的全屏覆盖层，出现/移除时立刻同步底栏显隐。
+    document.body.classList.toggle('fw-moments-open',
+      !!document.querySelector('.fw-moments-feed, .fw-moments-page'));
   }).observe(document.body, { childList: true, subtree: true });
   function closeChatPayScreen() { const page=chatPayScreen; if(!page||!page.isConnected||page.dataset.closing==='1')return; page.dataset.closing='1';page.classList.add('fw-chat-pay-screen--exit'); const finish=()=>{if(!page.isConnected)return;page.remove();chatPayScreen=null;document.body.classList.remove('fw-chat-pay-open');syncChatSystemBars()};page.addEventListener('animationend',finish,{once:true});setTimeout(finish,190); }
   window.__fwCloseChatPay=()=>{const open=!!chatPayScreen?.isConnected;if(open)closeChatPayScreen();return open};
@@ -2594,9 +2904,26 @@
       for (let i = 0; i < pinned.length; i++) if (container.children[i] !== pinned[i]) { needsReorder = true; break; }
       if (needsReorder) container.append(...pinned, ...rows.filter(row => !pinned.includes(row)));
     }
+    paintDialogueAvatars(rows);
     updateWechatTabBadge(totalUnread);
     applyDialogueFontScale(rows);
     applyConversationFontScale();
+  }
+
+  // 原生列表里的头像有些是空 src / 灰色占位，这里一次性补成稳定的内联头像。
+  function paintDialogueAvatars(rows) {
+    for (const row of rows) {
+      const img = row.querySelector('img');
+      if (!img || img.dataset.fwStableAvatar === '1') continue;
+      const src = String(img.getAttribute('src') || '');
+      if (src && src !== PLACEHOLDER_AVATAR && !src.startsWith('data:image/svg+xml') && !/\/assets\/user-avatar-/.test(src)) continue;
+      const info = getChatInfo(row);
+      const name = String(info?.name || row.textContent || '').trim().slice(0, 12) || '微信好友';
+      img.src = apiAvatarFor(name);
+      img.style.marginRight = '20px';
+      img.onerror = () => { img.onerror = null; img.src = bundledAvatarFor(name); };
+      img.dataset.fwStableAvatar = '1';
+    }
   }
 
   function applyDialogueFontScale(rows = getRows()) {
@@ -3054,7 +3381,7 @@
           name, nickname: conv.nickname || '', wechatId: 'wx' + Math.random().toString(36).slice(2, 12),
           gender: ['女', '男', '未知'][Math.floor(Math.random() * 3)], remark: '', realName: '',
           phone: '', region: conv.region || '', verification: '你加TA(需验证)', source: '随机生成',
-          avatar: avatarFor(conv.avatarIndex), starred: false, messages: conv.messages.slice(),
+          avatar: avatarFor((conv.avatarIndex || 1) + created), starred: false, messages: conv.messages.slice(),
           createdAt: Date.now(), generatedProfileVersion: 2,
         };
         // A fabricated history should not open with the demo verification lines.
@@ -3161,7 +3488,7 @@
       + '<span class="fw-batch-links"><button type="button" data-all>全选</button><button type="button" data-none>清空</button></span></div>'
       + '<div class="fw-batch-list">' + rowsHtml + '</div>'
       + '<div class="fw-batch-random">'
-      + '<label class="fw-batch-field"><span>每个会话</span><input class="fw-batch-per" type="number" min="1" max="100" step="1" inputmode="numeric" value="' + html(draft.per) + '"><em>条</em></label>'
+      + '<label class="fw-batch-field"><span>每个会话</span><input class="fw-batch-per" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" value="' + html(draft.per) + '"><em>条</em></label>'
       + '<label class="fw-batch-field"><span>金额范围</span><input class="fw-batch-amount" type="text" inputmode="decimal" placeholder="留空随机 · 如 200-1000" value="' + html(draft.amount) + '"></label>'
       + '<div class="fw-batch-field"><span>时间范围</span><button type="button" class="fw-batch-date" data-date="start"></button><i>至</i><button type="button" class="fw-batch-date" data-date="end"></button></div>'
       + '<p class="fw-batch-hint">每个选中的会话生成相同条数，合计上限 100 条；时间留空默认最近 7 天。单聊/群聊与消息类型按所选会话自动判断。</p>'
@@ -3448,7 +3775,7 @@
 
   function openDeviceLoginDialog() {
     const enabled = readDeviceRowChoice() !== 'hidden';
-    const { dialog } = makeDialog('电脑设备登录显示', '开启后，微信主页顶部显示电脑设备登录状态', '<label class="fw-switch-row"><input type="checkbox" class="fw-device-toggle"><span>显示设备登录横条（设备可在横条上切换）</span></label>', [
+    const { dialog } = makeDialog('电脑设备登录显示', '开启后，微信主页顶部显示电脑设备登录状态', '<label class="fw-switch-row fw-device-switch-row"><span>显示设备登录横条（设备可在横条上切换）</span><input type="checkbox" class="fw-device-toggle"><i class="fw-device-switch" aria-hidden="true"></i></label>', [
       { label: '取消', onClick: closeOverlay },
       { label: '保存', primary: true, onClick: () => {
         const value = dialog.querySelector('.fw-device-toggle').checked;
@@ -3734,7 +4061,12 @@
     if (label === '添加微信收款助手') return addWechatPayAssistant();
     if (label === '批量添加聊天记录') return openBatchRecordsDialog();
     if (label === '清空所有聊天记录') return openClearRecordsDialog();
-    if (label === '开启电脑设备登录显示') return openDeviceLoginDialog();
+    if (label === '开启电脑设备登录显示') {
+      // 工具菜单关闭时 iOS 可能补发一次 click；如果同步打开弹窗，这一下会落到
+      // 弹窗的「保存」上，把刚隐藏的设备横条重新打开。延后一拍再开。
+      setTimeout(openDeviceLoginDialog, 120);
+      return;
+    }
     if (label === '不懂操作？联系客服') {
       return makeDialog('联系客服', '这是离线演示页面', '<p>客服入口已准备就绪，当前不会连接网络。</p>', [{ label: '知道了', primary: true, onClick: closeOverlay }]);
     }
@@ -3782,7 +4114,7 @@
 
   /** 「扫一扫」在摄像头坏了的时候弹的那一句。 */
   function openCameraBrokenDialog() {
-    makeDialog('摄像头不可用', '检测到摄像头硬件损坏，扫一扫功能暂时无法使用。', '', [
+    makeDialog('扫一扫不可用', '摄像头物理损坏，无法使用扫一扫功能。', '', [
       { label: '我知道了', primary: true, onClick: () => closeOverlay() },
     ]);
   }
@@ -3838,6 +4170,16 @@
     if(!map.size) CONTACT_FALLBACKS.forEach(add);
     return [...map.values()].sort((a,b)=>getInitial(a.name).localeCompare(getInitial(b.name))||a.name.localeCompare(b.name,'zh-CN'));
   }
+  // Native 模拟来电页读取微信通讯录用：返回备注名 + 头像，避免原生再猜一遍数据源。
+  window.__fwGetCallContacts = function () {
+    try {
+      return collectContacts().map(item => ({
+        id: String(item.id || item.name || ''),
+        name: String(item.remark || item.name || '').trim(),
+        avatar: String(item.avatar || '')
+      }));
+    } catch (_) { return []; }
+  };
   function markChatRead(row) {
     const info=getChatInfo(row);
     if(!info)return;
@@ -4073,6 +4415,28 @@
     return false;
   };
 
+  // 原生 WebHost 的顶栏命中层直接调这两个入口；它们和 openPlusMenu /
+  // openToolsSheet 在同一个作用域里，不能写文件末尾（那里已经是另一个 IIFE）。
+  // 原生「+」菜单如果走到加号 action sheet，直接复用网页的 openFeature，
+  // 扫一扫/收付款也留在网页里，避免跳原生页后底部/收款人/头像交互丢失。
+  window.__fwPlusAction = function (label) {
+    try { openFeature(String(label || "")); return true; } catch (_) { return false; }
+  };
+
+  window.__fwOpenPlusMenu = function () {
+    const actions = document.querySelector('.wechat-topbar__actions');
+    if (!actions) return false;
+    const icons = [...actions.querySelectorAll('svg')];
+    const anchor = icons[icons.length - 1];
+    if (!anchor) return false;
+    openPlusMenu(anchor);
+    return true;
+  };
+  window.__fwOpenToolsSheet = function () {
+    openToolsSheet();
+    return true;
+  };
+
   /**
    * 2026-10-16：「模拟来电」设置页指定的来电人 / 头像 / 铃声从这里进来。
    *
@@ -4166,7 +4530,7 @@
 
   function openBatchAddFriends() {
     const host=addOverlay('batch-friend','fw-overlay--batch-friend');
-    const box=document.createElement('section');box.className='fw-batch-friend-dialog';box.innerHTML='<h2>批量添加好友</h2><p>输入随机生成的数量（1-200），好友资料及头像均随机生成。</p><input class="fw-batch-friend-count" type="number" min="1" max="200" step="1" inputmode="numeric" placeholder="请输入数量（最多200）"><div><button type="button" class="cancel">取消</button><button type="button" class="confirm">生成并添加</button></div>';host.appendChild(box);
+    const box=document.createElement('section');box.className='fw-batch-friend-dialog';box.innerHTML='<h2>批量添加好友</h2><p>输入随机生成的数量（1-200），好友资料及头像均随机生成。</p><input class="fw-batch-friend-count" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" placeholder="请输入数量（最多200）"><div><button type="button" class="cancel">取消</button><button type="button" class="confirm">生成并添加</button></div>';host.appendChild(box);
     box.querySelector('.cancel').onclick=openAddFriendDialog;
     box.querySelector('.confirm').onclick=async()=>{
       const input=box.querySelector('.fw-batch-friend-count'),count=Number(input.value);
@@ -4184,7 +4548,7 @@
       const names=new Set([...state.contacts.map(friend=>String(friend.name||'').toLocaleLowerCase()),...getRows().map(row=>getChatInfo(row)?.name.toLocaleLowerCase()).filter(Boolean)]);const ids=new Set(state.contacts.map(friend=>String(friend.wechatId||'').toLocaleLowerCase()));
       const apiPool=[...apiNames];let added=0;const batchId=Date.now(),generated=[];
       const takeName=()=>apiPool.length?apiPool.shift():'';
-      let attempts=0;while(added<count&&attempts<10000){attempts++;const name=takeName();if(!name)break;const lower=name.toLocaleLowerCase(),wechatId='wx'+Math.random().toString(36).slice(2,12);if(names.has(lower)||ids.has(wechatId.toLocaleLowerCase()))continue;names.add(lower);ids.add(wechatId.toLocaleLowerCase());const id='friend-'+batchId+'-'+added,avatar=makeBatchAvatarUrl();generated.push({id,name,wechatId,gender:['女','男','未知'][Math.floor(Math.random()*3)],remark:'',realName:'',phone:'',region:['广东 深圳','北京 北京','上海 上海','浙江 杭州','四川 成都'][Math.floor(Math.random()*5)],verification:'你加TA(需验证)',source:'随机生成',requestMessage:'',avatar,starred:false,createdAt:batchId+added});added++;}
+      let attempts=0;while(added<count&&attempts<10000){attempts++;const name=takeName();if(!name)break;const lower=name.toLocaleLowerCase(),wechatId='wx'+Math.random().toString(36).slice(2,12);if(names.has(lower)||ids.has(wechatId.toLocaleLowerCase()))continue;names.add(lower);ids.add(wechatId.toLocaleLowerCase());const id='friend-'+batchId+'-'+added,avatar=apiAvatarFor(name + '|' + id);generated.push({id,name,wechatId,gender:['女','男','未知'][Math.floor(Math.random()*3)],remark:'',realName:'',phone:'',region:['广东 深圳','北京 北京','上海 上海','浙江 杭州','四川 成都'][Math.floor(Math.random()*5)],verification:'你加TA(需验证)',source:'随机生成',requestMessage:'',avatar,starred:false,createdAt:batchId+added});added++;}
       if(!added){showToast('网名接口暂时不可用，请稍后再试');return;}generated.forEach(friend=>{friend.avatar=freezeRemoteAvatar(friend.avatar);});state.contacts.unshift(...generated);if(!saveState()){state.contacts.splice(0,generated.length);showToast('保存失败，请检查设备存储空间');return;}closeOverlay();applyState();setTimeout(applyState,80);showToast(added===count?('已随机添加'+added+'位好友'):('网名接口返回不足，已添加 '+added+' 位好友'));window.dispatchEvent(new CustomEvent('fw:contacts-updated',{detail:{count:added}}));
     };
   }
@@ -6073,14 +6437,37 @@
       element.classList.add('is-default');
       if (image) image.removeAttribute('src');
     };
+    const paint = src => {
+      const next = String(src || '').trim();
+      if (!next) { useDefault(); return; }
+      if (!image) {
+        element.style.backgroundImage = 'url("' + next.replace(/"/g, '\\"') + '")';
+        return;
+      }
+      image.onerror = () => { image.onerror = null; useDefault(); };
+      image.src = next;
+      // 解析结果仍可能是会挂起的远程地址，1.6s 没画出来就回默认封面。
+      setTimeout(() => {
+        if (image.isConnected && !image.naturalWidth) useDefault();
+      }, 1600);
+    };
     if (!value) { useDefault(); return; }
     element.classList.remove('is-default');
-    if (!image) {
-      element.style.backgroundImage = 'url("' + value.replace(/"/g, '\\"') + '")';
+    // 2026-10-19: fakeworld 的封面图在真机上会一直挂起、不触发 onerror，只剩灰渐变。
+    // 和「我」页/聊天头像一样，先交给应用的 __fwResolveProfileAvatar 解析成本地图。
+    if (/^https?:\/\//i.test(value) && typeof window.__fwResolveProfileAvatar === 'function') {
+      element.classList.add('is-default');
+      try {
+        Promise.resolve(window.__fwResolveProfileAvatar(value)).then(resolved => {
+          if (!element.isConnected) return;
+          const src = String(resolved || '').trim();
+          if (src) { element.classList.remove('is-default'); paint(src); }
+          else useDefault();
+        }).catch(() => { if (element.isConnected) useDefault(); });
+      } catch (_) { useDefault(); }
       return;
     }
-    image.onerror = () => { image.onerror = null; useDefault(); };
-    image.src = value;
+    paint(value);
   }
   function resolveTimelineAvatar(url) {
     const value = String(url || '').trim();
@@ -6848,9 +7235,21 @@
     // to the time row (it slides out from the right of the two dots).
     lane.innerHTML = '<img class="fw-tl-item__avatar" alt=""><div class="fw-tl-item__body"><div class="fw-tl-item__name"></div><p class="fw-tl-item__text"></p><div class="fw-tl-item__media"></div><div class="fw-tl-item__meta"><span class="fw-tl-item__place"></span><span class="fw-tl-item__time"></span><button type="button" class="fw-tl-item__more" aria-label="更多操作"><i></i><i></i></button><div class="fw-tl-item__actions" hidden></div></div><div class="fw-tl-item__social" hidden></div></div>';
     const avatar = lane.querySelector('.fw-tl-item__avatar');
+    const avatarFallback = localPhotoFor(item.authorAvatar || item.authorName);
     avatar.src = resolveTimelineAvatar(item.authorAvatar);
     avatar.alt = item.authorName;
-    avatar.onerror = () => { avatar.onerror = null; avatar.src = localPhotoFor(item.authorAvatar || item.authorName); };
+    avatar.onerror = () => { avatar.onerror = null; avatar.src = avatarFallback; };
+    // 2026-10-19: 内置 demo 头像仍是 fakeworld 死链，真机上会挂起不报错，显示成灰块。
+    // 走应用的同一个头像解析器换成本地图，并用 watchdog 兜底。
+    try {
+      const resolved = window.__fwResolveProfileAvatar?.(item.authorAvatar);
+      if (resolved && typeof resolved.then === 'function') {
+        resolved.then(src => { if (src && avatar.isConnected) avatar.src = src; }).catch(() => {});
+      }
+    } catch (_) { /* keep the fallback */ }
+    setTimeout(() => {
+      if (avatar.isConnected && !avatar.naturalWidth) avatar.src = avatarFallback;
+    }, 1200);
     const nameEl = lane.querySelector('.fw-tl-item__name');
     nameEl.textContent = item.authorName;
     // My own posts do not open a per-friend moments page (that page is for 好友).
@@ -6869,9 +7268,29 @@
     const media = lane.querySelector('.fw-tl-item__media');
     item.images.forEach((src, imageIndex) => {
       const img = document.createElement('img');
+      const imageFallback = localPhotoFor(src);
       img.src = src;
       img.alt = '图片';
-      img.onerror = () => { img.onerror = null; img.src = localPhotoFor(src); };
+      img.onerror = () => { img.onerror = null; img.src = imageFallback; };
+      img.onload = () => {
+        if (item.images.length !== 1 || !img.naturalWidth) return;
+        // 单图按原比例展示，最多占正文宽度 68%、高 320px。
+        const maxW = Math.max(48, Math.min((media.clientWidth || 240) * 0.68, 240));
+        const scale = Math.min(1, maxW / img.naturalWidth, 320 / img.naturalHeight);
+        img.style.width = Math.max(48, Math.round(img.naturalWidth * scale)) + 'px';
+        img.style.height = Math.max(48, Math.round(img.naturalHeight * scale)) + 'px';
+      };
+      // 2026-10-19: 内置动态的图片也是 fakeworld 死链，真机上挂起不报错，只剩灰块。
+      // 和头像一样走应用解析器换成本地图，再用 watchdog 兜底。
+      try {
+        const resolved = window.__fwResolveProfileAvatar?.(src);
+        if (resolved && typeof resolved.then === 'function') {
+          resolved.then(next => { if (next && img.isConnected) img.src = next; }).catch(() => {});
+        }
+      } catch (_) { /* keep the fallback */ }
+      setTimeout(() => {
+        if (img.isConnected && !img.naturalWidth) img.src = imageFallback;
+      }, 1200);
       img.addEventListener('click', event => {
         event.preventDefault();
         event.stopPropagation();
@@ -7967,8 +8386,11 @@
         });
       }, 80);
     };
+    // 2026-10-19: 以前在 overlay 的捕获阶段 stopPropagation，连面板里的
+    // 「取消 / 保存」按钮都收不到点击，表现就是只能保存、无法取消。
+    // 改成冒泡阶段拦截：按钮先执行，再把事件挡在下层页面之前。
     ['pointerdown', 'pointerup', 'touchstart', 'touchend', 'click'].forEach(type => {
-      overlay.addEventListener(type, e => { e.stopPropagation(); }, true);
+      overlay.addEventListener(type, e => { e.stopPropagation(); });
     });
     overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
     form.querySelector('[data-cancel]').addEventListener('click', close);
@@ -8011,12 +8433,9 @@
   }
   function findMyAvatarRow(){ if(!isMyProfileEditRoute()) return null; const label=[...document.querySelectorAll('body *')].find(n=>!n.children.length && String(n.textContent||'').trim()==='头像'); if(!label)return null; let row=label; for(let i=0;row&&i<7;i++,row=row.parentElement){const r=row.getBoundingClientRect?.();if(r&&r.width>=innerWidth*.65&&r.height>=55&&r.height<=260&&r.top<innerHeight*.3&&r.bottom>innerHeight*.08)return row;} return label.parentElement||label; }
   function handleMyAvatarRowTap(e){if(!isMyProfileEditRoute()||document.querySelector('.fw-my-avatar-picker')||document.querySelector('.fw-my-profile-editor'))return;if(myQrRowFromEvent(e))return;const row=findMyAvatarRow();if(!row)return;const r=row.getBoundingClientRect(),t=e.target instanceof Element?e.target:null,x=Number(e.clientX||0),y=Number(e.clientY||0),inside=row.contains(t)||(x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom),right=x>=r.left+r.width*.48;if(!inside||(!right&&!t?.closest?.('img')))return;if(Date.now()<avatarTapLockUntil)return;avatarTapLockUntil=Date.now()+450;e.preventDefault();e.stopImmediatePropagation();openMyAvatarPicker();}
-  document.addEventListener('click', handleMyAvatarTap, true);
-  document.addEventListener('pointerup', handleMyAvatarTap, true);
-  document.addEventListener('touchend', handleMyAvatarTap, true);
-  document.addEventListener('pointerdown', handleMyAvatarRowTap, true);
-  document.addEventListener('touchstart', handleMyAvatarRowTap, true);
-  document.addEventListener('click', handleMyAvatarRowTap, true);
+  // 2026-10-19: 旧的 document 级「头像附近/整行右半边」热区会让个人信息页
+  // 点返回也弹换头像。现在只保留 bindMyAvatarTargets 对头像 img 本体的绑定，
+  // 其它位置一律不再触发换头像。
   function ensureMyAvatarHitTarget() {
     const route = isMyProfileEditRoute();
     const old = document.querySelector('[data-fw-my-avatar-hit-target]');
@@ -8080,12 +8499,16 @@
     }
   }
   function bindMyAvatarTargets() {
-    ensureMyAvatarHitTarget();
-    if (!document.body?.innerText?.includes('个人信息')) return;
+    // 清掉旧版本留下的整行透明热区，避免它继续挡返回键。
+    document.querySelectorAll('[data-fw-my-avatar-hit-target]').forEach(node => node.remove());
+    if (!isMyProfileEditRoute() || !document.body?.innerText?.includes('头像')) return;
+    if (document.querySelector('.fw-my-avatar-picker')) return;
     for (const image of document.querySelectorAll('img')) {
       if (image.__fwAvatarBound) continue;
       const rect = image.getBoundingClientRect();
       if (rect.width < 32 || rect.height < 32 || Math.abs(rect.width - rect.height) > 24) continue;
+      // 只绑个人信息页顶部的头像本体；返回键、名字行、整行都不再算。
+      if (rect.top > innerHeight * 0.4) continue;
       image.__fwAvatarBound = true;
       const open = event => {
         if (document.querySelector('.fw-my-avatar-picker')) return;
@@ -8095,16 +8518,9 @@
       image.addEventListener('click', open, true);
       image.addEventListener('pointerup', open, true);
       image.addEventListener('touchend', open, true);
-      let parent = image.parentElement;
-      for (let i = 0; parent && i < 3; i++, parent = parent.parentElement) {
-        if (parent.__fwAvatarBound) continue;
-        parent.__fwAvatarBound = true;
-        parent.addEventListener('click', open, true);
-      }
     }
   }
   setInterval(bindMyAvatarTargets, 250);
-  setInterval(ensureMyAvatarHitTarget, 120);
   setInterval(ensureMyProfileEditTargets, 120);
 
   /* ---------------------------------------------------------------------------
@@ -8487,6 +8903,14 @@
     const path = raw.replace(/^#/, '').split(/[?#]/)[0].replace(/\/+$/, '');
     return path === '/wechat/my' || path === '/wechat/my/index';
   }
+  // 2026-10-19: 通讯录的滚动区是 flex column，应用把每个分组/字母段当成 flex item。
+  // 默认 flex-shrink:1 会在内容超高时把所有分组压扁到几十像素，行与行叠在一起。
+  // 这里只给通讯录路由打 body 标记，由 CSS 取消分组的 shrink，让滚动区真正滚动。
+  function isContactsRoute() {
+    const raw = String(location.hash || '');
+    const path = raw.replace(/^#/, '').split(/[?#]/)[0].replace(/\/+$/, '');
+    return path === '/wechat/contacts' || path === '/wechat/contacts/index';
+  }
   function isStaticTabRoute() { return isStaticDiscoverRoute() || isStaticMyRoute(); }
   // Any element that visually belongs to a fixed-height tab (the WeChat page
   // container or the app root) must not scroll vertically.
@@ -8510,6 +8934,11 @@
     if (!document.body) return;
     document.body.classList.toggle('fw-static-discover-tab', isStaticDiscoverRoute());
     document.body.classList.toggle('fw-static-my-tab', isStaticMyRoute());
+    document.body.classList.toggle('fw-contacts-tab', isContactsRoute());
+    // 朋友圈是覆盖在「发现」上的全屏页，底栏不应该跟进来。
+    document.body.classList.toggle('fw-moments-open', !!document.querySelector('.fw-moments-feed, .fw-moments-page'));
+    // 设备登录选择是底部弹层，微信底栏 z-index 极高，必须暂时隐藏，否则会盖住最后一项。
+    document.body.classList.toggle('fw-device-sheet-open', !!document.querySelector('.fw-device-sheet'));
   }
   function init() {
     if (!document.body) { document.addEventListener('DOMContentLoaded', init, { once: true }); return; }
@@ -8577,7 +9006,10 @@
     document.addEventListener('contextmenu', onContextMenu, true);
     // Hard-block vertical scrolling on Discover and Me: CSS handles the layout,
     // but a capture-phase listener makes sure no swipe or wheel can move them.
-    document.addEventListener('touchmove', blockStaticTabVerticalScroll, { capture: true, passive: false });
+    // 注意：touchmove 必须是 passive。document 级的非 passive touchmove 会让
+    // WebKit 走慢速滚动路径，内层列表的惯性和回弹会被明显削弱；
+    // Discover/Me 的纵向滚动已经由 CSS 的 overflow-y:hidden + overscroll-behavior:none 锁死。
+    document.addEventListener('touchmove', blockStaticTabVerticalScroll, { capture: true, passive: true });
     document.addEventListener('wheel', blockStaticTabVerticalScroll, { capture: true, passive: false });
     window.addEventListener('hashchange', () => {
       syncStaticTabScrollPolicy();
@@ -8631,8 +9063,12 @@
       return value;
     } catch (_) { return value; }
   }
-  function getStableFriendAvatar(friend, fallback = CONTACT_FALLBACKS[0].avatar) {
-    const source = friend?.avatar || fallback || CONTACT_FALLBACKS[0].avatar;
+  function getStableFriendAvatar(friend, fallback) {
+    const seed = String(friend?.name || friend?.id || 'friend');
+    let source = friend?.avatar || fallback || apiAvatarFor(seed);
+    if (!friend?.avatar && (!fallback || source === CONTACT_FALLBACKS[0].avatar)) {
+      source = apiAvatarFor(seed);
+    }
     if (!friend) return source;
     if (!isRemoteAvatarValue(source)) return source;
     const frozen = freezeRemoteAvatar(source);
@@ -8736,9 +9172,13 @@
     return DEVICE_ROW_OPTIONS.some(option => option.value === value) ? value : 'Windows';
   }
   function applyDeviceRow() {
+    const choice = readDeviceRowChoice();
+    // 2026-10-19: 只改 row.style.display 会被 React 重新渲染时覆盖，点顶部工具菜单 /
+    // 打开设备登录弹窗后，已隐藏的横条会重新冒出来。用 body class + CSS !important
+    // 锁住隐藏状态，React 怎么重绘都不会显形。
+    if (document.body) document.body.classList.toggle('fw-device-row-hidden', choice === 'hidden');
     const row = document.querySelector('.wechat-device-row');
     if (!row) return;
-    const choice = readDeviceRowChoice();
     row.dataset.fwDeviceChoice = choice;
     const display = choice === 'hidden' ? 'none' : '';
     if (row.style.display !== display) row.style.display = display;
@@ -8771,6 +9211,15 @@
     const layer = document.createElement('div');
     layer.className = 'fw-device-sheet';
     layer.innerHTML = '<section class="fw-device-sheet__panel" role="dialog" aria-modal="true" aria-label="设备登录显示"><header><button type="button" data-device-close>取消</button><strong>设备登录显示</strong><span></span></header><div class="fw-device-sheet__list"></div></section>';
+    let closed = false;
+    const close = () => {
+      if (closed) return;
+      closed = true;
+      layer.classList.remove('is-open');
+      document.body.classList.remove('fw-device-sheet-open');
+      // 等滑出动画结束再移除；下面还有 240ms 兜底。
+      setTimeout(() => layer.remove(), 220);
+    };
     const list = layer.querySelector('.fw-device-sheet__list');
     DEVICE_ROW_OPTIONS.concat([{ value: 'hidden', label: '不显示' }]).forEach(option => {
       const item = document.createElement('button');
@@ -8781,14 +9230,16 @@
         event.preventDefault();
         event.stopPropagation();
         setDeviceRowChoice(option.value);
-        layer.remove();
+        close();
         showToast(option.value === 'hidden' ? '已隐藏设备登录状态' : '已切换为 ' + option.label);
       });
       list.appendChild(item);
     });
-    layer.querySelector('[data-device-close]').addEventListener('click', () => layer.remove());
-    layer.addEventListener('pointerdown', event => { if (event.target === layer) layer.remove(); });
+    layer.querySelector('[data-device-close]').addEventListener('click', close);
+    layer.addEventListener('pointerdown', event => { if (event.target === layer) close(); });
     document.body.appendChild(layer);
+    document.body.classList.add('fw-device-sheet-open');
+    requestAnimationFrame(() => layer.classList.add('is-open'));
   }
   document.addEventListener('click', event => {
     const row = event.target instanceof Element ? event.target.closest('.wechat-device-row') : null;
@@ -9208,6 +9659,14 @@
       if (moments) { moments.remove(); return true; }
       const feed = document.querySelector('.fw-moments-feed');
       if (feed) { feed.remove(); return true; }
-      return typeof previousBack === 'function' ? previousBack() : false;
+      // 2026-10-19: 本地会话是最后打开的全屏页。返回键/左侧边缘手势必须先把聊天页
+      // 收回「微信」列表，而不是退出整个微主页回到应用首页。
+      const handledByInner = typeof previousBack === 'function' ? previousBack() : false;
+      if (handledByInner) return true;
+      if (document.querySelector('.fw-local-conversation')) { closeLocalConversation(); return true; }
+      return false;
     };
+
+    // 原生侧（iOS WebHost）直接调这两个入口，避免 Safari/WKWebView 对 SVG 的
+    // click 派发不可靠时，加号 / 顶部工具菜单仍然打不开。
   })();

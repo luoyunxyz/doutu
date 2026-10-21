@@ -2080,8 +2080,47 @@
       renderQuoteBar();
       focusComposer();
     };
+    // Long-press → 收藏: save into the same list the 我 → 收藏 page renders.
+    const saveMessageToFavorites=(message)=>{
+      if(!message)return;
+      const type=String(message.type||'text');
+      const source=String(friend.remark||friend.name||friendLabel(friend)||'聊天');
+      const payload={kind:'text',title:'',body:'',image:'',size:'',duration:'',source:source};
+      if(type==='image'){
+        payload.kind='image';
+        payload.title='图片';
+        payload.image=String(message.text||'');
+      }else if(type==='video'){
+        payload.kind='video';
+        payload.title='视频';
+        payload.image=String(message.poster||message.thumb||message.cover||'');
+        payload.duration=String(message.duration||'');
+      }else if(type==='file'){
+        payload.kind='file';
+        payload.title=String(message.name||message.fileName||message.text||'文件');
+        payload.size=String(message.size||'');
+      }else{
+        const text=messageQuoteText(message);
+        payload.kind='text';
+        payload.title=text.slice(0,40);
+        payload.body=text;
+      }
+      if(typeof window.__fwAddFavoriteFromChat==='function'){
+        window.__fwAddFavoriteFromChat(payload);
+        return;
+      }
+      try{
+        const KEY='fw-me-favorites-v2';
+        const list=JSON.parse(localStorage.getItem(KEY)||'[]');
+        const now=Date.now();
+        list.unshift(Object.assign({id:'f-'+now,ts:now,date:'今天'},payload));
+        localStorage.setItem(KEY,JSON.stringify(list.slice(0,80)));
+        showToast('已收藏');
+      }catch(_){ showToast('收藏失败'); }
+    };
     const handleMessageAction=(action,message)=>{
       if(!message)return;
+      if(action==='收藏'){ saveMessageToFavorites(message); return; }
       if(action==='复制'){
         const text=messageQuoteText(message);
         const finish=ok=>showToast(ok?'已复制':'复制失败');

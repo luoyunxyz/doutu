@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 1.0.0(74)：小微「我」页收藏/朋友圈/卡包/表情/设置`  
-> 最新代码版本：`1.0.0 / 74`（已推送，待 Codemagic 构建）；Android `1.0.3`  
+> 最新提交：`本轮 1.0.0(75)：按真机截图重做「我」页 + 聊天收藏`  
+> 最新代码版本：`1.0.0 / 75`（已推送，待 Codemagic 构建）；Android `1.0.4`  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -1802,6 +1802,34 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
     - 版本 1.0.0(74)（iOS）/ 1.0.3（Android）。
       改动文件：`wechat-me-pages.js`、`wechat-me-pages.css`、两个 `index.html`、
       iOS `project.yml`；Android `assets/fake_world/overrides/*`。
+
+168. **1.0.0(75) / Android 1.0.4：按真机截图重做「我」页**
+    - 用户提供四张真机微信截图，要求「一模一样」，并允许非收藏页直接抠图：
+      - 卡包：优惠券 / 会员卡 / 交通卡 / 票证 四组入口；
+      - 表情：精选表情 / 更多表情 + 搜索 + DaiDai 横幅 + 精选列表 + 添加；
+      - 设置：搜索 + 账号 / 通用 / 功能 / 帮助与关于 + 切换账号 / 退出登录 + 底部清单；
+      - 收藏：+ / 搜索 / 最近使用 / 图片与视频 / 文件 / 下拉，PDF、图片、笔记卡片。
+    - 75：
+      - 卡包 / 表情 / 设置的内容区直接使用截图裁图
+        `overrides/me/cards.png`、`settings.png`、`stickers.png`；
+      - 头部、状态栏、返回仍是 Web 原生，截图区上面覆盖透明热点：
+        卡包四行、设置各行、表情 22 个「添加」按钮；
+      - 收藏完全动态：首次随机生成 PDF / 图片 / 笔记 / 链接 / 视频，
+        姓名、日期、标签、照片全部随机（不用用户截图里的内容）；
+        照片池取 fake-world 的 user-avatar 图；
+      - 收藏的 PDF 图标用 CSS 画（红底 + 折角 + PDF）；
+      - 「+」可新建笔记并保存到收藏；
+      - 聊天长按消息 → 收藏：`wechat-chat-actions.js` 的
+        `handleMessageAction('收藏')` 现在调用 `saveMessageToFavorites`，
+        写入 `fw-me-favorites-v2`，收藏页置顶显示；图片消息保存 data URL；
+      - 表情「添加」写入 `fw-me-stickers-v2`，已添加的按钮上覆盖「已添加」；
+      - 卡包四行分别进入优惠券/会员卡/交通卡/票证的简单列表页；
+    - 已用浏览器实测：收藏随机内容、聊天收藏注入、卡包四行、表情添加、
+      设置详情、返回；Android 资源与 iOS 同步；
+    - 版本 1.0.0(75)（iOS）/ 1.0.4（Android）。
+      改动文件：`wechat-me-pages.js/.css`、`wechat-chat-actions.js`、
+      `overrides/me/*.png`、两个 `index.html`、iOS `project.yml`；
+      Android `assets/fake_world/overrides/*`。
 
 ---
 
