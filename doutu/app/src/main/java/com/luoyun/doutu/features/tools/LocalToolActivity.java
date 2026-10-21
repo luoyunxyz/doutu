@@ -78,7 +78,7 @@ public final class LocalToolActivity extends Activity {
         tv.setGravity(Gravity.CENTER);
         bar.addView(tv, new LinearLayout.LayoutParams(0, dp(50), 1f));
         bar.addView(new View(this), new LinearLayout.LayoutParams(dp(88), dp(50)));
-        if (!("home".equals(key) || "contacts".equals(key) || "moments".equals(key) || "profile".equals(key) || "discover".equals(key) || "chat".equals(key) || "wallet".equals(key) || "transfer".equals(key) || "redpacket".equals(key) || "paysuccess".equals(key) || "pay".equals(key))) root.addView(bar);
+        if (!("home".equals(key) || "contacts".equals(key) || "moments".equals(key) || "profile".equals(key) || "discover".equals(key) || "chat".equals(key) || "wallet".equals(key) || "transfer".equals(key) || "redpacket".equals(key) || "paysuccess".equals(key) || "pay".equals(key) || "billstats".equals(key))) root.addView(bar);
 
         ScrollView scroll = new ScrollView(this);
         content = new LinearLayout(this);
@@ -1211,23 +1211,127 @@ public final class LocalToolActivity extends Activity {
     }
 
     private void buildBillStats() {
-        double total = 0;
+        content.setBackgroundColor(0xff3cb371);
+        content.setPadding(0, 0, 0, 0);
+
+        LinearLayout bar = new LinearLayout(this);
+        bar.setGravity(Gravity.CENTER_VERTICAL);
+        bar.setBackgroundColor(0xff3cb371);
+        ImageView back = assetIcon("ic_wx_bill_back_dark", 16);
+        back.setOnClickListener(v -> finish());
+        LinearLayout.LayoutParams blp = new LinearLayout.LayoutParams(dp(13), dp(13));
+        blp.leftMargin = dp(12);
+        bar.addView(back, blp);
+        TextView title = new TextView(this);
+        title.setText("账单");
+        title.setTextSize(14);
+        title.setTextColor(Color.WHITE);
+        title.setGravity(Gravity.CENTER);
+        bar.addView(title, new LinearLayout.LayoutParams(0, dp(43), 1f));
+        bar.addView(new View(this), new LinearLayout.LayoutParams(dp(37), dp(43)));
+        content.addView(bar);
+
+        LinearLayout tabs = new LinearLayout(this);
+        tabs.setGravity(Gravity.CENTER);
+        tabs.setPadding(0, dp(12), 0, 0);
+        TextView month = new TextView(this);
+        month.setText("月账单");
+        month.setTextSize(14.5f);
+        month.setTextColor(0xff9dd9b8);
+        tabs.addView(month);
+        TextView year = new TextView(this);
+        year.setText("年账单");
+        year.setTextSize(14.5f);
+        year.setTextColor(Color.WHITE);
+        year.setTypeface(null, android.graphics.Typeface.BOLD);
+        LinearLayout.LayoutParams ylp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        ylp.leftMargin = dp(50);
+        tabs.addView(year, ylp);
+        content.addView(tabs);
+
+        LinearLayout info = new LinearLayout(this);
+        info.setGravity(Gravity.CENTER_VERTICAL);
+        info.setPadding(dp(24), dp(22), dp(15), 0);
+        TextView y = new TextView(this);
+        y.setText("2026年");
+        y.setTextSize(14.5f);
+        y.setTextColor(Color.WHITE);
+        info.addView(y);
+        ImageView arrow = assetIcon("icon_wx_bill_statisc_choose_arrow", 12);
+        LinearLayout.LayoutParams alp = new LinearLayout.LayoutParams(dp(12), dp(12));
+        alp.leftMargin = dp(4);
+        info.addView(arrow, alp);
+        info.addView(new View(this), new LinearLayout.LayoutParams(0, 1, 1f));
+        TextView out = new TextView(this);
+        out.setText("支出");
+        out.setTextSize(12);
+        out.setTextColor(0xff3cb371);
+        out.setPadding(dp(10), dp(4), dp(10), dp(4));
+        android.graphics.drawable.GradientDrawable og = new android.graphics.drawable.GradientDrawable();
+        og.setColor(Color.WHITE);
+        og.setCornerRadius(dp(3));
+        out.setBackground(og);
+        info.addView(out);
+        TextView in = new TextView(this);
+        in.setText("收入");
+        in.setTextSize(12);
+        in.setTextColor(0xff9dd9b8);
+        in.setPadding(dp(10), dp(4), dp(10), dp(4));
+        LinearLayout.LayoutParams ilp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        ilp.leftMargin = dp(14);
+        info.addView(in, ilp);
+        content.addView(info);
+
+        double spent = 0;
         for (String b : bills) {
-            int i = b.indexOf("¥");
+            int i = b.indexOf("-¥");
             if (i >= 0) {
-                int j = i + 1;
+                int j = i + 2;
                 while (j < b.length() && (Character.isDigit(b.charAt(j)) || b.charAt(j) == '.')) j++;
-                try { total += Double.parseDouble(b.substring(i + 1, j)); } catch (Exception ignored) { }
+                try { spent += Double.parseDouble(b.substring(i + 2, j)); } catch (Exception ignored) { }
             }
         }
-        TextView tv = new TextView(this);
-        tv.setText("年度账单（本地）\n\n共 " + bills.size() + " 笔记录\n合计 ¥" + String.format("%.2f", total));
-        tv.setTextSize(18);
-        tv.setTextColor(0xff1d1f26);
-        tv.setGravity(Gravity.CENTER);
-        tv.setBackgroundColor(Color.WHITE);
-        tv.setPadding(0, dp(50), 0, dp(50));
-        content.addView(tv);
+        TextView total = new TextView(this);
+        total.setText("¥" + String.format("%.2f", spent));
+        total.setTextSize(36);
+        total.setTextColor(Color.WHITE);
+        total.setGravity(Gravity.CENTER);
+        total.setPadding(0, dp(18), 0, 0);
+        content.addView(total);
+        TextView lbl = new TextView(this);
+        lbl.setText("支出 · 共 " + bills.size() + " 笔");
+        lbl.setTextSize(12);
+        lbl.setTextColor(0xff9dd9b8);
+        lbl.setGravity(Gravity.CENTER);
+        lbl.setPadding(0, dp(4), 0, dp(16));
+        content.addView(lbl);
+
+        LinearLayout card = new LinearLayout(this);
+        card.setOrientation(LinearLayout.VERTICAL);
+        card.setBackgroundColor(Color.WHITE);
+        card.setPadding(dp(14), dp(8), dp(14), dp(8));
+        LinearLayout.LayoutParams clp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        clp.leftMargin = dp(7);
+        clp.rightMargin = dp(7);
+        clp.bottomMargin = dp(20);
+        content.addView(card, clp);
+        if (bills.isEmpty()) {
+            TextView e = new TextView(this);
+            e.setText("暂无账单，去「转账 / 红包」试试");
+            e.setTextSize(13);
+            e.setTextColor(0xff999999);
+            e.setPadding(0, dp(12), 0, dp(12));
+            card.addView(e);
+        } else {
+            for (String b : bills) {
+                TextView row = new TextView(this);
+                row.setText(b);
+                row.setTextSize(14);
+                row.setTextColor(0xff191919);
+                row.setPadding(0, dp(12), 0, dp(12));
+                card.addView(row);
+            }
+        }
     }
 
     private void buildRedPackets() {
