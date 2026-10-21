@@ -1731,7 +1731,7 @@ static final class FeatureRow {
         private void openTool(ToolEntry e) {
             String toolKey = e.action == null ? "" : e.action;
             if (toolKey.startsWith("local:")) toolKey = toolKey.substring(6);
-            if (!("avatar".equals(toolKey) || "auto".equals(toolKey) || "ai".equals(toolKey) || "localavatars".equals(toolKey) || "edit".equals(toolKey) || "tutorial".equals(toolKey))) {
+            if (!("avatar".equals(toolKey) || "auto".equals(toolKey) || "ai".equals(toolKey) || "localavatars".equals(toolKey) || "edit".equals(toolKey) || "tutorial".equals(toolKey) || "wechat".equals(toolKey) || "group".equals(toolKey) || "wallet_wechat".equals(toolKey) || "moments_wechat".equals(toolKey) || "pay_success_wechat".equals(toolKey) || "annual_bill".equals(toolKey))) {
                 com.luoyun.doutu.features.tools.LocalToolActivity.open(MainActivity.this, toolKey, e.name);
                 return;
             }
