@@ -1905,6 +1905,20 @@ static final class FeatureRow {
                     overridePendingTransition(0, 0);
                     return;
                 }
+                // 上传截图：真机打开的是「收付款」页（付款码 / 二维码收款 / 确认演示）
+                if ("#/wechat/receive-pay".equals(route)) {
+                    startActivity(new Intent(MainActivity.this,
+                            com.luoyun.doutu.features.wx.WxReceivePayActivity.class));
+                    overridePendingTransition(0, 0);
+                    return;
+                }
+                // 红包：真机是「发红包」页（红包金额 / 恭喜发财，大吉大利 / 切换发送人 / 键盘）
+                if ("tool:redpacket".equals(route)) {
+                    startActivity(new Intent(MainActivity.this,
+                            com.luoyun.doutu.features.wx.WxRedPacketActivity.class));
+                    overridePendingTransition(0, 0);
+                    return;
+                }
                 // 年账单：真机是绿色「账单」页（月账单/年账单 + 支出对比 + 支出排行榜）
                 if ("feature:annual-bill".equals(route)) {
                     startActivity(new Intent(MainActivity.this,

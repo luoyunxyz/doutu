@@ -295,6 +295,14 @@
             android:screenOrientation="portrait"
             android:exported="false" />
         <activity
+            android:name=".features.wx.WxReceivePayActivity"
+            android:screenOrientation="portrait"
+            android:exported="false" />
+        <activity
+            android:name=".features.wx.WxRedPacketActivity"
+            android:screenOrientation="portrait"
+            android:exported="false" />
+        <activity
             android:name=".features.tools.AvatarAdjustActivity"
             android:screenOrientation="portrait"
             android:exported="false" />

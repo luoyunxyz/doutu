@@ -102,7 +102,7 @@
       {
         "name": "上传截图",
         "icon": "upload",
-        "action": "uploadimg"
+        "action": "wechat:#/wechat/receive-pay"
       }
     ]
   },
