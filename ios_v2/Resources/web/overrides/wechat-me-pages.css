@@ -286,3 +286,11 @@
 /* The fake-world React app draws a status bar with time / signal / wifi / battery.
    Keep its 40px height (layout) but hide everything inside it. */
 #root .flex.items-center.justify-between.py-2.pr-6.pl-10 { visibility: hidden !important; }
+
+/* 1.0.0(78): favorites long-press + dropdown arrow alignment */
+#fw-me-pages-host .fwm-fav-item { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+#fw-me-pages-host .fwm-fav-photo { -webkit-touch-callout: none; -webkit-user-drag: none; }
+#fw-me-pages-host .fwm-fav-photo { pointer-events: none; }
+#fw-me-pages-host .fwm-fav-drop { width: 28px; height: 28px; margin-left: auto; margin-right: 0; background: #ececec; color: #9a9a9a; align-self: center; }
+#fw-me-pages-host .fwm-fav-drop .fwm-icon { width: 13px; height: 13px; margin: 0; }
+#fw-me-pages-host .fwm-fav-tabs { min-height: 36px; }

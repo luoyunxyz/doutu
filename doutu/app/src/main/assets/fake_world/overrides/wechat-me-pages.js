@@ -58,6 +58,10 @@
   var view = { favTab: 'recent', favQuery: '', favSort: 'time' };
   var dialog = null;
   var toastTimer = 0;
+  var suppressClickUntil = 0;
+  var pressTimer = 0;
+  var pressStart = null;
+  var pressItem = null;
 
   /* ---------------------------------------------------------------- storage */
 
@@ -426,6 +430,12 @@
   /* ---------------------------------------------------------------- handlers */
 
   function saveFavorites() { write(FAV_KEY, favorites); }
+  function deleteFavorite(id) {
+    favorites = favorites.filter(function (x) { return x.id !== id; });
+    saveFavorites();
+    render();
+    toast('已删除');
+  }
   function addPack(idx) {
     var key = String(idx);
     if (addedPacks.indexOf(key) >= 0) { toast('已在表情包中'); return; }
@@ -504,7 +514,12 @@
       if (el.hasAttribute('data-back')) { e.preventDefault(); back(el.getAttribute('data-back')); return; }
       if (el.hasAttribute('data-hot')) { e.preventDefault(); handleHot(el.getAttribute('data-hot')); return; }
       if (el.hasAttribute('data-favnew')) { e.preventDefault(); nav('#/wechat/me/favorites/new'); return; }
-      if (el.hasAttribute('data-fav')) { e.preventDefault(); nav('#/wechat/me/favorites/' + el.getAttribute('data-fav')); return; }
+      if (el.hasAttribute('data-fav')) {
+        e.preventDefault();
+        if (Date.now() < suppressClickUntil) return;
+        nav('#/wechat/me/favorites/' + el.getAttribute('data-fav'));
+        return;
+      }
       if (el.hasAttribute('data-favtab')) { e.preventDefault(); view.favTab = el.getAttribute('data-favtab'); render(); return; }
       if (el.hasAttribute('data-favdrop')) {
         e.preventDefault();
@@ -560,6 +575,41 @@
         list.innerHTML = items.length ? items.map(favCard).join('') : '<div class="fwm-empty"><div class="fwm-empty-art">🗂️</div><b>暂无收藏</b><p>换个关键词试试</p></div>';
       }
     });
+
+    // long-press a favorite card → delete confirm
+    document.addEventListener('pointerdown', function (e) {
+      var item = e.target.closest ? e.target.closest('[data-fav]') : null;
+      if (!item || !document.querySelector('[data-fav-list]')) return;
+      pressItem = item;
+      pressStart = { x: e.clientX, y: e.clientY };
+      clearTimeout(pressTimer);
+      pressTimer = setTimeout(function () {
+        if (!pressItem) return;
+        suppressClickUntil = Date.now() + 1000;
+        var id = pressItem.getAttribute('data-fav');
+        pressItem = null;
+        try { navigator.vibrate && navigator.vibrate(12); } catch (_) {}
+        openDialog({ title: '删除收藏', text: '删除后无法恢复。', danger: true, okText: '删除', onOk: function () { deleteFavorite(id); } });
+      }, 550);
+    }, true);
+    document.addEventListener('pointermove', function (e) {
+      if (!pressStart) return;
+      if (Math.abs(e.clientX - pressStart.x) > 10 || Math.abs(e.clientY - pressStart.y) > 10) {
+        clearTimeout(pressTimer);
+        pressItem = null;
+        pressStart = null;
+      }
+    }, true);
+    ['pointerup', 'pointercancel'].forEach(function (type) {
+      document.addEventListener(type, function () {
+        clearTimeout(pressTimer);
+        pressItem = null;
+        pressStart = null;
+      }, true);
+    });
+    document.addEventListener('contextmenu', function (e) {
+      if (e.target.closest && e.target.closest('[data-fav]')) e.preventDefault();
+    }, true);
 
     window.addEventListener('hashchange', render);
     window.addEventListener('popstate', render);

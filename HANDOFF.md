@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 1.0.0(77)：隐藏 Web/系统任务栏图标`  
-> 最新代码版本：`1.0.0 / 77`（已推送，待 Codemagic 构建）；Android `1.0.6`  
+> 最新提交：`本轮 1.0.0(78)：收藏长按删除 + 下拉箭头`  
+> 最新代码版本：`1.0.0 / 78`（已推送，待 Codemagic 构建）；Android `1.0.7`  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -1857,7 +1857,19 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
       改动文件：`wechat-me-pages.js/.css`、两个 `index.html`、iOS `project.yml`；
       Android `assets/fake_world/overrides/*`。
 
----
+171. **1.0.0(78) / Android 1.0.7：收藏长按删除 + 下拉箭头位置**
+    - 收藏卡片支持长按 550ms 删除：
+      - pointerdown 起计时，移动超过 10px 或抬起取消；
+      - 触发后弹出「删除收藏」确认框，确认后从列表删除并写入 localStorage；
+      - 长按后抑制随后的 click，避免同时打开详情；
+      - 随机内容、聊天收藏、笔记都适用；
+    - 「最近使用 / 图片与视频 / 文件」右侧的下拉箭头重新定位：
+      - 28px、垂直居中、贴右边缘，去掉原来偏大的圆形底；
+      - 13px 的 chevron，间距按截图；
+    - 浏览器实测：长按弹出「删除收藏」，确认后 9→8 条；
+    - 版本 1.0.0(78)（iOS）/ 1.0.7（Android）。
+      改动文件：`wechat-me-pages.js/.css`、两个 `index.html`、iOS `project.yml`；
+      Android `assets/fake_world/overrides/*`。
 
 ---
 
