@@ -2131,7 +2131,9 @@ static final class FeatureRow {
                     com.luoyun.doutu.features.sound.AccountSoundActivity.open(MainActivity.this);
                     break;
                 case "act:order":
-                    com.luoyun.doutu.features.order.TaobaoOrderActivity.open(MainActivity.this);
+                    // 淘宝账单详情：真机是「卖家已发货」订单详情（物流卡 + 商品卡 + 订单服务）
+                    startActivity(new Intent(MainActivity.this,
+                            com.luoyun.doutu.features.ali.AliOrderActivity.class));
                     break;
                 default:
                     break;
