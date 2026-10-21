@@ -1905,6 +1905,13 @@ static final class FeatureRow {
                     overridePendingTransition(0, 0);
                     return;
                 }
+                // 年账单：真机是绿色「账单」页（月账单/年账单 + 支出对比 + 支出排行榜）
+                if ("feature:annual-bill".equals(route)) {
+                    startActivity(new Intent(MainActivity.this,
+                            com.luoyun.doutu.features.wx.WxAnnualBillActivity.class));
+                    overridePendingTransition(0, 0);
+                    return;
+                }
                 // 零钱明细：真机是「× / 零钱明细 / 2019年6月 ⌄ / 空列表」，不是完整账单页
                 if ("#/wechat/wallet/bills".equals(route)) {
                     startActivity(new Intent(MainActivity.this,
