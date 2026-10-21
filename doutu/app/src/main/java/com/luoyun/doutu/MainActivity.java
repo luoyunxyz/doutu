@@ -620,12 +620,12 @@ static final class FeatureRow {
                 {41, 1814, 225, 203}, {323, 1814, 225, 203}, {613, 1814, 225, 203}, {896, 1814, 225, 203}
         };
         private static final String[][] TOOL_HOT_KEYS = {
-                {"avatar", "替换头像"}, {"home", "小微"},
-                {"chats", "创建单聊"}, {"chats", "创建群聊"}, {"contacts", "通讯录"}, {"redpacket", "红包"},
-                {"transfer", "转账"}, {"wallet", "微信零钱"}, {"contacts", "新的朋友"}, {"moments", "发现"},
-                {"wallet", "钱包"}, {"transfer", "零钱提现"}, {"wallet", "零钱明细"}, {"pay", "微信支付"},
-                {"paysuccess", "支付成功"}, {"broadcast", "群发助手"}, {"avatar", "替换头像"}, {"articles", "公众号"},
-                {"redpackets", "发出的红包"}, {"billstats", "年账单"}, {"pay", "微信收款助手"}, {"album", "上传截图"}
+                {"avatar", "替换头像"}, {"wechat", "小微"},
+                {"group", "创建单聊"}, {"group", "创建群聊"}, {"contacts", "通讯录"}, {"redpacket", "红包"},
+                {"transfer", "转账"}, {"wallet_wechat", "微信零钱"}, {"contacts", "新的朋友"}, {"moments_wechat", "发现"},
+                {"wallet_wechat", "钱包"}, {"transfer", "零钱提现"}, {"wallet_wechat", "零钱明细"}, {"pay_success_wechat", "微信支付"},
+                {"pay_success_wechat", "支付成功"}, {"broadcast", "群发助手"}, {"avatar", "替换头像"}, {"articles", "公众号"},
+                {"redpackets", "发出的红包"}, {"annual_bill", "年账单"}, {"pay", "微信收款助手"}, {"album", "上传截图"}
         };
         private final java.util.List<ToolGroup> toolGroups = new java.util.ArrayList<>();
         private float scroll = 0, downY;
@@ -1736,6 +1736,24 @@ static final class FeatureRow {
                 return;
             }
             switch (toolKey) {
+                case "wechat":
+                    startActivity(WeiHomeActivity.intentFor(MainActivity.this, WeiHomeActivity.ROUTE_HOME));
+                    break;
+                case "group":
+                    startActivity(WeiHomeActivity.intentFor(MainActivity.this, WeiHomeActivity.FEATURE_GROUP_CHAT));
+                    break;
+                case "wallet_wechat":
+                    startActivity(WeiHomeActivity.intentFor(MainActivity.this, WeiHomeActivity.ROUTE_WALLET_BALANCE));
+                    break;
+                case "moments_wechat":
+                    startActivity(WeiHomeActivity.intentFor(MainActivity.this, "#/wechat/moments"));
+                    break;
+                case "pay_success_wechat":
+                    startActivity(WeiHomeActivity.intentFor(MainActivity.this, WeiHomeActivity.FEATURE_PAY_SUCCESS));
+                    break;
+                case "annual_bill":
+                    startActivity(WeiHomeActivity.intentFor(MainActivity.this, WeiHomeActivity.FEATURE_ANNUAL_BILL));
+                    break;
                 case "avatar":
                     com.luoyun.doutu.features.tools.ToolImageActivity.open(MainActivity.this, "avatar");
                     break;
