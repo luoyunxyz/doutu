@@ -179,6 +179,14 @@
             android:screenOrientation="portrait"
             android:exported="false" />
         <activity
+            android:name=".features.album.AlbumHomeActivity"
+            android:screenOrientation="portrait"
+            android:exported="false" />
+        <activity
+            android:name=".features.video.VideoHomeActivity"
+            android:screenOrientation="portrait"
+            android:exported="false" />
+        <activity
             android:name=".features.zhi.ZhiHomeActivity"
             android:screenOrientation="portrait"
             android:exported="false"

@@ -28,6 +28,10 @@ public final class ToolLauncherActivity extends Activity {
             intent = new Intent(this, ToolsTutorialActivity.class);
         } else if ("qqhome".equals(key)) {
             intent = new Intent(this, com.luoyun.doutu.features.qq.QqHomeActivity.class);
+        } else if ("albumhome".equals(key)) {
+            intent = new Intent(this, com.luoyun.doutu.features.album.AlbumHomeActivity.class);
+        } else if ("videohome".equals(key)) {
+            intent = new Intent(this, com.luoyun.doutu.features.video.VideoHomeActivity.class);
         } else {
             intent = new Intent(this, LocalToolActivity.class);
             intent.putExtra("key", key);

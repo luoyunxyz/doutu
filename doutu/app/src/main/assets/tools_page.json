@@ -266,7 +266,7 @@
   {
     "title": "团队相册",
     "icon": "h_album",
-    "action": "local:album",
+    "action": "album",
     "team": true,
     "items": [
       {
@@ -284,12 +284,12 @@
   {
     "title": "视频",
     "icon": "h_video",
-    "action": "local:video",
+    "action": "videohome",
     "items": [
       {
         "name": "抖音",
         "icon": "douyin",
-        "action": "local:video"
+        "action": "videohome"
       },
       {
         "name": "评论切片",
@@ -299,12 +299,12 @@
       {
         "name": "微视",
         "icon": "weishi",
-        "action": "local:video"
+        "action": "videohome"
       },
       {
         "name": "快手",
         "icon": "kuaishou",
-        "action": "local:video"
+        "action": "videohome"
       }
     ]
   }

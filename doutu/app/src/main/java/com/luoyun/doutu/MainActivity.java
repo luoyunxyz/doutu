@@ -1853,6 +1853,16 @@ static final class FeatureRow {
                     startActivity(new Intent(MainActivity.this,
                             com.luoyun.doutu.features.qq.QqHomeActivity.class));
                     break;
+                case "album":
+                    // 团队相册分组标题：进「云相册」主页（我加入的团队 / 三条特权 / 加号）。
+                    startActivity(new Intent(MainActivity.this,
+                            com.luoyun.doutu.features.album.AlbumHomeActivity.class));
+                    break;
+                case "videohome":
+                    // 视频分组标题：进黑底短视频主页（分类 / 上传 / 右侧互动栏 / 底部五格）。
+                    startActivity(new Intent(MainActivity.this,
+                            com.luoyun.doutu.features.video.VideoHomeActivity.class));
+                    break;
                 case "act:licai":
                     startActivity(com.luoyun.doutu.features.zhi.LicaiActivity.intentFor(MainActivity.this));
                     break;
