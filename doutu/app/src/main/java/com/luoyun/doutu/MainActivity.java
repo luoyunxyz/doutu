@@ -636,6 +636,7 @@ static final class FeatureRow {
         private boolean toolsDark;
         private final java.util.List<ToolSection> toolSections = new java.util.ArrayList<>();
         private final java.util.HashMap<String, Bitmap> toolIconCache = new java.util.HashMap<>();
+    private final java.util.HashMap<String, Rect> toolInkCache = new java.util.HashMap<>();
         private float scroll = 0, downY;
         private float downX;
         private long downAt;
@@ -1672,6 +1673,47 @@ static final class FeatureRow {
             return b;
         }
 
+        /** 图标 PNG 是逐张从截图裁的，字形在画布里的位置/大小并不统一；这里取不透明像素的范围。 */
+        private Rect toolInk(String key) {
+            Rect r = toolInkCache.get(key);
+            if (r != null) return r;
+            Bitmap b = toolIcon(key);
+            if (b == null) {
+                r = new Rect(0, 0, 1, 1);
+            } else {
+                int w = b.getWidth(), h = b.getHeight();
+                int minX = w, minY = h, maxX = -1, maxY = -1;
+                int[] px = new int[w * h];
+                b.getPixels(px, 0, w, 0, 0, w, h);
+                for (int y = 0; y < h; y++) {
+                    for (int x = 0; x < w; x++) {
+                        if ((px[y * w + x] >>> 24) > 8) {
+                            if (x < minX) minX = x;
+                            if (x > maxX) maxX = x;
+                            if (y < minY) minY = y;
+                            if (y > maxY) maxY = y;
+                        }
+                    }
+                }
+                r = maxX < 0 ? new Rect(0, 0, w, h) : new Rect(minX, minY, maxX + 1, maxY + 1);
+            }
+            toolInkCache.put(key, r);
+            return r;
+        }
+
+        /** 把图标的不透明部分按比例居中画进圆底。 */
+        private void drawToolGlyph(Canvas c, String key, float centerX, float centerY, float maxInk) {
+            Bitmap b = toolIcon(key);
+            if (b == null) return;
+            Rect ink = toolInk(key);
+            float iw = Math.max(1, ink.width()), ih = Math.max(1, ink.height());
+            float k = maxInk / Math.max(iw, ih);
+            dst.set(centerX - iw * k / 2f, centerY - ih * k / 2f,
+                    centerX + iw * k / 2f, centerY + ih * k / 2f);
+            p.setFilterBitmap(true);
+            c.drawBitmap(b, ink, dst, p);
+        }
+
         private void drawToolArt(Canvas c, String key, float left, float top, float size, int circleColor) {
             if (circleColor != 0) round(c, left, top, left + size, top + size, size / 2f, circleColor);
             Bitmap b = toolIcon(key);
@@ -1686,7 +1728,10 @@ static final class FeatureRow {
 
         private void drawToolHeaderRow(Canvas c, ToolSection s, int ink) {
             boolean dark = toolsDark;
-            drawToolArt(c, s.icon, 45, s.top + 45f, TOOL_HDR_LOGO, dark ? 0xff242424 : 0xfff5f5f5);
+            round(c, 45, s.top + 45f, 45 + TOOL_HDR_LOGO, s.top + 45f + TOOL_HDR_LOGO,
+                    TOOL_HDR_LOGO / 2f, dark ? 0xff242424 : 0xfff5f5f5);
+            drawToolGlyph(c, s.icon, 45 + TOOL_HDR_LOGO / 2f, s.top + 45f + TOOL_HDR_LOGO / 2f,
+                    TOOL_HDR_LOGO * 0.78f);
             text(c, s.title, 258, s.top + 143f, 39, ink, false);
             line(c, 1013, s.top + 113f, 1027, s.top + 129f, 0xffb0b0b0, 4.5f);
             line(c, 1027, s.top + 129f, 1013, s.top + 145f, 0xffb0b0b0, 4.5f);
@@ -1748,7 +1793,9 @@ static final class FeatureRow {
                     float dotInset = (TOOL_LOGO - dot) / 2f;
                     round(c, logoLeft + dotInset, cell.top + dotInset,
                             logoLeft + dotInset + dot, cell.top + dotInset + dot, dot / 2f, circle);
-                    drawToolArt(c, cell.icon, logoLeft, cell.top, TOOL_LOGO, 0);
+                    // 字形在 PNG 里的位置/大小不统一：按不透明像素范围居中，统一缩放到圆底的 63%
+                    drawToolGlyph(c, cell.icon, logoLeft + TOOL_LOGO / 2f,
+                            cell.top + TOOL_LOGO / 2f, dot * 0.63f);
                     float labelTop = cell.top + TOOL_LABEL_DY;
                     float centerX = cell.left + TOOL_CELL_W / 2f;
                     if (cell.name.length() > 4) {
