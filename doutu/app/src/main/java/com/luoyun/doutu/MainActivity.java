@@ -2035,9 +2035,10 @@ static final class FeatureRow {
                             com.luoyun.doutu.features.qq.QqRedPacketV2Activity.class));
                     break;
                 case "qqgz":
-                    // QQ 公众号：进 QQ 主页并弹表单（只有一个「消息置顶」开关）。
+                    // QQ 公众号：QQ 首页上的弹窗，只有「消息置顶」一个开关。
                     startActivity(new Intent(MainActivity.this,
-                            com.luoyun.doutu.features.qq.QqHomeActivity.class).putExtra("gzh", true));
+                            com.luoyun.doutu.features.wx.WxOfficialAccountActivity.class)
+                            .putExtra("qq", true));
                     break;
                 case "qqedit":
                     // QQ 在线状态：真机进的是「编辑个人资料」页。

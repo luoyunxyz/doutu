@@ -81,8 +81,10 @@ public final class WxOfficialAccountActivity extends Activity {
         clp2.topMargin = dp(12);
         card.addView(content, clp2);
 
-        card.addView(toggleRow("设为蓝色字体"));
-        card.addView(toggleRow("免打扰"));
+        if (!getIntent().getBooleanExtra("qq", false)) {
+            card.addView(toggleRow("设为蓝色字体"));
+            card.addView(toggleRow("免打扰"));
+        }
         card.addView(toggleRow("消息置顶"));
 
         // 取消 / 确定
