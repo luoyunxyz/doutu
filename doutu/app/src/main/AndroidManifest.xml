@@ -187,6 +187,18 @@
             android:screenOrientation="portrait"
             android:exported="false" />
         <activity
+            android:name=".features.wx.MassAssistantActivity"
+            android:screenOrientation="portrait"
+            android:exported="false" />
+        <activity
+            android:name=".features.wx.UploadImageActivity"
+            android:screenOrientation="portrait"
+            android:exported="false" />
+        <activity
+            android:name=".features.wx.SentRedPacketActivity"
+            android:screenOrientation="portrait"
+            android:exported="false" />
+        <activity
             android:name=".features.zhi.ZhiHomeActivity"
             android:screenOrientation="portrait"
             android:exported="false"

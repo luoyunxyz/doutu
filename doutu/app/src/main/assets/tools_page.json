@@ -73,7 +73,7 @@
       {
         "name": "群发助手",
         "icon": "send",
-        "action": "local:broadcast"
+        "action": "mass"
       },
       {
         "name": "替换头像",
@@ -88,7 +88,7 @@
       {
         "name": "发出的红包",
         "icon": "sentrp",
-        "action": "local:redpackets"
+        "action": "sentrp"
       },
       {
         "name": "年账单",
@@ -103,7 +103,7 @@
       {
         "name": "上传截图",
         "icon": "upload",
-        "action": "local:upload"
+        "action": "uploadimg"
       }
     ]
   },

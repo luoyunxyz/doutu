@@ -1863,6 +1863,21 @@ static final class FeatureRow {
                     startActivity(new Intent(MainActivity.this,
                             com.luoyun.doutu.features.video.VideoHomeActivity.class));
                     break;
+                case "mass":
+                    // 群发助手：浅灰页头 + 空列表 + 底部「新建群发」。
+                    startActivity(new Intent(MainActivity.this,
+                            com.luoyun.doutu.features.wx.MassAssistantActivity.class));
+                    break;
+                case "uploadimg":
+                    // 上传截图：白页 + 黄色加号「上传图片」，选图后就地显示。
+                    startActivity(new Intent(MainActivity.this,
+                            com.luoyun.doutu.features.wx.UploadImageActivity.class));
+                    break;
+                case "sentrp":
+                    // 发出的红包：红色页头 + 统计区（0.00 元 / 0 个）。
+                    startActivity(new Intent(MainActivity.this,
+                            com.luoyun.doutu.features.wx.SentRedPacketActivity.class));
+                    break;
                 case "act:licai":
                     startActivity(com.luoyun.doutu.features.zhi.LicaiActivity.intentFor(MainActivity.this));
                     break;

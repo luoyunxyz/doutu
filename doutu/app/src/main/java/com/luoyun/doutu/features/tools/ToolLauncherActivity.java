@@ -32,6 +32,12 @@ public final class ToolLauncherActivity extends Activity {
             intent = new Intent(this, com.luoyun.doutu.features.album.AlbumHomeActivity.class);
         } else if ("videohome".equals(key)) {
             intent = new Intent(this, com.luoyun.doutu.features.video.VideoHomeActivity.class);
+        } else if ("mass".equals(key)) {
+            intent = new Intent(this, com.luoyun.doutu.features.wx.MassAssistantActivity.class);
+        } else if ("uploadimg".equals(key)) {
+            intent = new Intent(this, com.luoyun.doutu.features.wx.UploadImageActivity.class);
+        } else if ("sentrp".equals(key)) {
+            intent = new Intent(this, com.luoyun.doutu.features.wx.SentRedPacketActivity.class);
         } else {
             intent = new Intent(this, LocalToolActivity.class);
             intent.putExtra("key", key);
