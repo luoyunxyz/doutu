@@ -111,7 +111,8 @@ public final class LocalToolActivity extends Activity {
         else if ("billstats".equals(key)) buildBillStats();
         else if ("redpackets".equals(key)) buildRedPackets();
         else if ("paysuccess".equals(key)) buildSuccess();
-        else if ("settings".equals(key) || "status".equals(key)) buildSwitches("状态与显示", new String[]{"显示未读红点", "在线状态", "悬浮窗快捷入口"});
+        else if ("settings".equals(key)) buildSettings();
+        else if ("status".equals(key)) buildSwitches("状态与显示", new String[]{"显示未读红点", "在线状态", "悬浮窗快捷入口"});
         else if ("voice".equals(key)) buildVoice();
         else if ("order".equals(key)) buildOrders();
         else if ("assets".equals(key)) buildAssets();
@@ -251,6 +252,7 @@ public final class LocalToolActivity extends Activity {
                 getSharedPreferences(PREFS, 0).edit().putString("balance", String.format("%.2f", bal)).apply();
                 bills.add(0, (red ? "红包 -¥" : "转账 -¥") + String.format("%.2f", v2) + "  " + name.getText().toString().trim());
                 saveList("bills", bills);
+                getSharedPreferences(PREFS, 0).edit().putString("last_pay", (red ? "红包 · " : "转账 · ") + name.getText().toString().trim() + "|" + String.format("%.2f", v2)).apply();
                 toast(red ? "红包已发出（本地）" : "转账成功（本地）");
                 finish();
             } catch (Exception e) { toast("金额格式不正确"); }
@@ -633,14 +635,58 @@ public final class LocalToolActivity extends Activity {
     }
 
     private void buildSuccess() {
+        String raw = getSharedPreferences(PREFS, 0).getString("last_pay", "本地支付|0.00");
+        String[] parts = raw.split("\\|");
+        String merchant = parts.length > 0 ? parts[0] : "本地支付";
+        String amount = parts.length > 1 ? parts[1] : "0.00";
         TextView tv = new TextView(this);
-        tv.setText("✓\n\n支付成功（本地）\n\n本次操作只保存在本机");
-        tv.setTextSize(18);
+        tv.setText("✓\n\n¥ " + amount + "\n\n" + merchant + "\n\n支付成功（本地）");
+        tv.setTextSize(20);
         tv.setTextColor(0xff07c160);
         tv.setGravity(Gravity.CENTER);
         tv.setBackgroundColor(Color.WHITE);
-        tv.setPadding(0, dp(60), 0, dp(60));
+        tv.setPadding(0, dp(45), 0, dp(45));
         content.addView(tv);
+        Button done = new Button(this);
+        done.setText("完成");
+        done.setAllCaps(false);
+        done.setOnClickListener(v -> finish());
+        content.addView(done, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(48)));
+    }
+
+    private void buildAssets() {
+        TextView tv = new TextView(this);
+        tv.setText("总资产（本地）\n\n零钱  ¥" + getBalance() + "\n理财  ¥0.00\n红包  ¥0.00\n\n合计  ¥" + getBalance());
+        tv.setTextSize(17);
+        tv.setTextColor(0xff1d1f26);
+        tv.setBackgroundColor(Color.WHITE);
+        tv.setPadding(dp(18), dp(18), dp(18), dp(18));
+        content.addView(tv);
+        Button wallet = new Button(this);
+        wallet.setText("查看零钱明细");
+        wallet.setAllCaps(false);
+        wallet.setOnClickListener(v -> LocalToolActivity.open(this, "wallet", "零钱明细"));
+        content.addView(wallet, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(46)));
+        Button bills = new Button(this);
+        bills.setText("查看账单统计");
+        bills.setAllCaps(false);
+        bills.setOnClickListener(v -> LocalToolActivity.open(this, "billstats", "年度账单"));
+        content.addView(bills, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(46)));
+    }
+
+    private void buildSettings() {
+        buildSwitches("状态与显示", new String[]{"显示未读红点", "在线状态", "悬浮窗快捷入口"});
+        Button clear = new Button(this);
+        clear.setText("清除本地聊天记录");
+        clear.setAllCaps(false);
+        clear.setOnClickListener(v -> new AlertDialog.Builder(this)
+                .setTitle("清除聊天记录").setMessage("只清除本机工具页的聊天记录")
+                .setNegativeButton("取消", null)
+                .setPositiveButton("清除", (d, w) -> {
+                    getSharedPreferences(PREFS, 0).edit().remove("chat_文件传输助手").remove("chat_本地好友").apply();
+                    toast("已清除");
+                }).show());
+        content.addView(clear, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(46)));
     }
 
     private void buildSwitches(String head, String[] labels) {
@@ -662,16 +708,6 @@ public final class LocalToolActivity extends Activity {
             lp.bottomMargin = dp(6);
             content.addView(cb, lp);
         }
-    }
-
-    private void buildAssets() {
-        TextView tv = new TextView(this);
-        tv.setText("总资产（本地）\n\n零钱  ¥" + getBalance() + "\n理财  ¥0.00\n\n合计  ¥" + getBalance());
-        tv.setTextSize(17);
-        tv.setTextColor(0xff1d1f26);
-        tv.setBackgroundColor(Color.WHITE);
-        tv.setPadding(dp(18), dp(18), dp(18), dp(18));
-        content.addView(tv);
     }
 
     private void buildComment() {
@@ -884,6 +920,7 @@ public final class LocalToolActivity extends Activity {
                 getSharedPreferences(PREFS, 0).edit().putString("balance", String.format("%.2f", bal - v2)).apply();
                 bills.add(0, "转账到银行卡 -¥" + String.format("%.2f", v2) + "  " + name.getText().toString().trim());
                 saveList("bills", bills);
+                getSharedPreferences(PREFS, 0).edit().putString("last_pay", "银行卡 · " + name.getText().toString().trim() + "|" + String.format("%.2f", v2)).apply();
                 toast("转账成功（本地）");
                 finish();
             } catch (Exception e) { toast("金额格式不正确"); }
@@ -957,6 +994,7 @@ public final class LocalToolActivity extends Activity {
             List<String> orders = new ArrayList<>(split("orders"));
             orders.add(0, "订单 " + System.currentTimeMillis() + "\\n" + name + " · 待发货");
             saveList("orders", orders);
+            getSharedPreferences(PREFS, 0).edit().putString("last_pay", "本地商城 · " + name + "|" + String.format("%.2f", p)).apply();
             toast("下单成功（本地）");
         } catch (Exception e) {
             toast("下单失败");
