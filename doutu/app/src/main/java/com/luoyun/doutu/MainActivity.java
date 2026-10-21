@@ -1883,6 +1883,11 @@ static final class FeatureRow {
                     startActivity(new Intent(MainActivity.this,
                             com.luoyun.doutu.features.qq.QqRedPacketActivity.class));
                     break;
+                case "qqgz":
+                    // QQ 公众号：进 QQ 主页并弹表单（只有一个「消息置顶」开关）。
+                    startActivity(new Intent(MainActivity.this,
+                            com.luoyun.doutu.features.qq.QqHomeActivity.class).putExtra("gzh", true));
+                    break;
                 case "act:licai":
                     startActivity(com.luoyun.doutu.features.zhi.LicaiActivity.intentFor(MainActivity.this));
                     break;

@@ -40,6 +40,9 @@ public final class ToolLauncherActivity extends Activity {
             intent = new Intent(this, com.luoyun.doutu.features.wx.SentRedPacketActivity.class);
         } else if ("qqrp".equals(key)) {
             intent = new Intent(this, com.luoyun.doutu.features.qq.QqRedPacketActivity.class);
+        } else if ("qqgz".equals(key)) {
+            intent = new Intent(this, com.luoyun.doutu.features.qq.QqHomeActivity.class);
+            intent.putExtra("gzh", true);
         } else {
             intent = new Intent(this, LocalToolActivity.class);
             intent.putExtra("key", key);

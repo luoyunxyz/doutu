@@ -1,6 +1,7 @@
 package com.luoyun.doutu.features.qq;
 
 import android.app.Activity;
+import android.app.Dialog;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -10,11 +11,21 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Typeface;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
+import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.Switch;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import java.io.InputStream;
 
@@ -45,7 +56,12 @@ public final class QqHomeActivity extends Activity {
                     | View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
                     | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR);
         }
-        setContentView(new QqView());
+        QqView content = new QqView();
+        setContentView(content);
+        // 工具页「公众号」：进 QQ 主页并弹新建公众号表单（只有一个「消息置顶」开关）。
+        if (getIntent().getBooleanExtra("gzh", false)) {
+            content.post(this::showGzhDialog);
+        }
         // 必须在 setContentView 之后取：decorView 还没挂上去时 getInsetsController() 返回 null。
         if (android.os.Build.VERSION.SDK_INT >= 30) {
             android.view.WindowInsetsController ctl = w.getInsetsController();
@@ -57,6 +73,181 @@ public final class QqHomeActivity extends Activity {
                                 | android.view.WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS);
             }
         }
+    }
+
+    /**
+     * QQ 的「公众号」表单：和微信版同一套图标/输入框，但少「设为蓝色字体」「免打扰」
+     * 两个开关，只剩「消息置顶」。
+     */
+    private void showGzhDialog() {
+        final Dialog dialog = new Dialog(this);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        LinearLayout root = new LinearLayout(this);
+        root.setOrientation(LinearLayout.VERTICAL);
+        GradientDrawable bg = new GradientDrawable();
+        bg.setColor(Color.WHITE);
+        bg.setCornerRadius(dp(10));
+        root.setBackground(bg);
+        root.setPadding(0, dp(14), 0, 0);
+
+        LinearLayout icons = new LinearLayout(this);
+        icons.setGravity(Gravity.TOP);
+        icons.setPadding(dp(26), 0, dp(26), 0);
+        icons.setLayoutParams(new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(96)));
+        icons.addView(iconColumn("gzh_star", 42, "常用图标"),
+                new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f));
+        ImageView avatar = new ImageView(this);
+        avatar.setImageBitmap(asset("wx_icons/gzh_avatar.png"));
+        icons.addView(avatar, new LinearLayout.LayoutParams(dp(79), dp(79)));
+        icons.addView(iconColumn("gzh_photo", 45, "从相册获取"),
+                new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f));
+        root.addView(icons);
+
+        EditText name = field(root, "名称：");
+        EditText content = field(root, "消息内容：");
+        switchRow(root, "消息置顶");
+
+        View divider = new View(this);
+        divider.setBackgroundColor(0xffeeeeee);
+        LinearLayout.LayoutParams dlp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, 1);
+        dlp.topMargin = dp(16);
+        root.addView(divider, dlp);
+
+        LinearLayout footer = new LinearLayout(this);
+        footer.setLayoutParams(new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(48)));
+        TextView cancel = new TextView(this);
+        cancel.setText("取消");
+        cancel.setTextSize(16);
+        cancel.setTextColor(0xff888888);
+        cancel.setGravity(Gravity.CENTER);
+        cancel.setOnClickListener(v -> dialog.dismiss());
+        footer.addView(cancel, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f));
+        TextView ok = new TextView(this);
+        ok.setText("确定");
+        ok.setTextSize(16);
+        ok.setTextColor(0xff333333);
+        ok.setGravity(Gravity.CENTER);
+        ok.setOnClickListener(v -> {
+            String n = name.getText().toString().trim();
+            String m = content.getText().toString().trim();
+            getSharedPreferences("doutu_tools", 0).edit()
+                    .putString("qq_gzh_name", n)
+                    .putString("qq_gzh_content", m)
+                    .apply();
+            dialog.dismiss();
+            Toast.makeText(QqHomeActivity.this, "公众号消息已生成", Toast.LENGTH_SHORT).show();
+        });
+        footer.addView(ok, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f));
+        root.addView(footer);
+
+        dialog.setContentView(root);
+        Window win = dialog.getWindow();
+        if (win != null) {
+            win.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+            win.setDimAmount(0.38f);
+            win.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
+            WindowManager.LayoutParams lp = win.getAttributes();
+            lp.width = dp(282);
+            lp.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+            win.setAttributes(lp);
+        }
+        dialog.show();
+    }
+
+    private View iconColumn(String key, int size, String label) {
+        LinearLayout col = new LinearLayout(this);
+        col.setOrientation(LinearLayout.VERTICAL);
+        col.setGravity(Gravity.CENTER_HORIZONTAL);
+        ImageView img = new ImageView(this);
+        img.setImageBitmap(asset("wx_icons/" + key + ".png"));
+        col.addView(img, new LinearLayout.LayoutParams(dp(size), dp(size)));
+        TextView tv = new TextView(this);
+        tv.setText(label);
+        tv.setTextSize(11);
+        tv.setTextColor(0xff333333);
+        tv.setPadding(0, dp(6), 0, 0);
+        col.addView(tv);
+        return col;
+    }
+
+    private EditText field(LinearLayout root, String hint) {
+        LinearLayout box = new LinearLayout(this);
+        box.setOrientation(LinearLayout.HORIZONTAL);
+        box.setGravity(Gravity.CENTER_VERTICAL);
+        GradientDrawable g = new GradientDrawable();
+        g.setColor(Color.WHITE);
+        g.setCornerRadius(dp(5));
+        g.setStroke(dp(1), 0xffd9d9d9);
+        box.setBackground(g);
+        LinearLayout.LayoutParams blp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(35));
+        blp.leftMargin = dp(30);
+        blp.rightMargin = dp(30);
+        blp.topMargin = dp(18);
+        box.setLayoutParams(blp);
+        box.setPadding(dp(8), 0, dp(8), 0);
+        EditText input = new EditText(this);
+        input.setHint(hint);
+        input.setTextSize(13);
+        input.setBackground(null);
+        input.setSingleLine(true);
+        input.setPadding(0, 0, 0, 0);
+        box.addView(input, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f));
+        TextView clear = new TextView(this);
+        clear.setText("✕");
+        clear.setTextSize(10);
+        clear.setTextColor(Color.WHITE);
+        clear.setGravity(Gravity.CENTER);
+        GradientDrawable cg = new GradientDrawable();
+        cg.setColor(0xffc9c9c9);
+        cg.setShape(GradientDrawable.OVAL);
+        clear.setBackground(cg);
+        clear.setOnClickListener(v -> input.setText(""));
+        box.addView(clear, new LinearLayout.LayoutParams(dp(16), dp(16)));
+        root.addView(box);
+        return input;
+    }
+
+    private void switchRow(LinearLayout root, String label) {
+        LinearLayout row = new LinearLayout(this);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        GradientDrawable g = new GradientDrawable();
+        g.setColor(Color.WHITE);
+        g.setCornerRadius(dp(5));
+        g.setStroke(dp(1), 0xffd9d9d9);
+        row.setBackground(g);
+        LinearLayout.LayoutParams rlp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(35));
+        rlp.leftMargin = dp(30);
+        rlp.rightMargin = dp(30);
+        rlp.topMargin = dp(18);
+        row.setLayoutParams(rlp);
+        row.setPadding(dp(10), 0, dp(4), 0);
+        TextView tv = new TextView(this);
+        tv.setText(label);
+        tv.setTextSize(13);
+        tv.setTextColor(0xff333333);
+        row.addView(tv, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f));
+        Switch sw = new Switch(this);
+        sw.setScaleX(0.72f);
+        sw.setScaleY(0.72f);
+        row.addView(sw, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        root.addView(row);
+    }
+
+    private Bitmap asset(String path) {
+        try (InputStream in = getAssets().open(path)) {
+            return BitmapFactory.decodeStream(in);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private int dp(int v) {
+        return Math.round(v * getResources().getDisplayMetrics().density);
     }
 
     private final class QqView extends View {

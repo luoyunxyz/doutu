@@ -227,7 +227,7 @@
       {
         "name": "公众号",
         "icon": "official",
-        "action": "local:official"
+        "action": "qqgz"
       },
       {
         "name": "在线状态",
