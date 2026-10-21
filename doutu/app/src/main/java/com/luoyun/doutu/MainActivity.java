@@ -625,7 +625,7 @@ static final class FeatureRow {
                 {"transfer", "转账"}, {"wallet", "微信零钱"}, {"contacts", "新的朋友"}, {"discover", "发现"},
                 {"wallet", "钱包"}, {"withdraw", "零钱提现"}, {"walletdetail", "零钱明细"}, {"pay", "微信支付"},
                 {"paysuccess", "支付成功"}, {"broadcast", "群发助手"}, {"avatar", "替换头像"}, {"official", "公众号"},
-                {"redpackets", "发出的红包"}, {"billstats", "年账单"}, {"payee", "微信收款助手"}, {"album", "上传截图"}
+                {"redpackets", "发出的红包"}, {"billstats", "年账单"}, {"payee", "微信收款助手"}, {"upload", "上传截图"}
         };
         private final java.util.List<ToolGroup> toolGroups = new java.util.ArrayList<>();
         private float scroll = 0, downY;
