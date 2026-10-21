@@ -26,6 +26,8 @@ public final class ToolLauncherActivity extends Activity {
             intent = new Intent(this, EditPanelActivity.class);
         } else if ("tutorial".equals(key)) {
             intent = new Intent(this, ToolsTutorialActivity.class);
+        } else if ("qqhome".equals(key)) {
+            intent = new Intent(this, com.luoyun.doutu.features.qq.QqHomeActivity.class);
         } else {
             intent = new Intent(this, LocalToolActivity.class);
             intent.putExtra("key", key);

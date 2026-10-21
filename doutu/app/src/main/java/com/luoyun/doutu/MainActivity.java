@@ -1849,7 +1849,9 @@ static final class FeatureRow {
                     startActivity(com.luoyun.doutu.features.zhi.ZhiHomeActivity.intentFor(MainActivity.this));
                     break;
                 case "qq":
-                    com.luoyun.doutu.features.tools.LocalToolActivity.open(MainActivity.this, "chats", "小Q");
+                    // 小Q 分组标题：进 QQ 风格的主页（消息 / 频道 / 短视频 / 联系人 / 动态）。
+                    startActivity(new Intent(MainActivity.this,
+                            com.luoyun.doutu.features.qq.QqHomeActivity.class));
                     break;
                 case "act:licai":
                     startActivity(com.luoyun.doutu.features.zhi.LicaiActivity.intentFor(MainActivity.this));

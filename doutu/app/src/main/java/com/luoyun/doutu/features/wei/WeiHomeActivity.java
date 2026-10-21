@@ -532,7 +532,9 @@ public final class WeiHomeActivity extends Activity {
         String script = "(function(){try{var t=" + jsString(route) + ";"
                 + "if(t.charAt(0)==='#'){if(window.__fwOpenRoute){window.__fwOpenRoute(t);return true;}"
                 + "location.hash=t;return true;}"
-                + "if(window.__fwOpenFeature){window.__fwOpenFeature(t.slice(8));return true;}"
+                // 工具页的「红包 / 转账」：直接挂微信那套发红包/转账页（不用先进某个聊天）。
+                + "if(t.indexOf('tool:')===0){if(window.__fwOpenToolPay){window.__fwOpenToolPay(t.slice(5));return true;}}"
+                + "if(t.indexOf('feature:')===0&&window.__fwOpenFeature){window.__fwOpenFeature(t.slice(8));return true;}"
                 + "return false;}catch(e){return false;}})()";
         webView.evaluateJavascript(script, result -> {
             if (result != null && result.contains("true")) {

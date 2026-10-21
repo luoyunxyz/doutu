@@ -2763,6 +2763,15 @@
     }
     render();
   }
+  /**
+   * 工具页「红包 / 转账」直达：不必先打开某个聊天，用默认好友挂同一张收付款页。
+   */
+  window.__fwOpenToolPay = function (type) {
+    try {
+      mountChatPayScreen(type === 'transfer' ? 'transfer' : 'redpacket');
+      return true;
+    } catch (_) { return false; }
+  };
   function installChatPayActions(){if(document.documentElement.dataset.fwChatPayActions)return;document.documentElement.dataset.fwChatPayActions='1';document.addEventListener('click',event=>{const action=event.target instanceof Element?event.target.closest('[data-action="红包"], [data-action="转账"]'):null;if(!action)return;event.preventDefault();event.stopPropagation();event.stopImmediatePropagation();const panel=action.closest('.fw-native-chat-feature-panel');if(panel)closeNativeFeaturePanel(panel);else action.closest('.fw-chat-feature-panel')?.classList.remove('is-open');mountChatPayScreen(action.dataset.action==='转账'?'transfer':'redpacket')},true)}
   function installGalleryAction(){if(document.documentElement.dataset.fwGalleryAction)return;document.documentElement.dataset.fwGalleryAction='1';document.addEventListener('click',event=>{const action=event.target instanceof Element?event.target.closest('[data-action="相册"]'):null;if(!action)return;event.preventDefault();event.stopPropagation();event.stopImmediatePropagation();const page=document.querySelector('.fw-local-conversation');let friend=null;if(page){friend=(Array.isArray(state.contacts)?state.contacts:[]).find(x=>String(x.id)===page.dataset.friendId)||null}const panel=action.closest('.fw-chat-feature-panel');if(panel?.classList.contains('fw-native-chat-feature-panel'))closeNativeFeaturePanel(panel);if(page){const localPanel=page.querySelector('.fw-chat-feature-panel');if(localPanel)setFeaturesFromGallery(localPanel)}openChatGallery(friend)},true)}
 
