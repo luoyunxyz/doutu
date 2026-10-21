@@ -78,7 +78,7 @@ public final class LocalToolActivity extends Activity {
         tv.setGravity(Gravity.CENTER);
         bar.addView(tv, new LinearLayout.LayoutParams(0, dp(50), 1f));
         bar.addView(new View(this), new LinearLayout.LayoutParams(dp(88), dp(50)));
-        if (!("home".equals(key) || "contacts".equals(key) || "moments".equals(key) || "profile".equals(key) || "discover".equals(key) || "chat".equals(key) || "wallet".equals(key) || "transfer".equals(key) || "redpacket".equals(key) || "paysuccess".equals(key))) root.addView(bar);
+        if (!("home".equals(key) || "contacts".equals(key) || "moments".equals(key) || "profile".equals(key) || "discover".equals(key) || "chat".equals(key) || "wallet".equals(key) || "transfer".equals(key) || "redpacket".equals(key) || "paysuccess".equals(key) || "pay".equals(key))) root.addView(bar);
 
         ScrollView scroll = new ScrollView(this);
         content = new LinearLayout(this);
@@ -1068,38 +1068,146 @@ public final class LocalToolActivity extends Activity {
     }
 
     private void buildPayPage() {
-        TextView qr = new TextView(this);
-        qr.setText("▦ 收款码\n\n本地收款 · 不联网");
-        qr.setTextSize(18);
-        qr.setTextColor(0xff1d1f26);
-        qr.setGravity(Gravity.CENTER);
-        qr.setBackgroundColor(Color.WHITE);
-        qr.setPadding(0, dp(60), 0, dp(60));
-        content.addView(qr);
-        TextView bal = new TextView(this);
-        bal.setText("当前零钱：¥ " + getBalance());
-        bal.setTextSize(14);
-        bal.setTextColor(0xff5b6070);
-        bal.setPadding(0, dp(14), 0, 0);
-        content.addView(bal);
-        Button receive = new Button(this);
+        content.setBackgroundColor(0xffededed);
+        content.setPadding(0, 0, 0, 0);
+
+        LinearLayout bar = new LinearLayout(this);
+        bar.setGravity(Gravity.CENTER_VERTICAL);
+        bar.setBackgroundColor(Color.WHITE);
+        ImageView back = assetIcon("icon_wx_left_top_float", 21);
+        back.setOnClickListener(v -> finish());
+        LinearLayout.LayoutParams blp = new LinearLayout.LayoutParams(dp(21), dp(21));
+        blp.leftMargin = dp(13);
+        bar.addView(back, blp);
+        TextView title = new TextView(this);
+        title.setText("收付款");
+        title.setTextSize(16);
+        title.setTextColor(0xff2b2b2b);
+        title.setGravity(Gravity.CENTER);
+        bar.addView(title, new LinearLayout.LayoutParams(0, dp(43), 1f));
+        bar.addView(new View(this), new LinearLayout.LayoutParams(dp(34), dp(43)));
+        content.addView(bar);
+
+        LinearLayout green = new LinearLayout(this);
+        green.setOrientation(LinearLayout.HORIZONTAL);
+        android.graphics.drawable.GradientDrawable gg = new android.graphics.drawable.GradientDrawable();
+        gg.setColor(0xff3bad6a);
+        gg.setCornerRadius(dp(8));
+        green.setBackground(gg);
+        green.setPadding(dp(6), dp(24), dp(6), dp(20));
+        LinearLayout.LayoutParams glp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        glp.leftMargin = dp(7);
+        glp.rightMargin = dp(7);
+        glp.topMargin = dp(7);
+        content.addView(green, glp);
+
+        LinearLayout col1 = new LinearLayout(this);
+        col1.setOrientation(LinearLayout.VERTICAL);
+        col1.setGravity(Gravity.CENTER);
+        col1.addView(assetIcon("ic_wx_payment", 30), new LinearLayout.LayoutParams(dp(30), dp(24)));
+        TextView t1 = new TextView(this);
+        t1.setText("收付款");
+        t1.setTextSize(15);
+        t1.setTextColor(Color.WHITE);
+        t1.setPadding(0, dp(16), 0, 0);
+        col1.addView(t1);
+        green.addView(col1, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+
+        LinearLayout col2 = new LinearLayout(this);
+        col2.setOrientation(LinearLayout.VERTICAL);
+        col2.setGravity(Gravity.CENTER);
+        col2.addView(assetIcon("ic_wx_wallet", 30), new LinearLayout.LayoutParams(dp(30), dp(24)));
+        TextView t2 = new TextView(this);
+        t2.setText("钱包");
+        t2.setTextSize(15);
+        t2.setTextColor(Color.WHITE);
+        t2.setPadding(0, dp(16), 0, 0);
+        col2.addView(t2);
+        TextView tb = new TextView(this);
+        tb.setText("¥" + getBalance());
+        tb.setTextSize(13);
+        tb.setTextColor(0xff9bd8b2);
+        tb.setPadding(0, dp(3), 0, 0);
+        col2.addView(tb);
+        green.addView(col2, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+
+        LinearLayout codeCard = new LinearLayout(this);
+        codeCard.setOrientation(LinearLayout.VERTICAL);
+        codeCard.setGravity(Gravity.CENTER);
+        codeCard.setBackgroundColor(Color.WHITE);
+        codeCard.setPadding(dp(20), dp(22), dp(20), dp(22));
+        LinearLayout.LayoutParams clp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        clp.leftMargin = dp(7);
+        clp.rightMargin = dp(7);
+        clp.topMargin = dp(8);
+        content.addView(codeCard, clp);
+
+        ImageView qr = new ImageView(this);
+        qr.setImageBitmap(makeQr(210));
+        codeCard.addView(qr, new LinearLayout.LayoutParams(dp(210), dp(210)));
+        TextView payTip = new TextView(this);
+        payTip.setText("向商家付款");
+        payTip.setTextSize(15);
+        payTip.setTextColor(0xff191919);
+        payTip.setPadding(0, dp(12), 0, 0);
+        codeCard.addView(payTip);
+        TextView sub = new TextView(this);
+        sub.setText("本功能仅本地演示，不会联网");
+        sub.setTextSize(12);
+        sub.setTextColor(0xff999999);
+        sub.setPadding(0, dp(4), 0, 0);
+        codeCard.addView(sub);
+
+        TextView receive = new TextView(this);
         receive.setText("模拟收款 ¥50（本地）");
-        receive.setAllCaps(false);
+        receive.setTextSize(15);
+        receive.setTextColor(Color.WHITE);
+        receive.setGravity(Gravity.CENTER);
+        android.graphics.drawable.GradientDrawable rg = new android.graphics.drawable.GradientDrawable();
+        rg.setColor(0xff07c160);
+        rg.setCornerRadius(dp(4));
+        receive.setBackground(rg);
+        LinearLayout.LayoutParams rlp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(46));
+        rlp.leftMargin = dp(7);
+        rlp.rightMargin = dp(7);
+        rlp.topMargin = dp(10);
+        content.addView(receive, rlp);
         receive.setOnClickListener(v -> {
             try {
-                double newBal = Double.parseDouble(getBalance()) + 50;
-                getSharedPreferences(PREFS, 0).edit().putString("balance", String.format("%.2f", newBal)).apply();
+                double nb = Double.parseDouble(getBalance()) + 50;
+                getSharedPreferences(PREFS, 0).edit().putString("balance", String.format("%.2f", nb)).apply();
                 bills.add(0, "收款 +¥50.00");
                 saveList("bills", bills);
-                bal.setText("当前零钱：¥ " + getBalance());
+                tb.setText("¥" + getBalance());
+                toast("收款 ¥50.00（本地）");
             } catch (Exception ignored) { }
         });
-        content.addView(receive, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(44)));
-        Button save = new Button(this);
-        save.setText("保存收款码");
-        save.setAllCaps(false);
-        save.setOnClickListener(v -> toast("收款码已保存到本机（演示）"));
-        content.addView(save, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(46)));
+    }
+
+    private android.graphics.Bitmap makeQr(int size) {
+        android.graphics.Bitmap bmp = android.graphics.Bitmap.createBitmap(size, size, android.graphics.Bitmap.Config.ARGB_8888);
+        android.graphics.Canvas c = new android.graphics.Canvas(bmp);
+        c.drawColor(Color.WHITE);
+        android.graphics.Paint pt = new android.graphics.Paint();
+        pt.setColor(0xff111111);
+        int n = 21;
+        float cell = size / (float) n;
+        java.util.Random rnd = new java.util.Random(20261021L);
+        for (int y = 0; y < n; y++) {
+            for (int x = 0; x < n; x++) {
+                boolean finder = (x < 7 && y < 7) || (x >= n - 7 && y < 7) || (x < 7 && y >= n - 7);
+                boolean on;
+                if (finder) {
+                    int lx = x < 7 ? x : x - (n - 7);
+                    int ly = y < 7 ? y : y - (n - 7);
+                    on = lx == 0 || lx == 6 || ly == 0 || ly == 6 || (lx >= 2 && lx <= 4 && ly >= 2 && ly <= 4);
+                } else {
+                    on = rnd.nextBoolean();
+                }
+                if (on) c.drawRect(x * cell, y * cell, (x + 1) * cell, (y + 1) * cell, pt);
+            }
+        }
+        return bmp;
     }
 
     private void buildBillStats() {
