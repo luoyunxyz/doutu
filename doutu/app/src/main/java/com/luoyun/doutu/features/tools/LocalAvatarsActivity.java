@@ -62,7 +62,7 @@ public final class LocalAvatarsActivity extends Activity {
         ScrollView scroll = new ScrollView(this);
         list = new LinearLayout(this);
         list.setOrientation(LinearLayout.VERTICAL);
-        list.setPadding(dp(16), dp(16), dp(16), dp(16));
+        list.setPadding(dp(20), dp(20), dp(20), dp(20));
         scroll.addView(list);
         root.addView(scroll, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
         setContentView(root);
@@ -84,38 +84,44 @@ public final class LocalAvatarsActivity extends Activity {
             return;
         }
         Arrays.sort(files, (a, b) -> Long.compare(b.lastModified(), a.lastModified()));
-        for (File f : files) list.addView(row(f));
+        LinearLayout row = null;
+        for (int i = 0; i < files.length; i++) {
+            if (i % 4 == 0) {
+                row = new LinearLayout(this);
+                row.setOrientation(LinearLayout.HORIZONTAL);
+                list.addView(row);
+            }
+            row.addView(tile(files[i]));
+        }
     }
 
-    private View row(File f) {
-        LinearLayout row = new LinearLayout(this);
-        row.setGravity(Gravity.CENTER_VERTICAL);
-        row.setBackgroundColor(Color.WHITE);
-        row.setPadding(dp(14), dp(12), dp(14), dp(12));
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        lp.bottomMargin = dp(10);
-        row.setLayoutParams(lp);
-
+    private View tile(File f) {
+        LinearLayout cell = new LinearLayout(this);
+        cell.setOrientation(LinearLayout.VERTICAL);
+        cell.setGravity(Gravity.CENTER);
+        LinearLayout.LayoutParams clp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+        clp.setMargins(dp(6), dp(6), dp(6), dp(12));
+        cell.setLayoutParams(clp);
         ImageView thumb = new ImageView(this);
         thumb.setImageBitmap(BitmapFactory.decodeFile(f.getAbsolutePath()));
         thumb.setScaleType(ImageView.ScaleType.CENTER_CROP);
-        row.addView(thumb, new LinearLayout.LayoutParams(dp(64), dp(64)));
-
+        thumb.setBackgroundColor(0xffeef0f6);
+        cell.addView(thumb, new LinearLayout.LayoutParams(dp(82), dp(82)));
         TextView name = new TextView(this);
-        name.setText(f.getName());
-        name.setTextSize(13);
-        name.setTextColor(0xff1d1f26);
-        name.setPadding(dp(14), 0, 0, 0);
-        row.addView(name, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
-
-        row.setOnClickListener(v -> {
+        name.setText(f.getName().replace(".png", ""));
+        name.setTextSize(10);
+        name.setTextColor(0xff8b90a0);
+        name.setSingleLine(true);
+        name.setGravity(Gravity.CENTER);
+        cell.addView(name);
+        thumb.setOnClickListener(v -> {
             ImageView big = new ImageView(this);
             big.setImageBitmap(BitmapFactory.decodeFile(f.getAbsolutePath()));
             big.setAdjustViewBounds(true);
             new AlertDialog.Builder(this).setTitle("本地头像").setView(big)
                     .setPositiveButton("关闭", null).show();
         });
-        row.setOnLongClickListener(v -> {
+        thumb.setOnLongClickListener(v -> {
             new AlertDialog.Builder(this).setTitle("删除头像").setMessage(f.getName())
                     .setNegativeButton("取消", null)
                     .setPositiveButton("删除", (d, w) -> {
@@ -123,7 +129,7 @@ public final class LocalAvatarsActivity extends Activity {
                     }).show();
             return true;
         });
-        return row;
+        return cell;
     }
 
     private void pickImages() {

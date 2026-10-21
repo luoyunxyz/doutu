@@ -51,6 +51,8 @@ public final class ToolImageActivity extends Activity {
     private ImageView basePreview, avatarPreview, preview;
     private TextView hint;
     private CheckBox watermark, replaceAvatar;
+    private LinearLayout aiSources, aiResults;
+    private TextView aiResultsTitle;
     private LinearLayout slotList;
     private final List<RectF> slots = new ArrayList<>();
     private final List<Boolean> slotEnabled = new ArrayList<>();
@@ -111,6 +113,10 @@ public final class ToolImageActivity extends Activity {
             pickAll.setAllCaps(false);
             pickAll.setOnClickListener(v -> pickMulti());
             col.addView(pickAll, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(48)));
+            aiSources = new LinearLayout(this);
+            aiSources.setOrientation(LinearLayout.HORIZONTAL);
+            aiSources.setPadding(0, dp(6), 0, dp(6));
+            col.addView(aiSources);
             avatarPreview = addPickRow(col, "头像图片（用于替换）", () -> pickImage(REQ_AVATAR, false));
             replaceAvatar = new CheckBox(this);
             replaceAvatar.setText("替换头像（请确保头像完整性）");
@@ -145,16 +151,25 @@ public final class ToolImageActivity extends Activity {
         flp.topMargin = dp(12);
         col.addView(frame, flp);
 
+        aiResultsTitle = new TextView(this);
+        aiResultsTitle.setText("生成结果");
+        aiResultsTitle.setTextSize(14);
+        aiResultsTitle.setTextColor(0xff1d1f26);
+        aiResultsTitle.setVisibility(View.GONE);
+        col.addView(aiResultsTitle);
+        aiResults = new LinearLayout(this);
+        aiResults.setOrientation(LinearLayout.HORIZONTAL);
+        col.addView(aiResults);
         LinearLayout actions = new LinearLayout(this);
         actions.setGravity(Gravity.CENTER);
         actions.setPadding(0, dp(12), 0, 0);
         processBtn = new Button(this);
-        processBtn.setText(mode == MODE_AI ? "生成" : "开始替换");
+        processBtn.setText(mode == MODE_AI ? "立即生成" : "开始替换");
         processBtn.setAllCaps(false);
         processBtn.setOnClickListener(v -> handleProcess());
         actions.addView(processBtn, new LinearLayout.LayoutParams(0, dp(50), 1f));
         saveBtn = new Button(this);
-        saveBtn.setText("保存到相册");
+        saveBtn.setText(mode == MODE_AI ? "一键保存以上图片" : "保存到相册");
         saveBtn.setAllCaps(false);
         saveBtn.setEnabled(false);
         saveBtn.setOnClickListener(v -> saveAll());
@@ -254,7 +269,8 @@ public final class ToolImageActivity extends Activity {
             } else if (data.getData() != null) {
                 addSource(data.getData());
             }
-            hint.setText("已选择 " + sources.size() + " 张图片，点「生成」。");
+            hint.setText("已选择 " + sources.size() + " 张图片，点「立即生成」。");
+            renderAiSources();
         } else if (request == REQ_BASE || request == REQ_AVATAR) {
             Uri uri = data.getData();
             if (uri == null) return;
@@ -403,6 +419,34 @@ public final class ToolImageActivity extends Activity {
         }
     }
 
+
+    private void renderAiSources() {
+        if (aiSources == null) return;
+        aiSources.removeAllViews();
+        for (int i = 0; i < sources.size(); i++) {
+            ImageView iv = new ImageView(this);
+            iv.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            iv.setImageBitmap(sources.get(i));
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(dp(64), dp(64));
+            lp.rightMargin = dp(6);
+            aiSources.addView(iv, lp);
+        }
+    }
+
+    private void renderAiResults() {
+        if (aiResults == null) return;
+        aiResultsTitle.setVisibility(View.VISIBLE);
+        aiResults.removeAllViews();
+        for (int i = 0; i < results.size(); i++) {
+            ImageView iv = new ImageView(this);
+            iv.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            iv.setImageBitmap(results.get(i));
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(dp(72), dp(72));
+            lp.rightMargin = dp(6);
+            aiResults.addView(iv, lp);
+        }
+    }
+
     private void process() {
         results.clear();
         try {
@@ -416,7 +460,8 @@ public final class ToolImageActivity extends Activity {
             }
             preview.setImageBitmap(results.get(0));
             saveBtn.setEnabled(true);
-            toast("已生成 " + results.size() + " 张，点「保存到相册」");
+            toast("已生成 " + results.size() + " 张，点「一键保存以上图片」");
+            renderAiResults();
         } catch (Exception e) {
             toast("处理失败：" + e.getMessage());
         }
