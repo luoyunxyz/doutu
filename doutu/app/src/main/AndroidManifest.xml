@@ -314,6 +314,22 @@
             android:screenOrientation="portrait"
             android:exported="false"
             android:theme="@style/Theme.Doutu.WeiHome" />
+        <activity
+            android:name=".features.tools.ToolImageActivity"
+            android:screenOrientation="portrait"
+            android:exported="false" />
+        <activity
+            android:name=".features.tools.LocalAvatarsActivity"
+            android:screenOrientation="portrait"
+            android:exported="false" />
+        <activity
+            android:name=".features.tools.EditPanelActivity"
+            android:screenOrientation="portrait"
+            android:exported="false" />
+        <activity
+            android:name=".features.tools.ToolsTutorialActivity"
+            android:screenOrientation="portrait"
+            android:exported="false" />
     </application>
 </manifest>
 

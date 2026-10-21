@@ -280,6 +280,7 @@ public final class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        if (nativeView != null) nativeView.rebuildTools();
         // 不做登录门禁：默认就能进应用。
         // 会员只决定「有没有水印」——未开通时整页叠加遮罩，用户可以选择不开会员继续用。
         // 登录/注册入口在「我」页顶部的头像与名字上。
@@ -607,6 +608,9 @@ static final class FeatureRow {
         private Bitmap topBitmap;
         private final Bitmap[] segmentBitmaps = new Bitmap[4];
         private int servicePage = PAGE_WEI, bottom = 0;
+        /** 工具页独立使用 bottom=4，保留 0/1/2 原有语义。 */
+        private float toolsBottom;
+        private final java.util.List<ToolGroup> toolGroups = new java.util.ArrayList<>();
         private float scroll = 0, downY;
         private float downX;
         private long downAt;
@@ -649,6 +653,7 @@ static final class FeatureRow {
             loadHome();
             loadEntertainmentFromServer();
             buildEntertainmentLayout();
+            buildToolsLayout();
             setContentDescription("豆图助手主页面");
         }
 
@@ -784,6 +789,7 @@ static final class FeatureRow {
 
         /** 当前这一页还能往下滚多少。娱乐页的内容比一屏短，本来就是 0。 */
         private float maxScrollForCurrentPage() {
+            if (bottom == 4) return Math.max(0f, toolsBottom + 60f - CONTENT_BOTTOM);
             if (bottom != 1) return 0f;
             return Math.max(0f, entertainmentBottom + 40f - CONTENT_BOTTOM);
         }
@@ -813,7 +819,7 @@ static final class FeatureRow {
         private String detailTitle;
 
         private float contentHeight() {
-            return bottom == 1 ? 2350 : 2050;
+            return bottom == 4 ? toolsBottom + 140 : bottom == 1 ? 2350 : 2050;
         }
 
         private void drawDetail(Canvas c) {
@@ -882,6 +888,7 @@ static final class FeatureRow {
             c.scale(getWidth() / W, getHeight() / H);
             if (detailTitle != null) drawDetail(c);
             else if (bottom == 0) drawHome(c);
+            else if (bottom == 4) drawTools(c);
             else if (bottom == 1) drawEntertainment(c);
             else drawProfile(c);
             c.restore();
@@ -1566,13 +1573,183 @@ static final class FeatureRow {
             drawNav(c);
         }
 
+        private void buildToolsLayout() {
+            toolGroups.clear();
+            // 全部为本地、独立的工具，不跳转本软件其它模块。
+            addToolGroup("图片工具", new ToolEntry[]{
+                    new ToolEntry("换头像", "avatar", "换", 0xffeaf1ff, 0xff4a7bf7, "NEW"),
+                    new ToolEntry("自动替换", "auto", "自", 0xfffff0e8, 0xffff7a45, "HOT"),
+                    new ToolEntry("AI一键模仿", "ai", "AI", 0xffefeaff, 0xff7c5cf6, "")
+            });
+            addToolGroup("头像管理", new ToolEntry[]{
+                    new ToolEntry("本地头像", "localavatars", "头", 0xffeaf1ff, 0xff4a7bf7, "")
+            });
+            addToolGroup("更多", new ToolEntry[]{
+                    new ToolEntry("编辑面板", "edit", "编", 0xffeaf1ff, 0xff4a7bf7, ""),
+                    new ToolEntry("教程", "tutorial", "教", 0xffeaf1ff, 0xff4a7bf7, "")
+            });
+            applyToolOrder();
+            float y = 228f;
+            for (ToolGroup g : toolGroups) {
+                g.top = y;
+                int rows = (g.items.size() + 3) / 4;
+                g.height = 92f + rows * 186f;
+                for (int i = 0; i < g.items.size(); i++) {
+                    ToolEntry e = g.items.get(i);
+                    e.cx = 162f + (i % 4) * 252f;
+                    e.top = y + 92f + (i / 4) * 186f;
+                }
+                y += g.height + 22f;
+            }
+            toolsBottom = y + 100f;
+        }
+
+        private void applyToolOrder() {
+            String raw = getContext().getSharedPreferences("doutu_tools", 0).getString("tool_order", "");
+            if (raw.isEmpty()) return;
+            final java.util.List<String> keys = java.util.Arrays.asList(raw.split(","));
+            for (ToolGroup g : toolGroups) {
+                java.util.Collections.sort(g.items, (a, b) -> Integer.compare(keys.indexOf(a.name), keys.indexOf(b.name)));
+            }
+        }
+
+        void rebuildTools() { buildToolsLayout(); invalidate(); }
+
+        private void addToolGroup(String title, ToolEntry[] items) {
+            ToolGroup g = new ToolGroup();
+            g.title = title;
+            for (ToolEntry e : items) g.items.add(e);
+            toolGroups.add(g);
+        }
+
+        private void drawTools(Canvas c) {
+            c.drawColor(PAGE_BG);
+            c.save();
+            c.translate(0, -scroll);
+            for (ToolGroup g : toolGroups) {
+                round(c, 32, g.top, 1048, g.top + g.height, 28, Color.WHITE);
+                text(c, g.title, 60, g.top + 52, 28, SUB_INK, false);
+                for (ToolEntry e : g.items) {
+                    round(c, e.cx - 44, e.top, e.cx + 44, e.top + 88, 24, e.tint);
+                    textCentered(c, e.glyph, e.cx, e.top + 58, 36, e.accent, true);
+                    textCentered(c, e.name, e.cx, e.top + 124, 25, INK, false);
+                    if (!e.badge.isEmpty()) {
+                        round(c, e.cx + 20, e.top - 8, e.cx + 74, e.top + 22, 15, 0xffee3b30);
+                        textCentered(c, e.badge, e.cx + 47, e.top + 15, 17, Color.WHITE, true);
+                    }
+                }
+            }
+            p.setColor(0xfff5f6fa);
+            c.drawRect(0, toolsBottom - 96f, W, toolsBottom, p);
+            p.setColor(Color.WHITE);
+            c.drawRoundRect(300, toolsBottom - 86f, 780, toolsBottom - 26f, 30, 30, p);
+            textCentered(c, "更多功能及教程 ›", 540, toolsBottom - 46f, 26, BRAND, false);
+            c.restore();
+            p.setColor(Color.WHITE);
+            c.drawRect(0, 0, W, 206, p);
+            text(c, "工具", 40, 128, 52, INK, true);
+            text(c, "常用工具与快捷入口", 40, 174, 26, SUB_INK, false);
+            drawNav(c);
+        }
+
+        private void handleToolTap(float x, float y) {
+            float py = y + scroll;
+            if (py >= toolsBottom - 96f && py <= toolsBottom && x >= 280 && x <= 800) {
+                startActivity(new Intent(MainActivity.this, com.luoyun.doutu.features.tools.ToolsTutorialActivity.class));
+                return;
+            }
+            for (ToolGroup g : toolGroups) {
+                for (ToolEntry e : g.items) {
+                    if (x >= e.cx - 92 && x <= e.cx + 92 && py >= e.top - 16 && py <= e.top + 136) {
+                        openTool(e);
+                        return;
+                    }
+                }
+            }
+        }
+
+        private void openTool(ToolEntry e) {
+            switch (e.action) {
+                case "avatar":
+                    com.luoyun.doutu.features.tools.ToolImageActivity.open(MainActivity.this, "avatar");
+                    break;
+                case "auto":
+                    com.luoyun.doutu.features.tools.ToolImageActivity.open(MainActivity.this, "auto");
+                    break;
+                case "ai":
+                    com.luoyun.doutu.features.tools.ToolImageActivity.open(MainActivity.this, "ai");
+                    break;
+                case "localavatars":
+                    startActivity(new Intent(MainActivity.this, com.luoyun.doutu.features.tools.LocalAvatarsActivity.class));
+                    break;
+                case "edit":
+                    startActivity(new Intent(MainActivity.this, com.luoyun.doutu.features.tools.EditPanelActivity.class));
+                    break;
+                case "tutorial":
+                    startActivity(new Intent(MainActivity.this, com.luoyun.doutu.features.tools.ToolsTutorialActivity.class));
+                    break;
+                default:
+                    toast(e.name + "：暂未开放");
+            }
+        }
+
+        private void showToolsEdit() {
+            new AlertDialog.Builder(MainActivity.this)
+                    .setTitle("编辑面板")
+                    .setMessage("工具页只包含本地独立工具，所有图片处理都在本机完成，不会调用或上传到其他模块。\n\n"
+                            + "清空本地头像只会删除本工具生成的头像文件。")
+                    .setNegativeButton("关闭", null)
+                    .setPositiveButton("清空本地头像", (d, w) -> {
+                        java.io.File dir = new java.io.File(getContext().getFilesDir(), "avatars");
+                        java.io.File[] files = dir.listFiles();
+                        if (files != null) for (java.io.File f : files) f.delete();
+                        toast("已清空本地头像");
+                    })
+                    .show();
+        }
+
+        private void showToolsTutorial() {
+            new AlertDialog.Builder(MainActivity.this)
+                    .setTitle("工具教程")
+                    .setMessage("工具页按 小微 / 阿宝 / 小Q / 其他 / 云相册 / 视频 分组。\n\n"
+                            + "· 微信、朋友圈、卡包、收藏、钱包：直达小微对应页面\n"
+                            + "· 支付宝、扫一扫、收付款、余额、账单、花呗：直达小支页面\n"
+                            + "· 换头像：从相册选图，设为当前头像\n"
+                            + "· 自动替换头像 / AI一键模仿：选图后本地生成并保存到相册\n"
+                            + "· 去水印：短视频解析入口")
+                    .setPositiveButton("知道了", null)
+                    .show();
+        }
+
+        private static final class ToolEntry {
+            final String name, action, glyph, badge;
+            final int tint, accent;
+            float cx, top;
+
+            ToolEntry(String name, String action, String glyph, int tint, int accent, String badge) {
+                this.name = name;
+                this.action = action;
+                this.glyph = glyph;
+                this.tint = tint;
+                this.accent = accent;
+                this.badge = badge;
+            }
+        }
+
+        private static final class ToolGroup {
+            String title;
+            float top, height;
+            final java.util.List<ToolEntry> items = new java.util.ArrayList<>();
+        }
+
         private void drawNav(Canvas c) {
             p.setColor(Color.WHITE);
             c.drawRect(0, 2212, 1080, 2388, p);
             line(c, 0, 2212, 1080, 2212, 0xffeef0f6, 1.6f);
-            navItem(c, "首页", 180, bottom == 0);
-            navItem(c, "娱乐", 540, bottom == 1);
-            navItem(c, "我", 900, bottom == 2);
+            navItem(c, "首页", 135, bottom == 0);
+            navItem(c, "工具", 405, bottom == 4);
+            navItem(c, "娱乐", 675, bottom == 1);
+            navItem(c, "我", 945, bottom == 2);
         }
 
         /**
@@ -1631,7 +1808,7 @@ static final class FeatureRow {
                 //     判定永远不成立 → 停在「我」页时点底部标签栏完全没反应。
                 // 这里改成和 drawNav() 同一套坐标（分割线 2212，三格中心 180/540/900）。
                 if (rawY >= 2212f) {
-                    bottom = rawX < 360f ? 0 : rawX < 720f ? 1 : 2;
+                    bottom = rawX < 270f ? 0 : rawX < 540f ? 4 : rawX < 810f ? 1 : 2;
                     detailTitle = null;   // 切页即退出详情态，免得回来还停在详情上
                     scroll = 0;
                     invalidate();
@@ -1639,11 +1816,16 @@ static final class FeatureRow {
                     return true;
                 }
             } else if (y >= 2212) {
-                bottom = x < 360 ? 0 : x < 720 ? 1 : 2;
+                bottom = x < 270 ? 0 : x < 540 ? 4 : x < 810 ? 1 : 2;
                 detailTitle = null;
                 scroll = 0;
                 invalidate();
                 performClick();
+                return true;
+            }
+
+            if (bottom == 4) {
+                handleToolTap(x, y);
                 return true;
             }
 
