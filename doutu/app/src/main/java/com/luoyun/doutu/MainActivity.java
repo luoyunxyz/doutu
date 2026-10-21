@@ -610,6 +610,23 @@ static final class FeatureRow {
         private int servicePage = PAGE_WEI, bottom = 0;
         /** 工具页独立使用 bottom=4，保留 0/1/2 原有语义。 */
         private float toolsBottom;
+        private Bitmap toolsShot;
+        private static final int[][] TOOL_HOT = {
+                {0, 246, 1080, 248}, {0, 530, 1080, 221},
+                {41, 861, 225, 210}, {323, 861, 225, 210}, {613, 861, 225, 210}, {896, 861, 225, 210},
+                {41, 1101, 225, 211}, {323, 1101, 225, 211}, {613, 1101, 225, 211}, {896, 1101, 225, 211},
+                {41, 1341, 225, 211}, {323, 1341, 225, 211}, {613, 1341, 225, 211}, {896, 1341, 225, 211},
+                {41, 1581, 225, 211}, {323, 1581, 225, 211}, {613, 1581, 225, 211}, {896, 1581, 225, 211},
+                {41, 1814, 225, 203}, {323, 1814, 225, 203}, {613, 1814, 225, 203}, {896, 1814, 225, 203}
+        };
+        private static final String[][] TOOL_HOT_KEYS = {
+                {"avatar", "替换头像"}, {"home", "小微"},
+                {"chats", "创建单聊"}, {"chats", "创建群聊"}, {"contacts", "通讯录"}, {"redpacket", "红包"},
+                {"transfer", "转账"}, {"wallet", "微信零钱"}, {"contacts", "新的朋友"}, {"moments", "发现"},
+                {"wallet", "钱包"}, {"transfer", "零钱提现"}, {"wallet", "零钱明细"}, {"pay", "微信支付"},
+                {"paysuccess", "支付成功"}, {"broadcast", "群发助手"}, {"avatar", "替换头像"}, {"articles", "公众号"},
+                {"redpackets", "发出的红包"}, {"billstats", "年账单"}, {"pay", "微信收款助手"}, {"album", "上传截图"}
+        };
         private final java.util.List<ToolGroup> toolGroups = new java.util.ArrayList<>();
         private float scroll = 0, downY;
         private float downX;
@@ -654,6 +671,9 @@ static final class FeatureRow {
             loadEntertainmentFromServer();
             buildEntertainmentLayout();
             buildToolsLayout();
+            try (java.io.InputStream in = getContext().getAssets().open("tools_ref.png")) {
+                toolsShot = BitmapFactory.decodeStream(in);
+            } catch (Exception ignored) { }
             setContentDescription("豆图助手主页面");
         }
 
@@ -1641,6 +1661,18 @@ static final class FeatureRow {
         }
 
         private void drawTools(Canvas c) {
+            if (toolsShot != null) {
+                p.setColor(0xffffd400);
+                c.drawRect(0, 0, W, 46, p);
+                p.setColor(Color.WHITE);
+                c.drawRect(0, 46, W, 2212, p);
+                src.set(0, 0, toolsShot.getWidth(), toolsShot.getHeight());
+                float ih = 1080f * toolsShot.getHeight() / toolsShot.getWidth();
+                dst.set(0, 46, W, 46 + ih);
+                c.drawBitmap(toolsShot, src, dst, p);
+                drawNav(c);
+                return;
+            }
             c.drawColor(PAGE_BG);
             c.save();
             c.translate(0, -scroll);
@@ -1671,6 +1703,16 @@ static final class FeatureRow {
         }
 
         private void handleToolTap(float x, float y) {
+            if (toolsShot != null) {
+                for (int i = 0; i < TOOL_HOT.length && i < TOOL_HOT_KEYS.length; i++) {
+                    int[] r = TOOL_HOT[i];
+                    if (x >= r[0] && x <= r[0] + r[2] && y >= r[1] && y <= r[1] + r[3]) {
+                        openTool(new ToolEntry(TOOL_HOT_KEYS[i][1], TOOL_HOT_KEYS[i][0], "", 0xffeaf1ff, 0xff4a7bf7, ""));
+                        return;
+                    }
+                }
+                return;
+            }
             float py = y + scroll;
             if (py >= toolsBottom - 96f && py <= toolsBottom && x >= 280 && x <= 800) {
                 startActivity(new Intent(MainActivity.this, com.luoyun.doutu.features.tools.ToolsTutorialActivity.class));
