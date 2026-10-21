@@ -195,6 +195,14 @@
             android:screenOrientation="portrait"
             android:exported="false" />
         <activity
+            android:name=".features.qq.QqRedPacketV2Activity"
+            android:screenOrientation="portrait"
+            android:exported="false" />
+        <activity
+            android:name=".features.qq.QqUnreadActivity"
+            android:screenOrientation="portrait"
+            android:exported="false" />
+        <activity
             android:name=".features.ali.AliContactsActivity"
             android:screenOrientation="portrait"
             android:exported="false" />

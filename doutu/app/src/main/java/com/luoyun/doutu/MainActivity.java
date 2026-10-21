@@ -2030,9 +2030,9 @@ static final class FeatureRow {
                             com.luoyun.doutu.features.wx.SentRedPacketActivity.class));
                     break;
                 case "qqrp":
-                    // QQ 发红包：金额 / 祝福语 / 发送人一行。
+                    // QQ 发红包：真机是「红包金额 ¥0 / 恭喜发财 / 少女蒸汽机 + 切换发送人 / 发送」
                     startActivity(new Intent(MainActivity.this,
-                            com.luoyun.doutu.features.qq.QqRedPacketActivity.class));
+                            com.luoyun.doutu.features.qq.QqRedPacketV2Activity.class));
                     break;
                 case "qqgz":
                     // QQ 公众号：进 QQ 主页并弹表单（只有一个「消息置顶」开关）。
@@ -2045,9 +2045,9 @@ static final class FeatureRow {
                             com.luoyun.doutu.features.qq.QqEditProfileActivity.class));
                     break;
                 case "qqunread":
-                    // QQ 未读消息红点：进 QQ 主页并弹底部未读数量键盘。
+                    // QQ 未读消息：暗化首页 + 底部「未读消息数量」键盘弹层
                     startActivity(new Intent(MainActivity.this,
-                            com.luoyun.doutu.features.qq.QqHomeActivity.class).putExtra("unread", true));
+                            com.luoyun.doutu.features.qq.QqUnreadActivity.class));
                     break;
                 case "qqnewchat":
                     // QQ 创建聊天：进 QQ 主页并弹新建聊天表单。
