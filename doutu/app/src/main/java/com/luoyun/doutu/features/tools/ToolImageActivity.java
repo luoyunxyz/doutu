@@ -52,6 +52,10 @@ public final class ToolImageActivity extends Activity {
     private TextView hint;
     private CheckBox watermark, replaceAvatar;
     private LinearLayout aiSources, aiResults;
+    private FrameLayout aiOverlay;
+    private android.widget.ProgressBar aiProgress;
+    private TextView aiPercent;
+    private volatile boolean aiCancelled = false;
     private TextView aiResultsTitle;
     private LinearLayout slotList;
     private final List<RectF> slots = new ArrayList<>();
@@ -181,7 +185,10 @@ public final class ToolImageActivity extends Activity {
         root.addView(scroll, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
         root.addView(actions);
 
-        setContentView(root);
+        FrameLayout container = new FrameLayout(this);
+        container.addView(root);
+        if (mode == MODE_AI) { buildAiOverlay(); container.addView(aiOverlay); }
+        setContentView(container);
         if (getIntent().getBooleanExtra("selftest", false)) { finish(); return; }
         if (mode == MODE_AI) pickMulti();
     }
@@ -532,6 +539,79 @@ public final class ToolImageActivity extends Activity {
         p.setTextSize(Math.max(18f, bmp.getWidth() * .028f));
         p.setTextAlign(Paint.Align.RIGHT);
         c.drawText("豆图工具 · 本地处理", bmp.getWidth() - 16, bmp.getHeight() - 16, p);
+    }
+
+
+    private void buildAiOverlay() {
+        aiOverlay = new FrameLayout(this);
+        aiOverlay.setBackgroundColor(0x6b000000);
+        aiOverlay.setVisibility(View.GONE);
+        FrameLayout box = new FrameLayout(this);
+        box.setBackgroundColor(Color.BLACK);
+        aiOverlay.addView(box, new FrameLayout.LayoutParams(dp(200), dp(200), Gravity.CENTER));
+        TextView close = new TextView(this);
+        close.setText("×");
+        close.setTextSize(28);
+        close.setTextColor(Color.WHITE);
+        close.setGravity(Gravity.TOP | Gravity.END);
+        close.setPadding(0, 0, dp(10), 0);
+        close.setOnClickListener(v -> {
+            aiCancelled = true;
+            aiOverlay.setVisibility(View.GONE);
+        });
+        box.addView(close, new FrameLayout.LayoutParams(dp(42), dp(42), Gravity.TOP | Gravity.END));
+        aiProgress = new android.widget.ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
+        aiProgress.setMax(100);
+        FrameLayout.LayoutParams plp = new FrameLayout.LayoutParams(dp(96), dp(6), Gravity.CENTER);
+        aiProgress.setLayoutParams(plp);
+        box.addView(aiProgress);
+        aiPercent = new TextView(this);
+        aiPercent.setText("0%");
+        aiPercent.setTextSize(15);
+        aiPercent.setTextColor(Color.WHITE);
+        aiPercent.setGravity(Gravity.CENTER);
+        FrameLayout.LayoutParams tlp = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER);
+        tlp.topMargin = -dp(28);
+        box.addView(aiPercent, tlp);
+        TextView label = new TextView(this);
+        label.setText("正在生成");
+        label.setTextSize(16);
+        label.setTextColor(Color.WHITE);
+        label.setGravity(Gravity.CENTER);
+        FrameLayout.LayoutParams llp = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM);
+        llp.bottomMargin = dp(14);
+        box.addView(label, llp);
+    }
+
+    private void processAi() {
+        if (sources.isEmpty()) { toast("请先选择图片"); return; }
+        results.clear();
+        aiCancelled = false;
+        aiOverlay.setVisibility(View.VISIBLE);
+        aiProgress.setProgress(0);
+        aiPercent.setText("0%");
+        new Thread(() -> {
+            for (int i = 0; i < sources.size(); i++) {
+                if (aiCancelled) break;
+                Bitmap src = sources.get(i);
+                try {
+                    Bitmap done = (replaceAvatar != null && replaceAvatar.isChecked() && avatar != null)
+                            ? replaceFaces(src, avatar, true) : src.copy(Bitmap.Config.ARGB_8888, true);
+                    if (done != null) results.add(done);
+                } catch (Exception ignored) { }
+                final int p = (i + 1) * 100 / sources.size();
+                runOnUiThread(() -> { aiProgress.setProgress(p); aiPercent.setText(p + "%"); });
+                try { Thread.sleep(80); } catch (InterruptedException ignored) { }
+            }
+            runOnUiThread(() -> {
+                aiOverlay.setVisibility(View.GONE);
+                if (aiCancelled || results.isEmpty()) return;
+                preview.setImageBitmap(results.get(0));
+                saveBtn.setEnabled(true);
+                renderAiResults();
+                toast("已生成 " + results.size() + " 张，点「一键保存以上图片」");
+            });
+        }).start();
     }
 
     private void saveAll() {
