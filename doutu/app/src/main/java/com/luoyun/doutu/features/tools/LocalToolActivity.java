@@ -1515,10 +1515,12 @@ public final class LocalToolActivity extends Activity {
         head.setGravity(Gravity.CENTER);
         head.setBackgroundColor(Color.WHITE);
         head.setPadding(0, dp(24), 0, dp(24));
+        head.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         TextView tip = new TextView(this);
         tip.setText("收款记录");
         tip.setTextSize(13);
         tip.setTextColor(0xff888888);
+        tip.setGravity(Gravity.CENTER);
         head.addView(tip);
         TextView sum = new TextView(this);
         sum.setText("¥" + String.format("%.2f", total));
@@ -1531,6 +1533,7 @@ public final class LocalToolActivity extends Activity {
         cnt.setText("共 " + count + " 笔收款");
         cnt.setTextSize(12);
         cnt.setTextColor(0xff888888);
+        cnt.setGravity(Gravity.CENTER);
         cnt.setPadding(0, dp(4), 0, 0);
         head.addView(cnt);
         content.addView(head);
