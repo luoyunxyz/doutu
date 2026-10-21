@@ -342,6 +342,14 @@
             android:name=".features.tools.ToolsSelfTestActivity"
             android:screenOrientation="portrait"
             android:exported="true" />
+        <activity
+            android:name=".features.tools.ReplaceHeaderListActivity"
+            android:screenOrientation="portrait"
+            android:exported="false" />
+        <activity
+            android:name=".features.tools.ReplacePreviewActivity"
+            android:screenOrientation="portrait"
+            android:exported="false" />
     </application>
 </manifest>
 

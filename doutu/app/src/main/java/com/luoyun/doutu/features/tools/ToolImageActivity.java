@@ -131,14 +131,6 @@ public final class ToolImageActivity extends Activity {
             watermark.setTextSize(13);
             watermark.setVisibility(mode == MODE_AUTO ? View.VISIBLE : View.GONE);
             col.addView(watermark);
-            slotList = new LinearLayout(this);
-            slotList.setOrientation(LinearLayout.VERTICAL);
-            col.addView(slotList);
-            Button addSlot = new Button(this);
-            addSlot.setText("＋ 替换截图内其他头像");
-            addSlot.setAllCaps(false);
-            addSlot.setOnClickListener(v -> addManualSlot());
-            col.addView(addSlot, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(44)));
             hint.setText(mode == MODE_AUTO
                     ? "选底图和头像后点「开始替换」，会检测全部人脸并批量替换。"
                     : "选底图和头像后点「开始替换」，会检测最大的人脸并替换。");
@@ -288,20 +280,11 @@ public final class ToolImageActivity extends Activity {
             process();
             return;
         }
-        if (synthesized) {
-            synthesized = false;
-            slotsShown = true;
-            preview.setImageBitmap(null);
-            processBtn.setText("人工智能一键合成");
-            saveBtn.setEnabled(false);
-            renderSlots();
-            return;
-        }
-        if (!slotsShown) {
-            detectSlots();
-            return;
-        }
-        synthesize();
+        if (base == null || avatar == null) { toast("请先选择底图和头像"); return; }
+        ReplaceHeaderListActivity.base = base;
+        ReplaceHeaderListActivity.avatar = avatar;
+        ReplaceHeaderListActivity.watermark = mode == MODE_AUTO && watermark != null && watermark.isChecked();
+        startActivity(new Intent(this, ReplaceHeaderListActivity.class));
     }
 
     private void detectSlots() {
