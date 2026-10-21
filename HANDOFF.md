@@ -3,8 +3,8 @@
 > 生成时间：2026-10-19  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 1.0.0(78)：收藏长按删除 + 下拉箭头`  
-> 最新代码版本：`1.0.0 / 78`（已推送，待 Codemagic 构建）；Android `1.0.7`  
+> 最新提交：`本轮 1.0.0(79)：收藏箭头气泡菜单`  
+> 最新代码版本：`1.0.0 / 79`（已推送，待 Codemagic 构建）；Android `1.0.8`  
 > 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
 
 ---
@@ -1868,6 +1868,21 @@ webView.scrollView.panGestureRecognizer.isEnabled = true
       - 13px 的 chevron，间距按截图；
     - 浏览器实测：长按弹出「删除收藏」，确认后 9→8 条；
     - 版本 1.0.0(78)（iOS）/ 1.0.7（Android）。
+      改动文件：`wechat-me-pages.js/.css`、两个 `index.html`、iOS `project.yml`；
+      Android `assets/fake_world/overrides/*`。
+
+172. **1.0.0(79) / Android 1.0.8：收藏箭头改为气泡菜单**
+    - 用户：点开箭头后的 UI 不对；
+    - 79：
+      - 去掉原来的居中「排序方式」弹窗，改成贴着下拉箭头的白色气泡菜单：
+        - 右对齐、顶部小三角指向箭头、圆角 8、阴影；
+        - 三行：最近使用（默认，绿色 + ✓）/ 最新收藏 / 最早收藏；
+        - 点击选项立即排序，点击遮罩关闭；
+      - `favSort` 默认改为 `recent`，排序逻辑：
+        recent 保持 localStorage 顺序，new 按时间倒序，old 按时间正序；
+      - 长按删除（78 的功能）保留；
+    - 浏览器实测：点箭头弹出气泡菜单 3 行，选「最早收藏」后菜单关闭并重排；
+    - 版本 1.0.0(79)（iOS）/ 1.0.8（Android）。
       改动文件：`wechat-me-pages.js/.css`、两个 `index.html`、iOS `project.yml`；
       Android `assets/fake_world/overrides/*`。
 

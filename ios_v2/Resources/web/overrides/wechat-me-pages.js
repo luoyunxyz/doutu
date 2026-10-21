@@ -45,6 +45,11 @@
     '体检报告_2026.pdf',
     '学习资料_第3章.pdf'
   ];
+  var FAV_SORT = [
+    { key: 'recent', label: '最近使用' },
+    { key: 'new', label: '最新收藏' },
+    { key: 'old', label: '最早收藏' }
+  ];
   var STICKER_PACKS = [
     ['鱼烧哥窝囊篇', '🐟'], ['呆猫八条9', '🐱'], ['水豚噜噜14', '🦫'], ['月薪喵3', '😾'],
     ['瞅他', '👀'], ['奶龙③', '🐣'], ['高雅人士②', '🐧'], ['高情商聊天', '💬'],
@@ -55,7 +60,7 @@
   ];
 
   var host = null;
-  var view = { favTab: 'recent', favQuery: '', favSort: 'time' };
+  var view = { favTab: 'recent', favQuery: '', favSort: 'recent' };
   var dialog = null;
   var toastTimer = 0;
   var suppressClickUntil = 0;
@@ -183,8 +188,40 @@
   }
   function favSorted() {
     var list = favorites.filter(favFilter);
-    if (view.favSort === 'time') list.sort(function (a, b) { return (b.ts || 0) - (a.ts || 0); });
+    if (view.favSort === 'old') list.sort(function (a, b) { return (a.ts || 0) - (b.ts || 0); });
+    else if (view.favSort === 'new') list.sort(function (a, b) { return (b.ts || 0) - (a.ts || 0); });
     return list;
+  }
+  function closeFavMenu() {
+    if (!host) return;
+    var nodes = host.querySelectorAll('.fwm-favmenu-mask,.fwm-favmenu-panel');
+    for (var i = 0; i < nodes.length; i++) nodes[i].remove();
+  }
+  function openFavMenu(anchor) {
+    closeFavMenu();
+    if (!anchor || !host) return;
+    var rect = anchor.getBoundingClientRect();
+    var mask = document.createElement('div');
+    mask.className = 'fwm-favmenu-mask';
+    var panel = document.createElement('div');
+    panel.className = 'fwm-favmenu-panel';
+    panel.style.top = Math.round(rect.bottom + 8) + 'px';
+    panel.style.right = Math.max(8, Math.round(window.innerWidth - rect.right - 4)) + 'px';
+    panel.innerHTML = '<span class="fwm-favmenu-caret"></span>' + FAV_SORT.map(function (item) {
+      var active = view.favSort === item.key;
+      return '<button type="button" class="fwm-favmenu-row' + (active ? ' is-active' : '') + '" data-favsort="' + item.key + '">' +
+        '<span>' + item.label + '</span>' + (active ? '<span class="fwm-favmenu-check">✓</span>' : '') + '</button>';
+    }).join('');
+    host.appendChild(mask);
+    host.appendChild(panel);
+    mask.addEventListener('click', closeFavMenu);
+    panel.addEventListener('click', function (e) {
+      var btn = e.target.closest('[data-favsort]');
+      if (!btn) return;
+      view.favSort = btn.getAttribute('data-favsort');
+      closeFavMenu();
+      render();
+    });
   }
   function pdfIcon() { return '<span class="fwm-pdf"><i>PDF</i></span>'; }
   function favCard(item) {
@@ -523,7 +560,7 @@
       if (el.hasAttribute('data-favtab')) { e.preventDefault(); view.favTab = el.getAttribute('data-favtab'); render(); return; }
       if (el.hasAttribute('data-favdrop')) {
         e.preventDefault();
-        openDialog({ title: '排序方式', text: '最近使用 / 按时间', okText: '按时间', onOk: function () { view.favSort = 'time'; render(); } });
+        openFavMenu(el);
         return;
       }
       if (el.hasAttribute('data-favdel')) {

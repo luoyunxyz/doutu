@@ -294,3 +294,12 @@
 #fw-me-pages-host .fwm-fav-drop { width: 28px; height: 28px; margin-left: auto; margin-right: 0; background: #ececec; color: #9a9a9a; align-self: center; }
 #fw-me-pages-host .fwm-fav-drop .fwm-icon { width: 13px; height: 13px; margin: 0; }
 #fw-me-pages-host .fwm-fav-tabs { min-height: 36px; }
+
+/* 1.0.0(79): favorites sort popover (anchored to the dropdown) */
+#fw-me-pages-host .fwm-favmenu-mask { position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 40; background: transparent; }
+#fw-me-pages-host .fwm-favmenu-panel { position: fixed; width: 152px; background: #fff; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,.16); z-index: 41; padding: 6px 0; }
+#fw-me-pages-host .fwm-favmenu-caret { position: absolute; right: 17px; top: -5px; width: 10px; height: 10px; background: #fff; transform: rotate(45deg); }
+#fw-me-pages-host .fwm-favmenu-row { display: flex; align-items: center; justify-content: space-between; width: 100%; height: 44px; padding: 0 16px; font-size: 15px; color: #191919; border-bottom: 1px solid #f2f2f2; text-align: left; }
+#fw-me-pages-host .fwm-favmenu-row:last-child { border-bottom: 0; }
+#fw-me-pages-host .fwm-favmenu-row.is-active { color: #07c160; font-weight: 500; }
+#fw-me-pages-host .fwm-favmenu-check { color: #07c160; font-size: 15px; margin-left: 10px; }
