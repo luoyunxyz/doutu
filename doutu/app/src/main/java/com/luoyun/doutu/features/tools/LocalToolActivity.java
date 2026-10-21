@@ -561,14 +561,17 @@ public final class LocalToolActivity extends Activity {
         tabs.setGravity(Gravity.CENTER);
         tabs.setBackgroundColor(0xfff7f7f7);
         tabs.setPadding(0, dp(4), 0, dp(4));
-        String[][] defs = {{"tab_wechat", "微信", "home"}, {"tab_contacts", "通讯录", "contacts"}, {"tab_discover", "发现", "discover"}, {"tab_me", "我", "profile"}};
+        String[][] defs = {{"💬", "微信", "home"}, {"👥", "通讯录", "contacts"}, {"🧭", "发现", "discover"}, {"👤", "我", "profile"}};
         for (String[] d : defs) {
             LinearLayout tab = new LinearLayout(this);
             tab.setOrientation(LinearLayout.VERTICAL);
             tab.setGravity(Gravity.CENTER);
             boolean on = active.equals(d[2]);
-            ImageView icon = assetIcon(d[0], 25);
-            tab.addView(icon, new LinearLayout.LayoutParams(dp(25), dp(25)));
+            TextView icon = new TextView(this);
+            icon.setText(d[0]);
+            icon.setTextSize(20);
+            icon.setGravity(Gravity.CENTER);
+            tab.addView(icon);
             TextView label = new TextView(this);
             label.setText(d[1]);
             label.setTextSize(10);
