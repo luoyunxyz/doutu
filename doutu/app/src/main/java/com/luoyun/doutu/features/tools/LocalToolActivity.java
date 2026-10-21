@@ -78,7 +78,7 @@ public final class LocalToolActivity extends Activity {
         tv.setGravity(Gravity.CENTER);
         bar.addView(tv, new LinearLayout.LayoutParams(0, dp(50), 1f));
         bar.addView(new View(this), new LinearLayout.LayoutParams(dp(88), dp(50)));
-        if (!("home".equals(key) || "contacts".equals(key) || "moments".equals(key) || "profile".equals(key) || "discover".equals(key) || "chat".equals(key) || "wallet".equals(key) || "transfer".equals(key) || "redpacket".equals(key) || "paysuccess".equals(key) || "pay".equals(key) || "billstats".equals(key) || "service".equals(key) || "favorites".equals(key) || "cards".equals(key) || "stickers".equals(key) || "redpackets".equals(key) || "broadcast".equals(key) || "payee".equals(key) || "walletdetail".equals(key) || "newfriends".equals(key))) root.addView(bar);
+        if (!("home".equals(key) || "contacts".equals(key) || "moments".equals(key) || "profile".equals(key) || "discover".equals(key) || "chat".equals(key) || "wallet".equals(key) || "transfer".equals(key) || "redpacket".equals(key) || "paysuccess".equals(key) || "pay".equals(key) || "billstats".equals(key) || "service".equals(key) || "favorites".equals(key) || "cards".equals(key) || "stickers".equals(key) || "redpackets".equals(key) || "broadcast".equals(key) || "payee".equals(key) || "walletdetail".equals(key) || "newfriends".equals(key) || "pickchat".equals(key) || "pickgroup".equals(key))) root.addView(bar);
 
         ScrollView scroll = new ScrollView(this);
         content = new LinearLayout(this);
@@ -99,6 +99,8 @@ public final class LocalToolActivity extends Activity {
         else if ("profile".equals(key)) buildProfile();
         else if ("chat".equals(key)) buildChat();
         else if ("wallet".equals(key)) buildWallet();
+        else if ("pickchat".equals(key)) buildPickContacts(false);
+        else if ("pickgroup".equals(key)) buildPickContacts(true);
         else if ("walletdetail".equals(key)) buildWalletDetail();
         else if ("newfriends".equals(key)) buildNewFriends();
         else if ("payee".equals(key)) buildPayee();
@@ -1590,6 +1592,82 @@ public final class LocalToolActivity extends Activity {
                 card.addView(line, llp);
             }
         }
+    }
+
+    private void buildPickContacts(boolean group) {
+        content.setBackgroundColor(0xffededed);
+        content.setPadding(0, 0, 0, 0);
+        final List<String> picked = new ArrayList<>();
+
+        LinearLayout bar = new LinearLayout(this);
+        bar.setGravity(Gravity.CENTER_VERTICAL);
+        bar.setBackgroundColor(0xffededed);
+        ImageView back = assetIcon("ic_wx_chat_title_back", 21);
+        back.setOnClickListener(v -> finish());
+        bar.addView(back, new LinearLayout.LayoutParams(dp(43), dp(43)));
+        TextView title = new TextView(this);
+        title.setText(group ? "选择联系人" : "选择联系人");
+        title.setTextSize(16);
+        title.setTextColor(0xff191919);
+        title.setGravity(Gravity.CENTER);
+        bar.addView(title, new LinearLayout.LayoutParams(0, dp(43), 1f));
+        TextView done = new TextView(this);
+        done.setText("确定");
+        done.setTextSize(15);
+        done.setTextColor(0xff07c160);
+        done.setGravity(Gravity.CENTER);
+        bar.addView(done, new LinearLayout.LayoutParams(dp(60), dp(43)));
+        content.addView(bar);
+
+        EditText search = new EditText(this);
+        search.setHint("搜索联系人");
+        search.setTextSize(14);
+        search.setSingleLine(true);
+        LinearLayout.LayoutParams slp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(42));
+        slp.leftMargin = dp(10);
+        slp.rightMargin = dp(10);
+        slp.topMargin = dp(8);
+        content.addView(search, slp);
+
+        if (contacts.isEmpty()) { contacts.add("文件传输助手"); contacts.add("本地好友"); }
+        LinearLayout list = new LinearLayout(this);
+        list.setOrientation(LinearLayout.VERTICAL);
+        list.setBackgroundColor(Color.WHITE);
+        content.addView(list);
+        for (String c : contacts) {
+            LinearLayout row = new LinearLayout(this);
+            row.setGravity(Gravity.CENTER_VERTICAL);
+            row.setPadding(dp(14), dp(8), dp(14), dp(8));
+            android.widget.CheckBox cb = new android.widget.CheckBox(this);
+            cb.setOnCheckedChangeListener((b, checked) -> {
+                if (checked) { if (!picked.contains(c)) picked.add(c); }
+                else picked.remove(c);
+            });
+            row.addView(cb, new LinearLayout.LayoutParams(dp(36), dp(36)));
+            row.addView(assetIcon("ic_wx_default_image", 40), new LinearLayout.LayoutParams(dp(40), dp(40)));
+            TextView name = new TextView(this);
+            name.setText(c);
+            name.setTextSize(15);
+            name.setTextColor(0xff191919);
+            name.setPadding(dp(12), 0, 0, 0);
+            row.addView(name, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+            list.addView(row);
+        }
+
+        done.setOnClickListener(v -> {
+            if (picked.isEmpty()) { toast("请选择联系人"); return; }
+            if (group) {
+                List<String> groups = split("groups");
+                String g = "本地群聊(" + picked.size() + ")";
+                groups.add(0, g);
+                saveList("groups", groups);
+                toast("已创建 " + g);
+                finish();
+            } else {
+                LocalToolActivity.open(this, "chat", picked.get(0));
+                finish();
+            }
+        });
     }
 
     private void buildService() {
