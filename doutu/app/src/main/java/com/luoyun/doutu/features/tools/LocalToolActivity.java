@@ -780,58 +780,65 @@ public final class LocalToolActivity extends Activity {
 
     private void buildHome() {
         boolean wechat = title.contains("微");
+        content.setBackgroundColor(0xffededed);
+
         LinearLayout header = new LinearLayout(this);
-        header.setGravity(Gravity.CENTER);
-        header.setBackgroundColor(Color.WHITE);
+        header.setGravity(Gravity.CENTER_VERTICAL);
+        header.setBackgroundColor(0xffededed);
+        TextView back = new TextView(this);
+        back.setText("‹");
+        back.setTextSize(26);
+        back.setTextColor(0xff191919);
+        back.setGravity(Gravity.CENTER);
+        back.setOnClickListener(v -> finish());
+        header.addView(back, new LinearLayout.LayoutParams(dp(48), dp(48)));
         TextView h = new TextView(this);
         h.setText(wechat ? "微信" : title);
-        h.setTextSize(18);
+        h.setTextSize(17);
         h.setTextColor(0xff191919);
         h.setGravity(Gravity.CENTER);
         header.addView(h, new LinearLayout.LayoutParams(0, dp(48), 1f));
+        TextView search = new TextView(this);
+        search.setText("🔍");
+        search.setTextSize(18);
+        search.setGravity(Gravity.CENTER);
+        header.addView(search, new LinearLayout.LayoutParams(dp(44), dp(48)));
         TextView plus = new TextView(this);
         plus.setText("＋");
         plus.setTextSize(24);
-        plus.setTextColor(0xff333333);
+        plus.setTextColor(0xff191919);
         plus.setGravity(Gravity.CENTER);
-        plus.setPadding(0, 0, dp(12), 0);
-        header.addView(plus, new LinearLayout.LayoutParams(dp(56), dp(48)));
+        header.addView(plus, new LinearLayout.LayoutParams(dp(48), dp(48)));
         content.addView(header);
         View line = new View(this);
-        line.setBackgroundColor(0xffeeeeee);
+        line.setBackgroundColor(0xffd9d9d9);
         content.addView(line, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(1)));
 
         if (contacts.isEmpty()) { contacts.add("文件传输助手"); contacts.add("本地好友"); }
-        TextView ch = new TextView(this);
-        ch.setText("聊天");
-        ch.setTextSize(12);
-        ch.setTextColor(0xff888888);
-        ch.setPadding(dp(14), dp(12), 0, dp(4));
-        content.addView(ch);
         for (int i = 0; i < contacts.size(); i++) {
             String c = contacts.get(i);
             LinearLayout row = new LinearLayout(this);
             row.setGravity(Gravity.CENTER_VERTICAL);
             row.setBackgroundColor(Color.WHITE);
-            row.setPadding(dp(14), dp(12), dp(14), dp(12));
+            row.setPadding(dp(12), dp(9), dp(12), dp(9));
             TextView avatar = new TextView(this);
             avatar.setText(c.substring(0, 1));
             avatar.setTextSize(18);
             avatar.setTextColor(Color.WHITE);
             avatar.setGravity(Gravity.CENTER);
-            avatar.setBackgroundColor(0xff07c160);
-            row.addView(avatar, new LinearLayout.LayoutParams(dp(44), dp(44)));
+            avatar.setBackgroundColor(i == 0 ? 0xff07c160 : 0xff5b8ff9);
+            row.addView(avatar, new LinearLayout.LayoutParams(dp(48), dp(48)));
             LinearLayout texts = new LinearLayout(this);
             texts.setOrientation(LinearLayout.VERTICAL);
             texts.setPadding(dp(12), 0, 0, 0);
             TextView name = new TextView(this);
             name.setText(c);
-            name.setTextSize(15);
+            name.setTextSize(16);
             name.setTextColor(0xff191919);
             texts.addView(name);
             TextView preview = new TextView(this);
             preview.setText(i == 0 ? "你好，这是本地独立工具" : "消息只保存在本机");
-            preview.setTextSize(12);
+            preview.setTextSize(13);
             preview.setTextColor(0xff999999);
             texts.addView(preview);
             row.addView(texts, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
@@ -841,31 +848,39 @@ public final class LocalToolActivity extends Activity {
             time.setTextColor(0xffb2b2b2);
             row.addView(time);
             row.setOnClickListener(v -> LocalToolActivity.open(this, "chat", c));
-            LinearLayout.LayoutParams rlp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            content.addView(row, rlp);
+            content.addView(row, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
             View d = new View(this);
-            d.setBackgroundColor(0xfff2f2f2);
+            d.setBackgroundColor(0xffe5e5e5);
             LinearLayout.LayoutParams dlp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(1));
-            dlp.leftMargin = dp(70);
+            dlp.leftMargin = dp(72);
             content.addView(d, dlp);
         }
 
         LinearLayout tabs = new LinearLayout(this);
         tabs.setGravity(Gravity.CENTER);
         tabs.setBackgroundColor(0xfff7f7f7);
-        tabs.setPadding(0, dp(8), 0, dp(8));
-        String[][] tabDefs = {{"微信", "home"}, {"通讯录", "contacts"}, {"发现", "moments"}, {"我", "profile"}};
+        tabs.setPadding(0, dp(6), 0, dp(4));
+        String[][] tabDefs = {{"💬", "微信", "home"}, {"👥", "通讯录", "contacts"}, {"🧭", "发现", "moments"}, {"👤", "我", "profile"}};
         for (String[] td : tabDefs) {
-            TextView tab = new TextView(this);
-            boolean active = "微信".equals(td[0]);
-            tab.setText(td[0]);
-            tab.setTextSize(11);
+            LinearLayout tab = new LinearLayout(this);
+            tab.setOrientation(LinearLayout.VERTICAL);
             tab.setGravity(Gravity.CENTER);
-            tab.setTextColor(active ? 0xff07c160 : 0xff666666);
+            boolean active = "微信".equals(td[1]);
+            TextView icon = new TextView(this);
+            icon.setText(td[0]);
+            icon.setTextSize(20);
+            icon.setGravity(Gravity.CENTER);
+            tab.addView(icon);
+            TextView label = new TextView(this);
+            label.setText(td[1]);
+            label.setTextSize(10);
+            label.setTextColor(active ? 0xff07c160 : 0xff666666);
+            label.setGravity(Gravity.CENTER);
+            tab.addView(label);
             tab.setOnClickListener(v -> {
-                if (!"home".equals(td[1])) LocalToolActivity.open(this, td[1], td[0]);
+                if (!"home".equals(td[2])) LocalToolActivity.open(this, td[2], td[1]);
             });
-            tabs.addView(tab, new LinearLayout.LayoutParams(0, dp(40), 1f));
+            tabs.addView(tab, new LinearLayout.LayoutParams(0, dp(52), 1f));
         }
         content.addView(tabs);
     }
