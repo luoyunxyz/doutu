@@ -1905,6 +1905,13 @@ static final class FeatureRow {
                     overridePendingTransition(0, 0);
                     return;
                 }
+                // 微信收款助手：真机是「个人收款服务」消息卡 + 个人收款/经营收款/更多
+                if ("#/wechat/service".equals(route)) {
+                    startActivity(new Intent(MainActivity.this,
+                            com.luoyun.doutu.features.wx.WxReceiptAssistantActivity.class));
+                    overridePendingTransition(0, 0);
+                    return;
+                }
                 startActivity(com.luoyun.doutu.features.wei.WeiHomeActivity
                         .intentFor(MainActivity.this, route)
                         .addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_SINGLE_TOP));
