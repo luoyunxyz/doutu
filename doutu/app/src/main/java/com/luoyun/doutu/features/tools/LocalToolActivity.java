@@ -112,7 +112,7 @@ public final class LocalToolActivity extends Activity {
         else if ("redpackets".equals(key)) buildRedPackets();
         else if ("paysuccess".equals(key)) buildSuccess();
         else if ("settings".equals(key) || "status".equals(key)) buildSwitches("状态与显示", new String[]{"显示未读红点", "在线状态", "悬浮窗快捷入口"});
-        else if ("voice".equals(key)) buildSwitches("语音播报", new String[]{"收款语音播报", "红包到账播报", "转账到账播报"});
+        else if ("voice".equals(key)) buildVoice();
         else if ("order".equals(key)) buildOrders();
         else if ("assets".equals(key)) buildAssets();
         else if ("comment".equals(key)) buildComment();
@@ -381,6 +381,16 @@ public final class LocalToolActivity extends Activity {
                 Bitmap bmp = AvatarUpload.decode(this, android.net.Uri.parse(p));
                 if (bmp != null) iv.setImageBitmap(bmp);
             } catch (Exception ignored) { }
+            iv.setOnLongClickListener(v -> {
+                new AlertDialog.Builder(this).setTitle("删除图片").setMessage("只从本地相册移除")
+                        .setNegativeButton("取消", null)
+                        .setPositiveButton("删除", (d, w) -> {
+                            albumImages.remove(p);
+                            saveList("album", albumImages);
+                            renderAlbum();
+                        }).show();
+                return true;
+            });
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(dp(96), dp(96));
             lp.bottomMargin = dp(8);
             albumGrid.addView(iv, lp);
@@ -553,6 +563,7 @@ public final class LocalToolActivity extends Activity {
             tv.setTextColor(0xff1d1f26);
             tv.setBackgroundColor(Color.WHITE);
             tv.setPadding(dp(14), dp(14), dp(14), dp(14));
+            tv.setOnClickListener(v -> new AlertDialog.Builder(this).setTitle(head).setMessage(line).setPositiveButton("关闭", null).show());
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
             lp.bottomMargin = dp(8);
             content.addView(tv, lp);
@@ -975,6 +986,25 @@ public final class LocalToolActivity extends Activity {
             orders.add("订单 20261021002\\n\\n本地示例订单 · 已完成");
         }
         buildInfo("淘订单", orders.toArray(new String[0]));
+    }
+
+
+    private void buildVoice() {
+        buildSwitches("语音播报", new String[]{"收款语音播报", "红包到账播报", "转账到账播报"});
+        Button tryBtn = new Button(this);
+        tryBtn.setText("试听语音播报");
+        tryBtn.setAllCaps(false);
+        tryBtn.setOnClickListener(v -> {
+            try {
+                final android.speech.tts.TextToSpeech tts = new android.speech.tts.TextToSpeech(this, status -> { });
+                tts.setOnUtteranceProgressListener(null);
+                tts.speak("微信收款五十元", android.speech.tts.TextToSpeech.QUEUE_FLUSH, null, "doutu_voice");
+                new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> { try { tts.shutdown(); } catch (Exception ignored) { } }, 4000);
+            } catch (Exception e) {
+                toast("本机没有可用的语音引擎");
+            }
+        });
+        content.addView(tryBtn, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(48)));
     }
 
     private int dp(int v) {
