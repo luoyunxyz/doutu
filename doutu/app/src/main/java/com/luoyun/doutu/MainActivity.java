@@ -2050,7 +2050,9 @@ static final class FeatureRow {
                     startActivity(com.luoyun.doutu.features.zhi.ReceiptActivity.intentFor(MainActivity.this));
                     break;
                 case "act:paysuccess":
-                    startActivity(com.luoyun.doutu.features.zhi.PaySuccessActivity.intentFor(MainActivity.this));
+                    // 支付成功：真机是对勾 + 支付成功 + ¥金额 + 交易方式 + 上传真实截图
+                    startActivity(new Intent(MainActivity.this,
+                            com.luoyun.doutu.features.ali.AliPaySuccessActivity.class));
                     break;
                 case "act:sound":
                     com.luoyun.doutu.features.sound.AccountSoundActivity.open(MainActivity.this);
