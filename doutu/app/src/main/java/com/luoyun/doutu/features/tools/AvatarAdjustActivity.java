@@ -287,10 +287,15 @@ public final class AvatarAdjustActivity extends Activity {
         }
 
         void resetBox() {
-            box.set(img.isEmpty() ? new RectF(200, 400, 800, 1400) : img);
-            float w = box.width() * 0.55f, h = box.height() * 0.75f;
-            box.set(box.centerX() - w / 2, box.centerY() - h / 2,
-                    box.centerX() + w / 2, box.centerY() + h / 2);
+            // 头像框固定为正方形：边长取图片短边的 55%，居中摆放
+            RectF base = img.isEmpty()
+                    ? new RectF(0, 0, Math.max(1, getWidth()), Math.max(1, getHeight()))
+                    : new RectF(img);
+            float side = Math.min(base.width(), base.height()) * 0.55f;
+            if (side < 1f) side = Math.min(base.width(), base.height());
+            box.set(base.centerX() - side / 2, base.centerY() - side / 2,
+                    base.centerX() + side / 2, base.centerY() + side / 2);
+            clamp();
             invalidate();
         }
 
