@@ -1905,6 +1905,13 @@ static final class FeatureRow {
                     overridePendingTransition(0, 0);
                     return;
                 }
+                // 公众号：真机是在微信首页上弹「常用图标/名称/消息内容/三个开关」的弹窗
+                if ("tool:gzh".equals(route)) {
+                    startActivity(new Intent(MainActivity.this,
+                            com.luoyun.doutu.features.wx.WxOfficialAccountActivity.class));
+                    overridePendingTransition(0, 0);
+                    return;
+                }
                 // 零钱提现：真机是「到账银行卡 + 提现金额 + 键盘」的提现页
                 if ("#/wechat/wallet/withdraw".equals(route)) {
                     startActivity(new Intent(MainActivity.this,
