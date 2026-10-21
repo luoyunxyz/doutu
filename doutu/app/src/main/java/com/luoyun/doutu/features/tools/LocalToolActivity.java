@@ -1133,7 +1133,7 @@ public final class LocalToolActivity extends Activity {
         content.setBackgroundColor(Color.WHITE);
         content.setPadding(0, 0, 0, 0);
         String raw = getSharedPreferences(PREFS, 0).getString("last_pay", "本地支付|0.00");
-        String[] parts = raw.split("\|");
+        String[] parts = raw.split("\\|");
         String merchant = parts.length > 0 ? parts[0] : "本地支付";
         String amount = parts.length > 1 ? parts[1] : "0.00";
 
