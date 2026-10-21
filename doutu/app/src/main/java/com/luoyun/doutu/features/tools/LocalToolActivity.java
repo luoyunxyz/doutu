@@ -596,25 +596,27 @@ public final class LocalToolActivity extends Activity {
         tabs.setGravity(Gravity.CENTER);
         tabs.setBackgroundColor(0xfff7f7f7);
         tabs.setPadding(0, dp(4), 0, dp(4));
-        String[][] defs = {{"💬", "微信", "home"}, {"👥", "通讯录", "contacts"}, {"🧭", "发现", "discover"}, {"👤", "我", "profile"}};
+        String[][] defs = {
+                {"btn_wx_outlin_conversation", "btn_wx_filled_conversation", "微信", "home"},
+                {"btn_wx_outlin_contacts", "btn_wx_filled_contacts", "通讯录", "contacts"},
+                {"btn_wx_outline_find", "btn_wx_filled_find", "发现", "discover"},
+                {"btn_wx_outlin_me", "btn_wx_filled_me", "我", "profile"}
+        };
         for (String[] d : defs) {
             LinearLayout tab = new LinearLayout(this);
             tab.setOrientation(LinearLayout.VERTICAL);
             tab.setGravity(Gravity.CENTER);
-            boolean on = active.equals(d[2]);
-            TextView icon = new TextView(this);
-            icon.setText(d[0]);
-            icon.setTextSize(20);
-            icon.setGravity(Gravity.CENTER);
-            tab.addView(icon);
+            boolean on = active.equals(d[3]);
+            ImageView icon = assetIcon(on ? d[1] : d[0], 25);
+            tab.addView(icon, new LinearLayout.LayoutParams(dp(25), dp(25)));
             TextView label = new TextView(this);
-            label.setText(d[1]);
+            label.setText(d[2]);
             label.setTextSize(10);
             label.setTextColor(on ? 0xff07c160 : 0xff191919);
             label.setGravity(Gravity.CENTER);
             tab.addView(label);
             tab.setOnClickListener(v -> {
-                if (!on) LocalToolActivity.open(this, d[2], d[1]);
+                if (!on) LocalToolActivity.open(this, d[3], d[2]);
             });
             tabs.addView(tab, new LinearLayout.LayoutParams(0, dp(47), 1f));
         }
