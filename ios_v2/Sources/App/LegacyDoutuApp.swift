@@ -2162,6 +2162,22 @@ final class Router {
             UpdatePrompt.topViewController()?.present(sheet, animated: true)
             return
         }
+        if rest == "withdraw" {
+            push(AliWithdrawScreen(), state: AliWithdrawScreen.State())
+            return
+        }
+        if rest.hasPrefix("withdraw:") {
+            handleAliWithdraw(String(rest.dropFirst("withdraw:".count)))
+            return
+        }
+        if rest == "order" {
+            push(AliOrderScreen(), state: AliOrderScreen.State())
+            return
+        }
+        if rest.hasPrefix("order:") {
+            handleAliOrder(String(rest.dropFirst("order:".count)))
+            return
+        }
         if rest == "redpacket" {
             push(AliRedPacketDetailScreen(), state: AliRedPacketDetailScreen.State())
             return
@@ -2321,6 +2337,36 @@ final class Router {
         state.messages.append(message)
         AliChatStore.shared.touch(name: state.title, last: message)
         host?.setNeedsDisplay()
+    }
+
+    /// 提现页的令牌：`all` 全部提现（填 0.10）/ `confirm` 提交后关页 / `done` 直接关页。
+    private func handleAliWithdraw(_ rest: String) {
+        switch rest {
+        case "all":
+            if let state = host?.state as? AliWithdrawScreen.State {
+                state.amount = "0.10"
+                host?.setNeedsDisplay()
+            }
+        case "confirm":
+            showToast("提现申请已提交", ok: true)
+            pop()
+        case "done":
+            pop()
+        default:
+            break
+        }
+    }
+
+    /// 订单页的令牌：目前都是提示（物流 / 商品按钮 / 订单服务 / 更多）。
+    private func handleAliOrder(_ rest: String) {
+        switch rest {
+        case "logistics": showToast("查看物流", ok: false)
+        case "buttons": showToast("订单操作（演示）", ok: false)
+        case "service": showToast("订单服务（演示）", ok: false)
+        case "row": showToast("订单信息（演示）", ok: false)
+        case "more": showToast("更多（演示）", ok: false)
+        default: break
+        }
     }
 
     /// 红包**编辑页**的令牌：`amount` / `bless` / `sender`（切换发送人）/ `send`（发送 → 详情页）。

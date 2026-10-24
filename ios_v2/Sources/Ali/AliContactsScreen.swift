@@ -111,14 +111,29 @@ final class AliContactsScreen: Screen {
     func draw(_ d: Draw, state: ScreenState) {
         d.rect(CGRect(x: 0, y: 0, width: Self.W, height: Self.H), bg)
 
-        for row in rows() {
+        // 顶部 7 行是**一整张**圆角卡（Java:172-203 只给 card 设了一次 background），
+        // 逐行各自圆角会在行与行之间露出灰底锯齿 —— 先把整张卡铺出来，行只画内容。
+        let allRows = rows()
+        let topRects = allRows.compactMap { row -> CGRect? in
+            if case .topItem = row.kind { return row.rect }
+            return nil
+        }
+        if let first = topRects.first, let last = topRects.last {
+            d.round(CGRect(x: first.minX, y: first.minY,
+                           width: first.width, height: last.maxY - first.minY),
+                    radius: dp(12), .white)
+        }
+
+        for row in allRows {
             switch row.kind {
             case .search:
                 drawSearch(d, rect: row.rect)
             case let .topItem(index):
-                drawIconRow(d, rect: row.rect, icon: topIcons[index], title: topNames[index])
+                drawIconRow(d, rect: row.rect, icon: topIcons[index], title: topNames[index],
+                            rounded: false)
             case .batch:
-                drawIconRow(d, rect: row.rect, icon: "ali_new_friend", title: "批量添加")
+                drawIconRow(d, rect: row.rect, icon: "ali_new_friend", title: "批量添加",
+                            rounded: true)
             case let .letter(letter):
                 guard !letter.isEmpty else { continue }
                 d.text(letter, x: dp(16),
@@ -162,8 +177,12 @@ final class AliContactsScreen: Screen {
     }
 
     /// 白卡里的一行：38dp 图标 + 16sp 粗体文字
-    private func drawIconRow(_ d: Draw, rect: CGRect, icon: String, title: String) {
-        d.round(rect, radius: dp(12), .white)
+    private func drawIconRow(_ d: Draw, rect: CGRect, icon: String, title: String,
+                             rounded: Bool) {
+        // 顶部七行共用一张卡，行本身不再圆角（否则行间露出灰底锯齿）
+        if rounded {
+            d.round(rect, radius: dp(12), .white)
+        }
         let iconSize = dp(38)
         d.art(UIImage(named: icon),
               CGRect(x: rect.minX + dp(12), y: rect.midY - iconSize / 2,
