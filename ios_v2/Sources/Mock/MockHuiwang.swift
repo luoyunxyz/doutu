@@ -20,17 +20,14 @@ enum MockHuiwang {
     static func page(state: MockState, metrics: MockMetrics,
                      width: CGFloat, showsTopTitle: Bool) -> MockPage {
         let b = MockBuilder(width: width, metrics: metrics)
-        switch state.sub {
-        case 0:
-            billDetail(b, state, showsTopTitle: showsTopTitle)
-        default:
-            return MockComposer.placeholder(module: .huiwang, metrics: metrics, width: width)
-        }
+        // 三个子页共用「账单详情」版式：转入的金额取正、标题不同
+        let incoming = state.sub == 1
+        billDetail(b, state, showsTopTitle: showsTopTitle, incoming: incoming)
         return b.result
     }
 
     private static func billDetail(_ b: MockBuilder, _ s: MockState,
-                                   showsTopTitle: Bool) {
+                                   showsTopTitle: Bool, incoming: Bool) {
         if showsTopTitle { b.titleBar("账单详情") }
 
         b.coloredHeaderBar("账单详情", bg: navy, fg: .white)
@@ -40,8 +37,9 @@ enum MockHuiwang {
             p.sectionLabel("交易金额                                    已付款",
                            size: dp(15), color: MockInk.label,
                            padH: 0, padTop: dp(6), padBottom: dp(6))
-            p.sectionLabel(s.value("金额", "-100.00 USD"), size: dp(40),
-                           color: amountBlue, padH: 0, padTop: dp(4), padBottom: dp(8))
+            p.sectionLabel(s.value("金额", incoming ? "100.00 USD" : "-100.00 USD"),
+                           size: dp(40), color: amountBlue,
+                           padH: 0, padTop: dp(4), padBottom: dp(8))
             p.sectionLabel("交易后的金额：****** USD", size: dp(14),
                            color: MockInk.label, padH: 0, padTop: 0, padBottom: 0)
         }

@@ -17,25 +17,29 @@ enum MockTPWallet {
         let b = MockBuilder(width: width, metrics: metrics)
         switch state.sub {
         case 0:
-            detail(b, state, showsTopTitle: showsTopTitle)
+            detail(b, state, showsTopTitle: showsTopTitle, incoming: true)
         default:
-            return MockComposer.placeholder(module: .tp, metrics: metrics, width: width)
+            // 转出：同一张交易详情，金额取负、标题换掉
+            detail(b, state, showsTopTitle: showsTopTitle, incoming: false)
         }
         return b.result
     }
 
-    private static func detail(_ b: MockBuilder, _ s: MockState, showsTopTitle: Bool) {
-        if showsTopTitle { b.titleBar("交易详情") }
+    private static func detail(_ b: MockBuilder, _ s: MockState,
+                               showsTopTitle: Bool, incoming: Bool) {
+        if showsTopTitle { b.titleBar(incoming ? "转入" : "转出") }
 
         b.fill(dp(0), MockInk.page)
-        b.coloredHeaderBar("交易详情", bg: MockInk.page, fg: MockInk.title)
+        b.coloredHeaderBar(incoming ? "交易详情" : "转出详情",
+                           bg: MockInk.page, fg: MockInk.title)
 
         // 绿勾 + 交易成功 + 金额
         b.gap(dp(16))
         b.checkBadge(diameter: dp(76), color: green, gapTop: dp(4), symbolSize: dp(42))
         b.sectionLabel("交易成功", size: dp(17), color: green,
                        padH: 0, padTop: dp(10), padBottom: 0)
-        b.sectionLabel(s.value("金额", "+70 USDT"), size: dp(26), color: MockInk.title,
+        b.sectionLabel(s.value("金额", incoming ? "+70 USDT" : "-70 USDT"),
+                       size: dp(26), color: MockInk.title,
                        padH: 0, padTop: dp(6), padBottom: 0)
 
         // 发送方 / 接收方

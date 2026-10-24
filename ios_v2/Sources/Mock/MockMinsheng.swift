@@ -9,16 +9,15 @@ enum MockMinsheng {
     static func page(state: MockState, metrics: MockMetrics,
                      width: CGFloat, showsTopTitle: Bool) -> MockPage {
         let b = MockBuilder(width: width, metrics: metrics)
-        switch state.sub {
-        case 0:
-            detail(b, state, showsTopTitle: showsTopTitle)
-        default:
-            return MockComposer.placeholder(module: .minsheng, metrics: metrics, width: width)
-        }
+        // 三个子页共用「交易详情」版式：转入取正、转入支付宝换个摘要
+        let incoming = state.sub != 0
+        detail(b, state, showsTopTitle: showsTopTitle, incoming: incoming,
+               alipay: state.sub == 2)
         return b.result
     }
 
-    private static func detail(_ b: MockBuilder, _ s: MockState, showsTopTitle: Bool) {
+    private static func detail(_ b: MockBuilder, _ s: MockState, showsTopTitle: Bool,
+                               incoming: Bool, alipay: Bool) {
         if showsTopTitle { b.titleBar("交易详情") }
 
         // 灰底 + 白底顶栏
@@ -27,9 +26,10 @@ enum MockMinsheng {
 
         // 金额 + 六行明细（同一张白卡）
         b.panel(gapTop: dp(8), margin: dp(12), pad: dp(16), bg: .white) { p in
-            p.sectionLabel(s.value("金额", "- ¥ 2,000.00"), size: dp(34),
-                           color: MockInk.title, padH: 0, padTop: dp(8), padBottom: dp(10))
-            p.row("摘要", s.value("摘要", "手机转账"))
+            p.sectionLabel(s.value("金额", incoming ? "+ ¥ 2,000.00" : "- ¥ 2,000.00"),
+                           size: dp(34), color: MockInk.title,
+                           padH: 0, padTop: dp(8), padBottom: dp(10))
+            p.row("摘要", s.value("摘要", alipay ? "支付宝转账" : "手机转账"))
             p.row("交易卡号", s.value("交易卡号", "民生卡6226 22** **** 5978"))
             p.row("对方户名", s.value("对方户名", "李四喜"))
             p.row("对方账户", s.value("对方账户", "6227 64** **** 3815"))
