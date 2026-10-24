@@ -25,13 +25,47 @@ enum MockAlipay {
             // 扫码转出2 / 对行转出 / 对支付宝转出 / 话费转出 / 明细(转出)
             transfer(b, s: state, title: title, showsTopTitle: showsTopTitle)
         case 6:
-            // 消息盒子
-            if showsTopTitle { b.titleBar("消息盒子") }
-            b.coloredHeaderBar("消息盒子", bg: .white, fg: MockInk.title)
-            b.row("支付宝", "支付成功 ¥100.00")
-            b.row("余额宝", "收益到账 ¥0.12")
-            b.row("花呗", "本月账单已出")
-            b.gap(dp(20))
+            // 消息盒子：账单详情（按 `ali_sub6` 截图复刻）
+            if showsTopTitle { b.titleBar("账单详情") }
+            b.sectionLabel("‹  账单详情", size: dp(19), color: MockInk.title,
+                           padH: dp(16), padTop: dp(12), padBottom: dp(8))
+            b.panel(gapTop: dp(6), margin: dp(12), pad: dp(14), bg: .white) { p in
+                p.sectionLabel("■", size: dp(36), color: UIColor(red: 0xe6 / 255.0,
+                                                                green: 0x5a / 255.0,
+                                                                blue: 0x1e / 255.0, alpha: 1),
+                               padH: 0, padTop: 0, padBottom: dp(4))
+                p.sectionLabel(s.value("名称", "风筝"), size: dp(20), color: MockInk.title,
+                               padH: 0, padTop: 0, padBottom: dp(4))
+                p.sectionLabel(s.value("金额", "-100.00"), size: dp(44), color: MockInk.black,
+                               padH: 0, padTop: dp(4), padBottom: dp(4))
+                p.sectionLabel("交易成功", size: dp(15), color: MockInk.label,
+                               padH: 0, padTop: 0, padBottom: dp(12))
+                p.row("付款方式", "花呗 ›")
+                p.row("支付宝积分", "立即领取25积分(已翻5倍)")
+                p.row("商品说明", "收钱码收款")
+                p.row("收款方全称", "**岚(个人)")
+                p.row("支付日期", s.time)
+                p.row("订单号", "2022100822001454681448487984")
+            }
+            b.panel(gapTop: dp(12), margin: dp(12), pad: dp(14), bg: .white) { p in
+                p.chevronRow("联系收款方", size: dp(16), color: MockInk.title,
+                             padH: 0, padV: dp(14))
+                p.chevronRow("账单分类          其他", size: dp(16), color: MockInk.title,
+                             padH: 0, padV: dp(14))
+                p.chevronRow("标签和备注          添加", size: dp(16), color: MockInk.title,
+                             padH: 0, padV: dp(14))
+                p.chevronRow("查看往来记录", size: dp(16), color: MockInk.title,
+                             padH: 0, padV: dp(14))
+            }
+        case 8, 9, 10, 11:
+            // 扫码收款1/2、商户转出1/2：收款码式
+            if showsTopTitle { b.titleBar(title) }
+            b.coloredHeaderBar(title, bg: .white, fg: MockInk.title)
+            b.sectionLabel("¥ 100.00", size: dp(40), color: MockInk.black,
+                           padH: 0, padTop: dp(60), padBottom: dp(10))
+            b.sectionLabel("扫一扫付款", size: dp(15), color: MockInk.label,
+                           padH: 0, padTop: 0, padBottom: dp(20))
+            b.gap(dp(200))
         case 7:
             // 收支明细
             if showsTopTitle { b.titleBar("收支明细") }
@@ -43,14 +77,8 @@ enum MockAlipay {
             b.row("余额宝-转入", "+200.00")
             b.gap(dp(20))
         default:
-            // 扫码收款1/2、商户转出1/2：收款码式
-            if showsTopTitle { b.titleBar(title) }
-            b.coloredHeaderBar(title, bg: .white, fg: MockInk.title)
-            b.sectionLabel("¥ 100.00", size: dp(40), color: MockInk.black,
-                           padH: 0, padTop: dp(60), padBottom: dp(10))
-            b.sectionLabel("扫一扫付款", size: dp(15), color: MockInk.label,
-                           padH: 0, padTop: 0, padBottom: dp(20))
-            b.gap(dp(200))
+            // 子页 0：支付成功（蓝色大额 + 福利卡）
+            paid(b, state, showsTopTitle: showsTopTitle)
         }
         return b.result
     }
