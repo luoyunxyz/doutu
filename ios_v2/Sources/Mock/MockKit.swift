@@ -734,11 +734,12 @@ final class MockBuilder {
         self.y = startY
     }
 
-    /// 内容画完后的底板色（自动铺到画布底部）。
+    /// 内容画完后的底板色（自动铺到画布底部），默认 `nil` = 不铺（纯白到底）。
     ///
-    /// 安卓绝大多数页面在内容结束后露出浅灰底板；之前我们白到底就是因为缺这一步。
-    /// 需要保持纯白到底的页面（聊天、长列表、微信支付空页）把它设成 `nil`。
-    var autoBoard: UIColor? = MockInk.board
+    /// ⚠️ 不能默认铺灰：实测**数字钱包 / 农信 / 回单 / 欧易 / 微信 / 支付宝都是纯白底**，
+    /// 只有列表类页面（明细查询 #eeeeee、qq 入口区 #f0f1f2、聊天 #ededed、TP #f1f2f6）
+    /// 才在内容结束后露灰。所以由每页自己声明。
+    var autoBoard: UIColor?
 
     var result: MockPage {
         var finalOps = ops

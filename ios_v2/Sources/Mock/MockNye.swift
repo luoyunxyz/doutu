@@ -203,6 +203,8 @@ enum MockNye {
                               showsTopTitle: Bool) {
         let m = b.metrics
         if showsTopTitle { b.titleBar("明细查询") }
+        // 明细查询内容下方露 #eeeeee 底板（安卓实测 nye_sub2_detail）
+        b.autoBoard = MockInk.board
 
         b.cardRow("卡号", logo: "mock_abc",
                   text: s.value("卡号", out ? "6228 **** 0979" : "6221 **** 3665"))

@@ -26,6 +26,8 @@ enum MockLiushui {
         let names = MockModule.liushui.subs
         let title = names.indices.contains(s.sub) ? names[s.sub] : "明细查询"
         if showsTopTitle { b.titleBar(title) }
+        // 内容下方露 #eeeeee 底板（与农业明细查询一致）
+        b.autoBoard = MockInk.board
 
         b.coloredHeaderBar(title, bg: .white, fg: MockInk.title)
 
