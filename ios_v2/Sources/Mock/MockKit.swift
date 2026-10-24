@@ -349,8 +349,11 @@ struct MockMetrics {
     /// 成品页（`NyeDetailActivity`）
     static let detail = MockMetrics(
         isDetail: true,
-        titleBarH: dp(52), titleSize: dp(19),
-        rowSize: dp(15), rowPadV: dp(12), rowPadH: dp(16),
+        // 下面这组是按**安卓设备上的 uni-app 版**实测调的（2026-10-24）：
+        // 行高 83px/3 ≈ 27.7dp（文字 15sp + 上下各 6dp），比 Java 原生版的 12dp 紧一半；
+        // 上半段（收款人/金额/状态条）反而更松，两处加起来正好让底部对齐。
+        titleBarH: dp(44), titleSize: dp(19),
+        rowSize: dp(15), rowPadV: dp(7), rowPadH: dp(16),
         statusPadV: dp(14), statusPadH: dp(16), statusSize: dp(15),
         statusCheck: dp(20), statusGap: dp(9),
         nameSize: dp(15), namePadTop: dp(16),
@@ -358,7 +361,7 @@ struct MockMetrics {
         cardPadV: dp(14), cardPadH: dp(16), cardLogo: dp(28), cardNoSize: dp(20), cardGap: dp(10),
         amtLabelSize: dp(15), amtSize: dp(28), amtPadV: dp(6), bandH: dp(10),
         linkPadV: dp(16), linkPadH: dp(16), linkSize: dp(15),
-        buttonPadV: dp(18), buttonH: dp(48), buttonSize: dp(16),
+        buttonPadV: dp(12), buttonH: dp(35), buttonSize: dp(15),
         kindPadTop: dp(24), kindSize: dp(16), kindIcon: dp(18),
         ledgerAmountSize: dp(32), ledgerPadTop: dp(2), ledgerPadBottom: dp(4),
         balSize: dp(14), balPadBottom: dp(20),
