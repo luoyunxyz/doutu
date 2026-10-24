@@ -19,26 +19,24 @@ enum MockPingan {
     static func page(state: MockState, metrics: MockMetrics,
                      width: CGFloat, showsTopTitle: Bool) -> MockPage {
         let b = MockBuilder(width: width, metrics: metrics)
-        switch state.sub {
-        case 0:
-            transferDetail(b, state, showsTopTitle: showsTopTitle)
-        default:
-            return MockComposer.placeholder(module: .pingan, metrics: metrics, width: width)
-        }
+        // 五个子页共用「转账交易详情」版式，转入取正
+        let incoming = state.sub == 2 || state.sub == 4
+        transferDetail(b, state, showsTopTitle: showsTopTitle, incoming: incoming)
         return b.result
     }
 
     // MARK: - 子页 0：转账交易详情
 
     private static func transferDetail(_ b: MockBuilder, _ s: MockState,
-                                       showsTopTitle: Bool) {
+                                       showsTopTitle: Bool, incoming: Bool) {
         if showsTopTitle { b.titleBar("转账交易详情") }
 
         // 深色金额卡
         b.panel(gapTop: dp(12), margin: dp(16), pad: dp(18), bg: navy) { p in
             p.sectionLabel("交易类型：转账", size: dp(13), color: dimText,
                            padH: 0, padTop: 0, padBottom: 0)
-            p.sectionLabel(s.value("金额", "- ¥ 100.00"), size: dp(34), color: .white,
+            p.sectionLabel(s.value("金额", incoming ? "+ ¥ 100.00" : "- ¥ 100.00"),
+                           size: dp(34), color: .white,
                            padH: 0, padTop: dp(12), padBottom: 0)
             p.sectionLabel("手续费：0.00", size: dp(13), color: dimText,
                            padH: 0, padTop: dp(12), padBottom: 0)

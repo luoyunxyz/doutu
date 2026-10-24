@@ -16,13 +16,32 @@ enum MockXingye {
         switch state.sub {
         case 0, 3:
             result(b, state, showsTopTitle: showsTopTitle)
-        case 4:
-            transferDetail(b, state, showsTopTitle: showsTopTitle)
+        case 1:
+            // 明细转入：与「明细转出2」同版式，金额取正
+            transferDetail(b, state, showsTopTitle: showsTopTitle, incoming: true)
+        case 2:
+            receipt(b, state, showsTopTitle: showsTopTitle)
         default:
-            // 1 明细转入 / 2 回单：版式还没照截图补完
-            return MockComposer.placeholder(module: .xingye, metrics: metrics, width: width)
+            transferDetail(b, state, showsTopTitle: showsTopTitle, incoming: false)
         }
         return b.result
+    }
+
+    // MARK: - 子页 2：回单（电子受理单）
+
+    private static func receipt(_ b: MockBuilder, _ s: MockState, showsTopTitle: Bool) {
+        if showsTopTitle { b.titleBar("电子回单") }
+        b.sectionLabel("电子受理单", size: dp(17), color: MockInk.title,
+                       padH: dp(16), padTop: dp(20), padBottom: dp(6))
+        b.row("收款人", s.value("收款人", "张大国"))
+        b.row("收款账号", s.value("收款账号", "6226 0222 0000 0646 9990"))
+        b.row("收款银行", s.value("收款银行", "中国工商银行"))
+        b.row("转账金额", s.value("转账金额", "100.00"))
+        b.row("交易时间", s.value("交易时间", s.time))
+        b.hairlineFull()
+        b.paragraph("本回单为电子凭证，可用于核对转账信息。",
+                    size: dp(14), color: MockInk.label,
+                    padH: dp(16), padTop: dp(12), padBottom: dp(20))
     }
 
     // MARK: - 子页 0 / 3：转账结果（`资金已转入对方账户`）
@@ -71,14 +90,15 @@ enum MockXingye {
 
     // MARK: - 子页 4：明细转出2（按「明细」模板，字段默认值来自截图）
 
-    private static func transferDetail(_ b: MockBuilder, _ s: MockState, showsTopTitle: Bool) {
+    private static func transferDetail(_ b: MockBuilder, _ s: MockState,
+                                       showsTopTitle: Bool, incoming: Bool) {
         let m = b.metrics
-        if showsTopTitle { b.titleBar("明细") }
+        if showsTopTitle { b.titleBar(incoming ? "明细转入" : "明细") }
 
         b.centerBlock("收款人", s.value("收款人", "张大国"),
                       size: m.nameSize, color: MockInk.grey,
                       padTop: m.namePadTop, padBottom: 0)
-        b.centerBlock("金额", s.value("金额", "-100.00"),
+        b.centerBlock("金额", s.value("金额", incoming ? "+100.00" : "-100.00"),
                       size: m.amountSize, color: MockInk.amount, bold: true,
                       padTop: m.amountPadTop, padBottom: m.amountPadBottom)
 
