@@ -37,6 +37,9 @@ enum MockComposer {
         case .xingye:
             return MockXingye.page(state: state, metrics: metrics, width: width,
                                    showsTopTitle: showsTopTitle)
+        case .jianshe:
+            return MockJianshe.page(state: state, metrics: metrics, width: width,
+                                    showsTopTitle: showsTopTitle)
         default:
             return placeholder(module: module, metrics: metrics, width: width)
         }
@@ -45,7 +48,7 @@ enum MockComposer {
     /// 这家银行的版式有没有写（`isBuilt` 用它，避免两处清单走偏）
     static func hasLayout(_ module: MockModule) -> Bool {
         switch module {
-        case .nye, .icbc, .boc, .psbc, .cmb, .eank, .xingye:
+        case .nye, .icbc, .boc, .psbc, .cmb, .eank, .xingye, .jianshe:
             return true
         }
     }

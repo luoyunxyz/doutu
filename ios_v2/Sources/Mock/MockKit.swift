@@ -95,6 +95,7 @@ enum MockModule: Int, CaseIterable {
     case cmb = 4      // 招商模拟（CmbActivity）
     case eank = 5     // 光大模拟（EankActivity）
     case xingye = 6   // 兴业模拟（安卓设备上的版式，无 Java 源码，按截图复刻）
+    case jianshe = 7  // 建设模拟（12 个子页，子页名与招商一致）
 
     /// 首页卡片标题（`LABELS[0...5]`）
     var title: String {
@@ -106,6 +107,7 @@ enum MockModule: Int, CaseIterable {
         case .cmb: return "招商模拟"
         case .eank: return "光大模拟"
         case .xingye: return "兴业模拟"
+        case .jianshe: return "建设模拟"
         }
     }
 
@@ -134,6 +136,11 @@ enum MockModule: Int, CaseIterable {
         case .xingye:
             // 安卓设备上「兴业模拟」抽屉里的五项（按截图抄，无 Java 源码）
             return ["明细转出", "明细转入", "回单", "转账结果", "明细转出2"]
+        case .jianshe:
+            // 与招商同名的 12 个子页（安卓设备截图）
+            return ["明细转出(旧)", "明细转入(旧)", "明细转出1", "明细支付宝转入",
+                    "明细转入", "明细转出2", "微信支付宝转入", "明细转出3",
+                    "回单", "余额", "微信转入", "财付通转出"]
         }
     }
 
@@ -147,6 +154,7 @@ enum MockModule: Int, CaseIterable {
         case .cmb: return "mock_cmb"
         case .eank: return "mock_ceb"
         case .xingye: return "mock_cib"
+        case .jianshe: return "mock_ccb"
         }
     }
 
@@ -195,6 +203,13 @@ enum MockModule: Int, CaseIterable {
             case 2: return "电子回单"
             case 3: return "转账结果"
             default: return "明细"
+            }
+        case .jianshe:
+            switch sub {
+            case 0: return "转账成功"
+            case 8: return "电子回单"
+            case 9: return "余额"
+            default: return subs.indices.contains(sub) ? subs[sub] : title
             }
         default:
             return subs.indices.contains(sub) ? subs[sub] : title
