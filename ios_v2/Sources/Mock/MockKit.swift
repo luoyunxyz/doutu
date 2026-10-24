@@ -337,10 +337,9 @@ enum MockModule: Int, CaseIterable {
         case .psbc:
             switch sub {
             case 0: return "转账结果"
-            case 1, 2, 6: return "交易详情"
-            case 3, 5: return "汇款明细查询"
+            case 3: return "电子回单"
             case 4: return "转账记录"
-            default: return "电子受理单"
+            default: return "交易详情"
             }
         case .cmb:
             switch sub {
