@@ -2427,3 +2427,51 @@ draw-api 2 / mock 13 / video 9）。而这一轮的 `check-members` 还顺手抓
 1. `AliCreateChatActivity`（206 行）—— 创建单聊；
 2. `AliChatActivity`（352）+ `AliChatStore` 已就绪 —— 聊天页；
 3. 然后是红包 / 转账（`AliRedPacket` + `AliTransfer` 系列，约 2000 行）。
+
+---
+
+## 20. 2026-10-24：支付宝单聊页（+ 创建单聊接线）
+
+### 做了什么
+
+`ios_v2/Sources/Ali/AliChatScreen.swift` —— `AliChatActivity`（377 行）的移植：
+
+- 顶栏 56dp：`‹` + 昵称 20sp + 右侧 `ali_chat_header_right` 原图（82×42dp，左半收款 / 右半更多）；
+- 消息区：气泡右对齐，16sp、`#d9f0ff` 底、圆角 8、内边距 12/9，**从底部往上排**（与
+  Android 的 `ScrollView` + `gravity=bottom` 一致）；
+- 底部 172dp 整块用 `ali_chat_bottom` 原图，上面叠透明热区，坐标照 Java 的
+  `lefts/widths`（4 个快捷短语）、输入框（38/72 边距）、语音/表情/加号、四个入口（top 88、高 84、四等分）。
+
+交互：快捷短语一点就发；点输入框弹系统输入框（iOS 没有内嵌输入法）→ 发一条；
+发完 `AliChatStore.touch` 写回最后一条，通讯录那边就会把它算成「同步来的联系人」。
+收款/更多/语音/表情/加号/相册/小视频都是「演示」提示；红包与转账提示「制作中」。
+
+**创建单聊**（工具页 `alicreatechat`、通讯录里「发起聊天」）已接通：输入昵称 → 落库 → 直接进聊天页。
+Android 那个带头像预览、自动获取、从相册获取的弹窗**先简化成输入框**（相册头像挑选留到后面）。
+
+### 切图
+
+19 张 `ali_chat_*` 在 `res/drawable-nodpi/`（不是 `assets/`），用
+`_ios/sync-ali-chat-assets.mjs` 同步，文件名保持不变。
+
+### 校验
+
+```powershell
+node _ios/v2/lint-swift.mjs        # 445 项全绿
+node _ios/v2/check-symbols.mjs     # 9 项全绿（含 4 个 Screen 必填项）
+node _ios/v2/check-members.mjs     # 1 项全绿
+node _ios/v2/check-access.mjs      # 2 项全绿
+```
+
+### 支付宝社交还差
+
+```text
+AliMsgBoxActivity(81)                     消息盒子
+AliRedPacket(405) + Detail(329)           红包
+AliTransfer(536) + Detail(885) + Ui(133)  转账（最大的两块）
+AliWithdraw(215) / AliOrder(244) / AliYearBill(126)
+AliCreateChat 的完整弹窗（头像预览 / 自动获取 / 相册）
+```
+
+工具页「阿宝」5 个入口现状：`alicreatechat` ✅ · `alicontacts` ✅ · `alimsg` ✅ ·
+`alired` ⏳ · `alitransfer` ⏳。
