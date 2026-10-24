@@ -177,16 +177,20 @@ enum MockNye {
                       padTop: m.amountPadTop, padBottom: m.amountPadBottom)
         b.gap(dp(6))
 
+        // 明细页行距按安卓实测：15sp 字 + 上下各 5dp（行距 83px）
+        let stmtSize = dp(15)
+        let stmtPadV = dp(5)
+
         b.statusBar("交易成功", trailing: "进度查询  ›")
 
-        b.row("收款账号", s.value("收款账号", "622143551800063640"))
-        b.row("收款银行", s.value("收款银行", "中国农业银行"))
+        b.row("收款账号", s.value("收款账号", "622143551800063640"), size: stmtSize, padV: stmtPadV)
+        b.row("收款银行", s.value("收款银行", "中国农业银行"), size: stmtSize, padV: stmtPadV)
         b.divider(m.rowPadH)
-        b.row("付款户名", s.value("付款户名", "李东"))
-        b.row("付款账号", s.value("付款账号", "6221****3646"))
-        b.row("转账方式", s.value("转账方式", "实时转账"))
-        b.row("转账附言", s.value("转账附言", "--"))
-        b.row("交易时间", s.value("交易时间", s.time))
+        b.row("付款户名", s.value("付款户名", "李东"), size: stmtSize, padV: stmtPadV)
+        b.row("付款账号", s.value("付款账号", "6221****3646"), size: stmtSize, padV: stmtPadV)
+        b.row("转账方式", s.value("转账方式", "实时转账"), size: stmtSize, padV: stmtPadV)
+        b.row("转账附言", s.value("转账附言", "--"), size: stmtSize, padV: stmtPadV)
+        b.row("交易时间", s.value("交易时间", s.time), size: stmtSize, padV: stmtPadV)
 
         b.gap(dp(12))
         b.linkBlock("查看和TA的转账记录", trailing: "›")
