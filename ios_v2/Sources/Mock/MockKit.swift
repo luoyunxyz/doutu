@@ -107,6 +107,7 @@ enum MockModule: Int, CaseIterable {
     case shuzi = 16    // 数字钱包（12+ 个子页，转钱成功）
     case yunshanfu = 24 // 云闪付（11 个子页，转账成功）—— 宫格索引 24
     case cbi = 23      // c币钱包（1 个子页，交易流水详情）
+    case tp = 25       // TP钱包（2 个子页，交易详情）
 
     /// 首页卡片标题（`LABELS[0...5]`）
     var title: String {
@@ -130,6 +131,7 @@ enum MockModule: Int, CaseIterable {
         case .shuzi: return "数字钱包"
         case .yunshanfu: return "云闪付"
         case .cbi: return "c币钱包"
+        case .tp: return "TP钱包"
         }
     }
 
@@ -206,6 +208,9 @@ enum MockModule: Int, CaseIterable {
         case .cbi:
             // 只有一个子页
             return ["c币钱包"]
+        case .tp:
+            // 只要两个子页
+            return ["转入", "转出"]
         }
     }
 
@@ -231,6 +236,7 @@ enum MockModule: Int, CaseIterable {
         case .shuzi: return "mock_shuzi"
         case .yunshanfu: return ""     // 宫格 logos[24] 也是空串
         case .cbi: return "mock_cbi"
+        case .tp: return "mock_cbi"      // 宫格 logos[25] 是空串，这里借用同色的 c币图标
         }
     }
 
@@ -309,6 +315,8 @@ enum MockModule: Int, CaseIterable {
             return sub == 0 ? "转账成功" : (subs.indices.contains(sub) ? subs[sub] : title)
         case .cbi:
             return "交易流水详情"
+        case .tp:
+            return sub == 0 ? "交易详情" : (subs.indices.contains(sub) ? subs[sub] : title)
         default:
             return subs.indices.contains(sub) ? subs[sub] : title
         }
