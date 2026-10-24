@@ -26,15 +26,16 @@ final class HomeV2Screen: Screen {
 
     /// 底栏：白色底从 2212 到 2388（Java:1571）
     static let navTop: CGFloat = 2212
-    /// 四格中心（Android 三格是 180/540/900；这里加上「模拟」后均分四格）
-    static let navCenters: [CGFloat] = [135, 405, 675, 945]
+    /// 五格中心：与 Android `navItem(..., x, ...)` 的 x 完全一致（108/324/540/756/972）
+    static let navCenters: [CGFloat] = [108, 324, 540, 756, 972]
     static let navBaseline: CGFloat = 2324
     static let navFontSize: CGFloat = 46
 
     /// 顶部三栏：0 首页 / 1 娱乐 / 2 我（Java:884-886）
     /// 第 4 项「模拟」是 Android「模拟」Tab（`SimulationActivity`）的移植，
-    /// 追加在末尾（rawValue 3），这样既有页面返回的 `tab:0/1/2` 语义完全不变。
-    enum Tab: Int { case home = 0, entertainment = 1, profile = 2, mock = 3 }
+    /// 第 5 项「工具」是 Android「工具」Tab（`MainActivity.drawTools`）的移植，
+    /// 都追加在末尾（rawValue 3/4），这样既有页面返回的 `tab:0/1/2` 语义完全不变。
+    enum Tab: Int { case home = 0, entertainment = 1, profile = 2, mock = 3, tools = 4 }
 
     final class State: ScreenState {
         var tab: Tab = .home
@@ -111,6 +112,9 @@ final class HomeV2Screen: Screen {
         case .mock:
             // 「模拟」首页 31 格，内容比一屏高
             return max(0, MockHome.contentHeight - Self.navTop)
+        case .tools:
+            // 「工具」页 4 个分区、43 个入口，内容远高于一屏
+            return max(0, ToolsPage.contentHeight - Self.navTop)
         case .home, .profile:
             return 0
         }
@@ -139,6 +143,11 @@ final class HomeV2Screen: Screen {
             d.ctx.translateBy(x: 0, y: -s.scroll)
             MockHome.draw(d)
             d.ctx.restoreGState()
+            drawNav(d, state: s)
+        case .tools:
+            // 「工具」页自己管平移（顶部黄条要固定），这里只给底色、传滚动量
+            d.rect(CGRect(x: 0, y: 0, width: Self.W, height: Self.H), MockInk.white)
+            ToolsPage.draw(d, scroll: s.scroll)
             drawNav(d, state: s)
         case .entertainment:
             drawEntertainment(d, state: s)
@@ -228,13 +237,14 @@ final class HomeV2Screen: Screen {
         }
     }
 
-    /// 底部四格（Android 是五格：首页/工具/模拟/娱乐/我；iOS 侧把「模拟」并进来）
+    /// 底部五格（与 Android 完全一致：首页 / 工具 / 模拟 / 娱乐 / 我）
     func drawNav(_ d: Draw, state: State) {
         d.rect(CGRect(x: 0, y: Self.navTop, width: Self.W, height: Self.H - Self.navTop), navBg)
         d.hairline(Self.navTop, from: 0, to: Self.W, navLine, width: 1.6)
 
         let cells: [(label: String, tab: Tab)] = [
-            ("首页", .home), ("模拟", .mock), ("娱乐", .entertainment), ("我", .profile),
+            ("首页", .home), ("工具", .tools), ("模拟", .mock),
+            ("娱乐", .entertainment), ("我", .profile),
         ]
         for (index, cell) in cells.enumerated() {
             let center = Self.navCenters[index]
@@ -259,13 +269,17 @@ final class HomeV2Screen: Screen {
         // 底栏是固定层，用屏幕坐标；娱乐/我页的内容用宿主传入的内容坐标。
         let rawY = y - s.scroll
         // 底部标签栏永远优先响应（Java:1619-1635）
+        // 五格按 Java 的 x 中心 108/324/540/756/972 均分（每格 216）
         if rawY >= Self.navTop {
-            if x < 270 { return "tab:0" }      // 首页
-            if x < 540 { return "tab:3" }      // 模拟
-            if x < 810 { return "tab:1" }      // 娱乐
+            if x < 216 { return "tab:0" }      // 首页
+            if x < 432 { return "tab:4" }      // 工具
+            if x < 648 { return "tab:3" }      // 模拟
+            if x < 864 { return "tab:1" }      // 娱乐
             return "tab:2"                     // 我
         }
         switch s.tab {
+        case .tools:
+            return ToolsPage.hit(x: x, y: y)
         case .mock:
             return MockHome.hit(x: x, y: y)
         case .home:

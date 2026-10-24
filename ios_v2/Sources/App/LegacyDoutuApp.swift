@@ -930,9 +930,9 @@ final class Router {
             if let state = self.host?.state as? ReceiptV2Screen.State { state.scroll = 0 }
             self.host?.setNeedsDisplay()
 
-        // 首页外壳：底部四栏 + 平台页签（Android MainActivity）
-        // tab:3 是新增的「模拟」栏（`HomeV2Screen.Tab.mock`），漏掉它点了会没反应。
-        case "tab:0", "tab:1", "tab:2", "tab:3":
+        // 首页外壳：底部五栏 + 平台页签（Android MainActivity）
+        // tab:3 = 模拟、tab:4 = 工具，漏掉任何一个点了都会没反应。
+        case "tab:0", "tab:1", "tab:2", "tab:3", "tab:4":
             let index = Int(token.suffix(1)) ?? 0
             if let state = self.host?.state as? HomeV2Screen.State {
                 let next = HomeV2Screen.Tab(rawValue: index) ?? .home
@@ -2062,9 +2062,105 @@ final class Router {
         case let t where t.hasPrefix("mock:"):
             handleMock(String(t.dropFirst("mock:".count)))
 
+        // 「工具」Tab（Android `MainActivity.drawTools` / `tools_page.json`）
+        case let t where t.hasPrefix("tools:"):
+            handleTools(String(t.dropFirst("tools:".count)))
+
         default:
             break
         }
+    }
+
+    // MARK: - 工具 Tab（Android `MainActivity.drawTools`）
+
+    /// 令牌形状：`tools:<action>|<显示名>`（`tools_page.json` 里每个入口的 action）。
+    ///
+    /// action 词表（2026-10-24 同步时的 43 个入口）：
+    ///   · `wechat` / `wechat:#/wechat/...` / `wechat:feature:...` —— 微信 clone 的站内路由
+    ///   · `wechat:tool:redpacket|transfer|gzh` —— 先开微信，再调页面里的直达函数
+    ///   · `act:licai|balance|bill|assets|me|paymsg|withdraw|receipt|paysuccess` —— 支模块已移植的页
+    ///   · `alipay` —— 小支主页
+    ///   · 其余（`wxcreatechat` / `sentrp` / `ali*` / `qq*` / 视频四格）—— iOS 还没有对应页面，
+    ///     与 Android 对未实现模块的处理一致：提示「制作中」
+    private func handleTools(_ rest: String) {
+        let parts = rest.split(separator: "|", maxSplits: 1).map(String.init)
+        let action = parts.first ?? ""
+        let name = parts.count > 1 ? parts[1] : "该入口"
+
+        if action == "alipay" {
+            push(ZhiHomeV2Screen(), state: ZhiHomeV2Screen.State())
+            return
+        }
+        if action == "wechat" {
+            presentWeb(route: "#/wechat")
+            return
+        }
+        if action.hasPrefix("wechat:") {
+            let route = String(action.dropFirst("wechat:".count))
+            if route.hasPrefix("tool:") {
+                openWeChatTool(String(route.dropFirst("tool:".count)))
+                return
+            }
+            presentWeb(route: route)
+            return
+        }
+        if action.hasPrefix("act:") {
+            let key = String(action.dropFirst("act:".count))
+            switch key {
+            case "licai":
+                push(LicaiV2Screen(), state: LicaiV2Screen.State())
+            case "balance":
+                push(BalanceV2Screen(), state: BalanceV2Screen.State())
+            case "bill":
+                push(BillV2Screen(), state: BillV2Screen.State())
+            case "assets":
+                push(AssetV2Screen(), state: AssetV2Screen.State())
+            case "me":
+                push(MeScreen(), state: MeScreen.State())
+            case "paymsg":
+                push(PayMsgV2Screen(), state: PayMsgV2Screen.State())
+            case "withdraw":
+                let state = WithdrawV2Screen.State()
+                state.keypad = true
+                push(WithdrawV2Screen(), state: state)
+            case "receipt":
+                push(ReceiptV2Screen(), state: ReceiptV2Screen.State())
+            case "paysuccess":
+                push(PaySuccessV2Screen(), state: PaySuccessV2Screen.State())
+            default:
+                showToast("\(name) 制作中", ok: false)
+            }
+            return
+        }
+        showToast("\(name) 制作中", ok: false)
+    }
+
+    /// 微信里的两个直达入口：开微信 → 等首页就绪 → 调页面里的函数。
+    ///
+    /// 这两个函数（`__fwOpenToolPay` / `__fwOpenGzhDialog`）是 2026-10-24 从 Android
+    /// 的 override 同步过来的（见 `_ios/port-wechat-helpers.mjs`）。
+    /// 页面还没加载完时调用会被函数里的 `try/catch` 吞掉，所以先等 0.9 秒再调一次。
+    private func openWeChatTool(_ kind: String) {
+        presentWeb(route: "#/wechat")
+        let script: String
+        if kind == "gzh" {
+            script = "window.__fwOpenGzhDialog && window.__fwOpenGzhDialog()"
+        } else {
+            script = "window.__fwOpenToolPay && window.__fwOpenToolPay('\(kind)')"
+        }
+        for delay in [0.9, 2.0] {
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
+                guard let web = self?.presentedWeChat else { return }
+                web.run(script)
+            }
+        }
+    }
+
+    /// 当前呈现在最上层的微信 WebView（`presentWeb` 复用它）
+    private var presentedWeChat: WeChatV2Host? {
+        if let host = host as? WeChatV2Host { return host }
+        if let presented = host?.presentedViewController as? WeChatV2Host { return presented }
+        return nil
     }
 
     // MARK: - 模拟模块（Android `features/mock`）

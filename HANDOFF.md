@@ -1,10 +1,10 @@
 # 斗图去水印 iOS V2 交接文档
 
 > 生成时间：2026-10-19  
-> 最近更新：**2026-10-24（模拟模块 6 家 40 屏接完）**  
+> 最近更新：**2026-10-24（模拟 40 屏 + 工具 Tab 43 入口）**  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新代码版本：`1.0.2 / 10002`（「模拟」Tab 6 家 40 屏已接完，待构建装机）；上一版 `1.0.1 / 10001`  
+> 最新代码版本：`1.0.3 / 10003`（工具 Tab 新加；模拟 40 屏沿用上一版）；上一版 `1.0.2 / 10002`  
 > 设备当前安装：`1.0.0 / 80`（2026-10-21 查得；本轮代码尚未装机）  
 > Android `1.0.9`
 
@@ -2202,5 +2202,74 @@ MockKit.swift:1041 error: extraneous argument label 'bold:' in call
 ### 仍未验证
 
 - 本轮代码**没有编译过**（本机 Windows / 无 Xcode），要靠 Codemagic 出包；
-- 装机后先看：模拟 Tab 是否出现在底栏第 2 格、31 格是否 3 列对齐、
+- 装机后先看：模拟 Tab 是否出现在底栏第 3 格、31 格是否 3 列对齐、
   农业 5 个子页能否切换、点文字能否改、生成图片能否进成品页。
+
+---
+
+## 16. 2026-10-24：补上 Android 的「工具」Tab（43 个入口）
+
+### 为什么是它
+
+Android 底栏是 **5 格**（首页 / 工具 / 模拟 / 娱乐 / 我），iOS 之前只有 3 格，
+这一轮加「模拟」到 4 格之后，**只剩「工具」这一整页没有**。补上之后两端底栏完全对齐：
+中心 x = `108 / 324 / 540 / 756 / 972`（与 `MainActivity.navItem(..., x, ...)` 一致）。
+
+### 做了什么
+
+| 文件 | 内容 |
+|---|---|
+| `ios_v2/Sources/Tools/ToolsCatalog.swift` | 解析随包的 `tools_page.json`，得到 4 个分区 / 43 个入口；`ToolsAssets.icon(_:)` 管 `tool_` 前缀 |
+| `ios_v2/Sources/Tools/ToolsPage.swift` | `drawTools()` 的 1:1 移植：234 高黄条 + 分区头 258 + 4 列入口格 + 「更多功能及教程」胶囊；滚动自己管（先按屏幕坐标裁黄条以下，再 `translate(-scroll)`，顺序与 Java 一致） |
+| `ios_v2/Resources/tools_page.json` | 目录数据，从 Android 原样同步 |
+| `Assets.xcassets/tool_*.imageset` | 48 张图标（`_ios/sync-tools-assets.mjs` 同步） |
+
+接入：`HomeV2Screen.Tab` 加 `case tools = 4`，底栏 5 格；
+Router 新增 `tools:<action>|<名称>` 令牌族（`handleTools`）。
+
+### 43 个入口里，iOS 真正能进的 28 个
+
+```text
+wechat / wechat:#/... / wechat:feature:...   → 微信 clone 站内路由（presentWeb）
+wechat:tool:redpacket|transfer|gzh           → 开微信后再调页面里的直达函数
+act:licai|balance|bill|assets|me|paymsg|
+    withdraw|receipt|paysuccess              → 支模块已移植的 9 个页面
+alipay                                       → 小支主页
+```
+
+剩下 15 个（`wxcreatechat` 创建单聊、`sentrp` 已发红包、`ali*` 支付宝社交 5 个、
+`qq*` 小Q 6 个、视频 4 个里的部分）**iOS 还没有对应页面**，点了提示「XX 制作中」——
+与 Android 对未实现模块的处理一致，不假装能点。
+
+### 顺手补的微信网页层
+
+`_ios/port-wechat-helpers.mjs` 把 Android 10-21 之后新增的三个「给原生调」的函数同步进 iOS：
+
+```text
+__fwOpenToolPay(type)   工具页「红包 / 转账」直达收付款页（本轮有了调用方）
+__fwOpenGzhDialog()     工具页「公众号」弹新建公众号表单（同上）
+__fwAddFriend(...)      创建单聊走「添加朋友」同一条落库路径（暂无调用方）
+```
+
+同时把「电脑设备行」的默认值改成 `hidden`（Android 同一轮改的）——
+**这条已在浏览器里验证**：新会话打开微信首页，顶部不再出现「Windows 微信已登录」。
+
+### 本轮验证（本机可复现）
+
+```powershell
+node _ios/v2/lint-swift.mjs        # 418 项全绿
+node _ios/v2/check-mock.mjs        # 13 项全绿（模拟模块专项，含新增的 2b）
+node --check ios_v2/Resources/web/overrides/wechat-chat-actions.js
+node _tools-layout.cjs             # 版式数值：4 分区 / 43 入口 / 内容高 6069 / 滚动 3857
+```
+
+浏览器验证：`python -m http.server` 起 `ios_v2/Resources/web`，Edge headless 390×844
+截图确认设备行已隐藏、微信首页正常渲染。
+
+### 下一轮候选（按缺口大小）
+
+1. **支付宝社交模块**（`AliChat` / `AliContacts` / `AliMsg` / `AliRedPacket` / `AliTransfer`，
+   Android 有 26 个 Activity）—— 工具页里 `ali*` 那 5 个入口就等它；
+2. **小Q 模块**（`QqHome` 1356 行 + 聊天/红包/转账/未读/资料，6 屏）；
+3. **视频模块**（抖音 / 微视 / 快手 / 评论切片）；
+4. 工具页里剩下的「创建单聊 / 已发红包 / 教学页」。

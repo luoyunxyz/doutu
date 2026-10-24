@@ -1131,6 +1131,14 @@ final class WeChatV2Host: UIViewController, WKScriptMessageHandler,
         }
     }
 
+    /// 从原生调用页面里的函数（工具页的「红包 / 转账 / 公众号」直达）。
+    ///
+    /// 与 `debugEval` 的区别是**不写 crash.log**：这是正常业务路径，
+    /// 用户每点一次都记一行会把日志撑满。
+    func run(_ script: String) {
+        webView.evaluateJavaScript(script, completionHandler: nil)
+    }
+
     /// 把页面的真实状态写进 crash.log：模块脚本到底有没有执行、
     /// `#root` 里有没有内容、哪些资源没加载出来。
     func logDiagnostics() {

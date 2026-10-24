@@ -2763,6 +2763,239 @@
     }
     render();
   }
+  /**
+   * 工具页「红包 / 转账」直达：不必先打开某个聊天，用默认好友挂同一张收付款页。
+   */
+  window.__fwOpenToolPay = function (type) {
+    try {
+      mountChatPayScreen(type === 'transfer' ? 'transfer' : 'redpacket');
+      return true;
+    } catch (_) { return false; }
+  };
+
+  // 公众号「常用图标选择」数据：图标全部从参考视频逐格抠出（assets/gzh/icons）。
+  const GZH_ICON_GROUPS = [
+    ['系统', [
+      ['折叠的群聊', 'zhedie'], ['微信团队', 'wechat-team'], ['腾讯充值', 'tencent-recharge'], ['企业微信', 'wecom'], ['公众平台安全助手', 'mp-safe'], ['QQ安全中心', 'qq-safe'], ['微信开发者', 'wechat-dev'], ['微信游戏', 'wechat-game'], ['微信支付商家助手', 'wxpay-merchant'], ['文件传输助手', 'file-transfer'], ['腾讯WiFi管家', 'tencent-wifi'], ['微信收款商业版', 'wxpay-receive'], ['芝麻收款服务', 'zhima-pay'], ['腾讯客服', 'tencent-service'], ['微信运动', 'wechat-sport'], ['微信公众平台', 'wechat-mp'], ['微信支付', 'wechat-pay-official'],
+    ]],
+    ['餐饮', [
+      ['肯德基', 'kfc'], ['饿了么', 'eleme'], ['COCO', 'coco'], ['喜茶', 'heytea'], ['美团外卖', 'meituan'], ['德克士', 'dicos'], ['必胜客', 'pizzahut'], ['汉堡王', 'burgerking'], ['星巴克', 'starbucks'], ['奈雪的茶', 'naixue'], ['麦当劳', 'mcdonalds'], ['kfc宅急送', 'kfc-deli'], ['一点点', 'yidiandian'],
+    ]],
+    ['快递', [
+      ['中通快递', 'zhongtong'], ['韵达快递', 'yunda'], ['申通快递', 'st'], ['顺丰快递', 'sf'], ['天天快递', 'ttk'], ['京东物流', 'jd-logistics'], ['EMS', 'ems'], ['百世快递', 'best'], ['圆通快递', 'yto'], ['德邦快递', 'deppon'],
+    ]],
+    ['娱乐', [
+      ['快手', 'kuaishou'], ['虎牙直播', 'huya'], ['爱奇艺', 'iqiyi'], ['战旗直播', 'zhanqi'], ['斗鱼直播', 'douyu'], ['腾讯视频', 'tencent-video'], ['QQ音乐', 'qq-music'], ['全民K歌', 'kge'], ['抖音', 'douyin'], ['唱吧', 'changba'], ['网易云', 'netease-music'],
+    ]],
+    ['运动', [
+      ['古驰', 'gucci'], ['普拉达', 'prada'], ['安踏', 'anta'], ['斐乐', 'fila'], ['三叶草', 'adidas-originals'], ['爱马仕', 'hermes'], ['香奈儿', 'chanel'], ['阿迪达斯', 'adidas'], ['耐克', 'nike'], ['李宁', 'lining'], ['LV', 'lv'],
+    ]],
+  ];
+
+  const gzhIconPath = slug => './assets/gzh/icons/' + slug + '.png?v=3';
+  // 相册头像单独存一份，社区 state 里只放短引用，避免 data URL 把整份聊天状态撑爆。
+  const GZH_AVATAR_PREFIX = 'gzh-photo:';
+  function gzhAvatarSrc(value) {
+    const raw = String(value || '');
+    if (!raw.startsWith(GZH_AVATAR_PREFIX)) return raw;
+    try { return localStorage.getItem('fw-gzh-avatar:' + raw.slice(GZH_AVATAR_PREFIX.length)) || ''; }
+    catch (_) { return ''; }
+  }
+  function storeGzhPhoto(dataUrl) {
+    const key = Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
+    try {
+      localStorage.setItem('fw-gzh-avatar:' + key, dataUrl);
+      return GZH_AVATAR_PREFIX + key;
+    } catch (_) {
+      return dataUrl;
+    }
+  }
+
+  /**
+   * 工具页「公众号」：在微信主页上弹出真机那套新建公众号表单
+   * （常用图标 / 头像 / 从相册获取 / 名称 / 消息内容 / 三个开关 / 取消·确定）。
+   * 点「常用图标」打开底部图标选择面板；选中后自动替换头像和名称；
+   * 点「确定」把公众号作为会话写入聊天列表。
+   */
+  window.__fwOpenGzhDialog = function () {
+    try {
+      let mask = document.querySelector('.fw-gzh-mask');
+      if (mask) { mask.remove(); }
+      mask = document.createElement('div');
+      mask.className = 'fw-gzh-mask';
+      const field = (placeholder) => '<div class="fw-gzh-field"><input type="text" placeholder="' + placeholder + '">'
+        + '<button type="button" class="fw-gzh-clear" aria-label="清空">×</button></div>';
+      const row = (label) => '<div class="fw-gzh-row"><span>' + label + '</span>'
+        + '<i class="fw-gzh-switch" role="switch" aria-checked="false"><i></i></i></div>';
+      mask.innerHTML = '<section class="fw-gzh-dialog" role="dialog" aria-label="公众号">'
+        + '<div class="fw-gzh-icons">'
+        + '<div class="fw-gzh-col fw-gzh-common" role="button" tabindex="0"><img src="./assets/gzh/gzh_star.png" alt=""><b>常用图标</b></div>'
+        + '<img class="fw-gzh-avatar" src="./assets/gzh/gzh_avatar.png" alt="">'
+        + '<div class="fw-gzh-col fw-gzh-album" role="button" tabindex="0"><img class="fw-gzh-photo" src="./assets/gzh/gzh_photo.png" alt=""><b>从相册获取</b></div>'
+        + '</div>'
+        + field('名称：') + field('消息内容：')
+        + row('设为蓝色字体') + row('免打扰') + row('消息置顶')
+        + '<div class="fw-gzh-actions"><button type="button" data-cancel>取消</button><button type="button" data-ok>确定</button></div>'
+        + '<input type="file" accept="image/*" data-gzh-file hidden>'
+        + '</section>';
+      document.body.appendChild(mask);
+      const avatarImg = mask.querySelector('.fw-gzh-avatar');
+      const nameInput = mask.querySelectorAll('.fw-gzh-field input')[0];
+      const contentInput = mask.querySelectorAll('.fw-gzh-field input')[1];
+      let selectedIcon = avatarImg.getAttribute('src') || './assets/gzh/gzh_avatar.png';
+      let selectedName = '';
+      let picker = null;
+
+      // 从相册获取：用 WebView 的 file chooser 真选一张图，居中裁成 256 方图后作为头像。
+      const albumCol = mask.querySelector('.fw-gzh-album');
+      const albumFile = mask.querySelector('[data-gzh-file]');
+      if (albumCol && albumFile) {
+        albumCol.onclick = () => albumFile.click();
+        albumFile.addEventListener('change', () => {
+          const picked = albumFile.files && albumFile.files[0];
+          if (!picked || !picked.type.startsWith('image/')) return;
+          const reader = new FileReader();
+          reader.onload = () => {
+            const picture = new Image();
+            picture.onload = () => {
+              const size = 128;
+              const canvas = document.createElement('canvas');
+              canvas.width = size;
+              canvas.height = size;
+              const ctx = canvas.getContext('2d');
+              ctx.fillStyle = '#fff';
+              ctx.fillRect(0, 0, size, size);
+              const scale = Math.max(size / picture.width, size / picture.height);
+              const drawW = picture.width * scale;
+              const drawH = picture.height * scale;
+              ctx.drawImage(picture, (size - drawW) / 2, (size - drawH) / 2, drawW, drawH);
+              const dataUrl = canvas.toDataURL('image/jpeg', 0.82);
+              selectedIcon = storeGzhPhoto(dataUrl);
+              avatarImg.src = dataUrl;
+              albumFile.value = '';
+            };
+            picture.onerror = () => {
+              const dataUrl = String(reader.result || selectedIcon);
+              selectedIcon = storeGzhPhoto(dataUrl);
+              avatarImg.src = dataUrl;
+              albumFile.value = '';
+            };
+            picture.src = String(reader.result || '');
+          };
+          reader.readAsDataURL(picked);
+        });
+      }
+
+      const closePicker = () => { if (picker) { picker.remove(); picker = null; } };
+      const openPicker = () => {
+        closePicker();
+        picker = document.createElement('div');
+        picker.className = 'fw-gzh-picker';
+        picker.innerHTML = '<section class="fw-gzh-picker__sheet">'
+          + '<header class="fw-gzh-picker__head"><span>常用图标选择</span></header>'
+          + '<div class="fw-gzh-picker__tabs"></div><div class="fw-gzh-picker__list"></div></section>';
+        document.body.appendChild(picker);
+        const tabs = picker.querySelector('.fw-gzh-picker__tabs');
+        const list = picker.querySelector('.fw-gzh-picker__list');
+        let active = 0;
+        const render = () => {
+          tabs.replaceChildren();
+          GZH_ICON_GROUPS.forEach((group, index) => {
+            const tab = document.createElement('button');
+            tab.type = 'button';
+            tab.className = 'fw-gzh-picker__tab' + (index === active ? ' is-active' : '');
+            tab.textContent = group[0];
+            tab.onclick = () => { active = index; render(); };
+            tabs.appendChild(tab);
+          });
+          list.replaceChildren();
+          GZH_ICON_GROUPS[active][1].forEach(([name, slug]) => {
+            const icon = gzhIconPath(slug);
+            const item = document.createElement('button');
+            item.type = 'button';
+            item.className = 'fw-gzh-picker__item';
+            item.innerHTML = '<img src="' + icon + '" alt=""><span>' + name + '</span>';
+            item.onclick = () => {
+              selectedIcon = icon;
+              selectedName = name;
+              avatarImg.src = icon;
+              if (nameInput) nameInput.value = name;
+              closePicker();
+            };
+            list.appendChild(item);
+          });
+        };
+        render();
+        picker.addEventListener('click', (event) => { if (event.target === picker) closePicker(); });
+      };
+
+      mask.querySelector('.fw-gzh-common').onclick = openPicker;
+      mask.addEventListener('click', (event) => { if (event.target === mask) { closePicker(); mask.remove(); } });
+      mask.querySelectorAll('.fw-gzh-clear').forEach(btn => btn.onclick = () => {
+        const input = btn.parentElement.querySelector('input');
+        if (input) { input.value = ''; input.focus(); }
+      });
+      mask.querySelectorAll('.fw-gzh-switch').forEach(sw => sw.onclick = () => {
+        const on = !sw.classList.contains('is-on');
+        sw.classList.toggle('is-on', on);
+        sw.setAttribute('aria-checked', String(on));
+      });
+      mask.querySelector('[data-cancel]').onclick = () => { closePicker(); mask.remove(); };
+      mask.querySelector('[data-ok]').onclick = () => {
+        const name = (nameInput ? nameInput.value.trim() : '') || selectedName || '公众号';
+        const content = (contentInput ? contentInput.value.trim() : '') || '刚刚';
+        const friend = {
+          id: 'gzh-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+          name,
+          avatar: selectedIcon,
+          official: true,
+          source: '公众号',
+          greeting: { mine: { side: 'outgoing', deleted: true }, friend: { side: 'incoming', deleted: true } },
+          messages: [{ text: content, side: 'incoming', createdAt: Date.now() }],
+          createdAt: Date.now(),
+        };
+        const contacts = Array.isArray(state.contacts) ? state.contacts : (state.contacts = []);
+        contacts.unshift(friend);
+        saveState();
+        closePicker();
+        mask.remove();
+        document.querySelector('.fw-local-friend-row[data-fw-friend-id="' + CSS.escape(friend.id) + '"]')?.remove();
+        const paintRowAvatar = () => {
+          const row = document.querySelector('.fw-local-friend-row[data-fw-friend-id="' + CSS.escape(friend.id) + '"]');
+          if (!row) return;
+          const img = row.querySelector('img');
+          if (img) {
+            const preview = gzhAvatarSrc(selectedIcon) || selectedIcon;
+            img.src = preview;
+            img.dataset.fwAvatarValue = preview;
+          }
+          // 放在第一条原生会话之后（不要顶到列表最上方，那个位置会被原生列表的
+          // 覆盖层挡住点击）；视觉上仍然紧贴顶部，且能稳定点开。
+          if (row.parentElement) {
+            const anchor = row.parentElement.children[1] || null;
+            row.parentElement.insertBefore(row, anchor);
+          }
+        };
+        applyState();
+        paintRowAvatar();
+        setTimeout(() => { applyState(); paintRowAvatar(); }, 80);
+        setTimeout(paintRowAvatar, 320);
+        showToast('已添加到聊天列表');
+      };
+      return true;
+    } catch (_) { return false; }
+  };
+  // Android 返回键先关图标选择面板，再关公众号表单。
+  (function installGzhBackChain() {
+    const previous = window.__fwHandleChatPayBack;
+    window.__fwHandleChatPayBack = function () {
+      const picker = document.querySelector('.fw-gzh-picker');
+      if (picker) { picker.remove(); return true; }
+      const mask = document.querySelector('.fw-gzh-mask');
+      if (mask) { mask.remove(); return true; }
+      return typeof previous === 'function' ? previous.apply(this, arguments) : false;
+    };
+  })();
   function installChatPayActions(){if(document.documentElement.dataset.fwChatPayActions)return;document.documentElement.dataset.fwChatPayActions='1';document.addEventListener('click',event=>{const action=event.target instanceof Element?event.target.closest('[data-action="红包"], [data-action="转账"]'):null;if(!action)return;event.preventDefault();event.stopPropagation();event.stopImmediatePropagation();const panel=action.closest('.fw-native-chat-feature-panel');if(panel)closeNativeFeaturePanel(panel);else action.closest('.fw-chat-feature-panel')?.classList.remove('is-open');mountChatPayScreen(action.dataset.action==='转账'?'transfer':'redpacket')},true)}
   function installGalleryAction(){if(document.documentElement.dataset.fwGalleryAction)return;document.documentElement.dataset.fwGalleryAction='1';document.addEventListener('click',event=>{const action=event.target instanceof Element?event.target.closest('[data-action="相册"]'):null;if(!action)return;event.preventDefault();event.stopPropagation();event.stopImmediatePropagation();const page=document.querySelector('.fw-local-conversation');let friend=null;if(page){friend=(Array.isArray(state.contacts)?state.contacts:[]).find(x=>String(x.id)===page.dataset.friendId)||null}const panel=action.closest('.fw-chat-feature-panel');if(panel?.classList.contains('fw-native-chat-feature-panel'))closeNativeFeaturePanel(panel);if(page){const localPanel=page.querySelector('.fw-chat-feature-panel');if(localPanel)setFeaturesFromGallery(localPanel)}openChatGallery(friend)},true)}
 
@@ -4462,6 +4695,43 @@
       return true;
     } catch (_) {
       return false;
+    }
+  };
+
+  /**
+   * 供原生「创建单聊」调用：和「添加朋友」完全同一条落库路径（写 state.contacts + 持久化），
+   * 所以结果与手动添加好友一致（通讯录、会话都能看到）。
+   */
+  window.__fwAddFriend = function (name, avatar, wechatId, fixedId) {
+    try {
+      name = String(name || '').trim();
+      if (!name) return '';
+      state.contacts = Array.isArray(state.contacts) ? state.contacts : [];
+      const friend = {
+        id: 'friend-' + Date.now(),
+        name: name,
+        wechatId: String(wechatId || ('wx' + Date.now())),
+        gender: 'unknown',
+        remark: '',
+        realName: '',
+        phone: '',
+        region: '',
+        verification: '',
+        source: '',
+        requestMessage: '我是' + name,
+        avatar: String(avatar || ''),
+        starred: false,
+        createdAt: Date.now()
+      };
+      friend.avatar = freezeRemoteAvatar(friend.avatar);
+      state.contacts.unshift(friend);
+      saveState();
+      applyState();
+      setTimeout(applyState, 80);
+      window.dispatchEvent(new CustomEvent('fw:contacts-updated', { detail: { contact: friend } }));
+      return friend.id;
+    } catch (e) {
+      return '';
     }
   };
 
@@ -9169,7 +9439,7 @@
     let value = '';
     try { value = localStorage.getItem(DEVICE_ROW_KEY) || ''; } catch (_) { /* no-op */ }
     if (value === 'hidden') return 'hidden';
-    return DEVICE_ROW_OPTIONS.some(option => option.value === value) ? value : 'Windows';
+    return DEVICE_ROW_OPTIONS.some(option => option.value === value) ? value : 'hidden';
   }
   function applyDeviceRow() {
     const choice = readDeviceRowChoice();

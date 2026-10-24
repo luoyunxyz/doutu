@@ -1,0 +1,245 @@
+[
+  {
+    "title": "小微",
+    "icon": "h_wechat",
+    "action": "wechat:#/wechat",
+    "items": [
+      {
+        "name": "创建单聊",
+        "icon": "chat",
+        "action": "wxcreatechat"
+      },
+      {
+        "name": "创建群聊",
+        "icon": "group",
+        "action": "wechat:feature:group-chat"
+      },
+      {
+        "name": "通讯录",
+        "icon": "contacts",
+        "action": "wechat:#/wechat/contacts"
+      },
+      {
+        "name": "红包",
+        "icon": "redpacket",
+        "action": "wechat:tool:redpacket"
+      },
+      {
+        "name": "转账",
+        "icon": "transfer",
+        "action": "wechat:tool:transfer"
+      },
+      {
+        "name": "微信零钱",
+        "icon": "yen",
+        "action": "wechat:#/wechat/wallet/balance"
+      },
+      {
+        "name": "新的朋友",
+        "icon": "newfriends",
+        "action": "wechat:feature:new-friends"
+      },
+      {
+        "name": "发现",
+        "icon": "moments",
+        "action": "wechat:#/wechat/discover"
+      },
+      {
+        "name": "钱包",
+        "icon": "wallet",
+        "action": "wechat:#/wechat/wallet"
+      },
+      {
+        "name": "零钱提现",
+        "icon": "withdraw",
+        "action": "wechat:#/wechat/wallet/withdraw"
+      },
+      {
+        "name": "零钱明细",
+        "icon": "detail",
+        "action": "wechat:#/wechat/wallet/change-detail"
+      },
+      {
+        "name": "微信支付",
+        "icon": "wxpay",
+        "action": "wechat:feature:wechat-pay"
+      },
+      {
+        "name": "支付成功",
+        "icon": "check",
+        "action": "wechat:feature:pay-success"
+      },
+      {
+        "name": "公众号",
+        "icon": "official",
+        "action": "wechat:tool:gzh"
+      },
+      {
+        "name": "发出的红包",
+        "icon": "sentrp",
+        "action": "sentrp"
+      },
+      {
+        "name": "年账单",
+        "icon": "bill_receipt",
+        "action": "wechat:feature:annual-bill"
+      },
+      {
+        "name": "微信收款助手",
+        "icon": "receive",
+        "action": "wechat:#/wechat/service"
+      }
+    ]
+  },
+  {
+    "title": "阿宝",
+    "icon": "h_alipay",
+    "action": "alipay",
+    "items": [
+      {
+        "name": "创建单聊",
+        "icon": "chat",
+        "action": "alicreatechat"
+      },
+      {
+        "name": "财富",
+        "icon": "treasure",
+        "action": "act:licai"
+      },
+      {
+        "name": "转账",
+        "icon": "transfer",
+        "action": "alitransfer"
+      },
+      {
+        "name": "余额",
+        "icon": "balance",
+        "action": "act:balance"
+      },
+      {
+        "name": "余额明细",
+        "icon": "detail",
+        "action": "act:bill"
+      },
+      {
+        "name": "账单",
+        "icon": "bill_list",
+        "action": "act:bill"
+      },
+      {
+        "name": "总资产",
+        "icon": "assets",
+        "action": "act:assets"
+      },
+      {
+        "name": "红包",
+        "icon": "redpacket",
+        "action": "alired"
+      },
+      {
+        "name": "公众号",
+        "icon": "official",
+        "action": "alimsg"
+      },
+      {
+        "name": "通讯录",
+        "icon": "contacts",
+        "action": "alicontacts"
+      },
+      {
+        "name": "我的",
+        "icon": "me",
+        "action": "act:me"
+      },
+      {
+        "name": "支付助手",
+        "icon": "zhushou",
+        "action": "act:paymsg"
+      },
+      {
+        "name": "年账单",
+        "icon": "bill_receipt",
+        "action": "act:billstats"
+      },
+      {
+        "name": "转账到银行卡",
+        "icon": "bankcard",
+        "action": "act:withdraw"
+      },
+      {
+        "name": "商家收款记录",
+        "icon": "merchant",
+        "action": "act:receipt"
+      },
+      {
+        "name": "支付成功",
+        "icon": "check",
+        "action": "act:paysuccess"
+      }
+    ]
+  },
+  {
+    "title": "小Q",
+    "icon": "h_qq",
+    "action": "qq",
+    "items": [
+      {
+        "name": "创建聊天",
+        "icon": "chat",
+        "action": "qqnewchat"
+      },
+      {
+        "name": "红包",
+        "icon": "redpacket",
+        "action": "qqrp"
+      },
+      {
+        "name": "转账",
+        "icon": "transfer",
+        "action": "qqtransfer"
+      },
+      {
+        "name": "公众号",
+        "icon": "official",
+        "action": "qqgz"
+      },
+      {
+        "name": "在线状态",
+        "icon": "online",
+        "action": "qqedit"
+      },
+      {
+        "name": "未读消息红点",
+        "icon": "unread",
+        "action": "qqunread"
+      }
+    ]
+  },
+  {
+    "title": "视频",
+    "icon": "h_video",
+    "action": "videohome",
+    "items": [
+      {
+        "name": "抖音",
+        "icon": "douyin",
+        "action": "videohome"
+      },
+      {
+        "name": "评论切片",
+        "icon": "comment",
+        "action": "dycomment"
+      },
+      {
+        "name": "微视",
+        "icon": "weishi",
+        "action": "weishi"
+      },
+      {
+        "name": "快手",
+        "icon": "kuaishou",
+        "action": "kuaishou"
+      }
+    ]
+  }
+]
