@@ -2328,7 +2328,6 @@ node _ios/v2/check-video.mjs       # 9 项全绿（图标 25 张 / 字段键闭�
 
 - `DyCommentActivity`（评论切片，371 行）—— 工具页「评论切片」入口还是「制作中」；
 - 视频选择与播放（见上面第 1 条）。
-
 ### 第三个被复核抓到的编译错误：协议必填项没有默认值
 
 三个视频页都写了 `let selfScrolls = false`，却没写 `func maxScroll(...)` ——
@@ -2344,3 +2343,50 @@ canvasSize / hitTest / draw / maxScroll 四项」，67 个 Screen 子类全过�
 
 三次教训连起来看：**静态检查的覆盖面（查哪些文件、查哪几项）比检查本身更容易漏**。
 每新增一个目录，都要问一句「检查器看得见它吗」。
+
+---
+
+## 18. 2026-10-24：开始补「支付宝社交」（第一屏：公众号消息）
+
+### 为什么从它开始
+
+工具页「阿宝」分区有 5 个 `ali*` 入口（创建单聊 / 转账 / 红包 / 公众号 / 通讯录），
+Android 侧对应 `features/ali` 的 26 个 Activity（约 5000 行）。其中
+`AliMsgActivity`（公众号消息页）是**纯静态复刻页**（没有数据层），所以先拿它开刀。
+
+### 做了什么
+
+`ios_v2/Sources/Ali/AliMsgScreen.swift` —— `AliMsgActivity.onCreate()`（Java:35-217）的 1:1 移植：
+
+- 顶栏：「消息」24sp 粗体 + 搜索胶囊（`#e3e5ea`、圆角 100）+ `☰` + `⊕`（描边圆）；
+- 「全部会话」白卡（圆角 14、左右各 12dp）：卡头 `全部会话` + 右侧 `@ ◧ ¥ 🎁` 四个符号、
+  分割线、消息盒子一行（蓝色圆铃铛 42dp + 标题/副标题 + 右侧时间）；
+- 底部五格：圆形字形（`支 ¥ ▷ ✉ 人`）+ 文字，第 4 格选中态（蓝底白字）。
+
+交互：`⊕` 弹系统双字段弹窗（名称 / 消息内容），确定后写回消息盒子那一行 ——
+对应 Android 的「新建公众号」浮层；底栏 0/1/4 分别进小支主页 / 理财 / 我的，
+`☰`（通讯录）与消息盒子（公众号会话）目前提示「制作中」。
+
+### 校验
+
+```powershell
+node _ios/v2/lint-swift.mjs        # 433 项全绿
+node _ios/v2/check-symbols.mjs     # 每个 Screen 都有 canvasSize/hitTest/draw/maxScroll（67 个）
+```
+
+**这次 `check-symbols` 当场抓到我漏写 `maxScroll`** —— 上一轮刚补的检查，
+这一轮就拦住了同一类错误，说明那条改动是值的。
+
+### 下一轮（支付宝社交剩下的）
+
+```text
+AliContactStore(181) + AliContactsActivity(820)   通讯录（分组 + 单个/批量添加 + 换头像）
+AliCreateChatActivity(206)                        创建单聊
+AliChatActivity(352) + AliChatStore(123)          聊天页
+AliMsgBoxActivity(81)                             消息盒子
+AliRedPacket(405) + Detail(329)                   红包
+AliTransfer(536) + Detail(885) + Ui(133)          转账
+AliWithdraw(215) / AliOrder(244) / AliYearBill(126)
+```
+
+优先级：通讯录 → 创建单聊 → 聊天页（这三屏接通后工具页 5 个 `ali*` 入口就活了）。
