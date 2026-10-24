@@ -667,6 +667,8 @@ struct MockPage {
     var hits: [MockHit] = []
     /// 内容总高度（内容坐标）
     var height: CGFloat = 0
+    /// 页面底板色（默认白；列表类页面在这一层声明非白）
+    var background: UIColor = MockInk.white
 
     func draw(_ d: Draw) {
         for op in ops {
