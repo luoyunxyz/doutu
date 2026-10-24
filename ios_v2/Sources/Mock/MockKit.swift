@@ -41,6 +41,10 @@ enum MockInk {
     static let band = Draw.color(0xfff2f2f2)
     /// 列表页内容下方的底板灰 `#eeeeee`（安卓实测：明细查询底部就是它）
     static let board = Draw.color(0xffeeeeee)
+    /// 浅一档的分隔灰 `#f5f5f5`（话费页的入口区用）
+    static let pageAlt = Draw.color(0xfff5f5f5)
+    /// 入口区底板灰 `#f0f1f2`（qq 交易详情的三条入口用）
+    static let entryGrey = Draw.color(0xfff0f1f2)
     /// 状态块底色 `0xfff5f6f8`
     static let statusBg = Draw.color(0xfff5f6f8)
     /// 成功绿 `0xff00b578`

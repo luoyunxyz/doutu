@@ -60,11 +60,12 @@ enum MockQQ {
         b.row("商户订单", s.value("商户订单", "19240758031852801729335666864227"),
               size: rs, padV: rp)
 
-        // 三条入口
-        b.fill(dp(8), MockInk.page)
+        // 三条入口（安卓实测 qq_sub0：从 y=1204 起是 #f0f1f2 底板，入口行 46px 文字、行距 ~109px）
+        b.fill(dp(8), MockInk.entryGrey)
         for title in ["联系商户", "修改密码", "客服中心"] {
-            b.chevronRow(title, size: dp(18), color: MockInk.title,
-                         padH: dp(16), padV: dp(20))
+            b.chevronRow(title, size: dp(15), color: MockInk.title,
+                         padH: dp(16), padV: dp(18))
         }
+        b.bottomFill(MockInk.entryGrey)
     }
 }

@@ -70,8 +70,8 @@ enum MockHuafei {
                     size: rs, color: MockInk.label,
                     padH: dp(16), padTop: rp, padBottom: rp)
 
-        // 五条入口（安卓实测：17sp、行距 149px → 上下 14dp）
-        b.fill(dp(8), MockInk.board)
+        // 五条入口（安卓实测：17sp、行距 149px → 上下 14dp；分隔带 #f5f5f5）
+        b.fill(dp(8), MockInk.pageAlt)
         for title in ["充值未到账", "充错号码", "删除订单", "开发票指引", "客服帮助"] {
             b.chevronRow(title, size: dp(17), color: MockInk.title,
                          padH: dp(16), padV: dp(14))
