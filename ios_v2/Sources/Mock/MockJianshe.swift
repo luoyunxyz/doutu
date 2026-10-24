@@ -13,15 +13,50 @@ enum MockJianshe {
 
     static func page(state: MockState, metrics: MockMetrics,
                      width: CGFloat, showsTopTitle: Bool) -> MockPage {
-        // 子页 0 是金头「转账成功」；其余 11 个子页与招商同名同版式，直接复用 `MockCmb`。
-        // ⚠️ 复用的是招商那套文案（银行名/角标仍是招商），等有建设专属截图再逐页换。
-        if state.sub == 0 {
-            let b = MockBuilder(width: width, metrics: metrics)
+        let b = MockBuilder(width: width, metrics: metrics)
+        let names = MockModule.jianshe.subs
+        let title = names.indices.contains(state.sub) ? names[state.sub] : "明细"
+        switch state.sub {
+        case 0:
             transferSuccess(b, state, showsTopTitle: showsTopTitle)
-            return b.result
+        case 8:
+            // 回单
+            if showsTopTitle { b.titleBar("电子回单") }
+            b.coloredHeaderBar("电子回单", bg: .white, fg: MockInk.title)
+            b.sectionLabel("中国建设银行  电子回单", size: dp(17), color: MockInk.title,
+                           padH: dp(16), padTop: dp(16), padBottom: dp(6))
+            b.row("付款户名", "李哈哈")
+            b.row("收款户名", "张大国")
+            b.row("金额", "100.00")
+            b.row("时间", s.time)
+            b.gap(dp(20))
+        case 9:
+            // 余额
+            if showsTopTitle { b.titleBar("余额") }
+            b.coloredHeaderBar("余额", bg: .white, fg: MockInk.title)
+            b.sectionLabel("¥ 1,860.00", size: dp(40), color: MockInk.black,
+                           padH: 0, padTop: dp(30), padBottom: dp(10))
+            b.sectionLabel("中国建设银行 · 储蓄卡 6227****8888", size: dp(14),
+                           color: MockInk.label, padH: 0, padTop: 0, padBottom: dp(20))
+            b.gap(dp(160))
+        default:
+            // 其余 9 个子页：建设版的明细页（标题取子页名）
+            if showsTopTitle { b.titleBar(title) }
+            b.coloredHeaderBar(title, bg: .white, fg: MockInk.title)
+            b.centerBlock("对方", s.value("对方", "张大国"),
+                          size: dp(15), color: MockInk.grey,
+                          padTop: dp(24), padBottom: 0)
+            b.centerBlock("金额", s.value("金额", "-100.00"),
+                          size: dp(34), color: MockInk.amount, bold: true,
+                          padTop: dp(10), padBottom: dp(30))
+            b.statusBar("交易成功", trailing: "进度查询  ›")
+            b.row("收款账号", "6227 **** **** 8888")
+            b.row("收款银行", "中国建设银行")
+            b.row("交易类型", title)
+            b.row("交易时间", s.time)
+            b.gap(dp(20))
         }
-        return MockCmb.page(state: state, metrics: metrics, width: width,
-                            showsTopTitle: showsTopTitle)
+        return b.result
     }
 
     // MARK: - 子页 0：转账成功（`明细转出(旧)`）
