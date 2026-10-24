@@ -2162,6 +2162,14 @@ final class Router {
             UpdatePrompt.topViewController()?.present(sheet, animated: true)
             return
         }
+        if rest == "redpacket" {
+            push(AliRedPacketDetailScreen(), state: AliRedPacketDetailScreen.State())
+            return
+        }
+        if rest.hasPrefix("rp:") {
+            handleAliRedPacket(String(rest.dropFirst("rp:".count)))
+            return
+        }
         if rest == "box" {
             showToast("公众号会话制作中", ok: false)
             return
@@ -2267,8 +2275,10 @@ final class Router {
             switch String(rest.dropFirst("action:".count)) {
             case "0": showToast("从相册选择图片（演示）", ok: false)
             case "1": showToast("录制小视频（演示）", ok: false)
-            case "2": showToast("红包制作中", ok: false)
-            default: showToast("转账制作中", ok: false)
+            case "2":
+                push(AliRedPacketDetailScreen(), state: AliRedPacketDetailScreen.State())
+            default:
+                showToast("转账制作中", ok: false)
             }
         }
     }
@@ -2280,6 +2290,45 @@ final class Router {
         state.messages.append(message)
         AliChatStore.shared.touch(name: state.title, last: message)
         host?.setNeedsDisplay()
+    }
+
+    /// 红包详情页的令牌：`from` / `sender`（切换发送人）、`amount`（金额）、
+    /// `bless`（祝福语）、`thanks`（已答谢）、`open`（打开红包动画）。
+    private func handleAliRedPacket(_ rest: String) {
+        let store = AliRedPacketStore.shared
+        switch rest {
+        case "from", "sender":
+            let sheet = UIAlertController(title: "切换发送人", message: nil, preferredStyle: .actionSheet)
+            for (index, name) in store.senderNames.enumerated() {
+                sheet.addAction(UIAlertAction(title: name, style: .default) { [weak self] _ in
+                    store.senderIndex = index
+                    self?.host?.setNeedsDisplay()
+                })
+            }
+            sheet.addAction(UIAlertAction(title: "关闭", style: .cancel))
+            if let pop = sheet.popoverPresentationController, let view = host {
+                pop.sourceView = view
+                pop.sourceRect = CGRect(x: view.bounds.midX, y: view.bounds.midY, width: 1, height: 1)
+                pop.permittedArrowDirections = []
+            }
+            UpdatePrompt.topViewController()?.present(sheet, animated: true)
+        case "amount":
+            EditPrompt.present(title: "红包金额", current: store.amount, numeric: true) { [weak self] text in
+                store.setAmount(text)
+                self?.host?.setNeedsDisplay()
+            }
+        case "bless":
+            EditPrompt.present(title: "祝福语", current: store.blessing, numeric: false) { [weak self] text in
+                store.blessing = text
+                self?.host?.setNeedsDisplay()
+            }
+        case "thanks":
+            showToast("已答谢", ok: true)
+        case "open":
+            showToast("打开红包动画", ok: false)
+        default:
+            break
+        }
     }
 
     /// 删联系人要连消息列表一起删（否则「同步来的联系人」会把它带回来）
@@ -2373,6 +2422,9 @@ final class Router {
             return
         case "alicontacts":
             push(AliContactsScreen(), state: AliContactsScreen.State())
+            return
+        case "alired":
+            push(AliRedPacketDetailScreen(), state: AliRedPacketDetailScreen.State())
             return
         case "alicreatechat":
             // Android 是一个带头像预览的弹窗；iOS 先用输入框收昵称，确定后直接进聊天页
