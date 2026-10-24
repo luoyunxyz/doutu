@@ -2171,10 +2171,30 @@ node _ios/v2/check-instance.mjs    # State 实例成员
 ```text
 1. MockInk.xxx 颜色是否真的声明过
 2. 161 处 MockBuilder 调用的方法名与参数标签
+2b. MockOp 枚举 case 构造有没有写标签（2026-10-24 云端构建踩过）
 3. 6 家子页名与 Java SUBS 逐字一致（靠它抓出工商/中国被文档带错）
 4. 招商 MODES 派发表与 CmbActivity.MODES 一致
 5. MockComposer 6 个分支与 MockModule 6 个 case 一一对应
 ```
+
+### 第一次云端构建的结果（2026-10-24）
+
+Codemagic 实际用的是 **Xcode 26.6 / iPhoneOS 26.5 SDK**（`codemagic.yaml` 里写的是
+`xcode: latest`，不是文档早先假设的 15.4）。第一次构建挂在 `MockKit.swift`，6 个错误：
+
+```text
+MockKit.swift:771  error: unable to type-check this expression in reasonable time
+MockKit.swift:1005 error: missing argument label 'contentsOf:' / 'Sequence' has no member 'circle'
+MockKit.swift:1041 error: extraneous argument label 'bold:' in call
+```
+
+**根因**：把枚举 case 当函数调用，给了不存在的参数标签 ——
+`MockOp.circle` / `.center` 的参数是**位置的**，没有 `cx:` `cy:` `r:` `bold:`。
+已改为按位置传，并把 `.circle` / `.image` 的参数算式提到局部常量（新 Xcode 的类型检查更慢，
+四个 CGFloat 表达式塞一个调用里就会超时）。
+
+**教训**：`check-mock.mjs` 之前只查 `d.xxx` / `b.xxx` 两类调用，漏了 `.case(...)` 这一种写法，
+所以现在有了 2b 这一节。**静态检查全绿 ≠ 能编译**，这条一直成立。
 
 > `_ios/v2/*` 是把 `_ios/*` 那套检查器改成指向 `ios_v2`（真正的工程）的副本，
 > 原来是照着 `ios/`（旧工程）查的，等于这一个月的新代码没人管。
