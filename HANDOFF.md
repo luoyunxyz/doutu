@@ -2279,5 +2279,52 @@ node _tools-layout.cjs             # 版式数值：4 分区 / 43 入口 / 内�
 1. **支付宝社交模块**（`AliChat` / `AliContacts` / `AliMsg` / `AliRedPacket` / `AliTransfer`，
    Android 有 26 个 Activity）—— 工具页里 `ali*` 那 5 个入口就等它；
 2. **小Q 模块**（`QqHome` 1356 行 + 聊天/红包/转账/未读/资料，6 屏）；
-3. **视频模块**（抖音 / 微视 / 快手 / 评论切片）；
+3. ~~视频模块~~ ✅ 已做（见第 17 节），只剩「评论切片」`DyCommentActivity`；
 4. 工具页里剩下的「创建单聊 / 已发红包 / 教学页」。
+
+---
+
+## 17. 2026-10-24：视频模块（抖音 / 快手 / 微视）
+
+### 做了什么
+
+三个页面是同一套结构（黑底 + 顶部分类 + 中间上传 + 右侧互动栏 + 左下账号/文案/音乐 + 底部五格），
+按各自 Java 的 `onDraw()` 逐条照抄：
+
+| 文件 | 对应 | 要点 |
+|---|---|---|
+| `ios_v2/Sources/Video/VideoKit.swift` | 三家共用 | `video_` 图标、圆形头像裁切、数字气泡、**静止版**音乐条；`VideoFeedState` 协议 |
+| `VideoDouyinScreen.swift` | `VideoHomeActivity`（586 行） | 杭州/关注/推荐、黄色 99 气泡、唱片头像（r73 + r48）、五格底栏 |
+| `VideoKuaishouScreen.swift` | `KuaishouActivity`（446 行） | 关注/发现/精选、红色消息气泡（cx845）、相机图标 |
+| `VideoWeishiScreen.swift` | `WeishiActivity`（448 行） | 关注/推荐、猪「表个态」、左下头像 + 关注按钮 |
+
+路由：`video:field:<key>` / `video:like` / `video:tab:<i>` / `video:pick` /
+`video:pickAvatar` / `video:nav:<home|friend|me>`，由 `Router.handleVideo` 统一处理
+（三家共用 `VideoFeedState`，所以一份逻辑通吃）。
+工具页「视频」分区三个入口（`videohome` / `kuaishou` / `weishi`）已接通。
+
+### 两处按 iOS 现状降级（写清楚，不算漏）
+
+1. **视频播放没接**：Android 是相册选视频 → `VideoView` 循环播放。iOS 需要
+   `PHPickerViewController` + `AVPlayerLayer`（宿主得给一层「视频背景」槽位，
+   类似现有的 `usesCameraBackground`）。现在点加号提示「选择视频暂未移植」；
+   未选视频时与 Android 默认态一致（黑底 + 上传加号）。
+2. **音乐条不滚**：Android 每帧 `postInvalidateOnAnimation()` 从右往左滚；iOS 宿主
+   只按 0.25s 重绘，跑起来一顿一顿，所以取静止位置（贴音符图标、裁到中线），
+   与参考截图一致。
+
+### 校验
+
+```powershell
+node _ios/v2/lint-swift.mjs        # 430 项全绿
+node _ios/v2/check-video.mjs       # 9 项全绿（图标 25 张 / 字段键闭合 / 工具页接线）
+```
+
+`check-video.mjs` 查三件事：`VideoKit.icon("x")` 的 25 个引用是否都有 `video_x` 资源；
+`hitTest` 发出的 `video:field:<key>` 是否都被对应 `State.fieldInfo` 认识（漏了就是点了没反应）；
+工具页三个入口是否都在 Router 里有分支。
+
+### 还差什么
+
+- `DyCommentActivity`（评论切片，371 行）—— 工具页「评论切片」入口还是「制作中」；
+- 视频选择与播放（见上面第 1 条）。

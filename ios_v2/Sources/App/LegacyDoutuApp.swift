@@ -2066,8 +2066,56 @@ final class Router {
         case let t where t.hasPrefix("tools:"):
             handleTools(String(t.dropFirst("tools:".count)))
 
+        // 「视频」模块（Android `features/video`）：抖音 / 快手 / 微视
+        case let t where t.hasPrefix("video:"):
+            handleVideo(String(t.dropFirst("video:".count)))
+
         default:
             break
+        }
+    }
+
+    // MARK: - 视频模块（Android `features/video`）
+
+    /// 令牌形状：`video:field:<key>` / `video:like` / `video:tab:<i>` /
+    /// `video:pick`（选视频）/ `video:pickAvatar`（换头像）/ `video:nav:<home|friend|me>`。
+    ///
+    /// 三家页面共用 `VideoFeedState`，所以这里不用区分是哪个平台。
+    private func handleVideo(_ rest: String) {
+        guard let state = host?.state as? VideoFeedState else { return }
+
+        if rest == "pick" {
+            // Android 是从相册选视频循环播放；iOS 侧播放器还没接（见 HANDOFF 第 17 节）
+            showToast("选择视频暂未移植", ok: false)
+            return
+        }
+        if rest == "pickAvatar" {
+            showToast("换头像暂未移植", ok: false)
+            return
+        }
+        if rest == "like" {
+            state.toggleLiked()
+            host?.setNeedsDisplay()
+            return
+        }
+        if rest.hasPrefix("tab:") {
+            if let index = Int(rest.dropFirst("tab:".count)) {
+                state.selectedTab = index
+                host?.setNeedsDisplay()
+            }
+            return
+        }
+        if rest.hasPrefix("nav:") {
+            showToast("该入口制作中", ok: false)
+            return
+        }
+        if rest.hasPrefix("field:") {
+            let key = String(rest.dropFirst("field:".count))
+            guard let info = state.fieldInfo(key) else { return }
+            EditPrompt.present(title: info.title, current: info.value, numeric: info.numeric) { [weak self] text in
+                state.setField(key, text)
+                self?.host?.setNeedsDisplay()
+            }
         }
     }
 
@@ -2131,6 +2179,20 @@ final class Router {
                 showToast("\(name) 制作中", ok: false)
             }
             return
+        }
+        // 视频模块（工具页 4 个入口）
+        switch action {
+        case "videohome":
+            push(VideoDouyinScreen(), state: VideoDouyinScreen.State())
+            return
+        case "kuaishou":
+            push(VideoKuaishouScreen(), state: VideoKuaishouScreen.State())
+            return
+        case "weishi":
+            push(VideoWeishiScreen(), state: VideoWeishiScreen.State())
+            return
+        default:
+            break
         }
         showToast("\(name) 制作中", ok: false)
     }
