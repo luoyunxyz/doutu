@@ -10,7 +10,7 @@
     { "name": "话费",          "file": "MockHuafei.swift", "scope": "detail",   "size": 13, "padV": 13, "pitch": 124 },
     { "name": "欧易",          "file": "MockOkx.swift",    "scope": "detail",   "size": 12, "padV": 7,  "pitch": 84 },
     { "name": "民生",          "file": "MockMinsheng.swift","scope": "detail",  "size": 14, "padV": 6.5, "pitch": 91 },
-    { "name": "汇旺",          "file": "MockHuiwang.swift","scope": "detail",   "size": 14, "padV": 6,  "pitch": 84 }
+    { "name": "汇旺",          "file": "MockHuiwang.swift","scope": "detail",   "size": 14, "padV": 5.5, "pitch": 84 }
   ],
   "boards": [
     { "name": "明细查询底部", "hex": "#eeeeee" },

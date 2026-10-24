@@ -44,15 +44,17 @@ enum MockHuiwang {
                            color: MockInk.label, padH: 0, padTop: 0, padBottom: 0)
         }
 
-        // 明细白卡
+        // 明细白卡（行距按安卓实测 hw_sub0：14sp + 5.5dp，行距 84px）
+        let rs = dp(14)
+        let rp = dp(5.5)
         b.panel(gapTop: dp(14), margin: dp(12), pad: dp(14), bg: .white) { p in
-            p.row("账单类型", s.value("账单类型", "转账"))
-            p.row("账单号", s.value("账单号", "22082179616251015"))
-            p.row("账单时间", s.value("账单时间", s.time))
-            p.row("收款人", s.value("收款人", "李**"))
-            p.row("收款账号", s.value("收款账号", "62*****699"))
-            p.row("收款方式", s.value("收款方式", "余额-USD"))
-            p.row("备注", s.value("备注", "-"))
+            p.row("账单类型", s.value("账单类型", "转账"), size: rs, padV: rp)
+            p.row("账单号", s.value("账单号", "22082179616251015"), size: rs, padV: rp)
+            p.row("账单时间", s.value("账单时间", s.time), size: rs, padV: rp)
+            p.row("收款人", s.value("收款人", "李**"), size: rs, padV: rp)
+            p.row("收款账号", s.value("收款账号", "62*****699"), size: rs, padV: rp)
+            p.row("收款方式", s.value("收款方式", "余额-USD"), size: rs, padV: rp)
+            p.row("备注", s.value("备注", "-"), size: rs, padV: rp)
         }
         _ = paidRed
     }
