@@ -67,6 +67,9 @@ enum MockComposer {
         case .shuzi:
             return MockDigitalWallet.page(state: state, metrics: metrics, width: width,
                                           showsTopTitle: showsTopTitle)
+        case .yunshanfu:
+            return MockUnionPay.page(state: state, metrics: metrics, width: width,
+                                     showsTopTitle: showsTopTitle)
         default:
             return placeholder(module: module, metrics: metrics, width: width)
         }
@@ -77,7 +80,7 @@ enum MockComposer {
         switch module {
         case .nye, .icbc, .boc, .psbc, .cmb, .eank,
              .xingye, .jianshe, .pingan, .jiaotong, .zhongxin, .pufa,
-             .minsheng, .wechat, .alipay, .huiwang, .shuzi:
+             .minsheng, .wechat, .alipay, .huiwang, .shuzi, .yunshanfu:
             return true
         }
     }
