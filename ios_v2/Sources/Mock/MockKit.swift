@@ -349,15 +349,15 @@ struct MockMetrics {
     /// 成品页（`NyeDetailActivity`）
     static let detail = MockMetrics(
         isDetail: true,
-        // 下面这组是按**安卓设备上的 uni-app 版**逐行对位量出来的（2026-10-24）：
-        // 明细行距实测 77px（≈25.7dp）＝ 15sp 文字 + 上下各 5.3dp；
-        // 收款人/金额/状态条之间比 Java 原生版松，合计约 +30dp。
+        // 下面这组是按**安卓设备上的 uni-app 版**逐行量出来的（2026-10-24）：
+        // 明细行距实测 103px（≈34dp）＝ 15sp 文字 + 上下各 8dp；
+        // 金额块比 Java 原生版松，合计 +11dp。
         titleBarH: dp(44), titleSize: dp(19),
-        rowSize: dp(15), rowPadV: dp(12), rowPadH: dp(16),
+        rowSize: dp(15), rowPadV: dp(8), rowPadH: dp(16),
         statusPadV: dp(20), statusPadH: dp(16), statusSize: dp(15),
         statusCheck: dp(20), statusGap: dp(9),
         nameSize: dp(15), namePadTop: dp(32),
-        amountSize: dp(32), amountPadTop: dp(12), amountPadBottom: dp(48),
+        amountSize: dp(32), amountPadTop: dp(12), amountPadBottom: dp(59),
         cardPadV: dp(14), cardPadH: dp(16), cardLogo: dp(28), cardNoSize: dp(20), cardGap: dp(10),
         amtLabelSize: dp(15), amtSize: dp(28), amtPadV: dp(6), bandH: dp(10),
         linkPadV: dp(16), linkPadH: dp(16), linkSize: dp(15),
