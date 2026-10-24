@@ -328,7 +328,7 @@ enum MockModule: Int, CaseIterable {
         switch self {
         case .nye:
             if sub == 0 { return "明细" }
-            if sub == 4 { return "收支详情" }
+            if sub == 3 || sub == 4 { return "明细" }
             return "明细查询"
         case .icbc:
             return sub == 0 ? "汇款明细查询" : "明细详情"

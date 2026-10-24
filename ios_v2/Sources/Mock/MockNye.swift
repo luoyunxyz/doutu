@@ -155,7 +155,7 @@ enum MockNye {
         switch state.sub {
         case 0:
             statement(b, state, showsTopTitle: showsTopTitle)
-        case 4:
+        case 3, 4:
             ledger(b, state, showsTopTitle: showsTopTitle)
         default:
             query(b, state, out: state.sub == 1, showsTopTitle: showsTopTitle)
@@ -234,26 +234,36 @@ enum MockNye {
         b.row("交易附言", s.value("交易附言", "---"), size: rowSize, padV: rowPadV)
     }
 
-    // MARK: - 明细转出3：收支详情（`buildLedger()`）
+    // MARK: - 收支详情（`buildLedger()`）
 
     private static func ledger(_ b: MockBuilder, _ s: MockState, showsTopTitle: Bool) {
-        let m = b.metrics
-        if showsTopTitle { b.titleBar("收支详情") }
+        if showsTopTitle { b.titleBar("明细") }
 
-        b.kindRow("类型", asset: "mock_ye_consume", text: s.value("类型", "消费"))
-        b.centerBlock("金额", s.value("金额", "-264.00"),
-                      size: m.ledgerAmountSize, color: MockInk.amount, bold: true,
-                      padTop: m.ledgerPadTop, padBottom: m.ledgerPadBottom)
+        // 安卓 00_03 / 00_04：标题 16、金额 31、余额 16、明细行 16sp + 4.9dp（87px）。
+        // 没有「类型/消费」那一行，也没有「查看更多」。
+        let incoming = s.sub == 3
+        b.centerBlock("金额", s.value("金额", incoming ? "+264.00" : "-264.00"),
+                      size: dp(31), color: MockInk.amount, bold: true,
+                      padTop: dp(10), padBottom: dp(4))
         b.centerBlock("余额", s.value("余额", "余额 ¥ 289.25"),
-                      size: m.balSize, color: MockInk.label,
-                      padTop: 0, padBottom: m.balPadBottom)
+                      size: dp(16), color: MockInk.label,
+                      padTop: 0, padBottom: dp(16))
 
-        b.row("交易时间", s.value("交易时间", s.time))
-        b.row("收款方", s.value("收款方", "海州区好客士便利店"))
-        b.row("收款账户", s.value("收款账户", "1050****5157"))
-        b.row("交易摘要", s.value("交易摘要", "代付"))
-        b.row("交易附言", s.value("交易附言", "TH404022415986431658"))
-
-        b.moreRow("查看更多")
+        let size = dp(16)
+        let padV = dp(4.9)
+        b.row("交易时间", s.value("交易时间", s.time), size: size, padV: padV)
+        if incoming {
+            b.row("付款方", s.value("付款方", "支付宝(中国)网络技术有限公司"), size: size, padV: padV)
+            b.row("收款账户", s.value("收款账户", "1058****2456"), size: size, padV: padV)
+            b.row("交易摘要", s.value("交易摘要", "消费"), size: size, padV: padV)
+            b.row("交易附言", s.value("交易附言", "商户支付宝转账"), size: size, padV: padV)
+            b.row("交易卡号", s.value("交易卡号", "6228****9073"), size: size, padV: padV)
+            b.row("交易类型", s.value("交易类型", "转账"), size: size, padV: padV)
+        } else {
+            b.row("收款方", s.value("收款方", "海州区好客士便利店"), size: size, padV: padV)
+            b.row("收款账户", s.value("收款账户", "1050****5157"), size: size, padV: padV)
+            b.row("交易摘要", s.value("交易摘要", "代付"), size: size, padV: padV)
+            b.row("交易附言", s.value("交易附言", "TH404022415986431658"), size: size, padV: padV)
+        }
     }
 }
