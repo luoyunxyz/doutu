@@ -71,15 +71,18 @@ enum MockAlipay {
                            color: MockInk.title, padH: 0, padTop: dp(20), padBottom: 0)
             b.sectionLabel(s.value("金额", "+100.00"), size: dp(44), color: MockInk.black,
                            padH: 0, padTop: dp(8), padBottom: dp(20))
-            b.row("类型", "收入")
+            // 行距按安卓实测（ali_sub8）：14sp + 12.5dp，行距 126px（这页特别松）
+            let rs = dp(14)
+            let rp = dp(12.5)
+            b.row("类型", "收入", size: rs, padV: rp)
             b.hairlineFull()
-            b.row("时间", s.time)
+            b.row("时间", s.time, size: rs, padV: rp)
             b.hairlineFull()
-            b.row("余额", "100.00")
+            b.row("余额", "100.00", size: rs, padV: rp)
             b.hairlineFull()
-            b.row("流水号", "2022092622001463831445460044")
+            b.row("流水号", "2022092622001463831445460044", size: rs, padV: rp)
             b.hairlineFull()
-            b.row("备注", "收钱码收款-来自**容")
+            b.row("备注", "收钱码收款-来自**容", size: rs, padV: rp)
             b.gap(dp(20))
         case 7:
             // 收支明细：交易详情（与微信同结构）

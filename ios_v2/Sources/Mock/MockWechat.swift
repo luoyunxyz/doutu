@@ -42,9 +42,11 @@ enum MockWechat {
             case 11: status = "商户已收款"; remark = "商户收款"; timeLabel = "支付时间"
             default: status = "支付成功"; remark = "二维码收款"; timeLabel = "转账时间"
             }
+            // 行距按子页实测：扫码捐款/收款（6,7）76px → 4.5dp；赞赏码/商户（8-11）89px → 6.5dp
+            let padV: CGFloat = (state.sub == 6 || state.sub == 7) ? dp(4.5) : dp(6.5)
             billDetail(b, s: state, title: title, status: status,
                        remark: remark, timeLabel: timeLabel,
-                       showsTopTitle: showsTopTitle)
+                       rowPadV: padV, showsTopTitle: showsTopTitle)
         case 4:
             // 消息盒子：微信支付空页（按 `wx_sub4` 截图复刻）
             if showsTopTitle { b.titleBar("微信支付") }
@@ -91,7 +93,7 @@ enum MockWechat {
     /// 账单详情一族：✕、图标、名称、金额、五行明细、账单服务、财付通署名
     private static func billDetail(_ b: MockBuilder, s: MockState, title: String,
                                    status: String, remark: String, timeLabel: String,
-                                   showsTopTitle: Bool) {
+                                   rowPadV: CGFloat, showsTopTitle: Bool) {
         if showsTopTitle { b.titleBar(title) }
         b.sectionLabel("✕                                       全部账单",
                        size: dp(16), color: MockInk.title,
@@ -106,9 +108,9 @@ enum MockWechat {
         b.sectionLabel(s.value("金额", "-100.00"), size: dp(44),
                        color: MockInk.black, padH: 0, padTop: dp(12), padBottom: dp(20))
         b.hairlineFull()
-        // 行距按安卓实测（wx_sub8）：14sp + 6.5dp，行距 89px
+        // 行距由调用方按子页给定（实测 76 / 89px）
         let bs = dp(14)
-        let bp = dp(6.5)
+        let bp = rowPadV
         b.row("当前状态", status, size: bs, padV: bp)
         b.row("收款方备注", remark, size: bs, padV: bp)
         b.row(timeLabel, s.time, size: bs, padV: bp)
