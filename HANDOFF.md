@@ -2160,9 +2160,20 @@ fullWidthImage(按图片比例算高)  brandRow/dualLinks          hairlineFull
 
 ```powershell
 node _ios/v2/lint-swift.mjs        # 412 项全绿（括号/重名/素材/版本号一致性）
+node _ios/v2/check-mock.mjs        # 模拟模块专项 12 项（颜色/构建器调用/子页名/MODES/接线）
 node _ios/v2/check-draw-api.mjs    # 新增绘制调用的参数标签与个数
 node _ios/v2/check-members.mjs     # Type.member 是否存在
 node _ios/v2/check-instance.mjs    # State 实例成员
+```
+
+`check-mock.mjs` 是这一轮新加的，专门盯「错了不容易发现」的五类问题：
+
+```text
+1. MockInk.xxx 颜色是否真的声明过
+2. 161 处 MockBuilder 调用的方法名与参数标签
+3. 6 家子页名与 Java SUBS 逐字一致（靠它抓出工商/中国被文档带错）
+4. 招商 MODES 派发表与 CmbActivity.MODES 一致
+5. MockComposer 6 个分支与 MockModule 6 个 case 一一对应
 ```
 
 > `_ios/v2/*` 是把 `_ios/*` 那套检查器改成指向 `ios_v2`（真正的工程）的副本，
