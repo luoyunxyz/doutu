@@ -15,6 +15,8 @@ enum MockIcbc {
         let b = MockBuilder(width: width, metrics: metrics)
         if state.sub == 0 {
             remit(b, state, showsTopTitle: showsTopTitle)
+        } else if state.sub == 1 || state.sub == 2 || state.sub == 4 {
+            detailV2(b, state, showsTopTitle: showsTopTitle)
         } else {
             detail(b, state, showsTopTitle: showsTopTitle)
         }
@@ -178,6 +180,75 @@ enum MockIcbc {
             pair("交易场所", "支付宝")
             pair("交易金额", "100.00")
             b.centeredLink("查看全部", size: linkSize, color: MockInk.noteTitle, padV: linkPadV)
+        }
+    }
+
+    // MARK: - 工商明细详情：01_01 / 01_02 / 01_04（安卓 DOM 实测：14sp、33 CSS 行距）
+
+    private static func detailV2(_ b: MockBuilder, _ s: MockState, showsTopTitle: Bool) {
+        if showsTopTitle {
+            b.headerBar("明细详情", color: MockInk.value,
+                        icon: "mock_icbc_hdricons",
+                        iconSize: CGSize(width: dp(44), height: dp(24)))
+        }
+
+        b.centerBlock("金额", s.value("金额", "+100.00"), size: dp(28),
+                      color: Draw.color(0xffff5500), bold: false,
+                      padTop: dp(17), padBottom: dp(4))
+        if s.sub == 2 {
+            b.centerBlock("余额", s.value("余额", "余额:100.00"), size: dp(13),
+                          color: MockInk.grey, padTop: dp(12), padBottom: dp(2))
+        }
+
+        let size = dp(14)
+        let padV = dp(8.1)
+        let padH = dp(14.4)
+
+        func row(_ label: String, _ value: String) {
+            b.pairRow(label, s.value(label, value), size: size, padH: padH, padV: padV,
+                      labelColor: Draw.color(0xff313131), valueColor: MockInk.value)
+        }
+
+        switch s.sub {
+        case 1:
+            row("交易时间", s.time)
+            row("交易卡号", "6221****3640")
+            row("业务摘要", "跨行转入")
+            row("交易国家或地区简称", "CHN")
+            row("交易金额", "100.00")
+            row("记账金额", "100.00")
+            row("记账币种", "人民币")
+            row("交易卡余额", "100.00")
+            row("对方账户", "6222****7958")
+            row("对方户名", "张三")
+            row("对方账户行别", "中国工商银行")
+            b.centeredLink("对该笔订单有疑问？立即咨询", size: dp(16),
+                           color: Draw.color(0xff009dec), padV: dp(14))
+        case 2:
+            row("交易卡号", "6221****3640")
+            row("交易时间", s.time)
+            row("业务摘要", "银联入账")
+            row("交易场所", "网上银行")
+            row("交易金额", "100.00")
+            b.centeredLink("查看更多", size: dp(13), color: MockInk.grey, padV: dp(10))
+            b.centeredCells(["投资理财", "信用卡还款", "查看来往"],
+                            height: dp(38), size: dp(12), padV: dp(10))
+        default:
+            row("交易时间", s.time)
+            row("交易卡号", "6221****3640")
+            row("业务摘要", "银联入账")
+            row("交易详情", "银联入账")
+            row("交易国家或地区简称", "CHN")
+            row("交易场所", "网上银行")
+            row("交易金额", "100.00")
+            row("记账金额", "100.00")
+            row("记账币种", "人民币")
+            row("交易卡余额", "100.00")
+            row("对方账户", "6222****7958")
+            row("对方户名", "张三")
+            row("对方账户行别", "中国工商银行")
+            b.centeredLink("对该笔订单有疑问？立即咨询", size: dp(16),
+                           color: Draw.color(0xff009dec), padV: dp(14))
         }
     }
 }
