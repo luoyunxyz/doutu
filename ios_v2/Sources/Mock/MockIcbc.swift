@@ -24,11 +24,13 @@ enum MockIcbc {
     // MARK: - 明细转出1：汇款明细查询（`buildRemit()`）
 
     private static func remit(_ b: MockBuilder, _ s: MockState, showsTopTitle: Bool) {
+        // 安卓 01_00 实测：16 行、14sp、行距 60px（20 CSS）＝上下各 1.6dp；
+        // 标签右对齐列右边缘 ≈160 CSS，值从 ≈166 起。
+        let padH = dp(14)
+        let padV = dp(1.6)
+        let rowSize = dp(14)
+        let labelWidth = dp(146)
         let detail = b.metrics.isDetail
-        let padH = detail ? dp(14) : dp(12)
-        let padV = detail ? dp(8) : dp(6)
-        let rowSize = detail ? dp(14) : dp(13)
-        let labelWidth = detail ? dp(120) : dp(110)
         let buttonH = detail ? dp(50) : dp(46)
         let buttonPadH = detail ? dp(14) : dp(12)
         let buttonSize = detail ? dp(17) : dp(16)
