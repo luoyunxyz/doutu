@@ -101,6 +101,7 @@ enum MockModule: Int, CaseIterable {
     case zhongxin = 10 // 中信模拟（5 个子页，银行卡转账成功）
     case pufa = 11    // 浦发模拟（4 个子页，转账结果）
     case minsheng = 12 // 民生模拟（3 个子页，交易详情）
+    case wechat = 13   // 微信模拟（12+ 个子页，支付成功）
 
     /// 首页卡片标题（`LABELS[0...5]`）
     var title: String {
@@ -118,6 +119,7 @@ enum MockModule: Int, CaseIterable {
         case .zhongxin: return "中信模拟"
         case .pufa: return "浦发模拟"
         case .minsheng: return "民生模拟"
+        case .wechat: return "微信模拟"
         }
     }
 
@@ -169,6 +171,11 @@ enum MockModule: Int, CaseIterable {
         case .minsheng:
             // 安卓设备抽屉里的三项
             return ["明细转出", "明细转入", "明细转入支付宝"]
+        case .wechat:
+            // 安卓设备抽屉里的前 12 项（下面可能还有，后续照截图补）
+            return ["扫码转出1", "扫码转出2", "扫码转出2", "明细(转出)",
+                    "消息盒子", "收支明细", "扫码捐款", "扫码收款",
+                    "赞赏码转出", "赞赏码转出2", "赞赏码转入", "商户转出1"]
         }
     }
 
@@ -188,6 +195,7 @@ enum MockModule: Int, CaseIterable {
         case .zhongxin: return "mock_citic"
         case .pufa: return "mock_bufa"
         case .minsheng: return "mock_mingsheng"
+        case .wechat: return "mock_wechat"
         }
     }
 
@@ -254,6 +262,8 @@ enum MockModule: Int, CaseIterable {
             return sub == 0 ? "转账结果" : (subs.indices.contains(sub) ? subs[sub] : title)
         case .minsheng:
             return sub == 0 ? "交易详情" : (subs.indices.contains(sub) ? subs[sub] : title)
+        case .wechat:
+            return sub == 0 ? "支付成功" : (subs.indices.contains(sub) ? subs[sub] : title)
         default:
             return subs.indices.contains(sub) ? subs[sub] : title
         }
@@ -840,6 +850,23 @@ final class MockBuilder {
         ops.append(.text(text, padH, baseline, size, color, false))
         ops.append(.right(chevron, width - padH, baseline, dp(18), MockInk.label, false))
         y += h
+    }
+
+    /// 居中的圆形头像（微信「支付成功」页）。没有图片就用蓝底首字兜底。
+    func centeredAvatar(_ name: String, asset: String?, diameter: CGFloat, gapTop: CGFloat) {
+        y += gapTop
+        let cx: CGFloat = width / 2
+        let cy: CGFloat = y + diameter / 2
+        let radius: CGFloat = diameter / 2
+        if let asset {
+            ops.append(.image(asset, CGRect(x: cx - radius, y: y, width: diameter, height: diameter)))
+        } else {
+            ops.append(.circle(cx, cy, radius, MockInk.logoFallback))
+            let size = diameter * 0.42
+            let baseline = cy + ascender(size) / 2 - size * 0.06
+            ops.append(.center(String(name.prefix(1)), cx, baseline, size, MockInk.white, false))
+        }
+        y += diameter
     }
 
     /// 居中的绿色圆形 ✓（中行「操作结果」页）

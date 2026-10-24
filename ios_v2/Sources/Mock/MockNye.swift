@@ -55,6 +55,9 @@ enum MockComposer {
         case .minsheng:
             return MockMinsheng.page(state: state, metrics: metrics, width: width,
                                      showsTopTitle: showsTopTitle)
+        case .wechat:
+            return MockWechat.page(state: state, metrics: metrics, width: width,
+                                   showsTopTitle: showsTopTitle)
         default:
             return placeholder(module: module, metrics: metrics, width: width)
         }
@@ -64,7 +67,8 @@ enum MockComposer {
     static func hasLayout(_ module: MockModule) -> Bool {
         switch module {
         case .nye, .icbc, .boc, .psbc, .cmb, .eank,
-             .xingye, .jianshe, .pingan, .jiaotong, .zhongxin, .pufa, .minsheng:
+             .xingye, .jianshe, .pingan, .jiaotong, .zhongxin, .pufa,
+             .minsheng, .wechat:
             return true
         }
     }
