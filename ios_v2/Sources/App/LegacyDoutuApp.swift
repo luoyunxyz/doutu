@@ -2070,8 +2070,69 @@ final class Router {
         case let t where t.hasPrefix("video:"):
             handleVideo(String(t.dropFirst("video:".count)))
 
+        // 「支付宝」模块（Android `features/ali`）：目前只接了公众号消息页
+        case let t where t.hasPrefix("ali:"):
+            handleAli(String(t.dropFirst("ali:".count)))
+
         default:
             break
+        }
+    }
+
+    // MARK: - 支付宝模块（Android `features/ali`）
+
+    /// 令牌：`ali:gzh`（新建公众号）/ `ali:contacts`（通讯录，未移植）/
+    /// `ali:box`（公众号会话，未移植）/ `ali:nav:<0..4>`（底部五格）。
+    private func handleAli(_ rest: String) {
+        if rest == "gzh" {
+            // Android 是「名称 / 消息内容 / 三个开关 / 取消·确定」的浮层；
+            // iOS 用系统弹窗收两个字段，确定后直接写回消息盒子那一行。
+            let alert = UIAlertController(title: "新建公众号",
+                                          message: "会生成一条公众号消息",
+                                          preferredStyle: .alert)
+            alert.addTextField { field in
+                field.placeholder = "名称"
+                field.text = "蚂蚁财富"
+            }
+            alert.addTextField { field in
+                field.placeholder = "消息内容"
+                field.text = "你的总资产收益已更新"
+            }
+            alert.addAction(UIAlertAction(title: "取消", style: .cancel))
+            alert.addAction(UIAlertAction(title: "确定", style: .default) { [weak self] _ in
+                let name = alert.textFields?.first?.text ?? ""
+                let content = alert.textFields?.last?.text ?? ""
+                if let state = self?.host?.state as? AliMsgScreen.State {
+                    if !name.isEmpty { state.boxName = name }
+                    if !content.isEmpty { state.boxSub = content }
+                    self?.host?.setNeedsDisplay()
+                }
+                self?.showToast("已生成公众号消息", ok: true)
+            })
+            UpdatePrompt.topViewController()?.present(alert, animated: true)
+            return
+        }
+        if rest == "contacts" {
+            showToast("支付宝通讯录制作中", ok: false)
+            return
+        }
+        if rest == "box" {
+            showToast("公众号会话制作中", ok: false)
+            return
+        }
+        if rest.hasPrefix("nav:") {
+            switch String(rest.dropFirst("nav:".count)) {
+            case "0":
+                push(ZhiHomeV2Screen(), state: ZhiHomeV2Screen.State())
+            case "1":
+                push(LicaiV2Screen(), state: LicaiV2Screen.State())
+            case "3":
+                break                                   // 当前就是「消息」
+            case "4":
+                push(MeScreen(), state: MeScreen.State())
+            default:
+                showToast("该入口制作中", ok: false)
+            }
         }
     }
 
@@ -2190,6 +2251,9 @@ final class Router {
             return
         case "weishi":
             push(VideoWeishiScreen(), state: VideoWeishiScreen.State())
+            return
+        case "alimsg":
+            push(AliMsgScreen(), state: AliMsgScreen.State())
             return
         default:
             break
