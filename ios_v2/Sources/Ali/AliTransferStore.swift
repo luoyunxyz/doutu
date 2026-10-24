@@ -30,6 +30,32 @@ final class AliTransferStore {
     var status = "交易成功"
     var pageTitle = "账单详情"
 
+    // 详情页（账单详情）用到的其它字段，默认值与 Java 一致
+    var category = "其他"
+    var tags = ""
+    var includedInBill = true
+    var serviceTip = "恭喜你有6元转账保障福利待领取！"
+    var billTip = "恭喜你有6元转账保障福利待领取！"
+    var paymentMethod = "余额"
+    var orderNo = ""
+    var billTitle = "账单管理"
+    var serviceLabel = "服务推荐"
+    var actionLabels = [
+        "查看往来记录", "AA收款", "转账凭证", "往来流水证明", "申请电子回单",
+        "对此订单有疑问", "投诉",
+    ]
+
+    /// 订单号：没填过就按时间戳生成（Java `orderNumber()`）
+    func orderNumber() -> String {
+        if orderNo.isEmpty {
+            let formatter = DateFormatter()
+            formatter.locale = Locale(identifier: "en_US_POSIX")
+            formatter.dateFormat = "yyyyMMddHHmmss"
+            orderNo = formatter.string(from: Date()) + "4200"
+        }
+        return orderNo
+    }
+
     /// 没选过发送人就给一个默认的（Java `ensureSender`）
     func ensureSender(fallbackName: String = "怕你久居她心") {
         if sender == nil {

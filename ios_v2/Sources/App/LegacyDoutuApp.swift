@@ -2170,6 +2170,10 @@ final class Router {
             push(AliTransferScreen(), state: AliTransferScreen.State())
             return
         }
+        if rest.hasPrefix("td:") {
+            handleAliTransferDetail(String(rest.dropFirst("td:".count)))
+            return
+        }
         if rest.hasPrefix("transfer:") {
             handleAliTransfer(String(rest.dropFirst("transfer:".count)))
             return
@@ -2300,6 +2304,176 @@ final class Router {
         host?.setNeedsDisplay()
     }
 
+    /// 转账详情页（账单详情）的令牌：`more` 展开/收起两个额外行；`avatar`/`name`/`amount`/`status`
+    /// 改汇总卡；`row:<标签>` 改三行明细里的值；`bill:<标签>` 改账单卡；`action:<i>` 七个入口。
+    private func handleAliTransferDetail(_ rest: String) {
+        let store = AliTransferStore.shared
+        if rest == "more" {
+            if let state = host?.state as? AliTransferDetailScreen.State {
+                state.expandMore.toggle()
+                host?.setNeedsDisplay()
+            }
+            return
+        }
+        if rest == "avatar" {
+            let sheet = UIAlertController(title: "修改头像", message: nil, preferredStyle: .actionSheet)
+            for name in store.randomNames.prefix(6) {
+                sheet.addAction(UIAlertAction(title: name, style: .default) { [weak self] _ in
+                    let asset = store.sender?.asset
+                    store.sender = AliTransferStore.Sender(name: name, asset: asset)
+                    self?.host?.setNeedsDisplay()
+                })
+            }
+            sheet.addAction(UIAlertAction(title: "关闭", style: .cancel))
+            if let pop = sheet.popoverPresentationController, let view = host {
+                pop.sourceView = view
+                pop.sourceRect = CGRect(x: view.bounds.midX, y: view.bounds.midY, width: 1, height: 1)
+                pop.permittedArrowDirections = []
+            }
+            UpdatePrompt.topViewController()?.present(sheet, animated: true)
+            return
+        }
+        if rest == "status" {
+            let options = ["交易成功", "交易关闭", "处理中", "已退款"]
+            presentAliOptions(title: "交易状态", options: options, current: store.status) { value in
+                store.status = value
+            }
+            return
+        }
+        if rest.hasPrefix("bill:") {
+            let key = String(rest.dropFirst("bill:".count))
+            switch key {
+            case "账单分类":
+                presentAliOptions(title: "账单分类",
+                                  options: ["其他", "餐饮美食", "交通出行", "日用百货",
+                                            "服饰装扮", "转账红包", "收入"],
+                                  current: store.category) { value in
+                    store.category = value
+                }
+            case "标签和备注":
+                EditPrompt.present(title: "标签和备注", current: store.tags, numeric: false) { [weak self] text in
+                    store.tags = text
+                    self?.host?.setNeedsDisplay()
+                }
+            default:   // 计入收支
+                store.includedInBill.toggle()
+                host?.setNeedsDisplay()
+            }
+            return
+        }
+        if rest.hasPrefix("action:") {
+            let index = Int(rest.dropFirst("action:".count)) ?? 0
+            let label = store.actionLabels.indices.contains(index) ? store.actionLabels[index] : ""
+            showToast("已打开\(label)", ok: true)
+            return
+        }
+        if rest.hasPrefix("row:") {
+            let key = String(rest.dropFirst("row:".count))
+            switch key {
+            case "创建时间":
+                EditPrompt.present(title: "创建时间", current: store.createdAt, numeric: false) { [weak self] text in
+                    store.createdAt = text
+                    self?.host?.setNeedsDisplay()
+                }
+            case "转账备注":
+                EditPrompt.present(title: "转账备注", current: store.note, numeric: false) { [weak self] text in
+                    store.note = text
+                    self?.host?.setNeedsDisplay()
+                }
+            case "对方账户":
+                EditPrompt.present(title: "对方账户", current: store.account, numeric: false) { [weak self] text in
+                    store.account = text
+                    self?.host?.setNeedsDisplay()
+                }
+            case "支付方式":
+                presentAliOptions(title: "支付方式",
+                                  options: ["余额", "余额宝", "花呗", "银行卡"],
+                                  current: store.paymentMethod) { value in
+                    store.paymentMethod = value
+                }
+            default:   // 订单号
+                EditPrompt.present(title: "订单号", current: store.orderNumber(), numeric: false) { [weak self] text in
+                    store.orderNo = text
+                    self?.host?.setNeedsDisplay()
+                }
+            }
+            return
+        }
+        switch rest {
+        case "name":
+            EditPrompt.present(title: "修改昵称", current: store.sender?.name ?? "", numeric: false) { [weak self] text in
+                let name = text.trimmingCharacters(in: .whitespacesAndNewlines)
+                guard !name.isEmpty else { return }
+                let asset = store.sender?.asset
+                store.sender = AliTransferStore.Sender(name: name, asset: asset)
+                self?.host?.setNeedsDisplay()
+            }
+        case "amount":
+            EditPrompt.present(title: "修改金额（可带 + / -）",
+                               current: store.amountText, numeric: true) { [weak self] text in
+                // Java `editAmount()`：减号表示支出，其余按收入处理
+                var raw = text.trimmingCharacters(in: .whitespacesAndNewlines)
+                let income = !raw.hasPrefix("-")
+                raw = raw.replacingOccurrences(of: "+", with: "")
+                    .replacingOccurrences(of: "-", with: "")
+                    .replacingOccurrences(of: "¥", with: "")
+                    .replacingOccurrences(of: "￥", with: "")
+                if let value = Double(raw), value.isFinite, value >= 0 {
+                    store.amount = String(format: "%.2f", value)
+                    store.income = income
+                }
+                self?.host?.setNeedsDisplay()
+            }
+        case "service":
+            EditPrompt.present(title: "左侧小标题", current: store.serviceLabel, numeric: false) { [weak self] text in
+                store.serviceLabel = text
+                self?.host?.setNeedsDisplay()
+            }
+        case "billTitle":
+            EditPrompt.present(title: "小标题", current: store.billTitle, numeric: false) { [weak self] text in
+                store.billTitle = text
+                self?.host?.setNeedsDisplay()
+            }
+        case "banner1":
+            EditPrompt.present(title: "服务推荐文案", current: store.serviceTip, numeric: false) { [weak self] text in
+                store.serviceTip = text
+                self?.host?.setNeedsDisplay()
+            }
+        case "banner2":
+            EditPrompt.present(title: "账单横幅文案", current: store.billTip, numeric: false) { [weak self] text in
+                store.billTip = text
+                self?.host?.setNeedsDisplay()
+            }
+        case "title":
+            EditPrompt.present(title: "页面标题", current: store.pageTitle, numeric: false) { [weak self] text in
+                store.pageTitle = text
+                self?.host?.setNeedsDisplay()
+            }
+        default:
+            break
+        }
+    }
+
+    /// 一组选项弹成 action sheet（Java 的 `chooseValue`）
+    private func presentAliOptions(title: String, options: [String], current: String,
+                                   onPick: @escaping (String) -> Void) {
+        let sheet = UIAlertController(title: title, message: nil, preferredStyle: .actionSheet)
+        for option in options {
+            let mark = option == current ? "✓ " : ""
+            sheet.addAction(UIAlertAction(title: mark + option, style: .default) { [weak self] _ in
+                onPick(option)
+                self?.host?.setNeedsDisplay()
+            })
+        }
+        sheet.addAction(UIAlertAction(title: "取消", style: .cancel))
+        if let pop = sheet.popoverPresentationController, let view = host {
+            pop.sourceView = view
+            pop.sourceRect = CGRect(x: view.bounds.midX, y: view.bounds.midY, width: 1, height: 1)
+            pop.permittedArrowDirections = []
+        }
+        UpdatePrompt.topViewController()?.present(sheet, animated: true)
+    }
+
     /// 转账编辑页的令牌：`amount` / `note` / `sender`（action sheet）/ `income` / `expense` /
     /// `done`（完成：校验金额 → 落库 → 进详情页；详情页还没移植，先提示）。
     private func handleAliTransfer(_ rest: String) {
@@ -2351,7 +2525,7 @@ final class Router {
                 store.note = "转账"
             }
             store.stamp()
-            showToast("转账详情页制作中", ok: false)
+            push(AliTransferDetailScreen(), state: AliTransferDetailScreen.State())
         default:
             break
         }
