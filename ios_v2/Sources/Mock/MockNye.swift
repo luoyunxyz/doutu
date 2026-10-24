@@ -221,6 +221,8 @@ enum MockNye {
         b.row("交易渠道", s.value("交易渠道", "超级网银"))
         b.row("本次余额", s.value("本次余额", "100.00"))
         b.row("交易附言", s.value("交易附言", "---"))
+        // 内容结束后的浅灰底板（安卓列表页：白内容 + 下方露灰）
+        b.bottomFill(MockInk.page)
     }
 
     // MARK: - 明细转出3：收支详情（`buildLedger()`）

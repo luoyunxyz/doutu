@@ -133,9 +133,9 @@ final class MockEditorScreen: Screen {
 
         drawGenerate(d)
 
-        // 预览：白底卡片 + 版式
+        // 预览：按页面底板色铺底 + 版式
         let page = self.page(s)
-        d.rect(CGRect(x: 0, y: previewTop, width: Self.W, height: page.height), MockInk.white)
+        d.rect(CGRect(x: 0, y: previewTop, width: Self.W, height: page.height), page.background)
         d.ctx.saveGState()
         d.ctx.translateBy(x: 0, y: previewTop)
         page.draw(d)

@@ -719,6 +719,8 @@ final class MockBuilder {
     private(set) var ops: [MockOp] = []
     private(set) var hits: [MockHit] = []
     private(set) var y: CGFloat = 0
+    /// 页面底板色（列表类页面设成浅灰，行内自己铺白）
+    var pageBackground: UIColor = MockInk.white
 
     init(width: CGFloat, metrics: MockMetrics, startY: CGFloat = 0) {
         self.width = width
@@ -726,7 +728,9 @@ final class MockBuilder {
         self.y = startY
     }
 
-    var result: MockPage { MockPage(ops: ops, hits: hits, height: y) }
+    var result: MockPage {
+        MockPage(ops: ops, hits: hits, height: y, background: pageBackground)
+    }
 
     // MARK: 基础量算
 
@@ -806,11 +810,26 @@ final class MockBuilder {
         y += h
     }
 
+    /// 内容结束后的「底板」：从当前 y 铺到画布底部。
+    ///
+    /// 安卓的列表类页面是「白内容 + 底下露出浅灰底板」，所以内容画完要补这一块，
+    /// 否则底部会一直白到底（这是本轮要修的共性差异之一）。
+    func bottomFill(_ color: UIColor, canvasHeight: CGFloat = 2388) {
+        let h = max(0, canvasHeight - y)
+        guard h > 0 else { return }
+        ops.append(.fill(CGRect(x: 0, y: y, width: width, height: h), color))
+    }
+
     /// 通用「标签 —— 值」行：值可点（`bind(v, label)`），键就是标签名
-    func row(_ label: String, _ value: String) {
+    ///
+    /// `bg` 非空时先铺一条该色的行底 —— 列表类页面（浅灰底 + 白行）要用。
+    func row(_ label: String, _ value: String, bg: UIColor? = nil) {
         let size = metrics.rowSize
         let lh = lineHeight(size)
         let h = lh + metrics.rowPadV * 2
+        if let bg {
+            ops.append(.fill(CGRect(x: 0, y: y, width: width, height: h), bg))
+        }
         let baseline = y + metrics.rowPadV + ascender(size)
         ops.append(.text(label, metrics.rowPadH, baseline, size, MockInk.label, false))
         ops.append(.right(value, width - metrics.rowPadH, baseline, size, MockInk.value, false))

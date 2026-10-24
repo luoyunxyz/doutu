@@ -66,11 +66,12 @@ final class MockDetailScreen: Screen {
         guard let s = state as? State else { return }
         let scroll = s.scroll
 
-        d.rect(CGRect(x: 0, y: scroll, width: Self.W, height: Self.H), MockInk.white)
-
-        // 成品页内容（整页白底 + 版式）
+        // 底板：内容之外露出来的部分用页面自己的底板色（列表类是浅灰）
         let page = self.page(s)
-        d.rect(CGRect(x: 0, y: Self.headH, width: Self.W, height: page.height), MockInk.white)
+        d.rect(CGRect(x: 0, y: scroll, width: Self.W, height: Self.H), page.background)
+
+        // 成品页内容
+        d.rect(CGRect(x: 0, y: Self.headH, width: Self.W, height: page.height), page.background)
         d.ctx.saveGState()
         d.ctx.translateBy(x: 0, y: Self.headH)
         page.draw(d)

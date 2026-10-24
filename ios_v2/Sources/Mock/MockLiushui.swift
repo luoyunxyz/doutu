@@ -52,6 +52,7 @@ enum MockLiushui {
         b.row("2026-10-22 08:30  消费", "-19.90")
         b.row("2026-10-21 21:10  退款", "+29.00")
         b.gap(dp(20))
-        _ = orange
+        // 内容结束后的浅灰底板（安卓列表页：白内容 + 下方露灰）
+        b.bottomFill(MockInk.page)
     }
 }
