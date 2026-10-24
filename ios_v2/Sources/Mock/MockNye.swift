@@ -76,6 +76,9 @@ enum MockComposer {
         case .tp:
             return MockTPWallet.page(state: state, metrics: metrics, width: width,
                                      showsTopTitle: showsTopTitle)
+        case .okx:
+            return MockOkx.page(state: state, metrics: metrics, width: width,
+                                showsTopTitle: showsTopTitle)
         default:
             return placeholder(module: module, metrics: metrics, width: width)
         }
@@ -87,7 +90,7 @@ enum MockComposer {
         case .nye, .icbc, .boc, .psbc, .cmb, .eank,
              .xingye, .jianshe, .pingan, .jiaotong, .zhongxin, .pufa,
              .minsheng, .wechat, .alipay, .huiwang, .shuzi,
-             .yunshanfu, .cbi, .tp:
+             .yunshanfu, .cbi, .tp, .okx:
             return true
         }
     }
