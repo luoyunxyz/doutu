@@ -15,10 +15,8 @@ enum MockIcbc {
         let b = MockBuilder(width: width, metrics: metrics)
         if state.sub == 0 {
             remit(b, state, showsTopTitle: showsTopTitle)
-        } else if state.sub == 1 || state.sub == 2 || state.sub == 4 {
-            detailV2(b, state, showsTopTitle: showsTopTitle)
         } else {
-            detail(b, state, showsTopTitle: showsTopTitle)
+            detailV2(b, state, showsTopTitle: showsTopTitle)
         }
         return b.result
     }
@@ -192,12 +190,27 @@ enum MockIcbc {
                         iconSize: CGSize(width: dp(44), height: dp(24)))
         }
 
-        b.centerBlock("金额", s.value("金额", "+100.00"), size: dp(28),
-                      color: Draw.color(0xffff5500), bold: false,
+        // 安卓 01_03 / 01_05 是「收支详情 + 详情设置」，金额 33sp、余额 15sp；
+        // 01_01 / 01_02 / 01_04 是 28sp 金额。
+        let isSettings = s.sub == 3 || s.sub == 5
+        let amountSize = isSettings ? dp(33) : dp(28)
+        let amountColor: UIColor
+        switch s.sub {
+        case 1, 2, 4: amountColor = Draw.color(0xffff5500)
+        case 3: amountColor = Draw.color(0xffc23933)
+        default: amountColor = Draw.color(0xff35827c)
+        }
+        b.centerBlock("金额", s.value("金额", s.sub == 5 ? "-70.00" : "+100.00"),
+                      size: amountSize, color: amountColor, bold: false,
                       padTop: dp(17), padBottom: dp(4))
         if s.sub == 2 {
             b.centerBlock("余额", s.value("余额", "余额:100.00"), size: dp(13),
                           color: MockInk.grey, padTop: dp(12), padBottom: dp(2))
+        }
+        if isSettings {
+            b.centerBlock("余额", s.value("余额", s.sub == 5 ? "余额：72.09" : "余额：100.00"),
+                          size: dp(15), color: Draw.color(0xff636363),
+                          padTop: dp(12), padBottom: dp(2))
         }
 
         let size = dp(14)
@@ -233,6 +246,26 @@ enum MockIcbc {
             b.centeredLink("查看更多", size: dp(13), color: MockInk.grey, padV: dp(10))
             b.centeredCells(["投资理财", "信用卡还款", "查看来往"],
                             height: dp(38), size: dp(12), padV: dp(10))
+        case 3, 5:
+            let sSize = dp(13)
+            let sPadV = dp(6.87)
+            let sPadH = dp(19)
+            func srow(_ label: String, _ value: String) {
+                b.pairRow(label, s.value(label, value), size: sSize, padH: sPadH, padV: sPadV,
+                          labelColor: Draw.color(0xff636363), valueColor: Draw.color(0xff323232))
+            }
+            srow("交易卡号", "6222****7958")
+            srow("交易账户", "1911****7581")
+            srow("交易户名", "李晓晓")
+            srow("交易时间", s.time)
+            srow("业务摘要", s.sub == 3 ? "黄杨少支付宝转账" : "消费")
+            if s.sub == 3 { srow("交易详情", "黄杨少支付宝转账") }
+            srow("交易场所", s.sub == 3 ? "支付宝" : "支付宝-杭州易充宝电子商务有限公司")
+            srow("交易金额", s.sub == 3 ? "100.00" : "70.00")
+            b.centeredLink("查看全部", size: dp(13), color: MockInk.grey, padV: dp(8))
+            // 「详情设置 / 分类 / 不计入收支 / 备注 / 为您推荐」用安卓截图切块
+            b.fullWidthImage("mock_icbc_setblock", gapTop: 0)
+            b.fullWidthImage("mock_icbc_recblock", gapTop: 0)
         default:
             row("交易时间", s.time)
             row("交易卡号", "6221****3640")
