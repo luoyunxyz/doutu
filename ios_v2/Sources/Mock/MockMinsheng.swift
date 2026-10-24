@@ -29,12 +29,16 @@ enum MockMinsheng {
             p.sectionLabel(s.value("金额", incoming ? "+ ¥ 2,000.00" : "- ¥ 2,000.00"),
                            size: dp(34), color: MockInk.title,
                            padH: 0, padTop: dp(8), padBottom: dp(10))
-            p.row("摘要", s.value("摘要", alipay ? "支付宝转账" : "手机转账"))
-            p.row("交易卡号", s.value("交易卡号", "民生卡6226 22** **** 5978"))
-            p.row("对方户名", s.value("对方户名", "李四喜"))
-            p.row("对方账户", s.value("对方账户", "6227 64** **** 3815"))
-            p.row("对方开户行", s.value("对方开户行", "中国银行总行"))
-            p.row("交易时间", s.value("交易时间", "2026.10.24 19:16:11"))
+            // 行距按安卓实测（ms_sub0）：14sp + 6.5dp，行距 91px
+            let rs = dp(14)
+            let rp = dp(6.5)
+            p.row("摘要", s.value("摘要", alipay ? "支付宝转账" : "手机转账"), size: rs, padV: rp)
+            p.row("交易卡号", s.value("交易卡号", "民生卡6226 22** **** 5978"),
+                  size: rs, padV: rp)
+            p.row("对方户名", s.value("对方户名", "李四喜"), size: rs, padV: rp)
+            p.row("对方账户", s.value("对方账户", "6227 64** **** 3815"), size: rs, padV: rp)
+            p.row("对方开户行", s.value("对方开户行", "中国银行总行"), size: rs, padV: rp)
+            p.row("交易时间", s.value("交易时间", "2026.10.24 19:16:11"), size: rs, padV: rp)
         }
 
         // 分类卡
