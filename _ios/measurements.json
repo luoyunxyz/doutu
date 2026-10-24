@@ -13,6 +13,8 @@
     { "name": "汇旺",          "file": "MockHuiwang.swift","scope": "detail",   "size": 14, "padV": 5.5, "pitch": 84 },
     { "name": "支付宝账单",    "file": "MockAlipay.swift",  "scope": "detail",  "size": 14, "padV": 8,   "pitch": 97 },
     { "name": "微信账单",      "file": "MockWechat.swift",  "scope": "detail",  "size": 14, "padV": 6.5, "pitch": 89 },
+    { "name": "微信扫码账单",  "file": "MockWechat.swift",  "scope": "detail",  "size": 14, "padV": 4.5, "pitch": 76 },
+    { "name": "支付宝收支详情","file": "MockAlipay.swift",  "scope": "detail",  "size": 14, "padV": 12.5,"pitch": 126 },
     { "name": "微信交易详情",  "file": "MockWechat.swift",  "scope": "detail",  "size": 14, "padV": 6,   "pitch": 87 }
   ],
   "boards": [
