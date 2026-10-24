@@ -2689,3 +2689,61 @@ AliOrder(244)    订单
 ```
 
 就剩这两个了，下一轮收尾。
+
+---
+
+## 26. 2026-10-24：真机看屏 + 修通讯录卡片 + 提现/订单收尾
+
+### 先说「怎么看到真机」的（很重要）
+
+爱思的实时屏幕是只读的，我这边看不到，但项目本来就有**反向通道**：
+App 每秒轮询 `http://192.168.1.96:8000/cmd.json`，执行 token 后把截图 POST 回 `share/shots`。
+
+```powershell
+cd D:\AAA\ipa\share; python debug_server.py      # 起服务（后台）
+python _ios\live_shots.py ali:contacts ali:redpacket   # 发 token、等图、落到 _ios/live/
+```
+
+`_ios/live_shots.py` 是这次新加的：**不需要 SSH**，只写 cmd.json + 收图。
+设备 IP 现在是 `192.168.1.170`（不是之前的 .171），SSH 22 端口不通，但 App 的 HTTP 轮询正常。
+
+真机实测已确认在跑的页面：首页（微/支/抖/Q）、我、通讯录、红包详情、转账编辑、年账单。
+
+### 通讯录的一个真 bug（靠真机截图发现）
+
+顶部「新的朋友 / 群聊 / 生活号 / 最近转账联系人 / 智能服务 / 标签 / 专属客服」这 7 行，
+我原来**逐行**各画了一个圆角矩形，结果行与行之间露出灰底、形成一排锯齿缺口。
+Android 里 `card` 只设了一次 background（Java:172-203），7 行共用**一张**圆角卡；
+只有**联系人行**才是各自独立圆角（Java:254-262）。
+
+修法：先按首尾行算出整张卡的区域铺一次白底，行内只画内容（`drawIconRow(..., rounded: false)`）。
+
+> 教训：这类「容器圆角 vs 子项圆角」的差异，静态检查永远看不出来，只有截图能发现。
+
+### 新增两页（支付宝收尾）
+
+| 页面 | 移植源 | 内容 |
+|---|---|---|
+| `AliWithdrawScreen` | `AliWithdrawActivity`（234 行） | 灰条（完成）+ 四张白卡：到账银行卡（红色「银」方块）、提现金额（¥28sp + 金额 32sp + 全部提现）、到账金额/服务费、添加卡红包；蓝色 48dp 确认按钮 |
+| `AliOrderScreen` | `AliOrderActivity`（265 行） | 78dp 顶栏（22sp「卖家已发货」+ 倒计时 + `···` + 橙色角标 13）+ 物流卡 + 商品卡（80dp 图 / 胶囊按钮 / 实付款 / 三行信息 / 查看更多）+ 订单服务卡（三个胶囊） |
+
+两页都用**实测矩形**布局（文字按宽度换行后再算高度），画与点共用一份数据。
+
+令牌：`ali:withdraw[:all|confirm|done]`、`ali:order[:logistics|buttons|service|row|more]`。
+
+### 又一次编码事故（第二次了）
+
+用 PowerShell 的 `(Get-Content -Raw).Replace(...) | Set-Content -Encoding utf8` 改 `project.yml`，
+把里面的中文（豆图、权限描述）写成了乱码 —— PowerShell 读 UTF-8 时按 GBK 解码了。
+**规则**：任何含中文的文件只用 `edit`/`write` 工具改，绝不用 PowerShell 的 Set-Content / Out-File。
+
+### 校验
+
+```powershell
+node _ios/v2/lint-swift.mjs      # 475 项全绿
+```
+
+### 支付宝模块状态
+
+工具页 6 个入口 + 通讯录 / 单聊 / 红包（编辑+详情）/ 转账（编辑+详情）/ 消息盒子 / 年账单 /
+提现 / 订单 —— **全部移植完成**。
