@@ -740,9 +740,14 @@ final class MockBuilder {
         Draw.font(size: size, bold: bold)
     }
 
-    /// 一行文字需要的垂直空间（对应 `TextView` 的 measured height）
+    /// 一行文字需要的垂直空间。
+    ///
+    /// **不要用 `UIFont.lineHeight`**：PingFang 的行高约为字号的 1.4 倍，而安卓 `TextView`
+    /// 按 1.2 倍排，直接用会让 iOS 每一行都偏高 4~5px，十行累积就错位一整屏。
+    /// 这里统一按安卓的 1.2 倍算（实测：14sp 行高 50px、行距 86px）。
     func lineHeight(_ size: CGFloat, bold: Bool = false) -> CGFloat {
-        font(for: size, bold: bold).lineHeight
+        _ = bold
+        return size * 1.2
     }
 
     private func ascender(_ size: CGFloat, bold: Bool = false) -> CGFloat {

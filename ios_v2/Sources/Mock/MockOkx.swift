@@ -44,9 +44,9 @@ enum MockOkx {
                            padH: 0, padTop: 0, padBottom: 0)
         }
 
-        // 八行明细（行距按安卓实测 oy_sub0：12sp 字 + 上下 5dp，行距 84px）
+        // 八行明细（行距按安卓实测 oy_sub0：12sp 字 + 上下 7dp，行距 84px）
         let rs = dp(12)
-        let rp = dp(5)
+        let rp = dp(7)
         b.panel(gapTop: dp(14), margin: 0, pad: dp(16), bg: .white) { p in
             p.row("网络", "TRC20", size: rs, padV: rp)
             let kinds = MockModule.okx.subs

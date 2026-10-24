@@ -58,9 +58,9 @@ enum MockHuafei {
         b.sectionLabel("查余额", size: dp(15), color: green,
                        padH: 0, padTop: dp(6), padBottom: dp(12))
 
-        // 明细（行距按安卓实测 hf_sub0：13sp 字 + 上下 12dp，行距 124px）
+        // 明细（行距按安卓实测 hf_sub0：13sp 字 + 上下 13dp，行距 124px）
         let rs = dp(13)
-        let rp = dp(12)
+        let rp = dp(13)
         b.row("当前状态", "充值成功", size: rs, padV: rp)
         b.row("支付金额", s.value("支付金额", "¥50"), size: rs, padV: rp)
         b.row("下单时间", s.time, size: rs, padV: rp)
