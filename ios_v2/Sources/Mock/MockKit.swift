@@ -96,6 +96,7 @@ enum MockModule: Int, CaseIterable {
     case eank = 5     // 光大模拟（EankActivity）
     case xingye = 6   // 兴业模拟（安卓设备上的版式，无 Java 源码，按截图复刻）
     case jianshe = 7  // 建设模拟（12 个子页，子页名与招商一致）
+    case pingan = 8   // 平安模拟（5 个子页，转账交易详情）
 
     /// 首页卡片标题（`LABELS[0...5]`）
     var title: String {
@@ -108,6 +109,7 @@ enum MockModule: Int, CaseIterable {
         case .eank: return "光大模拟"
         case .xingye: return "兴业模拟"
         case .jianshe: return "建设模拟"
+        case .pingan: return "平安模拟"
         }
     }
 
@@ -141,6 +143,9 @@ enum MockModule: Int, CaseIterable {
             return ["明细转出(旧)", "明细转入(旧)", "明细转出1", "明细支付宝转入",
                     "明细转入", "明细转出2", "微信支付宝转入", "明细转出3",
                     "回单", "余额", "微信转入", "财付通转出"]
+        case .pingan:
+            // 安卓设备抽屉里的五项（第 2、4 项同名，照抄）
+            return ["明细转出(旧)", "明细转出(新)", "明细转入(新)", "明细转出(新)", "转出(新)"]
         }
     }
 
@@ -155,6 +160,7 @@ enum MockModule: Int, CaseIterable {
         case .eank: return "mock_ceb"
         case .xingye: return "mock_cib"
         case .jianshe: return "mock_ccb"
+        case .pingan: return ""      // 宫格里也没有 logo（`MockHome.logos[8]` 是空串）
         }
     }
 
