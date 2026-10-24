@@ -58,24 +58,43 @@ enum MockAlipay {
                              padH: 0, padV: dp(14))
             }
         case 8, 9, 10, 11:
-            // 扫码收款1/2、商户转出1/2：收款码式
+            // 扫码收款1/2、商户转出1/2：收支详情（按 `ali_sub8` 截图复刻）
             if showsTopTitle { b.titleBar(title) }
-            b.coloredHeaderBar(title, bg: .white, fg: MockInk.title)
-            b.sectionLabel("¥ 100.00", size: dp(40), color: MockInk.black,
-                           padH: 0, padTop: dp(60), padBottom: dp(10))
-            b.sectionLabel("扫一扫付款", size: dp(15), color: MockInk.label,
-                           padH: 0, padTop: 0, padBottom: dp(20))
-            b.gap(dp(200))
-        case 7:
-            // 收支明细
-            if showsTopTitle { b.titleBar("收支明细") }
-            b.coloredHeaderBar("收支明细", bg: .white, fg: MockInk.title)
-            b.sectionLabel("本月支出  ¥ 2,860.40", size: dp(30), color: MockInk.black,
-                           padH: dp(16), padTop: dp(20), padBottom: dp(10))
-            b.row("转账-支出", "-100.00")
-            b.row("话费充值", "-50.00")
-            b.row("余额宝-转入", "+200.00")
+            b.sectionLabel("‹  收支详情", size: dp(19), color: MockInk.title,
+                           padH: dp(16), padTop: dp(12), padBottom: dp(8))
+            b.sectionLabel(s.value("说明", "收钱码收款-来自**容"), size: dp(20),
+                           color: MockInk.title, padH: 0, padTop: dp(20), padBottom: 0)
+            b.sectionLabel(s.value("金额", "+100.00"), size: dp(44), color: MockInk.black,
+                           padH: 0, padTop: dp(8), padBottom: dp(20))
+            b.row("类型", "收入")
+            b.hairlineFull()
+            b.row("时间", s.time)
+            b.hairlineFull()
+            b.row("余额", "100.00")
+            b.hairlineFull()
+            b.row("流水号", "2022092622001463831445460044")
+            b.hairlineFull()
+            b.row("备注", "收钱码收款-来自**容")
             b.gap(dp(20))
+        case 7:
+            // 收支明细：交易详情（与微信同结构）
+            if showsTopTitle { b.titleBar("交易详情") }
+            b.sectionLabel("‹            交易详情            •••  ◎",
+                           size: dp(17), color: MockInk.title,
+                           padH: dp(16), padTop: dp(12), padBottom: dp(6))
+            b.sectionLabel(s.value("昵称", "*果"), size: dp(17), color: MockInk.title,
+                           padH: 0, padTop: dp(30), padBottom: 0)
+            b.sectionLabel(s.value("金额", "¥ 100.00"), size: dp(44), color: MockInk.black,
+                           padH: 0, padTop: dp(10), padBottom: dp(24))
+            b.hairlineFull()
+            b.row("当前状态", "已收钱")
+            b.row("收款时间", s.time)
+            b.row("收款单号", "62260222000006469990")
+            b.fill(dp(10), MockInk.page)
+            b.sectionLabel("交易记录", size: dp(16), color: MockInk.label,
+                           padH: dp(16), padTop: dp(14), padBottom: dp(8))
+            b.sectionLabel("以上是近90天的交易记录", size: dp(14), color: MockInk.label,
+                           padH: 0, padTop: dp(6), padBottom: dp(20))
         default:
             // 子页 0：支付成功（蓝色大额 + 福利卡）
             paid(b, state, showsTopTitle: showsTopTitle)
