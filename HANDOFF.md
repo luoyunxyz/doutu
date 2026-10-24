@@ -2475,3 +2475,47 @@ AliCreateChat 的完整弹窗（头像预览 / 自动获取 / 相册）
 
 工具页「阿宝」5 个入口现状：`alicreatechat` ✅ · `alicontacts` ✅ · `alimsg` ✅ ·
 `alired` ⏳ · `alitransfer` ⏳。
+
+---
+
+## 21. 2026-10-24：支付宝红包详情页
+
+### 做了什么
+
+`ios_v2/Sources/Ali/AliRedPacketDetailScreen.swift` —— `AliRedPacketDetailActivity`（378 行）的移植：
+
+- 整屏竖向渐变 `#ef5136 → #ce3921`；
+- 顶栏（top 40 / 高 40）：白色 chevron 返回、`红包详情` 18sp、`rp_ic_kl` 38×38、`rp_pill` 83×34；
+- `rp_art` 主图（整宽 × 303.2dp）；
+- 白卡（left 12.4 / top 435.4 / 335.2×210，**只有上面两个圆角**）：`话不太美送你的红包` 13sp、
+  `￥96.00` 40sp 红、`“恭喜发财”` 13sp；
+- 圆形头像 72dp 压在卡片上沿；`rp_wave` 波浪；奶黄「答谢」胶囊 143.4×43.4；底部「查看红包」。
+
+`AliRedPacketStore.swift`（49 行）保存发送人名单 / 金额 / 祝福语，编辑页与详情页共用。
+点发送人头像或「送你的红包」→ 切换发送人弹窗；点金额/祝福语 → 输入框改；答谢/查看红包是提示。
+
+入口：工具页 `alired`、聊天页「红包」格子、以及 `ali:redpacket` 令牌。
+
+### 素材
+
+17 张 `ali_bill/*`（在 `assets/ali_bill/`）用 `_ios/sync-ali-bill-assets.mjs` 同步成
+`ali_rp_art` / `ali_rp_wave` / `ali_rp_ic_kl` / `ali_rp_pill` / `ali_rp_sender` / `ali_rp_avatar` 等。
+
+### 校验
+
+```powershell
+node _ios/v2/lint-swift.mjs      # 451 项全绿
+node _ios/v2/check-symbols.mjs   # 9 项
+node _ios/v2/check-members.mjs   # 1 项
+node _ios/v2/check-access.mjs    # 2 项
+```
+
+### 支付宝社交剩余
+
+```text
+AliRedPacketActivity(405)                 红包编辑页（金额卡 / 祝福卡 / 发送人卡 + 塞钱按钮）
+AliTransfer(536)+Detail(885)+Ui(133)      转账（最大的一块）
+AliMsgBox(81) / AliWithdraw(215) / AliOrder(244) / AliYearBill(126)
+```
+
+工具页「阿宝」：`alicreatechat` ✅ · `alicontacts` ✅ · `alimsg` ✅ · `alired` ✅ · `alitransfer` ⏳。
