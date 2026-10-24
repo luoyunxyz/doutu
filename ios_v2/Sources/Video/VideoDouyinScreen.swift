@@ -9,6 +9,8 @@ import UIKit
 final class VideoDouyinScreen: Screen {
     let canvasSize = CGSize(width: 1080, height: 2388)
     let selfScrolls = false
+    /// 视频页整屏黑底，刘海那条也要黑（否则会露一道白）
+    var safeAreaTint: UIColor { UIColor.black }
 
     /// 单屏页：内容就是一屏，不做滚动（所有交互都是点击）
     func maxScroll(_ state: ScreenState) -> CGFloat { 0 }

@@ -13,6 +13,11 @@ final class HomeV2Screen: Screen {
     /// 娱乐页/我页的 draw 自己做了 `translate(0, -scroll)`（见 +Entertainment/+Profile），
     /// 所以宿主不能再滚一次。
     let selfScrolls = true
+    /// 首页底色是浅灰，刘海那条也用它，避免露白
+    var safeAreaTint: UIColor { HomeV2Screen.backgroundTint }
+    /// 与 `pageBg` 一致的浅灰（0xfff6f6f6）
+    static let backgroundTint = UIColor(red: 0xf6 / 255.0, green: 0xf6 / 255.0,
+                                        blue: 0xf6 / 255.0, alpha: 1)
     static let W: CGFloat = 1080
     static let H: CGFloat = 2388
 

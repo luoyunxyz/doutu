@@ -95,6 +95,12 @@ extension Screen {
         }
     }
 
+    /// 安全区两条边（刘海 / 底部手势条）的填充色。
+    ///
+    /// 画布现在会避开安全区绘制，露出来的那两条要有人填。默认白；
+    /// 灰底页面（模拟编辑页、工具页等）覆盖成自己的底色即可。
+    var safeAreaTint: UIColor { UIColor.white }
+
     // MARK: - 手势钩子（默认不处理）
 
     /// 长按（对应 Android 的 `screen.longPress(state, x, y)`）。
@@ -365,7 +371,7 @@ final class ScreenHostView: UIView, UIScrollViewDelegate {
         super.layoutSubviews()
         let navH = bounds.height * 256 / 2816
         zhiTabBar.frame = CGRect(x: 0, y: bounds.height - navH,
-                                 width: bounds.width, height: navH)
+                                 width: canvasBounds.width, height: navH)
         // 相机是同级视图，跟着宿主 frame 走
         cameraView?.frame = frame
         // 转场快照必须始终盖在最上面，否则 layout 一跑，新页面的底栏就会从快照里穿出来。
@@ -390,13 +396,13 @@ final class ScreenHostView: UIView, UIScrollViewDelegate {
             return
         }
         if let existing = termsScrollView {
-            existing.frame = bounds
-            let canvas = Canvas(size: screen.canvasSize, bounds: bounds)
-            existing.contentSize = CGSize(width: bounds.width,
-                                          height: bounds.height + maxScroll * canvas.sy)
+            existing.frame = canvasBounds
+            let canvas = Canvas(size: screen.canvasSize, bounds: canvasBounds)
+            existing.contentSize = CGSize(width: canvasBounds.width,
+                                          height: canvasBounds.height + maxScroll * canvas.sy)
             return
         }
-        let scroll = UIScrollView(frame: bounds)
+        let scroll = UIScrollView(frame: canvasBounds)
         scroll.backgroundColor = .clear
         scroll.isOpaque = false
         scroll.showsVerticalScrollIndicator = false
@@ -407,9 +413,9 @@ final class ScreenHostView: UIView, UIScrollViewDelegate {
         scroll.canCancelContentTouches = false
         scroll.contentInsetAdjustmentBehavior = .never
         scroll.delegate = self
-        let canvas = Canvas(size: screen.canvasSize, bounds: bounds)
-        scroll.contentSize = CGSize(width: bounds.width,
-                                    height: bounds.height + maxScroll * canvas.sy)
+        let canvas = Canvas(size: screen.canvasSize, bounds: canvasBounds)
+        scroll.contentSize = CGSize(width: canvasBounds.width,
+                                    height: canvasBounds.height + maxScroll * canvas.sy)
         let tap = UITapGestureRecognizer(target: self, action: #selector(handleTermsTap(_:)))
         scroll.addGestureRecognizer(tap)
         addSubview(scroll)
@@ -418,7 +424,7 @@ final class ScreenHostView: UIView, UIScrollViewDelegate {
 
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
         guard screen is TermsScreen else { return }
-        let canvas = Canvas(size: screen.canvasSize, bounds: bounds)
+        let canvas = Canvas(size: screen.canvasSize, bounds: canvasBounds)
         state.scroll = min(max(0, scrollView.contentOffset.y / canvas.sy), maxScroll)
         setNeedsDisplay()
     }
@@ -426,7 +432,7 @@ final class ScreenHostView: UIView, UIScrollViewDelegate {
     @objc private func handleTermsTap(_ gesture: UITapGestureRecognizer) {
         guard screen is TermsScreen else { return }
         let p = gesture.location(in: self)
-        let canvas = Canvas(size: screen.canvasSize, bounds: bounds)
+        let canvas = Canvas(size: screen.canvasSize, bounds: canvasBounds)
         var design = canvas.design(p)
         design.y += state.scroll
         let token = screen.hitTest(state, x: design.x, y: design.y)
@@ -479,7 +485,7 @@ final class ScreenHostView: UIView, UIScrollViewDelegate {
             zhiTabBar.selected = index
             let navH = bounds.height * 256 / 2816
             zhiTabBar.frame = CGRect(x: 0, y: bounds.height - navH,
-                                     width: bounds.width, height: navH)
+                                     width: canvasBounds.width, height: navH)
             bringSubviewToFront(zhiTabBar)
             CrashLog.append("ZHITAB \(type(of: next)) idx=\(index) frame=\(zhiTabBar.frame) bounds=\(bounds)")
         } else {
@@ -590,16 +596,25 @@ final class ScreenHostView: UIView, UIScrollViewDelegate {
         redrawTimer = nil
     }
 
+    /// 画布可绘制区：**扣掉安全区**。
+    ///
+    /// Android 参考图（1080×2388）是不含状态栏的，铺满屏幕也不会被挡住；
+    /// iOS 有刘海/灵动岛，如果照原样从 y=0 画，顶栏文字会整条压在传感器区下面。
+    /// 所以这里统一让步：内容整体下移 `safeAreaInsets.top`，底部也避开手势条。
+    private var canvasBounds: CGRect {
+        bounds.inset(by: safeAreaInsets)
+    }
+
     // MARK: - 绘制
 
     override func draw(_ rect: CGRect) {
         guard let ctx = UIGraphicsGetCurrentContext() else { return }
-        let canvas = Canvas(size: screen.canvasSize, bounds: bounds)
+        let canvas = Canvas(size: screen.canvasSize, bounds: canvasBounds)
 
         // 背景：与参考画布同尺寸的底色（页面自己会先铺一层，这里兜底防闪烁）
         // 相机页例外 —— 刷白底会把下面的相机预览盖住
         if !screen.usesCameraBackground {
-            ctx.setFillColor(UIColor.white.cgColor)
+            ctx.setFillColor(screen.safeAreaTint.cgColor)
             ctx.fill(bounds)
         }
 
@@ -728,7 +743,7 @@ final class ScreenHostView: UIView, UIScrollViewDelegate {
         let p = t.location(in: self)
         touchStart = p
         lastPoint = p
-        let beginCanvas = Canvas(size: screen.canvasSize, bounds: bounds)
+        let beginCanvas = Canvas(size: screen.canvasSize, bounds: canvasBounds)
         touchStartDesignY = beginCanvas.design(p).y + state.scroll
         dragStartY = p.y
         dragStartScroll = state.scroll
@@ -769,7 +784,7 @@ final class ScreenHostView: UIView, UIScrollViewDelegate {
         // 长按已经触发：这次手势后面全部交给菜单，不再滚动/命中
         if longPressFired { return }
         let p = t.location(in: self)
-        let canvas = Canvas(size: screen.canvasSize, bounds: bounds)
+        let canvas = Canvas(size: screen.canvasSize, bounds: canvasBounds)
 
         // 左边缘右滑返回由上面的 UIScreenEdgePanGestureRecognizer 统一处理。
         // 《用户须知》由上面的 UIPanGestureRecognizer 负责滚动，避免两套位移叠加。
@@ -850,7 +865,7 @@ final class ScreenHostView: UIView, UIScrollViewDelegate {
     /// 如果允许拉出小半屏，深色页面（消息、财富、芝麻）顶部会露出一条很大的白边。
     /// 32pt 的弹性已经能明显感觉到「拉得住」，又不会把配色问题放大。
     private func rubberBand(_ value: CGFloat, upper: CGFloat) -> CGFloat {
-        let canvas = Canvas(size: screen.canvasSize, bounds: bounds)
+        let canvas = Canvas(size: screen.canvasSize, bounds: canvasBounds)
         let visible = max(1, bounds.height / max(0.0001, canvas.sy))
         let limit = min(visible * 0.55, 32 / max(0.0001, canvas.sy))
         if value < 0 {
@@ -875,7 +890,7 @@ final class ScreenHostView: UIView, UIScrollViewDelegate {
             return
         }
         let p = t.location(in: self)
-        let canvas = Canvas(size: screen.canvasSize, bounds: bounds)
+        let canvas = Canvas(size: screen.canvasSize, bounds: canvasBounds)
         // 屏幕点 → 参考坐标（x 用 sx、y 用 sy），再叠加当前滚动量。
         // 注意：本视图是全屏铺满的（SwiftUI 侧 ignoresSafeArea），所以**不再扣安全区**，
         // 否则命中坐标会整体上移，表现就是「点击没反应 / 点错位置」。

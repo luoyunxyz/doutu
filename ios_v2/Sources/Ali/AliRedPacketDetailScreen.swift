@@ -10,6 +10,9 @@ import UIKit
 final class AliRedPacketDetailScreen: Screen {
     let canvasSize = CGSize(width: 1080, height: 2388)
     let selfScrolls = false
+    /// 红包页整屏红底，刘海那条也要红
+    var safeAreaTint: UIColor { UIColor(red: 0xef / 255.0, green: 0x51 / 255.0,
+                                        blue: 0x36 / 255.0, alpha: 1) }
     func maxScroll(_ state: ScreenState) -> CGFloat { 0 }
 
     static let W: CGFloat = 1080
