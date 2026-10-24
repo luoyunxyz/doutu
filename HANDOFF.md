@@ -2648,3 +2648,44 @@ AliOrder(244) / AliWithdraw(215) / AliYearBill(126) / AliMsgBox(81)
 ```
 
 四个都是小页，合计 666 行 Java，下一轮可以一次收掉。
+
+---
+
+## 25. 2026-10-24：消息盒子 + 年账单
+
+### 做了什么
+
+**`AliMsgBoxScreen`** —— `AliMsgBoxActivity`（92 行）：
+
+56dp 灰条（`‹` + 居中「消息盒子」17sp）+ 44dp 白色双页签（服务消息选中蓝 `#3e7af6` 加粗、
+支付消息灰 `#666666`）+ 剩余空间居中的「暂无消息」14sp 灰字。点页签只切换选中态，
+两边都没有内容 —— 与 Android 一致。`ali:box` 从「制作中」改成真进这里。
+
+**`AliYearBillScreen`** —— `AliYearBillActivity`（138 行）：
+
+- 蓝色渐变头部 `#3e7af6 → #72b0f8`（内边距 16/10/16/20），里面是 36dp 返回条 + 居中「年账单」18sp；
+- 碳减排卡：15sp 正文（行距 6dp）+ 13sp 灰字说明（行距 5dp），文字按宽度**自动换行**；
+- 汇总卡：14sp 灰字 → 26sp「支出了 ¥125,116.68」→ 18sp「收到了 ¥0.00」→ 蓝色圆角「收支分析」按钮。
+
+**卡片高度由实际行数算出**（`wrap()` 量出来几行就是几行高），所以 `maxScroll` 跟真实内容一致，
+不是写死的常数 —— 这条在工具页那次踩过坑（内容高度算错就滚不到底）。
+
+工具页「阿宝 → 年账单」(`act:billstats`) 现在能真进。
+
+### 校验
+
+```powershell
+node _ios/v2/lint-swift.mjs      # 469 项全绿
+node _ios/v2/check-symbols.mjs   # 9 项
+node _ios/v2/check-members.mjs   # 1 项
+node _ios/v2/check-access.mjs    # 2 项
+```
+
+### 支付宝社交剩余
+
+```text
+AliWithdraw(215) 提现
+AliOrder(244)    订单
+```
+
+就剩这两个了，下一轮收尾。
