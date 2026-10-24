@@ -19,13 +19,22 @@ enum MockReceipt {
     static func page(state: MockState, metrics: MockMetrics,
                      width: CGFloat, showsTopTitle: Bool) -> MockPage {
         let b = MockBuilder(width: width, metrics: metrics)
-        switch state.sub {
-        case 0:
-            icbcReceipt(b, state, showsTopTitle: showsTopTitle)
-        default:
-            return MockComposer.placeholder(module: .huidan, metrics: metrics, width: width)
-        }
+        // 12 个子页共用「电子回单」版式；银行名从子页名推出来（「建设回单」→ 建设银行）
+        icbcReceipt(b, state, showsTopTitle: showsTopTitle)
         return b.result
+    }
+
+    /// 由子页名推银行名：去掉「回单」与括号后缀
+    private static func bankName(_ sub: Int) -> String {
+        let names = MockModule.huidan.subs
+        guard names.indices.contains(sub) else { return "中国工商银行" }
+        var base = names[sub]
+        for suffix in ["（新）", "回单"] where base.hasSuffix(suffix) {
+            base = String(base.dropLast(suffix.count))
+        }
+        if base == "支付宝1" || base == "支付宝2" { return "支付宝" }
+        if base.hasSuffix("银行") { return base }
+        return base + "银行"
     }
 
     private static func icbcReceipt(_ b: MockBuilder, _ s: MockState,
@@ -35,7 +44,7 @@ enum MockReceipt {
         b.coloredHeaderBar("通知收款人", bg: .white, fg: MockInk.title, trailing: "⋯")
 
         // 银行标题行
-        b.sectionLabel("ICBC  中国工商银行", size: dp(17), color: MockInk.title,
+        b.sectionLabel(bankName(s.sub), size: dp(17), color: MockInk.title,
                        padH: dp(16), padTop: dp(10), padBottom: 0)
         b.sectionLabel("境内汇款电子回单", size: dp(14), color: labelGrey,
                        padH: dp(16), padTop: dp(2), padBottom: dp(8))

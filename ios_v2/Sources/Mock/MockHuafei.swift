@@ -16,13 +16,27 @@ enum MockHuafei {
     static func page(state: MockState, metrics: MockMetrics,
                      width: CGFloat, showsTopTitle: Bool) -> MockPage {
         let b = MockBuilder(width: width, metrics: metrics)
-        switch state.sub {
-        case 0:
-            orderDetail(b, state, showsTopTitle: showsTopTitle)
-        default:
-            return MockComposer.placeholder(module: .huafei, metrics: metrics, width: width)
-        }
+        // 12 个子页共用「充值订单」版式；套餐名与运营商从子页名推
+        orderDetail(b, state, showsTopTitle: showsTopTitle)
         return b.result
+    }
+
+    /// 子页名 → (套餐名, 运营商)。「微电信话费」→ (微信·电信话费, 电信)
+    private static func plan(_ sub: Int) -> (title: String, carrier: String) {
+        let names = MockModule.huafei.subs
+        guard names.indices.contains(sub) else { return ("话费充值", "电信") }
+        let name = names[sub]
+        let carrier: String
+        if name.contains("电信") { carrier = "电信" }
+        else if name.contains("联通") { carrier = "联通" }
+        else if name.contains("移动") { carrier = "移动" }
+        else if name.contains("电力") { carrier = "电力" }
+        else { carrier = "移动" }
+        let prefix: String
+        if name.hasPrefix("微") { prefix = "微信" }
+        else if name.hasPrefix("支") { prefix = "支付宝" }
+        else { prefix = "手机" }
+        return ("\(prefix)·\(carrier)话费50元", carrier)
     }
 
     private static func orderDetail(_ b: MockBuilder, _ s: MockState,
@@ -36,7 +50,8 @@ enum MockHuafei {
         // 绿色 ¥ 图标
         b.sectionLabel("¥", size: dp(40), color: .white,
                        padH: 0, padTop: dp(18), padBottom: 0)
-        b.sectionLabel(s.value("套餐", "广东电信50元"), size: dp(22), color: MockInk.title,
+        b.sectionLabel(s.value("套餐", plan(s.sub).title), size: dp(22),
+                       color: MockInk.title,
                        padH: 0, padTop: dp(10), padBottom: 0)
         b.sectionLabel(s.value("手机号", "177 6594 2365"), size: dp(17),
                        color: MockInk.label, padH: 0, padTop: dp(6), padBottom: 0)
