@@ -18,13 +18,57 @@ enum MockAlipay {
     static func page(state: MockState, metrics: MockMetrics,
                      width: CGFloat, showsTopTitle: Bool) -> MockPage {
         let b = MockBuilder(width: width, metrics: metrics)
+        let names = MockModule.alipay.subs
+        let title = names.indices.contains(state.sub) ? names[state.sub] : "支付成功"
         switch state.sub {
-        case 0:
-            paid(b, state, showsTopTitle: showsTopTitle)
+        case 1, 2, 3, 4, 5:
+            // 扫码转出2 / 对行转出 / 对支付宝转出 / 话费转出 / 明细(转出)
+            transfer(b, s: state, title: title, showsTopTitle: showsTopTitle)
+        case 6:
+            // 消息盒子
+            if showsTopTitle { b.titleBar("消息盒子") }
+            b.coloredHeaderBar("消息盒子", bg: .white, fg: MockInk.title)
+            b.row("支付宝", "支付成功 ¥100.00")
+            b.row("余额宝", "收益到账 ¥0.12")
+            b.row("花呗", "本月账单已出")
+            b.gap(dp(20))
+        case 7:
+            // 收支明细
+            if showsTopTitle { b.titleBar("收支明细") }
+            b.coloredHeaderBar("收支明细", bg: .white, fg: MockInk.title)
+            b.sectionLabel("本月支出  ¥ 2,860.40", size: dp(30), color: MockInk.black,
+                           padH: dp(16), padTop: dp(20), padBottom: dp(10))
+            b.row("转账-支出", "-100.00")
+            b.row("话费充值", "-50.00")
+            b.row("余额宝-转入", "+200.00")
+            b.gap(dp(20))
         default:
-            return MockComposer.placeholder(module: .alipay, metrics: metrics, width: width)
+            // 扫码收款1/2、商户转出1/2：收款码式
+            if showsTopTitle { b.titleBar(title) }
+            b.coloredHeaderBar(title, bg: .white, fg: MockInk.title)
+            b.sectionLabel("¥ 100.00", size: dp(40), color: MockInk.black,
+                           padH: 0, padTop: dp(60), padBottom: dp(10))
+            b.sectionLabel("扫一扫付款", size: dp(15), color: MockInk.label,
+                           padH: 0, padTop: 0, padBottom: dp(20))
+            b.gap(dp(200))
         }
         return b.result
+    }
+
+    /// 转账/话费/明细(转出)：蓝头 + 金额 + 三行状态
+    private static func transfer(_ b: MockBuilder, s: MockState, title: String,
+                                 showsTopTitle: Bool) {
+        if showsTopTitle { b.titleBar(title) }
+        b.coloredHeaderBar(title, bg: .white, fg: MockInk.title)
+        b.checkBadge(diameter: dp(56), color: blue, gapTop: dp(20), symbolSize: dp(32))
+        b.sectionLabel("支付成功", size: dp(20), color: blue,
+                       padH: 0, padTop: dp(10), padBottom: 0)
+        b.sectionLabel(s.value("金额", "¥ 100.00"), size: dp(40), color: MockInk.black,
+                       padH: 0, padTop: dp(10), padBottom: dp(10))
+        b.row("当前状态", "支付成功")
+        b.row("支付方式", "余额宝")
+        b.row("交易时间", s.time)
+        b.gap(dp(20))
     }
 
     private static func paid(_ b: MockBuilder, _ s: MockState, showsTopTitle: Bool) {
