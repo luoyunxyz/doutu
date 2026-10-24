@@ -13,14 +13,15 @@ enum MockJianshe {
 
     static func page(state: MockState, metrics: MockMetrics,
                      width: CGFloat, showsTopTitle: Bool) -> MockPage {
-        let b = MockBuilder(width: width, metrics: metrics)
-        switch state.sub {
-        case 0:
+        // 子页 0 是金头「转账成功」；其余 11 个子页与招商同名同版式，直接复用 `MockCmb`。
+        // ⚠️ 复用的是招商那套文案（银行名/角标仍是招商），等有建设专属截图再逐页换。
+        if state.sub == 0 {
+            let b = MockBuilder(width: width, metrics: metrics)
             transferSuccess(b, state, showsTopTitle: showsTopTitle)
-        default:
-            return MockComposer.placeholder(module: .jianshe, metrics: metrics, width: width)
+            return b.result
         }
-        return b.result
+        return MockCmb.page(state: state, metrics: metrics, width: width,
+                            showsTopTitle: showsTopTitle)
     }
 
     // MARK: - 子页 0：转账成功（`明细转出(旧)`）
