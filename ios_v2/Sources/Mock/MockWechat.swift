@@ -54,15 +54,32 @@ enum MockWechat {
                            size: dp(15), color: MockInk.title,
                            padH: dp(16), padTop: dp(14), padBottom: dp(16))
         case 5:
-            // 收支明细：本月支出 + 三条流水
-            if showsTopTitle { b.titleBar(title) }
-            b.coloredHeaderBar(title, bg: .white, fg: MockInk.title)
-            b.sectionLabel("本月支出  ¥ 1,286.40", size: dp(30), color: MockInk.black,
-                           padH: dp(16), padTop: dp(20), padBottom: dp(10))
-            b.row("微信支付-消费", "-29.00")
-            b.row("扫码捐款", "-1.00")
-            b.row("赞赏码收款", "+50.00")
-            b.gap(dp(20))
+            // 收支明细：交易详情（按 `wx_sub5` 截图复刻）
+            if showsTopTitle { b.titleBar("交易详情") }
+            b.sectionLabel("‹            交易详情            •••  ◎",
+                           size: dp(17), color: MockInk.title,
+                           padH: dp(16), padTop: dp(12), padBottom: dp(6))
+            b.sectionLabel(s.value("昵称", "*果"), size: dp(17), color: MockInk.title,
+                           padH: 0, padTop: dp(30), padBottom: 0)
+            b.sectionLabel(s.value("金额", "¥ 100.00"), size: dp(44), color: MockInk.black,
+                           padH: 0, padTop: dp(10), padBottom: dp(24))
+            b.hairlineFull()
+            b.row("当前状态", "已收钱")
+            b.row("收款时间", s.time)
+            b.row("收款单号", "62260222000006469990")
+            b.sectionLabel("填写该笔收款的备忘", size: dp(15),
+                           color: UIColor(red: 0x2f / 255.0, green: 0x6f / 255.0,
+                                          blue: 0xd8 / 255.0, alpha: 1),
+                           padH: 0, padTop: dp(16), padBottom: dp(16))
+            b.fill(dp(10), MockInk.page)
+            b.sectionLabel("交易记录", size: dp(16), color: MockInk.label,
+                           padH: dp(16), padTop: dp(14), padBottom: dp(8))
+            b.sectionLabel("以上是近90天的交易记录", size: dp(14), color: MockInk.label,
+                           padH: 0, padTop: dp(6), padBottom: dp(20))
+            b.sectionLabel("常见问题", size: dp(15),
+                           color: UIColor(red: 0x2f / 255.0, green: 0x6f / 255.0,
+                                          blue: 0xd8 / 255.0, alpha: 1),
+                           padH: 0, padTop: dp(16), padBottom: dp(20))
         default:
             paid(b, state, showsTopTitle: showsTopTitle)
         }
