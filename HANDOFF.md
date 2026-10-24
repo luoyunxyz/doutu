@@ -2519,3 +2519,47 @@ AliMsgBox(81) / AliWithdraw(215) / AliOrder(244) / AliYearBill(126)
 ```
 
 工具页「阿宝」：`alicreatechat` ✅ · `alicontacts` ✅ · `alimsg` ✅ · `alired` ✅ · `alitransfer` ⏳。
+
+---
+
+## 22. 2026-10-24：支付宝转账编辑页（工具页 5/5 打通）
+
+### 做了什么
+
+`ios_v2/Sources/Ali/AliTransferScreen.swift` —— `AliTransferActivity`（591 行）的移植：
+
+- 顶栏 56dp（`#ededed`）：`‹` + 居中「转账」17sp + 右侧黄色「完成」（74×36、圆角 5、`#ffda43`）；
+- 金额卡（白底、内边距 26/22/20/18）：`转账金额` 14sp、`¥` 44sp + 金额 48sp、
+  说明 15sp（空时显示蓝色「新增转账说明」）；
+- 发送人行（内边距 15/12）：45dp 圆形头像（无切图用首字色块）+ 昵称 + `切换发送人 ›`；
+- 类型行（内边距 15/13）：`转账类型` + 收入/支出单选（选中 `#dfb91e`，未选 `#bbbbbb`）。
+
+`AliTransferStore.swift`（100 行）保存发送人（Android 的 20 个随机名）、金额、说明、收支标志、
+`stamp()` 时间戳 —— 转账详情页（账单详情）就靠这些。
+
+交互：金额/说明走系统输入框；发送人走 action sheet；收入/支出点哪边选哪边；
+「完成」按 Java `submit()` 校验金额 > 0、说明为空补「转账」、落时间戳，
+然后提示「转账详情页制作中」（详情页 885 行，下一轮做）。
+
+入口：工具页 `alitransfer`、聊天页底部「转账」格子、`ali:transfer` 令牌。
+
+### 校验
+
+```powershell
+node _ios/v2/lint-swift.mjs      # 457 项全绿
+node _ios/v2/check-symbols.mjs   # 9 项
+node _ios/v2/check-members.mjs   # 1 项
+node _ios/v2/check-access.mjs    # 2 项
+```
+
+### 支付宝社交现状
+
+工具页「阿宝」**5/5 全通**：`alicreatechat` ✅ · `alicontacts` ✅ · `alimsg` ✅ · `alired` ✅ · `alitransfer` ✅
+
+还差（按大小）：
+
+```text
+AliTransferDetailActivity(885)   转账详情 / 账单详情（最大的单屏）
+AliRedPacketActivity(405)        红包编辑页（详情页已完成）
+AliOrder(244) / AliWithdraw(215) / AliYearBill(126) / AliMsgBox(81)
+```
