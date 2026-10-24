@@ -44,18 +44,23 @@ enum MockOkx {
                            padH: 0, padTop: 0, padBottom: 0)
         }
 
-        // 八行明细
+        // 八行明细（行距按安卓实测 oy_sub0：12sp 字 + 上下 5dp，行距 84px）
+        let rs = dp(12)
+        let rp = dp(5)
         b.panel(gapTop: dp(14), margin: 0, pad: dp(16), bg: .white) { p in
-            p.row("网络", "TRC20")
+            p.row("网络", "TRC20", size: rs, padV: rp)
             let kinds = MockModule.okx.subs
-            p.row("类型", kinds.indices.contains(s.sub) ? kinds[s.sub] : "链上提币")
-            p.row("状态", "已转出")
-            p.row("提币地址", s.value("提币地址", "TTJeBTxhG12rJaoBXvssfvMPa9z7asKPa4"))
+            p.row("类型", kinds.indices.contains(s.sub) ? kinds[s.sub] : "链上提币",
+                  size: rs, padV: rp)
+            p.row("状态", "已转出", size: rs, padV: rp)
+            p.row("提币地址", s.value("提币地址", "TTJeBTxhG12rJaoBXvssfvMPa9z7asKPa4"),
+                  size: rs, padV: rp)
             p.row("区块链交易ID", s.value("区块链交易ID",
-                                       "a31471440cd6545d5cc9c30b4959762c39cbe03cccd03d89a509f574de32e2c5f"))
-            p.row("手续费", "0.8TRX")
-            p.row("时间", s.time)
-            p.row("参考编号", "133228641")
+                                       "a31471440cd6545d5cc9c30b4959762c39cbe03cccd03d89a509f574de32e2c5f"),
+                  size: rs, padV: rp)
+            p.row("手续费", "0.8TRX", size: rs, padV: rp)
+            p.row("时间", s.time, size: rs, padV: rp)
+            p.row("参考编号", "133228641", size: rs, padV: rp)
         }
 
         // 底部黑胶囊
