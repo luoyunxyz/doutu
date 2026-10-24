@@ -2563,3 +2563,47 @@ AliTransferDetailActivity(885)   转账详情 / 账单详情（最大的单屏�
 AliRedPacketActivity(405)        红包编辑页（详情页已完成）
 AliOrder(244) / AliWithdraw(215) / AliYearBill(126) / AliMsgBox(81)
 ```
+
+---
+
+## 23. 2026-10-24：转账详情（账单详情）—— 转账链路闭合
+
+### 做了什么
+
+`ios_v2/Sources/Ali/AliTransferDetailScreen.swift` —— `AliTransferDetailActivity`（990 行）的移植。
+
+固定 47dp 顶栏 + 两张圆角白卡：
+
+| 卡 | 内容 |
+|---|---|
+| 汇总卡 | 39dp 头像 → 昵称 + 箭头 → 金额 33sp 粗体 → 交易状态 15sp → 三行「标签/值」（创建时间 / 转账备注 / 对方账户）→ `更多 ﹀` 展开两行（支付方式 / 订单号）→ 服务推荐横幅 → 更多开关 |
+| 账单卡 | 小标题 → 黄色横幅 → 账单分类 / 标签和备注 / 计入收支（28×18 手绘开关）→ 分割线 → 七入口两列（每行 35.4dp，图标 15.2dp） |
+
+**架构上的两点**：
+
+1. **一套 rect、两处使用**：`layout(_:)` 一次算出所有元素的矩形（`Item` 列表），
+   绘制与命中都遍历这同一个列表 —— 点区不可能跟画面对不上；
+2. **固定顶栏的画法**：这一屏 `selfScrolls = false`，宿主整体 `translate(0,-scroll)`，
+   所以顶栏要画在内容坐标的 `scroll` 处；而 `hitTest` 收到的 y **已经含 scroll**，
+   不能再加一次（写反就是「点哪都不对」）。
+
+编辑：头像/昵称/金额（可带 ±）/状态/三行明细/分类/标签/计入收支/横幅文案/页面标题都能改，
+七个入口点了提示「已打开X」。
+
+「完成」现在直接从编辑页进这里，**转账链路闭合**（编辑 → 详情）。
+
+### 校验
+
+```powershell
+node _ios/v2/lint-swift.mjs      # 460 项全绿
+node _ios/v2/check-symbols.mjs   # 9 项
+node _ios/v2/check-members.mjs   # 1 项
+node _ios/v2/check-access.mjs    # 2 项
+```
+
+### 支付宝社交剩余（都不大了）
+
+```text
+AliRedPacketActivity(405)   红包编辑页（详情页已完成，接上就闭环）
+AliOrder(244) / AliWithdraw(215) / AliYearBill(126) / AliMsgBox(81)
+```
