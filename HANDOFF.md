@@ -2607,3 +2607,44 @@ node _ios/v2/check-access.mjs    # 2 项
 AliRedPacketActivity(405)   红包编辑页（详情页已完成，接上就闭环）
 AliOrder(244) / AliWithdraw(215) / AliYearBill(126) / AliMsgBox(81)
 ```
+
+---
+
+## 24. 2026-10-24：红包编辑页 —— 红包链路闭合
+
+### 做了什么
+
+`ios_v2/Sources/Ali/AliRedPacketScreen.swift` —— `AliRedPacketActivity`（465 行）的移植。
+
+四段式（Java 的 dp 常量，卡片间各 9.6dp）：
+
+| 块 | 高度 | 内容 |
+|---|---|---|
+| 顶栏 | 54dp | `‹`（两条线画）+ 居中「红包」17sp + 黄色「发送」（64×38.8、圆角 8、15sp 粗体） |
+| 金额块 | 126.8dp | `红包金额` 13sp 在 (32.6, 18.3)；下一行 `￥` 40sp 粗体 + 金额 56sp |
+| 祝福块 | 100.5dp | 祝福语 15sp 在 (15.8, 13.8) |
+| 发送人块 | 60.5dp | 39.4dp 头像 + 昵称 15sp + 右侧「发送人 ›」 |
+
+「发送」按 Java `submit()` 校验金额 > 0 —— 不满足就提示、留在本页；满足则格式化两位小数并进**详情页**。
+
+入口调整：工具页 `alired` 与聊天页「红包」格子现在都进**编辑页**（原来直接跳详情），
+编辑页再进详情 —— 与 Android 的 `编辑 → 塞钱 → 详情` 一致。
+
+**令牌前缀**：编辑页用 `ali:rpe:*`，详情页仍是 `ali:rp:*`，两套不冲突。
+
+### 校验
+
+```powershell
+node _ios/v2/lint-swift.mjs      # 463 项全绿
+node _ios/v2/check-symbols.mjs   # 9 项
+node _ios/v2/check-members.mjs   # 1 项
+node _ios/v2/check-access.mjs    # 2 项
+```
+
+### 支付宝社交剩余
+
+```text
+AliOrder(244) / AliWithdraw(215) / AliYearBill(126) / AliMsgBox(81)
+```
+
+四个都是小页，合计 666 行 Java，下一轮可以一次收掉。
