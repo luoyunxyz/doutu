@@ -353,11 +353,11 @@ struct MockMetrics {
         // 行高 83px/3 ≈ 27.7dp（文字 15sp + 上下各 6dp），比 Java 原生版的 12dp 紧一半；
         // 上半段（收款人/金额/状态条）反而更松，两处加起来正好让底部对齐。
         titleBarH: dp(44), titleSize: dp(19),
-        rowSize: dp(15), rowPadV: dp(7), rowPadH: dp(16),
-        statusPadV: dp(14), statusPadH: dp(16), statusSize: dp(15),
+        rowSize: dp(15), rowPadV: dp(9), rowPadH: dp(16),
+        statusPadV: dp(16), statusPadH: dp(16), statusSize: dp(15),
         statusCheck: dp(20), statusGap: dp(9),
-        nameSize: dp(15), namePadTop: dp(16),
-        amountSize: dp(32), amountPadTop: dp(6), amountPadBottom: dp(18),
+        nameSize: dp(15), namePadTop: dp(24),
+        amountSize: dp(32), amountPadTop: dp(12), amountPadBottom: dp(30),
         cardPadV: dp(14), cardPadH: dp(16), cardLogo: dp(28), cardNoSize: dp(20), cardGap: dp(10),
         amtLabelSize: dp(15), amtSize: dp(28), amtPadV: dp(6), bandH: dp(10),
         linkPadV: dp(16), linkPadH: dp(16), linkSize: dp(15),
