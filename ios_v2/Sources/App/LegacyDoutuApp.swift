@@ -2178,6 +2178,10 @@ final class Router {
             handleAliTransfer(String(rest.dropFirst("transfer:".count)))
             return
         }
+        if rest.hasPrefix("rpe:") {
+            handleAliRedPacketEdit(String(rest.dropFirst("rpe:".count)))
+            return
+        }
         if rest.hasPrefix("rp:") {
             handleAliRedPacket(String(rest.dropFirst("rp:".count)))
             return
@@ -2288,7 +2292,7 @@ final class Router {
             case "0": showToast("从相册选择图片（演示）", ok: false)
             case "1": showToast("录制小视频（演示）", ok: false)
             case "2":
-                push(AliRedPacketDetailScreen(), state: AliRedPacketDetailScreen.State())
+                push(AliRedPacketScreen(), state: AliRedPacketScreen.State())
             default:
                 push(AliTransferScreen(), state: AliTransferScreen.State())
             }
@@ -2302,6 +2306,51 @@ final class Router {
         state.messages.append(message)
         AliChatStore.shared.touch(name: state.title, last: message)
         host?.setNeedsDisplay()
+    }
+
+    /// 红包**编辑页**的令牌：`amount` / `bless` / `sender`（切换发送人）/ `send`（发送 → 详情页）。
+    /// 详情页用 `rp:` 前缀，这里用 `rpe:`，两者不冲突。
+    private func handleAliRedPacketEdit(_ rest: String) {
+        let store = AliRedPacketStore.shared
+        switch rest {
+        case "amount":
+            EditPrompt.present(title: "红包金额", current: store.amount, numeric: true) { [weak self] text in
+                store.setAmount(text)
+                self?.host?.setNeedsDisplay()
+            }
+        case "bless":
+            EditPrompt.present(title: "祝福语", current: store.blessing, numeric: false) { [weak self] text in
+                store.blessing = text
+                self?.host?.setNeedsDisplay()
+            }
+        case "sender":
+            let sheet = UIAlertController(title: "切换发送人", message: nil,
+                                          preferredStyle: .actionSheet)
+            for (index, name) in store.senderNames.enumerated() {
+                sheet.addAction(UIAlertAction(title: name, style: .default) { [weak self] _ in
+                    store.senderIndex = index
+                    self?.host?.setNeedsDisplay()
+                })
+            }
+            sheet.addAction(UIAlertAction(title: "关闭", style: .cancel))
+            if let pop = sheet.popoverPresentationController, let view = host {
+                pop.sourceView = view
+                pop.sourceRect = CGRect(x: view.bounds.midX, y: view.bounds.midY, width: 1, height: 1)
+                pop.permittedArrowDirections = []
+            }
+            UpdatePrompt.topViewController()?.present(sheet, animated: true)
+        case "send":
+            // Java `submit()`：金额必须大于 0，否则提示后留在本页
+            let value = Double(store.amount) ?? 0
+            guard value.isFinite, value > 0 else {
+                showToast("请输入红包金额", ok: false)
+                return
+            }
+            store.amount = String(format: "%.2f", value)
+            push(AliRedPacketDetailScreen(), state: AliRedPacketDetailScreen.State())
+        default:
+            break
+        }
     }
 
     /// 转账详情页（账单详情）的令牌：`more` 展开/收起两个额外行；`avatar`/`name`/`amount`/`status`
@@ -2663,7 +2712,7 @@ final class Router {
             push(AliContactsScreen(), state: AliContactsScreen.State())
             return
         case "alired":
-            push(AliRedPacketDetailScreen(), state: AliRedPacketDetailScreen.State())
+            push(AliRedPacketScreen(), state: AliRedPacketScreen.State())
             return
         case "alitransfer":
             push(AliTransferScreen(), state: AliTransferScreen.State())
