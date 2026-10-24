@@ -102,6 +102,7 @@ enum MockModule: Int, CaseIterable {
     case pufa = 11    // 浦发模拟（4 个子页，转账结果）
     case minsheng = 12 // 民生模拟（3 个子页，交易详情）
     case wechat = 13   // 微信模拟（12+ 个子页，支付成功）
+    case alipay = 14   // 支付宝模拟（12 个子页，支付成功）
 
     /// 首页卡片标题（`LABELS[0...5]`）
     var title: String {
@@ -120,6 +121,7 @@ enum MockModule: Int, CaseIterable {
         case .pufa: return "浦发模拟"
         case .minsheng: return "民生模拟"
         case .wechat: return "微信模拟"
+        case .alipay: return "支付宝"
         }
     }
 
@@ -176,6 +178,11 @@ enum MockModule: Int, CaseIterable {
             return ["扫码转出1", "扫码转出2", "扫码转出2", "明细(转出)",
                     "消息盒子", "收支明细", "扫码捐款", "扫码收款",
                     "赞赏码转出", "赞赏码转出2", "赞赏码转入", "商户转出1"]
+        case .alipay:
+            // 安卓设备抽屉里的前 12 项
+            return ["扫码转出1", "扫码转出2", "对行转出", "对支付宝转出",
+                    "话费转出", "明细(转出)", "消息盒子", "收支明细",
+                    "扫码收款1", "扫码收款2", "商户转出1", "商户转出2"]
         }
     }
 
@@ -196,6 +203,7 @@ enum MockModule: Int, CaseIterable {
         case .pufa: return "mock_bufa"
         case .minsheng: return "mock_mingsheng"
         case .wechat: return "mock_wechat"
+        case .alipay: return "mock_alipay"
         }
     }
 
@@ -263,6 +271,8 @@ enum MockModule: Int, CaseIterable {
         case .minsheng:
             return sub == 0 ? "交易详情" : (subs.indices.contains(sub) ? subs[sub] : title)
         case .wechat:
+            return sub == 0 ? "支付成功" : (subs.indices.contains(sub) ? subs[sub] : title)
+        case .alipay:
             return sub == 0 ? "支付成功" : (subs.indices.contains(sub) ? subs[sub] : title)
         default:
             return subs.indices.contains(sub) ? subs[sub] : title

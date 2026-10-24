@@ -58,6 +58,9 @@ enum MockComposer {
         case .wechat:
             return MockWechat.page(state: state, metrics: metrics, width: width,
                                    showsTopTitle: showsTopTitle)
+        case .alipay:
+            return MockAlipay.page(state: state, metrics: metrics, width: width,
+                                   showsTopTitle: showsTopTitle)
         default:
             return placeholder(module: module, metrics: metrics, width: width)
         }
@@ -68,7 +71,7 @@ enum MockComposer {
         switch module {
         case .nye, .icbc, .boc, .psbc, .cmb, .eank,
              .xingye, .jianshe, .pingan, .jiaotong, .zhongxin, .pufa,
-             .minsheng, .wechat:
+             .minsheng, .wechat, .alipay:
             return true
         }
     }
