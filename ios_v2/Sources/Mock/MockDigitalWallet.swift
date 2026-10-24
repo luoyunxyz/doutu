@@ -15,6 +15,8 @@ enum MockDigitalWallet {
     static func page(state: MockState, metrics: MockMetrics,
                      width: CGFloat, showsTopTitle: Bool) -> MockPage {
         let b = MockBuilder(width: width, metrics: metrics)
+        // 整页纯白（安卓实测 sz_sub0 底色 #ffffff）
+        b.autoBoard = nil
         // 12 个子页共用「转钱成功」版式：银行从子页名取，转入/存入取正
         transferred(b, state, showsTopTitle: showsTopTitle)
         return b.result
@@ -40,15 +42,15 @@ enum MockDigitalWallet {
         b.sectionLabel("✕", size: dp(22), color: MockInk.title,
                        padH: dp(16), padTop: 0, padBottom: 0)
 
-        // 对勾 + 转钱成功
+        // 对勾 + 转钱成功（安卓实测：勾直径 110px，标题 18sp）
         b.gap(dp(20))
         b.checkBadge(diameter: dp(110), color: green, gapTop: dp(10), symbolSize: dp(64))
-        b.sectionLabel("转钱成功", size: dp(24), color: MockInk.title,
+        b.sectionLabel("转钱成功", size: dp(18), color: MockInk.title,
                        padH: 0, padTop: dp(20), padBottom: 0)
 
-        // 金额
-        b.sectionLabel(s.value("金额", "¥70.00"), size: dp(44), color: MockInk.black,
-                       padH: 0, padTop: dp(40), padBottom: 0)
+        // 金额（实测文字高 74px ≈ 34sp）
+        b.sectionLabel(s.value("金额", "¥70.00"), size: dp(34), color: MockInk.black,
+                       padH: 0, padTop: dp(60), padBottom: 0)
 
         // 收款方 + 卡号
         b.sectionLabel(s.value("收款方", bank(s.sub).incoming
