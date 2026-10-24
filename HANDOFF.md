@@ -2390,3 +2390,40 @@ AliWithdraw(215) / AliOrder(244) / AliYearBill(126)
 ```
 
 优先级：通讯录 → 创建单聊 → 聊天页（这三屏接通后工具页 5 个 `ali*` 入口就活了）。
+
+---
+
+## 19. 2026-10-24：支付宝通讯录 + 两个数据层 + 把检查器修准
+
+### 做了什么
+
+| 文件 | 内容 |
+|---|---|
+| `ios_v2/Sources/Ali/AliChatStore.swift` | `AliChatStore`（141 行）移植：置顶在前、其余越新建越靠前；JSON 存在 `UserDefaults` |
+| `ios_v2/Sources/Ali/AliContactStore.swift` | `AliContactStore`（203 行）移植：手动 + 同步两类联系人、按昵称去重（手动优先）、A-Z 分组 # 兜底 |
+| `ios_v2/Sources/Ali/AliContactsScreen.swift` | `AliContactsActivity` 的页面：44dp 顶栏、搜索胶囊、7 行顶部白卡、批量添加卡、字母分组 + 54dp 联系人行、右侧 A-Z 索引 |
+
+交互：长按联系人 → 确认删除（**同时删通讯录与消息列表**，否则「同步来的联系人」会把它带回来）；
+点联系人 → 「发起聊天 / 删除联系人」；「添加朋友」→ 输入昵称后落库；
+批量添加 / 顶部七个入口 / 搜索仍是「制作中」。
+
+**一处与 Android 不同**：`letterOf` 用系统的汉字转拼音取首字母，而不是 Android 的
+GB2312 首字节区间 —— 常用字结果一致，代码短很多（Android 那套是为了避开 ICU 初始化慢）。
+
+### 顺手把三个检查器修准了（这轮最值钱的部分）
+
+| 检查器 | 原来的误报 | 修法 |
+|---|---|---|
+| `check-access` | 8 个「重复声明」（不同外层类里的同名嵌套 `State`、两个文件里的 `private extension UIImage`） | 类型路径带外层类名；`private/fileprivate` 作用域按文件隔离 → **0 误报** |
+| `check-members` | 3 个「未声明成员」（`WeChatV2Host.current/lastCloseAt/errorHook`） | 类型声明跨行（`final class X: A,` 换行才 `{`）时类型没入栈 → 支持跨行声明 → **0 误报** |
+| `check-symbols` | 5 屏「会不滚」 | 页面自管滚动的写法不止一种（`translateBy` 里带 `.scroll` 即算）；`TermsScreen`/`HomeShellScreen` 是已知例外 → **0 误报** |
+
+**现在 8 个检查器全绿**（lint 442 / access 2 / symbols 9 / members 1 / instance 1 /
+draw-api 2 / mock 13 / video 9）。而这一轮的 `check-members` 还顺手抓到我一个真错误：
+`AliContactsScreen` 忘了写 `State`，而 Router 里已经在 `push(... state: AliContactsScreen.State())`。
+
+### 下一轮
+
+1. `AliCreateChatActivity`（206 行）—— 创建单聊；
+2. `AliChatActivity`（352）+ `AliChatStore` 已就绪 —— 聊天页；
+3. 然后是红包 / 转账（`AliRedPacket` + `AliTransfer` 系列，约 2000 行）。
