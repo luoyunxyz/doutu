@@ -2266,8 +2266,16 @@ node _tools-layout.cjs             # 版式数值：4 分区 / 43 入口 / 内�
 浏览器验证：`python -m http.server` 起 `ios_v2/Resources/web`，Edge headless 390×844
 截图确认设备行已隐藏、微信首页正常渲染。
 
-### 下一轮候选（按缺口大小）
+### 本轮被「独立复核」抓到的一个编译错误（9c4a160）
 
+`presentedWeChat` 里对 `host` 取了 `presentedViewController` —— 但 `Router.host` 是
+`ScreenHostView`（**UIView**），那个属性只在 `UIViewController` 上。改成
+`UpdatePrompt.topViewController() as? WeChatV2Host`（`presentWeb` 也是这么找 host 的）。
+
+加上第 15 节那次「枚举 case 不该带标签」，这是**我这套静态检查拦不住的第二类错误**：
+只查了「谁调用谁」，没查「这个类型上到底有没有这个成员」。装机前每轮都值得让独立复核过一遍。
+
+### 下一轮候选（按缺口大小）
 1. **支付宝社交模块**（`AliChat` / `AliContacts` / `AliMsg` / `AliRedPacket` / `AliTransfer`，
    Android 有 26 个 Activity）—— 工具页里 `ali*` 那 5 个入口就等它；
 2. **小Q 模块**（`QqHome` 1356 行 + 聊天/红包/转账/未读/资料，6 屏）；
