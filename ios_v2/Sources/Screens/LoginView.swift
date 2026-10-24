@@ -226,6 +226,7 @@ struct LoginView: View {
         }
     }
 
+    @MainActor
     private func dismissThen(_ token: String) {
         // 等 LoginHostingController 真正 viewDidDisappear 后再执行，
         // 避免跳转页被推到登录模态下面。
@@ -233,7 +234,9 @@ struct LoginView: View {
         closeLogin()
         // 兜底：万一 viewDidDisappear 没有触发 onDismiss，0.6 秒后也执行一次。
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
-            Router.shared?.runPendingAfterLoginDismiss()
+            Task { @MainActor in
+                Router.shared?.runPendingAfterLoginDismiss()
+            }
         }
     }
 
