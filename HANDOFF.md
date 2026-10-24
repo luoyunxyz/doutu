@@ -3257,5 +3257,21 @@ python _ios\compare_page.py xxx.png mock_gen.png xxx               # 拼图对�
 5. 钱包与杂项（数字钱包/云闪付/c币/TP/欧易/抖音/QQ/京东/短信/聊天/农信/印度/汇旺）
 
 **需要用户配合**：每批改动后重新构建安装一次，我才能抓 iOS 真图对照。
+
+### 第 2 轮：用「数值测量」代替肉眼比对
+
+新增 `_ios/measure_page.py`：不显示图片，只打印**文字带（top/bottom/高度）+ 相邻间距 +
+纵向底色变化**，这样每页的量测只花几行输出，可以一页页量完 195 页。
+
+已量的三页（安卓设备）：
+
+| 页面 | 行距 | 字号 | 底板 |
+|---|---|---|---|
+| 农业·明细查询（`nye_sub2_detail`） | **69px** | 13sp + 上下 4dp | **#eeeeee** |
+| 农业·明细（`nye_detail_android`） | **83px** | 15sp + 上下 5dp | #eeeeee（内容后） |
+| 回单（`hd_sub0`） | **66px** | 12sp + 上下 4dp | 白 + 粉色水印 #fdebec |
+
+对应改动：`MockInk.board`（#eeeeee）、`b.row(size:padV:)` 覆盖参数，
+并分别改到 `MockNye.query`、`MockLiushui.query`、`MockNye.statement`、`MockReceipt`。
 剩 18 个非银行入口：微信 / 支付宝 / 汇旺 / 数字钱包 / 抖音 / 印度 / 短信 / 回单 / 流水 /
 聊天 / c币 / 云闪付 / TP / 欧易 / 话费 / 农信 / qq / 京东。
