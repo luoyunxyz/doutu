@@ -1,0 +1,19 @@
+{
+  "_comment": "安卓设备实测的行距（measure_page.py 量的文字带相邻间距）。pitch 单位是 px，canvas 宽 1080。",
+  "measured": [
+    { "name": "明细查询(农业)", "file": "MockNye.swift",  "scope": "query",     "size": 13, "padV": 4,  "pitch": 69 },
+    { "name": "明细查询(流水)", "file": "MockLiushui.swift", "scope": "query",  "size": 13, "padV": 4,  "pitch": 69 },
+    { "name": "明细(农业)",    "file": "MockNye.swift",   "scope": "statement", "size": 15, "padV": 5,  "pitch": 83 },
+    { "name": "回单",          "file": "MockReceipt.swift","scope": "receipt",  "size": 12, "padV": 4,  "pitch": 66 },
+    { "name": "农信",          "file": "MockNongxin.swift","scope": "receipt",  "size": 14, "padV": 6,  "pitch": 86 },
+    { "name": "qq",            "file": "MockQQ.swift",     "scope": "detail",   "size": 14, "padV": 6.5, "pitch": 90 },
+    { "name": "话费",          "file": "MockHuafei.swift", "scope": "detail",   "size": 13, "padV": 13, "pitch": 124 },
+    { "name": "欧易",          "file": "MockOkx.swift",    "scope": "detail",   "size": 12, "padV": 7,  "pitch": 84 }
+  ],
+  "boards": [
+    { "name": "明细查询底部", "hex": "#eeeeee" },
+    { "name": "话费入口分隔", "hex": "#f5f5f5" },
+    { "name": "qq 入口底板",  "hex": "#f0f1f2" },
+    { "name": "聊天页底色",   "hex": "#ededed" }
+  ]
+}

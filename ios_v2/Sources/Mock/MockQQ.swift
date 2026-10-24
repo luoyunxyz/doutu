@@ -47,9 +47,9 @@ enum MockQQ {
                        padH: 0, padTop: dp(14), padBottom: dp(10))
         b.hairlineFull()
 
-        // 七行明细（行距按安卓实测 qq_sub0：14sp 字 + 上下 7dp，行距 ~90px）
+        // 七行明细（行距按安卓实测 qq_sub0：14sp 字 + 上下 6.5dp，行距 90px）
         let rs = dp(14)
-        let rp = dp(7)
+        let rp = dp(6.5)
         b.row("金额", s.value("金额", "1,000.00"), size: rs, padV: rp)
         b.row("商品", s.value("商品", "QQ会员"), size: rs, padV: rp)
         b.row("商户全称", s.value("商户全称", "腾讯米大事移动支付"), size: rs, padV: rp)
