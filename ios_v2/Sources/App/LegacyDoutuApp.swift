@@ -2134,6 +2134,10 @@ final class Router {
             showToast("该入口制作中", ok: false)
             return
         }
+        if rest.hasPrefix("chat:") {
+            handleAliChat(String(rest.dropFirst("chat:".count)))
+            return
+        }
         if rest.hasPrefix("delete:") {
             confirmDeleteAliContact(String(rest.dropFirst("delete:".count)))
             return
@@ -2144,8 +2148,7 @@ final class Router {
             sheet.addAction(UIAlertAction(title: "发起聊天", style: .default) { [weak self] _ in
                 // 会话写进 AliChatStore 后，通讯录的「同步来的联系人」也会带上他
                 AliChatStore.shared.upsert(name: name, avatar: nil, last: nil)
-                self?.showToast("已创建会话（聊天页制作中）", ok: true)
-                self?.host?.setNeedsDisplay()
+                self?.openAliChat(name: name)
             })
             sheet.addAction(UIAlertAction(title: "删除联系人", style: .destructive) { [weak self] _ in
                 self?.confirmDeleteAliContact(name)
@@ -2221,6 +2224,62 @@ final class Router {
                 self?.host?.setNeedsDisplay()
             }
         }
+    }
+
+    /// 打开某个人的单聊页（`AliChatScreen`）。会话不存在时先落库。
+    private func openAliChat(name: String) {
+        if !AliChatStore.shared.list().contains(where: { $0.name == name }) {
+            AliChatStore.shared.upsert(name: name, avatar: nil, last: nil)
+        }
+        let state = AliChatScreen.State()
+        state.title = name
+        if let chat = AliChatStore.shared.list().first(where: { $0.name == name }),
+           !chat.avatar.isEmpty {
+            state.avatar = chat.avatar
+        }
+        push(AliChatScreen(), state: state)
+    }
+
+    /// 聊天页的令牌：`chip:<i>` 快捷短语 / `input` 输入 / `pay` `more` `voice` `emoji` `plus` /
+    /// `action:<0..3>`（相册 / 小视频 / 红包 / 转账）。
+    private func handleAliChat(_ rest: String) {
+        guard let state = host?.state as? AliChatScreen.State else { return }
+        let chips = ["你好", "在干嘛", "我来了", "谢谢老板"]
+
+        if rest.hasPrefix("chip:") {
+            if let index = Int(rest.dropFirst("chip:".count)), chips.indices.contains(index) {
+                sendAliChat(state, text: chips[index])
+            }
+            return
+        }
+        if rest == "input" {
+            EditPrompt.present(title: "发消息", current: "", numeric: false) { [weak self] text in
+                self?.sendAliChat(state, text: text)
+            }
+            return
+        }
+        if rest == "pay" { showToast("收款（演示）", ok: false); return }
+        if rest == "more" { showToast("更多（演示）", ok: false); return }
+        if rest == "voice" { showToast("按住说话（演示）", ok: false); return }
+        if rest == "emoji" { showToast("表情（演示）", ok: false); return }
+        if rest == "plus" { showToast("更多功能（演示）", ok: false); return }
+        if rest.hasPrefix("action:") {
+            switch String(rest.dropFirst("action:".count)) {
+            case "0": showToast("从相册选择图片（演示）", ok: false)
+            case "1": showToast("录制小视频（演示）", ok: false)
+            case "2": showToast("红包制作中", ok: false)
+            default: showToast("转账制作中", ok: false)
+            }
+        }
+    }
+
+    /// 发一条消息：追加气泡 + 写回会话列表的最后一条（Java `AliChatActivity.send`）
+    private func sendAliChat(_ state: AliChatScreen.State, text: String) {
+        let message = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !message.isEmpty else { return }
+        state.messages.append(message)
+        AliChatStore.shared.touch(name: state.title, last: message)
+        host?.setNeedsDisplay()
     }
 
     /// 删联系人要连消息列表一起删（否则「同步来的联系人」会把它带回来）
@@ -2314,6 +2373,16 @@ final class Router {
             return
         case "alicontacts":
             push(AliContactsScreen(), state: AliContactsScreen.State())
+            return
+        case "alicreatechat":
+            // Android 是一个带头像预览的弹窗；iOS 先用输入框收昵称，确定后直接进聊天页
+            EditPrompt.present(title: "对方昵称", current: "飞跃巅峰", numeric: false) { [weak self] text in
+                let name = text.trimmingCharacters(in: .whitespacesAndNewlines)
+                let final = name.isEmpty ? "飞跃巅峰" : name
+                AliChatStore.shared.upsert(name: final, avatar: "res:ali_chat_avatar_b",
+                                           last: "开始聊天吧")
+                self?.openAliChat(name: final)
+            }
             return
         default:
             break
