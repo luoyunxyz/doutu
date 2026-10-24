@@ -43,6 +43,16 @@ enum MockWechat {
             billDetail(b, s: state, title: title, status: status,
                        remark: remark, timeLabel: timeLabel,
                        showsTopTitle: showsTopTitle)
+        case 4:
+            // 消息盒子：微信支付空页（按 `wx_sub4` 截图复刻）
+            if showsTopTitle { b.titleBar("微信支付") }
+            b.sectionLabel("‹            微信支付            ⌕   ⚙",
+                           size: dp(18), color: MockInk.title,
+                           padH: dp(16), padTop: dp(14), padBottom: dp(10))
+            b.fill(dp(760), MockInk.page)
+            b.sectionLabel("⌨        我的账单        ｜        支付服务",
+                           size: dp(15), color: MockInk.title,
+                           padH: dp(16), padTop: dp(14), padBottom: dp(16))
         case 5:
             // 收支明细：本月支出 + 三条流水
             if showsTopTitle { b.titleBar(title) }
