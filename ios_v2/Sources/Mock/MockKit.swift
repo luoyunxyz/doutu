@@ -94,6 +94,7 @@ enum MockModule: Int, CaseIterable {
     case psbc = 3     // 邮政模拟（PsbcActivity）
     case cmb = 4      // 招商模拟（CmbActivity）
     case eank = 5     // 光大模拟（EankActivity）
+    case xingye = 6   // 兴业模拟（安卓设备上的版式，无 Java 源码，按截图复刻）
 
     /// 首页卡片标题（`LABELS[0...5]`）
     var title: String {
@@ -104,6 +105,7 @@ enum MockModule: Int, CaseIterable {
         case .psbc: return "邮政模拟"
         case .cmb: return "招商模拟"
         case .eank: return "光大模拟"
+        case .xingye: return "兴业模拟"
         }
     }
 
@@ -129,6 +131,9 @@ enum MockModule: Int, CaseIterable {
                     "回单", "余额", "微信转入", "财付通转出"]
         case .eank:
             return ["明细转出", "明细转入", "转账详情"]
+        case .xingye:
+            // 安卓设备上「兴业模拟」抽屉里的五项（按截图抄，无 Java 源码）
+            return ["明细转出", "明细转入", "回单", "转账结果", "明细转出2"]
         }
     }
 
@@ -141,6 +146,7 @@ enum MockModule: Int, CaseIterable {
         case .psbc: return "mock_psbc"
         case .cmb: return "mock_cmb"
         case .eank: return "mock_ceb"
+        case .xingye: return "mock_cib"
         }
     }
 
@@ -181,6 +187,14 @@ enum MockModule: Int, CaseIterable {
             case 0: return "转账汇款"
             case 1: return "交易详情"
             default: return "转账详情"
+            }
+        case .xingye:
+            switch sub {
+            case 0: return "明细转出"
+            case 1: return "明细转入"
+            case 2: return "电子回单"
+            case 3: return "转账结果"
+            default: return "明细"
             }
         default:
             return subs.indices.contains(sub) ? subs[sub] : title
