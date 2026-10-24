@@ -15,7 +15,7 @@ enum MockBoc {
         let b = MockBuilder(width: width, metrics: metrics)
         switch state.sub {
         case 0:
-            result(b, state, showsTopTitle: showsTopTitle)
+            resultV2(b, state, showsTopTitle: showsTopTitle)
         case 2:
             share(b, state, showsTopTitle: showsTopTitle)
         case 5:
@@ -195,5 +195,29 @@ enum MockBoc {
         row("交易渠道", "手机银行")
         row("交易序号", "44662595972")
         row("交易时间", "2026/10/24 21:41:55")
+    }
+
+    // MARK: - 中国 02/00：转账结果（14sp 金额、12sp 明细、完成按钮）
+
+    private static func resultV2(_ b: MockBuilder, _ s: MockState, showsTopTitle: Bool) {
+        if showsTopTitle { b.titleBar("操作结果") }
+
+        b.gap(dp(20))
+        b.centerBlock("金额", s.value("金额", "100.00元交易成功"), size: dp(14),
+                      color: MockInk.title, bold: false, padTop: dp(10), padBottom: 0)
+        b.centerBlock(nil, "预计10秒内到账，实际时间取决于对方银行", size: dp(12),
+                      color: MockInk.noteTitle, padTop: dp(6), padBottom: dp(8))
+        b.hairlineFull()
+
+        let size = dp(12)
+        let padV = dp(6)
+        b.pairRow("优惠后费用", s.value("优惠后费用", "0.00"), size: size,
+                  padH: dp(14), padV: padV, labelColor: MockInk.value)
+        b.pairRow("付款后\n可用余额", s.value("付款后可用余额", "100.00"), size: size,
+                  padH: dp(14), padV: padV, labelColor: MockInk.value)
+
+        b.centeredLink("交易详情", size: dp(12), color: Draw.color(0xff3f6ee5), padV: dp(8))
+        b.fullButton("完成", filled: true, color: Draw.color(0xffff0000),
+                     height: dp(44), padH: dp(16), gapTop: dp(36), size: dp(13))
     }
 }
