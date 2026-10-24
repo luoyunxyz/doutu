@@ -58,21 +58,23 @@ enum MockHuafei {
         b.sectionLabel("查余额", size: dp(15), color: green,
                        padH: 0, padTop: dp(6), padBottom: dp(12))
 
-        // 明细
-        b.row("当前状态", "充值成功")
-        b.row("支付金额", s.value("支付金额", "¥50"))
-        b.row("下单时间", s.time)
-        b.row("交易单号", "8124068569954568456258745624")
+        // 明细（行距按安卓实测 hf_sub0：13sp 字 + 上下 12dp，行距 124px）
+        let rs = dp(13)
+        let rp = dp(12)
+        b.row("当前状态", "充值成功", size: rs, padV: rp)
+        b.row("支付金额", s.value("支付金额", "¥50"), size: rs, padV: rp)
+        b.row("下单时间", s.time, size: rs, padV: rp)
+        b.row("交易单号", "8124068569954568456258745624", size: rs, padV: rp)
         b.paragraph("充值成功，可登陆运营商APP核实到账情况，月初（月末）为充值高峰，"
                     + "可能会延迟到账，感谢你的理解。",
-                    size: dp(15), color: MockInk.label,
-                    padH: dp(16), padTop: dp(8), padBottom: dp(12))
+                    size: rs, color: MockInk.label,
+                    padH: dp(16), padTop: rp, padBottom: rp)
 
-        // 五条入口
-        b.fill(dp(8), MockInk.page)
+        // 五条入口（安卓实测：17sp、行距 149px → 上下 14dp）
+        b.fill(dp(8), MockInk.board)
         for title in ["充值未到账", "充错号码", "删除订单", "开发票指引", "客服帮助"] {
-            b.chevronRow(title, size: dp(18), color: MockInk.title,
-                         padH: dp(16), padV: dp(18))
+            b.chevronRow(title, size: dp(17), color: MockInk.title,
+                         padH: dp(16), padV: dp(14))
         }
     }
 }
