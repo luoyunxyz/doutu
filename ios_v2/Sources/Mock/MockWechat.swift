@@ -29,8 +29,40 @@ enum MockWechat {
             b.row("微信收款助手", "收款到账 ¥100.00")
             b.row("服务通知", "零钱提现到账")
             b.gap(dp(20))
-        case 5, 6:
-            // 收支明细 / 扫码捐款：明细列表
+        case 6, 7:
+            // 扫码捐款 / 扫码收款：二维码付款详情（按 `wx_sub6` 截图复刻）
+            if showsTopTitle { b.titleBar(title) }
+            b.sectionLabel("✕                                       全部账单",
+                           size: dp(16), color: MockInk.title,
+                           padH: dp(16), padTop: dp(12), padBottom: dp(0))
+            b.gap(dp(24))
+            b.checkBadge(diameter: dp(64), color: UIColor(red: 0xf5 / 255.0,
+                                                          green: 0xc0 / 255.0,
+                                                          blue: 0x2a / 255.0, alpha: 1),
+                         gapTop: dp(10), symbolSize: dp(36))
+            b.sectionLabel(s.value("说明", "扫二维码付款-给李哈哈"), size: dp(20),
+                           color: MockInk.title, padH: 0, padTop: dp(14), padBottom: 0)
+            b.sectionLabel(s.value("金额", "-100.00"), size: dp(44),
+                           color: MockInk.black, padH: 0, padTop: dp(12), padBottom: dp(20))
+            b.hairlineFull()
+            b.row("当前状态", "支付成功")
+            b.row("收款方备注", "二维码收款")
+            b.row("支付方式", "零钱")
+            b.row("转账时间", s.time)
+            b.row("转账单号", "10000499012022092600801723318157")
+            b.fill(dp(10), MockInk.page)
+            b.sectionLabel("账单服务", size: dp(16), color: MockInk.title,
+                           padH: dp(16), padTop: dp(14), padBottom: dp(8))
+            b.centeredCells(["对订单有疑惑", "发起群收款"], height: dp(28), size: dp(15), padV: dp(8))
+            b.fill(dp(10), MockInk.page)
+            b.sectionLabel("收款方服务", size: dp(16), color: MockInk.title,
+                           padH: dp(16), padTop: dp(14), padBottom: dp(8))
+            b.sectionLabel("向收款方留言", size: dp(15), color: MockInk.label,
+                           padH: dp(16), padTop: dp(6), padBottom: dp(16))
+            b.sectionLabel("本服务由财付通提供", size: dp(13), color: MockInk.label,
+                           padH: 0, padTop: dp(16), padBottom: dp(20))
+        case 5:
+            // 收支明细：本月支出 + 三条流水
             if showsTopTitle { b.titleBar(title) }
             b.coloredHeaderBar(title, bg: .white, fg: MockInk.title)
             b.sectionLabel("本月支出  ¥ 1,286.40", size: dp(30), color: MockInk.black,
