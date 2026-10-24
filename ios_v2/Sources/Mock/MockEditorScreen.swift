@@ -224,7 +224,9 @@ final class MockEditorScreen: Screen {
 
         let size = dp(14)
         for (index, name) in s.module.subs.enumerated() {
-            let top = scroll + Self.drawerTop + CGFloat(index) * (Self.drawerRowH + dp(1))
+            // 行高就是 drawerRowH（分割线画在行底，不额外占高度）——
+            // 招商 12 行时 120dp + 12×54dp = 768dp 仍能塞进一屏（Android 同理）。
+            let top = scroll + Self.drawerTop + CGFloat(index) * Self.drawerRowH
             let logoSize = dp(18)
             d.art(UIImage(named: s.module.logo),
                   CGRect(x: panelX + dp(14), y: top + (Self.drawerRowH - logoSize) / 2,
@@ -249,7 +251,7 @@ final class MockEditorScreen: Screen {
             if x >= panelX {
                 let local = y - scroll - Self.drawerTop
                 if local >= 0 {
-                    let index = Int(local / (Self.drawerRowH + dp(1)))
+                    let index = Int(local / Self.drawerRowH)
                     if index >= 0 && index < s.module.subs.count { return "mock:sub:\(index)" }
                 }
                 return "noop"
