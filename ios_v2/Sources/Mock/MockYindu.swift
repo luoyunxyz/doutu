@@ -20,17 +20,16 @@ enum MockYindu {
     static func page(state: MockState, metrics: MockMetrics,
                      width: CGFloat, showsTopTitle: Bool) -> MockPage {
         let b = MockBuilder(width: width, metrics: metrics)
-        switch state.sub {
-        case 0:
-            moneySent(b, state, showsTopTitle: showsTopTitle)
-        default:
-            return MockComposer.placeholder(module: .yindu, metrics: metrics, width: width)
-        }
+        // 四个子页共用「Money Sent」版式，只换金额与参考号
+        moneySent(b, state, showsTopTitle: showsTopTitle)
         return b.result
     }
 
     private static func moneySent(_ b: MockBuilder, _ s: MockState, showsTopTitle: Bool) {
-        if showsTopTitle { b.titleBar("转出1") }
+        let names = MockModule.yindu.subs
+        if showsTopTitle {
+            b.titleBar(names.indices.contains(s.sub) ? names[s.sub] : "转出")
+        }
 
         // 顶部浅灰块：返回 / 分享 / Money Sent / 金额 / 时间
         b.fill(dp(300), headGrey)

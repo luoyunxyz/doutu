@@ -14,17 +14,14 @@ enum MockPufa {
     static func page(state: MockState, metrics: MockMetrics,
                      width: CGFloat, showsTopTitle: Bool) -> MockPage {
         let b = MockBuilder(width: width, metrics: metrics)
-        switch state.sub {
-        case 0:
-            transferResult(b, state, showsTopTitle: showsTopTitle)
-        default:
-            return MockComposer.placeholder(module: .pufa, metrics: metrics, width: width)
-        }
+        // 四个子页共用「转账结果」版式：转入取正
+        transferResult(b, state, showsTopTitle: showsTopTitle,
+                       incoming: state.sub == 2)
         return b.result
     }
 
     private static func transferResult(_ b: MockBuilder, _ s: MockState,
-                                       showsTopTitle: Bool) {
+                                       showsTopTitle: Bool, incoming: Bool) {
         if showsTopTitle { b.titleBar("转账结果") }
 
         // 白底顶栏：居中「转账结果」+ 右上「汇款回单」
@@ -37,8 +34,8 @@ enum MockPufa {
         // 转账成功 + 金额
         b.sectionLabel("转账成功", size: dp(17), color: MockInk.title,
                        padH: 0, padTop: dp(16), padBottom: 0)
-        b.sectionLabel(s.value("金额", "¥ 15.00"), size: dp(24), color: MockInk.title,
-                       padH: 0, padTop: dp(8), padBottom: 0)
+        b.sectionLabel(s.value("金额", incoming ? "¥ 15.00" : "¥ 15.00"), size: dp(24),
+                       color: MockInk.title, padH: 0, padTop: dp(8), padBottom: 0)
 
         // 三条蓝色链接
         b.centeredCells(["继续转账", "查看转账记录", "设置面容ID转账"],

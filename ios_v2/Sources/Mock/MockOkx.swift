@@ -17,12 +17,8 @@ enum MockOkx {
     static func page(state: MockState, metrics: MockMetrics,
                      width: CGFloat, showsTopTitle: Bool) -> MockPage {
         let b = MockBuilder(width: width, metrics: metrics)
-        switch state.sub {
-        case 0:
-            withdrawDetail(b, state, showsTopTitle: showsTopTitle)
-        default:
-            return MockComposer.placeholder(module: .okx, metrics: metrics, width: width)
-        }
+        // 四个子页共用「提币详情」版式，只换类型文案
+        withdrawDetail(b, state, showsTopTitle: showsTopTitle)
         return b.result
     }
 
@@ -51,7 +47,8 @@ enum MockOkx {
         // 八行明细
         b.panel(gapTop: dp(14), margin: 0, pad: dp(16), bg: .white) { p in
             p.row("网络", "TRC20")
-            p.row("类型", "链上提币")
+            let kinds = MockModule.okx.subs
+            p.row("类型", kinds.indices.contains(s.sub) ? kinds[s.sub] : "链上提币")
             p.row("状态", "已转出")
             p.row("提币地址", s.value("提币地址", "TTJeBTxhG12rJaoBXvssfvMPa9z7asKPa4"))
             p.row("区块链交易ID", s.value("区块链交易ID",
