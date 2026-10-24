@@ -44,9 +44,10 @@ enum MockHuiwang {
                            color: MockInk.label, padH: 0, padTop: 0, padBottom: 0)
         }
 
-        // 明细白卡（行距按安卓实测 hw_sub0：14sp + 5.5dp，行距 84px）
+        // 明细白卡（行距按安卓实测 hw_sub0：14sp + 11.75dp，行距 121px；
+        // 121 是文字带 top→top，「间距 84」只是墨迹空隙）
         let rs = dp(14)
-        let rp = dp(5.5)
+        let rp = dp(11.75)
         b.panel(gapTop: dp(14), margin: dp(12), pad: dp(14), bg: .white) { p in
             p.row("账单类型", s.value("账单类型", "转账"), size: rs, padV: rp)
             p.row("账单号", s.value("账单号", "22082179616251015"), size: rs, padV: rp)

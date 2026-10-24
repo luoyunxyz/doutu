@@ -212,9 +212,11 @@ enum MockNye {
                     value: s.value("金额", (out ? "-" : "+") + "100.00"))
         b.bandBlock()
 
-        // 行距按安卓实测：13sp 字 + 上下 4dp（行距 69px），比明细页更紧
+        // 行距按安卓实测（nye_sub2_detail）：13sp 字 + 上下 9.4dp，行距 103px。
+        // 注意 103 是相邻文字带的 top→top；measure_page.py 打印的「间距 69」是
+        // 墨迹空隙（= 103 − 字带高 34），拿 69 当行距会让每行少 32px。
         let rowSize = dp(13)
-        let rowPadV = dp(4)
+        let rowPadV = dp(9.4)
         b.row("交易时间", s.value("交易时间", s.time), size: rowSize, padV: rowPadV)
         b.row("交易摘要", s.value("交易摘要", out ? "转支" : "转存"), size: rowSize, padV: rowPadV)
         if out {

@@ -27,9 +27,10 @@ enum MockNongxin {
         b.coloredHeaderBar(names.indices.contains(s.sub) ? names[s.sub] : "电子回单详情",
                            bg: blue, fg: .white)
 
-        // 行距按安卓实测（nx_sub0）：14sp 字 + 上下 6dp，行距 86px
+        // 行距按安卓实测（nx_sub0）：14sp 字 + 上下 11.75dp，行距 121px。
+        // 121 是文字带 top→top；脚本打印的「间距 86」是墨迹空隙，别拿它当行距。
         let rs = dp(14)
-        let rp = dp(6)
+        let rp = dp(11.75)
         b.row("手机银行电子回单", "", size: rs, padV: rp)
         b.hairlineFull()
         b.row("电子回单编号", s.value("电子回单编号", "843471427"), size: rs, padV: rp)

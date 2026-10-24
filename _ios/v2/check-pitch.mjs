@@ -31,6 +31,7 @@ for (const m of manifest.measured) {
       `${got.toFixed(1).padStart(6)} ${String(m.pitch).padStart(6)} ` +
       `${(delta >= 0 ? '+' : '') + delta.toFixed(1)}${bad ? '  ❌' : '  ✅'}`,
   );
+  if (m.note) console.log(`${' '.repeat(14)} ↳ ${m.note}`);
 }
 
 // 底板色：确认 MockKit 里声明的三个灰和实测一致
