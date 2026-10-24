@@ -82,11 +82,12 @@ final class AliContactStore {
         for contact in all() {
             buckets[Self.letterOf(contact.name), default: []].append(contact)
         }
-        var result: [(String, [Contact])] = []
+        // 直接声明成带标签的元组：返回时不依赖「无标签 → 有标签」的隐式转换
+        var result: [(letter: String, contacts: [Contact])] = []
         for letter in Array("ABCDEFGHIJKLMNOPQRSTUVWXYZ").map(String.init) {
-            if let list = buckets[letter] { result.append((letter, list)) }
+            if let list = buckets[letter] { result.append((letter: letter, contacts: list)) }
         }
-        if let rest = buckets["#"] { result.append(("#", rest)) }
+        if let rest = buckets["#"] { result.append((letter: "#", contacts: rest)) }
         return result
     }
 
