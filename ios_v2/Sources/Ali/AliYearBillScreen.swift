@@ -78,16 +78,6 @@ final class AliYearBillScreen: Screen {
         // 宿主已整体平移：铺底从 scroll 开始
         d.rect(CGRect(x: 0, y: scroll, width: Self.W, height: Self.H), pageBg)
 
-        // 头部渐变（含返回条）
-        let header = laid.header.offsetBy(dx: 0, dy: 0)
-        d.gradient(header, from: blueTop, to: blueBottom, vertical: true)
-        d.centerText("‹", cx: dp(16) + dp(16), baseline: header.minY + dp(10) + dp(18) + dp(9),
-                     size: dp(26), .white)
-        let titleSize = dp(18)
-        d.centerText("年账单", cx: Self.W / 2,
-                     baseline: header.minY + dp(10) + dp(36) / 2 + Draw.font(size: titleSize).ascender / 2 - titleSize * 0.06,
-                     size: titleSize, .white)
-
         // 碳减排卡
         d.round(laid.carbon, radius: dp(10), .white)
         let innerX = laid.carbon.minX + cardPad
@@ -139,6 +129,22 @@ final class AliYearBillScreen: Screen {
         d.centerText("收支分析", cx: button.midX,
                      baseline: button.midY + Draw.font(size: buttonSize).ascender / 2 - buttonSize * 0.06,
                      size: buttonSize, .white)
+
+        // 头部最后画、并且偏移 scroll —— 这样它固定不动，滚上来的卡片被它盖住
+        // （Android 的头部在 ScrollView 之外，位置本来就是固定的）
+        drawHeader(d, scroll: scroll)
+    }
+
+    private func drawHeader(_ d: Draw, scroll: CGFloat) {
+        let header = layout().header.offsetBy(dx: 0, dy: scroll)
+        d.gradient(header, from: blueTop, to: blueBottom, vertical: true)
+        d.centerText("‹", cx: dp(16) + dp(16),
+                     baseline: header.minY + dp(10) + dp(18) + dp(9), size: dp(26), .white)
+        let titleSize = dp(18)
+        d.centerText("年账单", cx: Self.W / 2,
+                     baseline: header.minY + dp(10) + dp(36) / 2
+                        + Draw.font(size: titleSize).ascender / 2 - titleSize * 0.06,
+                     size: titleSize, .white)
     }
 
     // MARK: - 文字换行
