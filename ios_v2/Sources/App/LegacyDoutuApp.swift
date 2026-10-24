@@ -112,6 +112,8 @@ final class Router {
     private weak var callSetupScreen: CallSetupScreen?
     private weak var accountSoundScreen: AccountSoundScreen?
     private weak var customerServiceScreen: CustomerServiceScreen?
+    /// 当前打开的「模拟」编辑页（`mock:*` 令牌要回读它的 state 做改动）
+    private weak var mockEditor: MockEditorScreen?
     /// 「撩妹加 V」开关（Android 存在配置里，没有独立页面）
     private var teaseEnabled = TeaseStore.enabled
     /// 登录页关闭后再执行的令牌（例如 resetInvite）
@@ -928,8 +930,9 @@ final class Router {
             if let state = self.host?.state as? ReceiptV2Screen.State { state.scroll = 0 }
             self.host?.setNeedsDisplay()
 
-        // 首页外壳：底部三栏 + 平台页签（Android MainActivity）
-        case "tab:0", "tab:1", "tab:2":
+        // 首页外壳：底部四栏 + 平台页签（Android MainActivity）
+        // tab:3 是新增的「模拟」栏（`HomeV2Screen.Tab.mock`），漏掉它点了会没反应。
+        case "tab:0", "tab:1", "tab:2", "tab:3":
             let index = Int(token.suffix(1)) ?? 0
             if let state = self.host?.state as? HomeV2Screen.State {
                 let next = HomeV2Screen.Tab(rawValue: index) ?? .home
@@ -2054,6 +2057,110 @@ final class Router {
             UpdatePrompt.topViewController()?.present(alert, animated: true)
         case "bell", "invite", "rights", "func", "plugin", "publish", "dots", "info":
             break
+
+        // 「模拟」模块（Android `features/mock`）：首页 31 格 → 编辑页 → 成品页
+        case let t where t.hasPrefix("mock:"):
+            handleMock(String(t.dropFirst("mock:".count)))
+
+        default:
+            break
+        }
+    }
+
+    // MARK: - 模拟模块（Android `features/mock`）
+
+    /// `mock:home:<i>`   从 31 格首页点进某家银行（只接了前 6 家）
+    /// `mock:drawer`     打开/关闭右侧子页抽屉（`mock:drawer:close` 只关）
+    /// `mock:sub:<i>`    切子页
+    /// `mock:device:<i>` 切机型模板
+    /// `mock:gen`        「生成图片」→ 进成品页
+    /// `mock:reset`      「恢复默认」→ 重取交易时间
+    /// `mock:template` / `mock:save` / `mock:fill`  与 Android 一样只提示一句
+    /// `mock:field:<标签>` 点预览里的文字 → 弹输入框改值（编辑页与成品页都能改）
+    private func handleMock(_ rest: String) {
+        // 首页宫格
+        if rest.hasPrefix("home:") {
+            let index = Int(rest.dropFirst("home:".count)) ?? 0
+            guard index >= 0, index < MockHome.labels.count else { return }
+            let name = MockHome.labels[index]
+            guard let module = MockModule(rawValue: index), module.isBuilt else {
+                // 与 Android `SimulationActivity.card()` 的 else 分支一致
+                showToast("\(name) 制作中", ok: false)
+                return
+            }
+            let screen = MockEditorScreen()
+            mockEditor = screen
+            push(screen, state: MockEditorScreen.State(module: module))
+            return
+        }
+
+        let parts = rest.split(separator: ":", maxSplits: 1).map(String.init)
+        let verb = parts.first ?? ""
+        let arg = parts.count > 1 ? parts[1] : ""
+
+        // 成品页
+        if self.host?.screen is MockDetailScreen,
+           let ds = self.host?.state as? MockDetailScreen.State {
+            switch verb {
+            case "field":
+                guard !arg.isEmpty else { return }
+                EditPrompt.present(title: arg, current: ds.renderState.currentValue(arg),
+                                   numeric: false) { [weak self] text in
+                    if arg == "交易时间" {
+                        ds.time = text
+                    } else {
+                        ds.fields[arg] = text
+                    }
+                    self?.host?.setNeedsDisplay()
+                }
+            case "reset":
+                ds.time = MockState.nowString()
+                host?.setNeedsDisplay()
+            default:
+                break
+            }
+            return
+        }
+
+        // 编辑页
+        guard let es = self.host?.state as? MockEditorScreen.State else { return }
+        switch verb {
+        case "drawer":
+            es.drawerOpen = (arg == "close") ? false : !es.drawerOpen
+            host?.setNeedsDisplay()
+        case "sub":
+            if let index = Int(arg) {
+                es.sub = index
+                es.drawerOpen = false
+                es.scroll = 0
+                host?.setNeedsDisplay()
+            }
+        case "device":
+            if let index = Int(arg) {
+                es.device = index
+                host?.setNeedsDisplay()
+            }
+        case "gen":
+            let detail = MockDetailScreen()
+            push(detail, state: MockDetailScreen.State(module: es.module, sub: es.sub,
+                                                       time: es.time, fields: es.fields))
+        case "reset":
+            es.time = MockState.nowString()
+            host?.setNeedsDisplay()
+        case "template":
+            let device = MockDevices.all.indices.contains(es.device) ? MockDevices.all[es.device] : "本机"
+            showToast("当前模版：" + device, ok: true)
+        case "save":
+            showToast("已保存模版", ok: true)
+        case "fill":
+            showToast("点预览里对应文字即可修改", ok: true)
+        case "field":
+            guard !arg.isEmpty else { return }
+            EditPrompt.present(title: arg, current: es.currentValue(arg),
+                               numeric: false) { [weak self] text in
+                es.apply(arg, text)
+                self?.host?.setNeedsDisplay()
+            }
         default:
             break
         }

@@ -44,8 +44,8 @@ enum DtwConfig {
     static let tsWindow: Int64 = 300
 
     /// App 版本（上报用；与后台版本号规则一致：major*10000+minor*100+patch）
-    static let appVersion = "1.0.0"
-    static let versionCode = 10000
+    static let appVersion = "1.0.1"
+    static let versionCode = 10001
 
     /// 业务请求的默认请求头（与服务端 `clientAuth` 的期望一致）
     static func platform() -> String { "ios" }

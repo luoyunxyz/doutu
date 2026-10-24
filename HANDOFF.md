@@ -1,11 +1,12 @@
 # 斗图去水印 iOS V2 交接文档
 
 > 生成时间：2026-10-19  
+> 最近更新：**2026-10-24（模拟模块开工）**  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新提交：`本轮 1.0.0(80)：长按删除底部 Action Sheet`  
-> 最新代码版本：`1.0.0 / 80`（已推送，待 Codemagic 构建）；Android `1.0.9`  
-> 设备当前安装：`2.4.75 / 20115`（已通过 USB 查询确认）
+> 最新代码版本：`1.0.1 / 10001`（含「模拟」Tab 第一版，待构建装机）；上一版 `1.0.0 / 80`  
+> 设备当前安装：`1.0.0 / 80`（2026-10-21 查得；本轮代码尚未装机）  
+> Android `1.0.9`
 
 ---
 
@@ -2075,3 +2076,80 @@ CSS :first-child !important → 头像边距永远 4px
 - **不重绘整页，只改目标行**；
 - **所有失败都有本地确定性兜底**；
 - **每次安装后先验证版本号**。
+
+---
+
+## 15. 2026-10-24：补上 Android 的「模拟」Tab（进行中）
+
+### 背景
+
+Android 「豆图」底部第 3 个 Tab 是**模拟**（`features/mock`，6 家银行 36 屏已交付），
+iOS 侧此前**一屏都没有** —— 这是两端最大的功能缺口。
+
+### 本轮做了什么
+
+代码在 `ios_v2/Sources/Mock/`（新增 5 个文件）：
+
+| 文件 | 对应 Android | 内容 |
+|---|---|---|
+| `MockKit.swift` | 各 Activity 的公共部分 | `dp()`（=dp×3）、调色板、`MockModule`（6 家）、19 机型模板、`MockState`、两套度量 `MockMetrics.editor/detail`、绘制指令 `MockOp`、版式构建器 `MockBuilder` |
+| `MockHome.swift` | `SimulationActivity`（236 行） | 31 格功能首页：手账横幅 + `时间9999999999`/`设置` 胶囊 + 3 列卡片（真实 logo）+ 最近使用 |
+| `MockNye.swift` | `NyeActivity` + `NyeDetailActivity` | 农业 5 个子页的版式（明细 / 明细查询 ×2 / 支付宝转入 / 收支详情） |
+| `MockEditorScreen.swift` | `NyeActivity.buildUi()` 等 | 编辑页外壳：`‹`+标题+切换、19 机型按钮、绿色「生成图片」、底部四键、右侧子页抽屉 |
+| `MockDetailScreen.swift` | `NyeDetailActivity` | 成品页：固定标题栏 + 更大字号的同一份版式 |
+
+接入点：
+
+- `HomeV2Screen`：底栏从 3 格改成 **4 格（首页 / 模拟 / 娱乐 / 我）**，
+  `Tab` 新增 `case mock = 3`（追加在末尾，既有 `tab:0/1/2` 语义不变）；
+  `.mock` 分支画 `MockHome`，并照常画底栏。
+- `LegacyDoutuApp`（Router）：新增 `mock:` 一族令牌
+  （`mock:home:<i>` / `drawer` / `sub:<i>` / `device:<i>` / `gen` / `reset` / `template` / `save` / `fill` / `field:<标签>`）。
+- 素材：`_ios/sync-mock-assets.mjs` 把 Android `assets/mock_home/*`（59 张）同步成
+  `Assets.xcassets/mock_*`，代码里统一走 `MockAssets.named(_:)`。
+
+### 版本号
+
+`project.yml` 与 `DtwConfig` 从 `1.0.0 / 80` 抬到 **`1.0.1 / 10001`**：
+80 是历史「每轮 +1」的构建号，不满足 `major*10000+minor*100+patch` 规则，
+导致 `lint-swift` 的版本一致性检查一直红着（发布时最容易踩的坑）。
+
+### 还没做的（下一轮从这里接）
+
+1. **另外 5 家银行**：`MockComposer.page(...)` 里目前只有 `.nye` 分支；
+   `MockModule.isBuilt` 对它们返回 false，首页点了会提示「XX 制作中」
+   （与 Android 对未实现模块的处理一致）。按农业这套照搬：
+
+   ```text
+   IcbcActivity 6 屏 → MockIcbc.swift
+   BocActivity  6 屏 → MockBoc.swift
+   PsbcActivity 5 屏 → MockPsbc.swift
+   CmbActivity 12 屏 → MockCmb.swift
+   EankActivity 3 屏 → MockEank.swift
+   ```
+   每家只需要写「版式」：照 `buildXxx()` 一段段调 `MockBuilder` 的
+   `titleBar / centerBlock / statusBar / row / divider / cardRow / amountRow /
+   bandBlock / linkBlock / twoButtons / kindRow / moreRow`，数字原样照抄。
+
+2. **「生成图片」目前是进成品页，不落相册**：Android 同样只进 `XxxDetailActivity`；
+   若要真出图，接 `MediaSaver`（项目里已有）。
+3. **机型模板只影响记忆的选中项**：Android 也是只改高亮（`device` 变量没参与绘制）。
+4. 截图比对：装机后按 `_ios/compare_shots.py` 对 6 家首页做几何比对。
+
+### 本轮验证（本机可复现，无 macOS）
+
+```powershell
+node _ios/v2/lint-swift.mjs        # 397 项全绿（括号/重名/素材/版本号一致性）
+node _ios/v2/check-draw-api.mjs    # 新增绘制调用的参数标签与个数
+node _ios/v2/check-members.mjs     # Type.member 是否存在
+node _ios/v2/check-instance.mjs    # State 实例成员
+```
+
+> `_ios/v2/*` 是把 `_ios/*` 那套检查器改成指向 `ios_v2`（真正的工程）的副本，
+> 原来是照着 `ios/`（旧工程）查的，等于这一个月的新代码没人管。
+
+### 仍未验证
+
+- 本轮代码**没有编译过**（本机 Windows / 无 Xcode），要靠 Codemagic 出包；
+- 装机后先看：模拟 Tab 是否出现在底栏第 2 格、31 格是否 3 列对齐、
+  农业 5 个子页能否切换、点文字能否改、生成图片能否进成品页。

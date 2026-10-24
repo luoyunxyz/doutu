@@ -26,13 +26,15 @@ final class HomeV2Screen: Screen {
 
     /// 底栏：白色底从 2212 到 2388（Java:1571）
     static let navTop: CGFloat = 2212
-    /// 三格中心（Java:1573-1575）
-    static let navCenters: [CGFloat] = [180, 540, 900]
+    /// 四格中心（Android 三格是 180/540/900；这里加上「模拟」后均分四格）
+    static let navCenters: [CGFloat] = [135, 405, 675, 945]
     static let navBaseline: CGFloat = 2324
     static let navFontSize: CGFloat = 46
 
     /// 顶部三栏：0 首页 / 1 娱乐 / 2 我（Java:884-886）
-    enum Tab: Int { case home = 0, entertainment = 1, profile = 2 }
+    /// 第 4 项「模拟」是 Android「模拟」Tab（`SimulationActivity`）的移植，
+    /// 追加在末尾（rawValue 3），这样既有页面返回的 `tab:0/1/2` 语义完全不变。
+    enum Tab: Int { case home = 0, entertainment = 1, profile = 2, mock = 3 }
 
     final class State: ScreenState {
         var tab: Tab = .home
@@ -102,9 +104,16 @@ final class HomeV2Screen: Screen {
 
     func maxScroll(_ state: ScreenState) -> CGFloat {
         let s = (state as? State) ?? State()
-        // 只有娱乐页能滚；首页与「我」页不滚（Java:786-789）
-        guard s.tab == .entertainment else { return 0 }
-        return max(0, s.entertainmentBottom + 40 - Playbook.contentBottom)
+        switch s.tab {
+        case .entertainment:
+            // 只有娱乐页能滚；首页与「我」页不滚（Java:786-789）
+            return max(0, s.entertainmentBottom + 40 - Playbook.contentBottom)
+        case .mock:
+            // 「模拟」首页 31 格，内容比一屏高
+            return max(0, MockHome.contentHeight - Self.navTop)
+        case .home, .profile:
+            return 0
+        }
     }
 
     /// 让横幅轮播动起来（对应 Android 的 250ms/33ms 心跳）
@@ -120,6 +129,9 @@ final class HomeV2Screen: Screen {
         switch s.tab {
         case .home:
             drawHome(d, state: s)
+        case .mock:
+            MockHome.draw(d)
+            drawNav(d, state: s)
         case .entertainment:
             drawEntertainment(d, state: s)
         case .profile:
@@ -208,22 +220,25 @@ final class HomeV2Screen: Screen {
         }
     }
 
-    /// 底部三格（Java:1569-1590）
+    /// 底部四格（Android 是五格：首页/工具/模拟/娱乐/我；iOS 侧把「模拟」并进来）
     func drawNav(_ d: Draw, state: State) {
         d.rect(CGRect(x: 0, y: Self.navTop, width: Self.W, height: Self.H - Self.navTop), navBg)
         d.hairline(Self.navTop, from: 0, to: Self.W, navLine, width: 1.6)
 
-        let labels = ["首页", "娱乐", "我"]
-        for (index, center) in Self.navCenters.enumerated() {
-            let selected = state.tab.rawValue == index
+        let cells: [(label: String, tab: Tab)] = [
+            ("首页", .home), ("模拟", .mock), ("娱乐", .entertainment), ("我", .profile),
+        ]
+        for (index, cell) in cells.enumerated() {
+            let center = Self.navCenters[index]
+            let selected = state.tab == cell.tab
             if selected {
                 d.round(CGRect(x: center - 88, y: 2250, width: 176, height: 2358 - 2250),
                         radius: 54, navSelectedPill)
             }
-            d.centerText(labels[index], cx: center, baseline: Self.navBaseline,
+            d.centerText(cell.label, cx: center, baseline: Self.navBaseline,
                          size: Self.navFontSize, selected ? navSelectedText : navText, bold: selected)
             // 「娱乐」右上角那颗红点：不在这两格时才点着（Java:1586-1589）
-            if !selected && labels[index] == "娱乐" {
+            if !selected && cell.label == "娱乐" {
                 d.circle(cx: center + 48, cy: 2274, r: 11, redDot)
             }
         }
@@ -237,11 +252,14 @@ final class HomeV2Screen: Screen {
         let rawY = y - s.scroll
         // 底部标签栏永远优先响应（Java:1619-1635）
         if rawY >= Self.navTop {
-            if x < 360 { return "tab:0" }
-            if x < 720 { return "tab:1" }
-            return "tab:2"
+            if x < 270 { return "tab:0" }      // 首页
+            if x < 540 { return "tab:3" }      // 模拟
+            if x < 810 { return "tab:1" }      // 娱乐
+            return "tab:2"                     // 我
         }
         switch s.tab {
+        case .mock:
+            return MockHome.hit(x: x, y: y)
         case .home:
             // 分段控件（微/支/抖/Q）：与 Android MainActivity:1725-1726 完全同一组坐标。
             // 画在 736..890，命中留 8px 余量；之前误写成 876..1060，正好落在页签下方，
