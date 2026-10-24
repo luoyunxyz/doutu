@@ -579,11 +579,11 @@ struct MockMetrics {
     /// 成品页（`NyeDetailActivity`）
     static let detail = MockMetrics(
         isDetail: true,
-        // 下面这组是按**安卓设备上的 uni-app 版**逐行量出来的（2026-10-24）：
-        // 明细行距实测 103px（≈34dp）＝ 15sp 文字 + 上下各 8dp；
-        // 金额块比 Java 原生版松，合计 +11dp。
+        // 下面这组是按**安卓设备上的 uni-app 版**逐行量出来的（2026-10-24，measure_page.py）：
+        // 多数明细页行距 83~90px ＝ 14sp 文字 + 上下各 6dp（农信 86、qq 90、农业明细 83）；
+        // 明细查询族更紧（13sp + 4dp，69px）、回单 66px、话费 124px —— 三处用 row(size:padV:) 覆盖。
         titleBarH: dp(44), titleSize: dp(19),
-        rowSize: dp(15), rowPadV: dp(8), rowPadH: dp(16),
+        rowSize: dp(14), rowPadV: dp(6), rowPadH: dp(16),
         statusPadV: dp(20), statusPadH: dp(16), statusSize: dp(15),
         statusCheck: dp(20), statusGap: dp(9),
         nameSize: dp(15), namePadTop: dp(32),
