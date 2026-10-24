@@ -39,6 +39,8 @@ enum MockInk {
     static let line = Draw.color(0xffeeeeee)
     /// 灰色分带 `0xfff2f2f2`
     static let band = Draw.color(0xfff2f2f2)
+    /// 列表页内容下方的底板灰 `#eeeeee`（安卓实测：明细查询底部就是它）
+    static let board = Draw.color(0xffeeeeee)
     /// 状态块底色 `0xfff5f6f8`
     static let statusBg = Draw.color(0xfff5f6f8)
     /// 成功绿 `0xff00b578`
@@ -823,14 +825,17 @@ final class MockBuilder {
     /// 通用「标签 —— 值」行：值可点（`bind(v, label)`），键就是标签名
     ///
     /// `bg` 非空时先铺一条该色的行底 —— 列表类页面（浅灰底 + 白行）要用。
-    func row(_ label: String, _ value: String, bg: UIColor? = nil) {
-        let size = metrics.rowSize
+    /// `size` / `padV` 可按页面族覆盖（明细查询族是 13sp + 4dp，比明细页的 15sp 更紧）。
+    func row(_ label: String, _ value: String, bg: UIColor? = nil,
+             size overrideSize: CGFloat? = nil, padV overridePadV: CGFloat? = nil) {
+        let size = overrideSize ?? metrics.rowSize
+        let padV = overridePadV ?? metrics.rowPadV
         let lh = lineHeight(size)
-        let h = lh + metrics.rowPadV * 2
+        let h = lh + padV * 2
         if let bg {
             ops.append(.fill(CGRect(x: 0, y: y, width: width, height: h), bg))
         }
-        let baseline = y + metrics.rowPadV + ascender(size)
+        let baseline = y + padV + ascender(size)
         ops.append(.text(label, metrics.rowPadH, baseline, size, MockInk.label, false))
         ops.append(.right(value, width - metrics.rowPadH, baseline, size, MockInk.value, false))
         hits.append(MockHit(rect: CGRect(x: 0, y: y, width: width, height: h),

@@ -46,13 +46,15 @@ enum MockLiushui {
                        size: dp(16), color: MockInk.title,
                        padH: dp(16), padTop: dp(14), padBottom: dp(10))
 
-        // 几条流水
-        b.row("2026-10-24 19:40  转出", "-100.00")
-        b.row("2026-10-23 12:05  转入", "+200.00")
-        b.row("2026-10-22 08:30  消费", "-19.90")
-        b.row("2026-10-21 21:10  退款", "+29.00")
+        // 行距按安卓实测：13sp 字 + 上下 4dp
+        let rowSize = dp(13)
+        let rowPadV = dp(4)
+        b.row("2026-10-24 19:40  转出", "-100.00", size: rowSize, padV: rowPadV)
+        b.row("2026-10-23 12:05  转入", "+200.00", size: rowSize, padV: rowPadV)
+        b.row("2026-10-22 08:30  消费", "-19.90", size: rowSize, padV: rowPadV)
+        b.row("2026-10-21 21:10  退款", "+29.00", size: rowSize, padV: rowPadV)
         b.gap(dp(20))
-        // 内容结束后的浅灰底板（安卓列表页：白内容 + 下方露灰）
-        b.bottomFill(MockInk.page)
+        // 内容结束后的底板 #eeeeee
+        b.bottomFill(MockInk.board)
     }
 }

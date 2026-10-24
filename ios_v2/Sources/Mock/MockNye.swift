@@ -206,23 +206,26 @@ enum MockNye {
                     value: s.value("金额", (out ? "-" : "+") + "100.00"))
         b.bandBlock()
 
-        b.row("交易时间", s.value("交易时间", s.time))
-        b.row("交易摘要", s.value("交易摘要", out ? "转支" : "转存"))
+        // 行距按安卓实测：13sp 字 + 上下 4dp（行距 69px），比明细页更紧
+        let rowSize = dp(13)
+        let rowPadV = dp(4)
+        b.row("交易时间", s.value("交易时间", s.time), size: rowSize, padV: rowPadV)
+        b.row("交易摘要", s.value("交易摘要", out ? "转支" : "转存"), size: rowSize, padV: rowPadV)
         if out {
-            b.row("收款方", s.value("收款方", "李东"))
-            b.row("收款账户", s.value("收款账户", "6221****3640"))
-            b.row("收款银行", s.value("收款银行", "邮储银行"))
+            b.row("收款方", s.value("收款方", "李东"), size: rowSize, padV: rowPadV)
+            b.row("收款账户", s.value("收款账户", "6221****3640"), size: rowSize, padV: rowPadV)
+            b.row("收款银行", s.value("收款银行", "邮储银行"), size: rowSize, padV: rowPadV)
         } else {
-            b.row("付款方", s.value("付款方", "邓赞梅"))
-            b.row("付款账户", s.value("付款账户", "6221****3640"))
-            b.row("付款银行", s.value("付款银行", "邮储银行"))
+            b.row("付款方", s.value("付款方", "邓赞梅"), size: rowSize, padV: rowPadV)
+            b.row("付款账户", s.value("付款账户", "6221****3640"), size: rowSize, padV: rowPadV)
+            b.row("付款银行", s.value("付款银行", "邮储银行"), size: rowSize, padV: rowPadV)
         }
-        b.row("交易类型", s.value("交易类型", "转账"))
-        b.row("交易渠道", s.value("交易渠道", "超级网银"))
-        b.row("本次余额", s.value("本次余额", "100.00"))
-        b.row("交易附言", s.value("交易附言", "---"))
-        // 内容结束后的浅灰底板（安卓列表页：白内容 + 下方露灰）
-        b.bottomFill(MockInk.page)
+        b.row("交易类型", s.value("交易类型", "转账"), size: rowSize, padV: rowPadV)
+        b.row("交易渠道", s.value("交易渠道", "超级网银"), size: rowSize, padV: rowPadV)
+        b.row("本次余额", s.value("本次余额", "100.00"), size: rowSize, padV: rowPadV)
+        b.row("交易附言", s.value("交易附言", "---"), size: rowSize, padV: rowPadV)
+        // 内容结束后的底板（安卓实测 #eeeeee）
+        b.bottomFill(MockInk.board)
     }
 
     // MARK: - 明细转出3：收支详情（`buildLedger()`）
