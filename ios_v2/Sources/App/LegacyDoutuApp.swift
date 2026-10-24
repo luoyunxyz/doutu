@@ -2187,7 +2187,22 @@ final class Router {
             return
         }
         if rest == "box" {
-            showToast("公众号会话制作中", ok: false)
+            push(AliMsgBoxScreen(), state: AliMsgBoxScreen.State())
+            return
+        }
+        if rest == "msgbox:tab:0" || rest == "msgbox:tab:1" {
+            if let state = host?.state as? AliMsgBoxScreen.State {
+                state.tab = rest.hasSuffix("1") ? 1 : 0
+                host?.setNeedsDisplay()
+            }
+            return
+        }
+        if rest == "yearbill" {
+            push(AliYearBillScreen(), state: AliYearBillScreen.State())
+            return
+        }
+        if rest == "yearbill:analysis" {
+            showToast("收支分析制作中", ok: false)
             return
         }
         if rest.hasPrefix("nav:") {
@@ -2689,6 +2704,9 @@ final class Router {
                 push(ReceiptV2Screen(), state: ReceiptV2Screen.State())
             case "paysuccess":
                 push(PaySuccessV2Screen(), state: PaySuccessV2Screen.State())
+            case "billstats":
+                // 工具页「阿宝 → 年账单」
+                push(AliYearBillScreen(), state: AliYearBillScreen.State())
             default:
                 showToast("\(name) 制作中", ok: false)
             }
