@@ -24,8 +24,8 @@ final class AliChatScreen: Screen {
     static let headerH = dp(56)
     static let bottomH = dp(172)
 
-    /// 快捷短语（Java:141-142）
-    private let chips = ["你好", "在干嘛", "我来了", "谢谢老板"]
+    /// 快捷短语（Java:141-142）。Router 发消息时也用这一份，避免两处文案走偏。
+    static let quickPhrases = ["你好", "在干嘛", "我来了", "谢谢老板"]
     private let chipLefts: [CGFloat] = [dp(10), dp(83), dp(172), dp(258)]
     private let chipWidths: [CGFloat] = [dp(68), dp(81), dp(78), dp(96)]
 

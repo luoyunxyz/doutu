@@ -2244,7 +2244,7 @@ final class Router {
     /// `action:<0..3>`（相册 / 小视频 / 红包 / 转账）。
     private func handleAliChat(_ rest: String) {
         guard let state = host?.state as? AliChatScreen.State else { return }
-        let chips = ["你好", "在干嘛", "我来了", "谢谢老板"]
+        let chips = AliChatScreen.quickPhrases
 
         if rest.hasPrefix("chip:") {
             if let index = Int(rest.dropFirst("chip:".count)), chips.indices.contains(index) {
