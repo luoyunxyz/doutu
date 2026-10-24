@@ -54,21 +54,33 @@ enum MockWechat {
         return b.result
     }
 
-    /// 扫码转出 / 明细(转出)：绿勾 + 金额 + 对方 + 完成
+    /// 扫码转出1/2、明细(转出)：顶部「微信支付」通知卡 + 头像昵称 + 金额 + 完成
+    /// （按 `wx_sub3` 截图复刻）
     private static func transfer(_ b: MockBuilder, s: MockState, title: String,
                                  showsTopTitle: Bool) {
         if showsTopTitle { b.titleBar(title) }
-        b.coloredHeaderBar(title, bg: .white, fg: MockInk.title, trailing: "完成")
-        b.gap(dp(24))
-        b.checkBadge(diameter: dp(56), color: green, gapTop: 0, symbolSize: dp(32))
-        b.sectionLabel("支付成功", size: dp(20), color: green,
+
+        // 通知卡：微信支付 / 已支付 + 右侧绿图标 + 副行
+        b.panel(gapTop: dp(10), margin: dp(10), pad: dp(14), bg: .white) { p in
+            p.sectionLabel("微信支付                         ✓",
+                           size: dp(17), color: MockInk.title,
+                           padH: 0, padTop: 0, padBottom: dp(6))
+            p.sectionLabel("[1条]微信支付：已支付 ￥0.02", size: dp(15),
+                           color: MockInk.label, padH: 0, padTop: 0, padBottom: 0)
+        }
+
+        // 头像 / 昵称 / 金额
+        b.centeredAvatar(s.value("昵称", "李哈哈"), asset: nil,
+                         diameter: dp(80), gapTop: dp(36))
+        b.sectionLabel(s.value("昵称", "李哈哈(*要)"), size: dp(17),
+                       color: MockInk.title, padH: 0, padTop: dp(12), padBottom: 0)
+        b.sectionLabel(s.value("金额", "¥ 100.00"), size: dp(44), color: MockInk.black,
                        padH: 0, padTop: dp(10), padBottom: 0)
-        b.sectionLabel(s.value("金额", "¥ 100.00"), size: dp(40), color: MockInk.black,
-                       padH: 0, padTop: dp(10), padBottom: dp(10))
-        b.row("当前状态", "支付成功")
-        b.row("支付方式", "零钱")
-        b.row("交易时间", s.time)
-        b.gap(dp(20))
+
+        // 完成
+        b.gap(dp(430))
+        b.fullButton("完成", filled: false, color: MockInk.line,
+                     height: dp(46), padH: dp(120), gapTop: dp(10), size: dp(17))
     }
 
     private static func paid(_ b: MockBuilder, _ s: MockState, showsTopTitle: Bool) {
