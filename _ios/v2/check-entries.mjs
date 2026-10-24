@@ -56,3 +56,15 @@ if (fails.length) {
 }
 
 console.log(`[OK] 31 个模拟入口全部接上（标签 / 索引 / 标题 / 版式分支一致）`);
+
+// 顺便统计子页规模，方便判断还剩多少页要补
+const subsBlock = kit.slice(kit.indexOf('var subs: [String]'), kit.indexOf('var logo: String'));
+let total = 0;
+const per = [];
+for (const m of subsBlock.matchAll(/case \.(\w+):([\s\S]*?)(?=\n\s{8}case \.|\n\s{4}\})/g)) {
+  const names = [...m[2].matchAll(/"([^"]+)"/g)].map((x) => x[1]);
+  if (!names.length) continue;
+  total += names.length;
+  per.push(`${m[1]}:${names.length}`);
+}
+console.log(`     子页合计 ${total} 个 —— ${per.join(' ')}`);
