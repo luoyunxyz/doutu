@@ -130,7 +130,15 @@ final class HomeV2Screen: Screen {
         case .home:
             drawHome(d, state: s)
         case .mock:
+            // 这一屏 `selfScrolls = true`（娱乐/我页各自按 `-scroll` 做坐标换算），
+            // 所以宿主管不到「模拟」页的滚动 —— 必须在这里自己把内容整体上移，
+            // 否则 `maxScroll` 算出了 300+ 却画不动（最近使用永远压在底栏下面）。
+            // 整屏底色先兜住（滚动后内容下方不会露出宿主白底）
+            d.rect(CGRect(x: 0, y: 0, width: Self.W, height: Self.H), MockInk.homePage)
+            d.ctx.saveGState()
+            d.ctx.translateBy(x: 0, y: -s.scroll)
             MockHome.draw(d)
+            d.ctx.restoreGState()
             drawNav(d, state: s)
         case .entertainment:
             drawEntertainment(d, state: s)
