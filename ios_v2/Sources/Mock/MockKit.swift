@@ -333,7 +333,7 @@ enum MockModule: Int, CaseIterable {
         case .icbc:
             return sub == 0 ? "汇款明细查询" : "明细详情"
         case .boc:
-            return (sub == 0 || sub == 4) ? "操作结果" : "明细"
+            return (sub == 0 || sub == 5) ? "操作结果" : "明细"
         case .psbc:
             switch sub {
             case 0: return "转账结果"

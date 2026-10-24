@@ -13,7 +13,7 @@ enum MockBoc {
     static func page(state: MockState, metrics: MockMetrics,
                      width: CGFloat, showsTopTitle: Bool) -> MockPage {
         let b = MockBuilder(width: width, metrics: metrics)
-        if state.sub == 0 || state.sub == 4 {
+        if state.sub == 0 || state.sub == 5 {
             result(b, state, showsTopTitle: showsTopTitle)
         } else {
             detail(b, state, showsTopTitle: showsTopTitle)
@@ -90,13 +90,16 @@ enum MockBoc {
         let padH = detail ? dp(16) : dp(14)
         if showsTopTitle { b.titleBar("明细") }
 
+        // 安卓实测：02/01 行 12sp / 121px，02/03 行 14sp / 121px，02/04 行 12sp / 105px；
+        // 收入标签 16sp，金额 28 / 24 / 26sp。
+        let labelSize = dp(16)
+        let amountSize = s.sub == 3 ? dp(24) : (s.sub == 4 ? dp(26) : dp(28))
         b.leftAmount("收入金额（人民币元）", labelKey: nil,
                      s.value("金额", "100.00"), valueKey: "金额",
-                     labelSize: detail ? dp(15) : dp(14),
-                     amountSize: detail ? dp(28) : dp(26),
+                     labelSize: labelSize,
+                     amountSize: amountSize,
                      padH: padH,
-                     padTop: detail ? dp(14) : dp(12),
-                     padBottom: detail ? dp(14) : dp(12))
+                     padTop: dp(14), padBottom: dp(14))
 
         b.hairlineFull()
 
@@ -105,8 +108,8 @@ enum MockBoc {
                       size: detail ? dp(14) : dp(13),
                       padH: padH, padV: detail ? dp(14) : dp(12))
 
-        let rowSize = detail ? dp(15) : dp(14)
-        let rowV = detail ? dp(13) : dp(11)
+        let rowSize = s.sub == 3 ? dp(14) : dp(12)
+        let rowV = s.sub == 3 ? dp(11.77) : (s.sub == 4 ? dp(10.3) : dp(12.97))
         let channel = (s.sub == 2 || s.sub == 5) ? "支付宝" : "网上银行"
 
         b.pairRow("交易时间", s.value("交易时间", slashed(s.time)),
@@ -121,5 +124,11 @@ enum MockBoc {
                   size: rowSize, padH: padH, padV: rowV, labelColor: MockInk.value)
         b.pairRow("附言", s.value("附言", "-"),
                   size: rowSize, padH: padH, padV: rowV, labelColor: MockInk.value)
+
+        if s.sub == 1 || s.sub == 3 {
+            b.paragraph("\"交易时间\"为该笔交易提交的时间：\"记账时间\"为后台系统对该笔交易的实际处理时间。",
+                        size: dp(13), color: Draw.color(0xff5d5d5d),
+                        padH: dp(16), padTop: dp(10), padBottom: dp(10))
+        }
     }
 }
