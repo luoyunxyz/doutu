@@ -52,14 +52,9 @@ final class MockDetailScreen: Screen {
                           metrics: .detail, width: Self.W, showsTopTitle: false)
     }
 
-    /// Android `titleFor(sub)`：明细 / 收支详情 / 明细查询
+    /// 成品页标题：`MockModule.detailTitle(sub)`（各家 Java 的 `titleFor()` / `header(...)`）
     private func title(_ s: State) -> String {
-        if s.module == .nye {
-            if s.sub == 0 { return "明细" }
-            if s.sub == 4 { return "收支详情" }
-            return "明细查询"
-        }
-        return s.module.subs.indices.contains(s.sub) ? s.module.subs[s.sub] : s.module.title
+        s.module.detailTitle(s.sub)
     }
 
     func maxScroll(_ state: ScreenState) -> CGFloat {

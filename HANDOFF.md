@@ -1,10 +1,10 @@
 # 斗图去水印 iOS V2 交接文档
 
 > 生成时间：2026-10-19  
-> 最近更新：**2026-10-24（模拟模块开工）**  
+> 最近更新：**2026-10-24（模拟模块 6 家 40 屏接完）**  
 > 工作目录：`D:\AAA\doutu`  
 > 当前分支：`main`  
-> 最新代码版本：`1.0.1 / 10001`（含「模拟」Tab 第一版，待构建装机）；上一版 `1.0.0 / 80`  
+> 最新代码版本：`1.0.2 / 10002`（「模拟」Tab 6 家 40 屏已接完，待构建装机）；上一版 `1.0.1 / 10001`  
 > 设备当前安装：`1.0.0 / 80`（2026-10-21 查得；本轮代码尚未装机）  
 > Android `1.0.9`
 
@@ -2079,7 +2079,7 @@ CSS :first-child !important → 头像边距永远 4px
 
 ---
 
-## 15. 2026-10-24：补上 Android 的「模拟」Tab（进行中）
+## 15. 2026-10-24：补上 Android 的「模拟」Tab（6 家 / 40 屏已完成）
 
 ### 背景
 
@@ -2114,32 +2114,52 @@ iOS 侧此前**一屏都没有** —— 这是两端最大的功能缺口。
 80 是历史「每轮 +1」的构建号，不满足 `major*10000+minor*100+patch` 规则，
 导致 `lint-swift` 的版本一致性检查一直红着（发布时最容易踩的坑）。
 
+### 6 家银行全部接完（2026-10-24 第二轮）
+
+`MockComposer.page(...)` 现在 6 个分支齐全，`MockModule.isBuilt` 全部为 true。
+**实际是 40 个子页，不是交接文档原来写的 32 —— 交接文档把邮储和招商的屏数记少了。**
+
+| 模块 | 子页数 | 文件 | 版式来源 |
+|---|---|---|---|
+| 农业 | 5 | `MockNye.swift` | `NyeActivity.buildStatement/buildQuery/buildLedger` |
+| 工商 | 6 | `MockIcbc.swift` | `IcbcActivity.buildRemit/buildDetail` |
+| 中国 | 6 | `MockBoc.swift` | `BocActivity.buildResult/buildDetail` |
+| 邮政 | **8** | `MockPsbc.swift` | `PsbcPages.result/txDetail/record/remit/receipt` |
+| 招商 | **12** | `MockCmb.swift` | `CmbActivity` 的 `MODES` 五种版式 |
+| 光大 | 3 | `MockEank.swift` | `EankActivity.buildOut/buildIn/buildTransfer` |
+
+一共 40 屏（5+6+6+8+12+3），全部按 Java 的 `dp`/`sp` 原样 ×3 照抄。
+`_ios/v2/` 里新增了一个核对脚本思路：把每家 `SUBS` 与 Java 源逐个比对
+（本轮就是靠它发现工商/中国的子页名被交接文档带错了）。
+
+### 给 `MockBuilder` 补的通用块（后面做另外 24 个模块直接复用）
+
+```text
+kvRow(标签：值，固定标签宽)     pairRow(左右两端对齐，支持 \n 多行)
+centeredLink/centeredCells     fullButton/sideButtons
+noteBlock(灰底提示块)           sectionLabel/chevronRow
+checkBadge/outlinedCircleBadge  leftAmount/leftLine/paragraph
+headerBar/coloredHeaderBar/centeredHeader   tabsRow/actionCells
+panel(色块+白板嵌套)            gradientPanel(圆角渐变卡)  tintedPanel(纯色面板)
+fullWidthImage(按图片比例算高)  brandRow/dualLinks          hairlineFull
+```
+
 ### 还没做的（下一轮从这里接）
 
-1. **另外 5 家银行**：`MockComposer.page(...)` 里目前只有 `.nye` 分支；
-   `MockModule.isBuilt` 对它们返回 false，首页点了会提示「XX 制作中」
-   （与 Android 对未实现模块的处理一致）。按农业这套照搬：
-
-   ```text
-   IcbcActivity 6 屏 → MockIcbc.swift
-   BocActivity  6 屏 → MockBoc.swift
-   PsbcActivity 5 屏 → MockPsbc.swift
-   CmbActivity 12 屏 → MockCmb.swift
-   EankActivity 3 屏 → MockEank.swift
-   ```
-   每家只需要写「版式」：照 `buildXxx()` 一段段调 `MockBuilder` 的
-   `titleBar / centerBlock / statusBar / row / divider / cardRow / amountRow /
-   bandBlock / linkBlock / twoButtons / kindRow / moreRow`，数字原样照抄。
-
+1. **另外 24 个模块**（兴业/建设/平安…）：Android 侧 `SimulationActivity.TARGETS`
+   对它们全是 `null`，点了本来就只弹「制作中」，所以 iOS 目前与 Android **一致**。
+   要做的时候照这六家加一个 `MockXxx.swift` + `MockComposer` 一个分支即可。
 2. **「生成图片」目前是进成品页，不落相册**：Android 同样只进 `XxxDetailActivity`；
    若要真出图，接 `MediaSaver`（项目里已有）。
 3. **机型模板只影响记忆的选中项**：Android 也是只改高亮（`device` 变量没参与绘制）。
-4. 截图比对：装机后按 `_ios/compare_shots.py` 对 6 家首页做几何比对。
+4. **成品页的彩色头部**：招商「账户/余额」、光大那几页在 Android 是深蓝/紫色标题栏，
+   iOS 的 `MockDetailScreen` 统一是白底深字。视觉上差一条色带，功能无影响。
+5. 截图比对：装机后按 `_ios/compare_shots.py` 对 6 家首页做几何比对。
 
 ### 本轮验证（本机可复现，无 macOS）
 
 ```powershell
-node _ios/v2/lint-swift.mjs        # 397 项全绿（括号/重名/素材/版本号一致性）
+node _ios/v2/lint-swift.mjs        # 412 项全绿（括号/重名/素材/版本号一致性）
 node _ios/v2/check-draw-api.mjs    # 新增绘制调用的参数标签与个数
 node _ios/v2/check-members.mjs     # Type.member 是否存在
 node _ios/v2/check-instance.mjs    # State 实例成员

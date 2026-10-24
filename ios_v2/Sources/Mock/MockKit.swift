@@ -57,6 +57,16 @@ enum MockInk {
     static let dim = UIColor(white: 0, alpha: 0.6)
     /// 金额黑 `0xff111111`
     static let amount = Draw.color(0xff111111)
+    /// 提示块底色 `0xfff7f7f7`
+    static let noteBg = Draw.color(0xfff7f7f7)
+    /// 提示块标题 `0xff888888`
+    static let noteTitle = Draw.color(0xff888888)
+    /// 工行表头灰蓝 `0xff6b7b8c`
+    static let steel = Draw.color(0xff6b7b8c)
+    /// 工行红 `0xfff5434a`
+    static let icbcRed = Draw.color(0xfff5434a)
+    /// 链接蓝 `0xff2f7ed8`
+    static let linkBlue = Draw.color(0xff2f7ed8)
     /// 编辑页输入框深色（与 Android 的 AlertDialog 主题无关，这里统一用系统弹窗）
     static let black = UIColor.black
 }
@@ -103,14 +113,20 @@ enum MockModule: Int, CaseIterable {
         case .nye:
             return ["明细转出1", "明细转出2", "明细转入", "支付宝转入", "明细转出3"]
         case .icbc:
-            return ["明细转出1", "明细转出2", "明细转入1", "支付宝转入", "转入2", "转入3"]
+            // 工商实际 6 个子页（`IcbcActivity.SUBS`）
+            return ["明细转出1", "明细转出2", "明细转入1", "明细支付宝转入", "明细转入2", "明细转入3"]
         case .boc:
-            return ["明细转出", "转出2", "转入1", "支付宝转入", "转入2", "支付宝到账"]
+            // 中国银行实际 6 个子页（`BocActivity.SUBS`）：0/4 是「操作结果」，其余是「明细」
+            return ["明细转出1", "明细转入1", "支付宝转入", "明细转入2", "明细转出2", "支付宝到账"]
         case .psbc:
-            return ["明细转出", "转出2", "转入", "回单", "转账结果"]
+            // 邮储实际有 8 个子页（`PsbcActivity.SUBS`），不是交接文档里写的 5 个
+            return ["明细转出(旧)", "明细转入1(旧)", "明细转入2(旧)", "明细转出1(新)",
+                    "明细转出2(新)", "明细转出3(新)", "明细转入(新)", "回单"]
         case .cmb:
-            return ["明细转出1", "明细转出2", "明细转入1", "明细转入2", "账户", "回单",
-                    "明细转出3", "明细转入3", "余额", "信用卡", "理财", "流水"]
+            // 招商实际 12 个子页（`CmbActivity.SUBS`），用 `MODES` 归成 5 种版式
+            return ["明细转出(旧)", "明细转入(旧)", "明细转出1", "明细支付宝转入",
+                    "明细转入", "明细转出2", "微信支付宝转入", "明细转出3",
+                    "回单", "余额", "微信转入", "财付通转出"]
         case .eank:
             return ["明细转出", "明细转入", "转账详情"]
         }
@@ -129,10 +145,45 @@ enum MockModule: Int, CaseIterable {
     }
 
     /// 这一模块的预览版式是否已移植（`MockComposer` 里有没有分支）。
+    /// 6 家银行全部接好了。
     var isBuilt: Bool {
+        MockComposer.hasLayout(self)
+    }
+
+    /// 成品页顶部标题（对应各 `XxxDetailActivity.titleFor()` / `header(...)`）
+    func detailTitle(_ sub: Int) -> String {
         switch self {
-        case .nye: return true
-        default: return false
+        case .nye:
+            if sub == 0 { return "明细" }
+            if sub == 4 { return "收支详情" }
+            return "明细查询"
+        case .icbc:
+            return sub == 0 ? "汇款明细查询" : "明细详情"
+        case .boc:
+            return (sub == 0 || sub == 4) ? "操作结果" : "明细"
+        case .psbc:
+            switch sub {
+            case 0: return "转账结果"
+            case 1, 2, 6: return "交易详情"
+            case 3, 5: return "汇款明细查询"
+            case 4: return "转账记录"
+            default: return "电子受理单"
+            }
+        case .cmb:
+            switch sub {
+            case 7: return "账户"
+            case 8: return "电子回单"
+            case 9: return "余额"
+            default: return "明细详情"
+            }
+        case .eank:
+            switch sub {
+            case 0: return "转账汇款"
+            case 1: return "交易详情"
+            default: return "转账详情"
+            }
+        default:
+            return subs.indices.contains(sub) ? subs[sub] : title
         }
     }
 }
@@ -225,6 +276,8 @@ final class MockState: ScreenState {
 /// Android 的编辑页与成品页是两份几乎一样的 `buildXxx()`，字号与内边距各差 1~2dp。
 /// 这里把差异收进一份度量表，版式代码只写一遍。
 struct MockMetrics {
+    /// 成品页（字号/内边距都比编辑页大一圈）。各家银行的差异用这个开关各取所需。
+    var isDetail: Bool
     // 顶部标题条
     var titleBarH: CGFloat
     var titleSize: CGFloat
@@ -277,6 +330,7 @@ struct MockMetrics {
 
     /// 编辑页（`NyeActivity.buildStatement` 等）
     static let editor = MockMetrics(
+        isDetail: false,
         titleBarH: dp(52), titleSize: dp(17),
         rowSize: dp(14), rowPadV: dp(10), rowPadH: dp(14),
         statusPadV: dp(12), statusPadH: dp(14), statusSize: dp(14),
@@ -294,6 +348,7 @@ struct MockMetrics {
 
     /// 成品页（`NyeDetailActivity`）
     static let detail = MockMetrics(
+        isDetail: true,
         titleBarH: dp(52), titleSize: dp(19),
         rowSize: dp(15), rowPadV: dp(12), rowPadH: dp(16),
         statusPadV: dp(14), statusPadH: dp(16), statusSize: dp(15),
@@ -331,6 +386,36 @@ enum MockOp {
     case hairline(CGFloat, CGFloat, CGFloat, UIColor)
     /// 金色向下箭头：中心 x, 中心 y, 尺寸, 颜色
     case chevronDown(CGFloat, CGFloat, CGFloat, UIColor)
+    /// 圆角渐变块：矩形, 圆角, 起色, 止色, 是否上下渐变
+    case gradient(CGRect, CGFloat, UIColor, UIColor, Bool)
+
+    /// 整体平移（用于把子面板里的指令贴到父页面上）
+    static func shifted(_ op: MockOp, dx: CGFloat, dy: CGFloat) -> MockOp {
+        switch op {
+        case let .fill(rect, color):
+            return .fill(rect.offsetBy(dx: dx, dy: dy), color)
+        case let .round(rect, radius, color):
+            return .round(rect.offsetBy(dx: dx, dy: dy), radius, color)
+        case let .roundStroke(rect, radius, color, width):
+            return .roundStroke(rect.offsetBy(dx: dx, dy: dy), radius, color, width)
+        case let .circle(cx, cy, radius, color):
+            return .circle(cx + dx, cy + dy, radius, color)
+        case let .text(string, x, baseline, size, color, bold):
+            return .text(string, x + dx, baseline + dy, size, color, bold)
+        case let .center(string, cx, baseline, size, color, bold):
+            return .center(string, cx + dx, baseline + dy, size, color, bold)
+        case let .right(string, right, baseline, size, color, bold):
+            return .right(string, right + dx, baseline + dy, size, color, bold)
+        case let .image(name, rect):
+            return .image(name, rect.offsetBy(dx: dx, dy: dy))
+        case let .hairline(y, x1, x2, color):
+            return .hairline(y + dy, x1 + dx, x2 + dx, color)
+        case let .chevronDown(cx, cy, size, color):
+            return .chevronDown(cx + dx, cy + dy, size, color)
+        case let .gradient(rect, radius, from, to, vertical):
+            return .gradient(rect.offsetBy(dx: dx, dy: dy), radius, from, to, vertical)
+        }
+    }
 }
 
 /// 可点区域（内容坐标）。
@@ -374,6 +459,10 @@ struct MockPage {
                        cx - w / 2 + w * 0.5, cy - h / 2 + h * 0.7, color, width: dp(1.2))
                 d.line(cx - w / 2 + w * 0.5, cy - h / 2 + h * 0.7,
                        cx - w / 2 + w * 0.85, cy - h / 2 + h * 0.3, color, width: dp(1.2))
+            case let .gradient(rect, radius, from, to, vertical):
+                d.clipped(to: rect, radius: radius) {
+                    d.gradient(rect, from: from, to: to, vertical: vertical)
+                }
             }
         }
     }
@@ -597,5 +686,455 @@ final class MockBuilder {
         ops.append(.chevronDown(startX + w + dp(3) + size2 / 2,
                                 top + lh / 2, size2, MockInk.gold))
         y = top + lh + metrics.morePadBottom
+    }
+
+    // MARK: - 通用块（工行 / 中行 / 邮储 / 招商 / 光大 共用）
+
+    /// 表格式「标签：值」行：标签固定宽度、右对齐带冒号，值左对齐。
+    /// 工行的「汇款明细查询」与中行的交易明细都是这个版式。
+    func kvRow(_ label: String, _ value: String,
+               labelWidth: CGFloat, size: CGFloat,
+               padH: CGFloat, padV: CGFloat,
+               labelColor: UIColor = MockInk.value,
+               valueColor: UIColor = MockInk.value,
+               editable: Bool = true) {
+        let lh = lineHeight(size)
+        let h = lh + padV * 2
+        let baseline = y + padV + ascender(size)
+        ops.append(.right(label + "：", padH + labelWidth, baseline, size, labelColor, false))
+        ops.append(.text(value, padH + labelWidth + dp(6), baseline, size, valueColor, false))
+        if editable {
+            hits.append(MockHit(rect: CGRect(x: 0, y: y, width: width, height: h),
+                                token: "mock:field:\(label)"))
+        }
+        y += h
+    }
+
+    /// 左右两端对齐的行（值可指定颜色；工行的 `rowBlue` 用它）。
+    /// 标签或值里带 `\n` 时按多行排（中行「付款后\n可用余额」就是这种）。
+    func pairRow(_ label: String, _ value: String,
+                 size: CGFloat, padH: CGFloat, padV: CGFloat,
+                 labelColor: UIColor = MockInk.label,
+                 valueColor: UIColor = MockInk.value,
+                 editable: Bool = true) {
+        let lh = lineHeight(size)
+        let labelLines = label.split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
+        let valueLines = value.split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
+        let rows = max(labelLines.count, valueLines.count)
+        let h = lh * CGFloat(rows) + padV * 2
+        var baseline = y + padV + ascender(size)
+        for index in 0..<rows {
+            if index < labelLines.count {
+                ops.append(.text(labelLines[index], padH, baseline, size, labelColor, false))
+            }
+            if index < valueLines.count {
+                ops.append(.right(valueLines[index], width - padH, baseline, size, valueColor, false))
+            }
+            baseline += lh
+        }
+        if editable {
+            hits.append(MockHit(rect: CGRect(x: 0, y: y, width: width, height: h),
+                                token: "mock:field:\(label.replacingOccurrences(of: "\n", with: ""))"))
+        }
+        y += h
+    }
+
+    /// 1dp 满宽分割线（中行 / 邮储的 `line()`）
+    func hairlineFull() {
+        ops.append(.hairline(y, 0, width, MockInk.line))
+        y += dp(1)
+    }
+
+    /// 左对齐的小节标题（「您可能需要」「更多推荐」）
+    func sectionLabel(_ text: String, size: CGFloat, color: UIColor,
+                      padH: CGFloat, padTop: CGFloat, padBottom: CGFloat) {
+        let lh = lineHeight(size)
+        let top = y + padTop
+        ops.append(.text(text, padH, top + ascender(size), size, color, false))
+        y = top + lh + padBottom
+    }
+
+    /// 「文字 + ›」的行
+    func chevronRow(_ text: String, size: CGFloat, color: UIColor,
+                    padH: CGFloat, padV: CGFloat, chevron: String = "›") {
+        let lh = lineHeight(size)
+        let h = lh + padV * 2
+        let baseline = y + padV + ascender(size)
+        ops.append(.text(text, padH, baseline, size, color, false))
+        ops.append(.right(chevron, width - padH, baseline, dp(18), MockInk.label, false))
+        y += h
+    }
+
+    /// 居中的绿色圆形 ✓（中行「操作结果」页）
+    func checkBadge(diameter: CGFloat, color: UIColor, gapTop: CGFloat, symbolSize: CGFloat) {
+        y += gapTop
+        ops.append(.circle(cx: width / 2, cy: y + diameter / 2, r: diameter / 2, color))
+        let baseline = y + diameter / 2 + ascender(symbolSize) / 2 - symbolSize * 0.06
+        ops.append(.center("✓", width / 2, baseline, symbolSize, MockInk.white, false))
+        y += diameter
+    }
+
+    /// 左对齐的小标题 + 大金额（中行明细页「收入金额（人民币元）」+「100.00」）
+    func leftAmount(_ label: String, labelKey: String?, _ value: String, valueKey: String?,
+                    labelSize: CGFloat, amountSize: CGFloat, padH: CGFloat,
+                    padTop: CGFloat, padBottom: CGFloat) {
+        let lh1 = lineHeight(labelSize)
+        let top = y + padTop
+        ops.append(.text(label, padH, top + ascender(labelSize), labelSize, MockInk.title, false))
+        if let labelKey {
+            hits.append(MockHit(rect: CGRect(x: 0, y: top, width: width, height: lh1),
+                                token: "mock:field:\(labelKey)"))
+        }
+        let cursor = top + lh1 + dp(2)
+        let lh2 = lineHeight(amountSize, bold: true)
+        ops.append(.text(value, padH, cursor + ascender(amountSize, bold: true),
+                         amountSize, MockInk.amount, true))
+        if let valueKey {
+            hits.append(MockHit(rect: CGRect(x: 0, y: cursor, width: width, height: lh2),
+                                token: "mock:field:\(valueKey)"))
+        }
+        y = cursor + lh2 + padBottom
+    }
+
+    /// 灰底「标签 / 值」块（中行的「对方账户名称/\n账号」那一块）
+    func greyKvBlock(_ label: String, _ value: String,
+                     labelWidth: CGFloat, size: CGFloat,
+                     padH: CGFloat, padV: CGFloat, editable: Bool = true) {
+        let lh = lineHeight(size)
+        let labelLines = label.split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
+        let rows = max(1, labelLines.count)
+        let h = lh * CGFloat(rows) + padV * 2
+        ops.append(.fill(CGRect(x: 0, y: y, width: width, height: h), MockInk.band))
+        var baseline = y + padV + ascender(size)
+        for line in labelLines {
+            ops.append(.text(line, padH, baseline, size, MockInk.value, false))
+            baseline += lh
+        }
+        ops.append(.text(value, padH + labelWidth, y + padV + ascender(size), size,
+                         MockInk.value, false))
+        if editable {
+            hits.append(MockHit(rect: CGRect(x: 0, y: y, width: width, height: h),
+                                token: "mock:field:\(label.replacingOccurrences(of: "\n", with: ""))"))
+        }
+        y += h
+    }
+
+    /// 居中的一行链接文字（「查看全部 / 查看更多」）
+    func centeredLink(_ text: String, size: CGFloat, color: UIColor, padV: CGFloat) {
+        let lh = lineHeight(size)
+        let top = y + padV
+        let baseline = top + ascender(size)
+        ops.append(.center(text, width / 2, baseline, size, color, false))
+        y = top + lh + padV
+    }
+
+    /// 满宽等高的一排文字格（工行「投资理财 / 信用卡还款 / 查看来往」那种）
+    func centeredCells(_ titles: [String], height: CGFloat, size: CGFloat, padV: CGFloat) {
+        guard !titles.isEmpty else { return }
+        y += padV
+        let cellW = width / CGFloat(titles.count)
+        let baseline = y + height / 2 + ascender(size) / 2 - size * 0.06
+        for (index, title) in titles.enumerated() {
+            ops.append(.center(title, cellW * (CGFloat(index) + 0.5), baseline, size,
+                               MockInk.value, false))
+        }
+        y += height + padV
+    }
+
+    /// 满宽按钮（实心 / 描边）
+    func fullButton(_ title: String, filled: Bool, color: UIColor,
+                    height: CGFloat, padH: CGFloat, gapTop: CGFloat, size: CGFloat) {
+        y += gapTop
+        let rect = CGRect(x: padH, y: y, width: width - padH * 2, height: height)
+        if filled {
+            ops.append(.round(rect, dp(4), color))
+        } else {
+            ops.append(.round(rect, dp(4), MockInk.white))
+            ops.append(.roundStroke(rect, dp(4), color, dp(1)))
+        }
+        let baseline = rect.midY + ascender(size) / 2 - size * 0.06
+        ops.append(.center(title, rect.midX, baseline, size,
+                           filled ? MockInk.white : color, false))
+        y = rect.maxY
+    }
+
+    /// 灰底提示块：「—— 温馨提示 ——」+ 正文（正文里的 `\n` 保留，再按宽度折行）
+    func noteBlock(title: String, body: String, size: CGFloat, pad: CGFloat, gapTop: CGFloat) {
+        y += gapTop
+        let titleH = lineHeight(size)
+        let lineH = Draw.font(size: size).lineHeight
+        let bodyWidth = width - pad * 2
+        var lines: [String] = []
+        for paragraph in body.split(separator: "\n", omittingEmptySubsequences: false) {
+            lines.append(contentsOf: wrap(String(paragraph), maxWidth: bodyWidth, size: size))
+        }
+        let height = pad * 2 + titleH + dp(8) + CGFloat(lines.count) * lineH
+        ops.append(.fill(CGRect(x: 0, y: y, width: width, height: height), MockInk.noteBg))
+        let titleBaseline = y + pad + ascender(size)
+        ops.append(.center(title, width / 2, titleBaseline, size, MockInk.noteTitle, false))
+        var baseline = titleBaseline + titleH + dp(8)
+        for line in lines {
+            ops.append(.text(line, pad, baseline, size, MockInk.grey, false))
+            baseline += lineH
+        }
+        y += height
+    }
+
+    /// 满宽切图（对应 `adjustViewBounds` + `FIT_XY`：按图片自身宽高比算高度）
+    func fullWidthImage(_ name: String, gapTop: CGFloat = 0) {
+        y += gapTop
+        let image = UIImage(named: name)
+        let ratio = image.map { $0.size.height / max(1, $0.size.width) } ?? 0.3
+        let h = width * ratio
+        ops.append(.image(name, CGRect(x: 0, y: y, width: width, height: h)))
+        y += h
+    }
+
+    /// 页面头部（`‹` + 居中标题 + 可选右侧切图 / 文字）—— 工行、中行那几张表的卡片头
+    func headerBar(_ title: String, color: UIColor,
+                   icon: String? = nil, iconSize: CGSize = .zero,
+                   trailing: String? = nil) {
+        let h = metrics.titleBarH
+        let size = dp(16)
+        let baseline = y + h / 2 + ascender(size) / 2 - size * 0.06
+        ops.append(.text("‹", dp(10), baseline, dp(22), color, false))
+        ops.append(.center(title, width / 2, baseline, size, color, false))
+        var rightEdge = width - dp(10)
+        if let trailing {
+            let width = Draw.width(trailing, size: size)
+            ops.append(.right(trailing, rightEdge, baseline, size, color, false))
+            rightEdge -= width
+        }
+        if let icon, iconSize != .zero {
+            rightEdge -= dp(4)
+            ops.append(.image(icon, CGRect(x: rightEdge - iconSize.width,
+                                           y: y + (h - iconSize.height) / 2,
+                                           width: iconSize.width, height: iconSize.height)))
+        }
+        y += h
+    }
+
+    /// 按宽度折行（逐字累计；中文没有词边界，够了）
+    private func wrap(_ text: String, maxWidth: CGFloat, size: CGFloat) -> [String] {
+        if text.isEmpty { return [""] }
+        var lines: [String] = []
+        var current = ""
+        for character in text {
+            let next = current + String(character)
+            if Draw.width(next, size: size) > maxWidth, !current.isEmpty {
+                lines.append(current)
+                current = String(character)
+            } else {
+                current = next
+            }
+        }
+        if !current.isEmpty { lines.append(current) }
+        return lines
+    }
+
+    /// 嵌套面板的量算：内容先用子构建器跑一遍，得到外框与内容起点。
+    private func layoutPanel(gapTop: CGFloat, margin: CGFloat, pad: CGFloat,
+                             content: (MockBuilder) -> Void)
+        -> (outer: CGRect, innerY: CGFloat, innerWidth: CGFloat, child: MockBuilder) {
+        y += gapTop
+        let innerWidth = width - (margin + pad) * 2
+        let child = MockBuilder(width: innerWidth, metrics: metrics)
+        content(child)
+        let panelHeight = child.y + pad * 2
+        let outer = CGRect(x: margin, y: y, width: width - margin * 2, height: panelHeight)
+        return (outer, y + pad, innerWidth, child)
+    }
+
+    /// 把子构建器画好的东西整体贴进来
+    private func merge(_ child: MockBuilder, dx: CGFloat, dy: CGFloat) {
+        for op in child.ops {
+            ops.append(MockOp.shifted(op, dx: dx, dy: dy))
+        }
+        for hit in child.hits {
+            hits.append(MockHit(rect: hit.rect.offsetBy(dx: dx, dy: dy), token: hit.token))
+        }
+    }
+
+    /// 嵌套面板：外层色块 + 内层白板，内容先用子构建器量高，再整体贴进来。
+    ///
+    /// 邮储的「电子受理单」就是这种结构（浅蓝底 + 白纸 + 单据行）。
+    func panel(gapTop: CGFloat, margin: CGFloat, pad: CGFloat, bg: UIColor,
+               content: (MockBuilder) -> Void) {
+        let laid = layoutPanel(gapTop: gapTop, margin: margin, pad: pad, content: content)
+        ops.append(.fill(laid.outer, bg))
+        ops.append(.fill(CGRect(x: laid.outer.minX + pad, y: laid.innerY,
+                                width: laid.innerWidth,
+                                height: laid.outer.height - pad * 2),
+                         MockInk.white))
+        merge(laid.child, dx: laid.outer.minX + pad, dy: laid.innerY)
+        y = laid.outer.maxY
+    }
+
+    /// 圆角渐变面板（招商的蓝色银行卡 / 促销卡）
+    func gradientPanel(gapTop: CGFloat, margin: CGFloat, pad: CGFloat, radius: CGFloat,
+                       from: UIColor, to: UIColor, horizontal: Bool = true,
+                       content: (MockBuilder) -> Void) {
+        let laid = layoutPanel(gapTop: gapTop, margin: margin, pad: pad, content: content)
+        ops.append(.gradient(laid.outer, radius, from, to, !horizontal))
+        merge(laid.child, dx: laid.outer.minX + pad, dy: laid.innerY)
+        y = laid.outer.maxY
+    }
+
+    /// 纯色面板（光大的灰底/白底信息块）
+    func tintedPanel(gapTop: CGFloat, margin: CGFloat, pad: CGFloat,
+                     radius: CGFloat = 0, bg: UIColor,
+                     content: (MockBuilder) -> Void) {
+        let laid = layoutPanel(gapTop: gapTop, margin: margin, pad: pad, content: content)
+        if radius > 0 {
+            ops.append(.round(laid.outer, radius, bg))
+        } else {
+            ops.append(.fill(laid.outer, bg))
+        }
+        merge(laid.child, dx: laid.outer.minX + pad, dy: laid.innerY)
+        y = laid.outer.maxY
+    }
+
+    /// 描边圆圈 + 符号（光大「转账成功」那个白底紫圈 ✓）
+    func outlinedCircleBadge(diameter: CGFloat, stroke: UIColor, strokeWidth: CGFloat,
+                             symbol: String, symbolColor: UIColor, symbolSize: CGFloat,
+                             gapTop: CGFloat) {
+        y += gapTop
+        let cx = width / 2
+        let cy = y + diameter / 2
+        // 外圈整圆 + 内圈白圆 = 描边圆环
+        ops.append(.circle(cx: cx, cy: cy, r: diameter / 2, stroke))
+        ops.append(.circle(cx: cx, cy: cy, r: diameter / 2 - strokeWidth, MockInk.white))
+        let baseline = cy + ascender(symbolSize) / 2 - symbolSize * 0.06
+        ops.append(.center(symbol, width / 2, baseline, symbolSize, symbolColor, false))
+        y += diameter
+    }
+
+    /// 左右并排两个按钮：左描边、右实心（光大「查看回单 / 再转一笔」）
+    func sideButtons(_ left: String, _ right: String, color: UIColor,
+                     height: CGFloat, padH: CGFloat, gapTop: CGFloat, size: CGFloat) {
+        y += gapTop
+        let gapW = dp(8)
+        let w = (width - padH * 2 - gapW) / 2
+        let leftRect = CGRect(x: padH, y: y, width: w, height: height)
+        let rightRect = CGRect(x: padH + w + gapW, y: y, width: w, height: height)
+        ops.append(.round(leftRect, dp(4), MockInk.white))
+        ops.append(.roundStroke(leftRect, dp(4), color, dp(1)))
+        ops.append(.round(rightRect, dp(4), color))
+        let baseline = y + height / 2 + ascender(size) / 2 - size * 0.06
+        ops.append(.center(left, leftRect.midX, baseline, size, color, false))
+        ops.append(.center(right, rightRect.midX, baseline, size, MockInk.white, false))
+        y += height
+    }
+
+    /// 左右均分的标签行（「储蓄账户 / 信用卡 / 其他账户」）
+    func tabsRow(_ titles: [String], selected: Int, size: CGFloat,
+                 padH: CGFloat, padTop: CGFloat, padBottom: CGFloat,
+                 selectedColor: UIColor = MockInk.title,
+                 normalColor: UIColor = MockInk.grey) {
+        guard !titles.isEmpty else { return }
+        let lh = lineHeight(size)
+        let top = y + padTop
+        let cellW = (width - padH * 2) / CGFloat(titles.count)
+        let baseline = top + ascender(size)
+        for (index, title) in titles.enumerated() {
+            let isSelected = index == selected
+            ops.append(.center(title, padH + cellW * (CGFloat(index) + 0.5), baseline, size,
+                               isSelected ? selectedColor : normalColor, bold: isSelected))
+        }
+        y = top + lh + padBottom
+    }
+
+    /// 一行等分的文字按钮（招商蓝卡底部「详情 / 明细 / 特约取款 / 转账」）
+    func actionCells(_ titles: [String], size: CGFloat, color: UIColor, padTop: CGFloat) {
+        guard !titles.isEmpty else { return }
+        let lh = lineHeight(size)
+        let top = y + padTop
+        let cellW = width / CGFloat(titles.count)
+        let baseline = top + ascender(size)
+        for (index, title) in titles.enumerated() {
+            ops.append(.center(title, cellW * (CGFloat(index) + 0.5), baseline, size, color, false))
+        }
+        y = top + lh
+    }
+
+    /// 左对齐的一行（余额页「可用余额(元)」+ 大数字）
+    func leftLine(_ text: String, size: CGFloat, color: UIColor, bold: Bool = false,
+                  padH: CGFloat, padTop: CGFloat, padBottom: CGFloat,
+                  key: String? = nil) {
+        let lh = lineHeight(size, bold: bold)
+        let top = y + padTop
+        ops.append(.text(text, padH, top + ascender(size, bold: bold), size, color, bold))
+        if let key {
+            hits.append(MockHit(rect: CGRect(x: 0, y: top, width: width, height: lh),
+                                token: "mock:field:\(key)"))
+        }
+        y = top + lh + padBottom
+    }
+
+    /// 折行段落（招商「e账户」那段长文案）
+    func paragraph(_ text: String, size: CGFloat, color: UIColor,
+                   padH: CGFloat, padTop: CGFloat, padBottom: CGFloat) {
+        let lh = lineHeight(size)
+        let lines = wrap(text, maxWidth: width - padH * 2, size: size)
+        var baseline = y + padTop + ascender(size)
+        for line in lines {
+            ops.append(.text(line, padH, baseline, size, color, false))
+            baseline += lh
+        }
+        // 最后一行占用的底边 = 最后一行的基线 - ascender + 行高
+        y = baseline - ascender(size) + lh + padBottom
+    }
+
+    /// 有色底头部（招商账户页的深蓝条：`‹` + 标题 + `⋯`）
+    func coloredHeaderBar(_ title: String, bg: UIColor, fg: UIColor,
+                          trailing: String? = nil) {
+        let h = metrics.titleBarH
+        let size = dp(16)
+        ops.append(.fill(CGRect(x: 0, y: y, width: width, height: h), bg))
+        let baseline = y + h / 2 + ascender(size) / 2 - size * 0.06
+        ops.append(.text("‹", dp(10), baseline, dp(22), fg, false))
+        ops.append(.center(title, width / 2, baseline, size, fg, false))
+        if let trailing {
+            ops.append(.right(trailing, width - dp(10), baseline, dp(18), fg, false))
+        }
+        y += h
+    }
+
+    /// 只有居中标题的头部（招商「电子回单」那种）
+    func centeredHeader(_ title: String, size: CGFloat, color: UIColor,
+                        padTop: CGFloat, padBottom: CGFloat) {
+        let lh = lineHeight(size)
+        let top = y + padTop
+        ops.append(.center(title, width / 2, top + ascender(size), size, color, false))
+        y = top + lh + padBottom
+    }
+
+    /// 一行「左侧整宽切图 + 右侧竖版二维码」的品牌条（受理单顶部）
+    func brandRow(logo: String, logoHeight: CGFloat, qr: String,
+                  qrSize: CGSize, padH: CGFloat) {
+        let h = max(logoHeight, qrSize.height)
+        let qrX = width - padH - qrSize.width
+        ops.append(.image(qr, CGRect(x: qrX, y: y + (h - qrSize.height) / 2,
+                                     width: qrSize.width, height: qrSize.height)))
+        let logoWidth = max(1, qrX - padH - dp(8))
+        ops.append(.image(logo, CGRect(x: padH, y: y + (h - logoHeight) / 2,
+                                       width: logoWidth, height: logoHeight)))
+        y += h
+    }
+
+    /// 居中的「A   |   B」双链接（邮储转账结果页的「继续转账 | 转账记录」）
+    func dualLinks(_ left: String, _ right: String, size: CGFloat,
+                   color: UIColor, separatorColor: UIColor, padBottom: CGFloat) {
+        let lh = lineHeight(size)
+        let leftW = Draw.width(left, size: size)
+        let rightW = Draw.width(right, size: size)
+        let sepW = Draw.width("   |   ", size: size)
+        let total = leftW + sepW + rightW
+        let startX = (width - total) / 2
+        let baseline = y + ascender(size)
+        ops.append(.text(left, startX, baseline, size, color, false))
+        ops.append(.text("   |   ", startX + leftW, baseline, size, separatorColor, false))
+        ops.append(.text(right, startX + leftW + sepW, baseline, size, color, false))
+        y += lh + padBottom
     }
 }
