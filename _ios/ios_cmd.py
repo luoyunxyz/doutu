@@ -28,7 +28,21 @@ def send(token, timeout=12.0, copy_to=None):
     tmp = CMD + ".tmp"
     with open(tmp, "w", encoding="ascii") as f:
         json.dump({"seq": seq, "token": token}, f, separators=(",", ":"))
-    os.replace(tmp, CMD)
+    # debug_server 每秒都在读 cmd.json；Windows 下 rename 可能撞上占用，重试几次，
+    # 最后兜底直接覆盖写（JSON 很小，读到半截的概率极低）。
+    for _ in range(20):
+        try:
+            os.replace(tmp, CMD)
+            break
+        except PermissionError:
+            time.sleep(0.05)
+    else:
+        with open(CMD, "w", encoding="ascii") as f:
+            json.dump({"seq": seq, "token": token}, f, separators=(",", ":"))
+        try:
+            os.remove(tmp)
+        except OSError:
+            pass
     pattern = os.path.join(SHOTS, "shot-%d-*.png" % seq)
     deadline = time.time() + timeout
     path = None
