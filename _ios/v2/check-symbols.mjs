@@ -167,16 +167,28 @@ if (unique.length) {
 // 宿主与页面**都**做 `translate(0,-scroll)` 就是双倍滚动，**都**不做就是不滚。
 // 规则：draw 里自带 translate 的屏 → 不能声明 selfScrolls = false；
 //       draw 里没有的屏 → 必须声明 selfScrolls = false（由宿主代滚）。
+//
+// 两个已知例外（不是 bug，记在这里免得反复误报）：
+//   · `TermsScreen` —— 宿主给它挂了一个专用透明 UIScrollView（Screen.swift 的
+//     `updateTermsScrollView`），滚动不经过 ctx.translate；
+//   · `HomeShellScreen` —— 未被使用的旧外壳（V1），它按坐标算 `y - scroll`，同样不走 ctx 平移。
+const KNOWN_SCROLL_EXCEPTIONS = new Set(['TermsScreen.swift', 'HomeShellScreen.swift']);
 {
   const wrongOwner = [];
   let selfCount = 0;
   let hostCount = 0;
   for (const file of files) {
     if (!file.includes('Screens')) continue;
+    if (KNOWN_SCROLL_EXCEPTIONS.has(path.basename(file))) continue;
     const code = stripNoise(texts.get(file));
     // 只看真正实现 Screen 的文件
     if (!/:\s*Screen\b/.test(code)) continue;
-    const hasOwnTranslate = /translateBy\(x:\s*0,\s*y:\s*-s(?:elf)?\.?s?c?r?o?l?l?|translateBy\(x:\s*0,\s*y:\s*-state\.scroll/.test(code);
+    // 页面自己平移的写法有好几种：
+    //   translateBy(x: 0, y: -s.scroll)          —— 整页平移
+    //   translateBy(x: 0, y: Self.headH - s.scroll) —— 只滚内容区（账单列表）
+    // 只要 translateBy 的参数里出现 `.scroll` 就算「自带平移」，
+    // 否则会把这几个页面误报成「会不滚」。
+    const hasOwnTranslate = /translateBy\([^)]*\.scroll/.test(code);
     const declaresFalse = /let\s+selfScrolls\s*=\s*false|var\s+selfScrolls\s*(?::\s*Bool\s*)?\{\s*false\s*\}/.test(code);
     if (hasOwnTranslate) selfCount += 1;
     if (declaresFalse) hostCount += 1;

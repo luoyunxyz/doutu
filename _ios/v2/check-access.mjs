@@ -73,7 +73,11 @@ for (const file of files) {
     const closes = (line.match(/\}/g) || []).length;
 
     if (typeDecl && opens > 0) {
-      typeStack.push({ name: typeDecl[1], depth: depth });
+      // `private extension UIImage { … }` 的作用域是**文件级**：两个文件各写一个同名
+      // private 方法在 Swift 里合法，不能算重复。所以私有的类型作用域带上文件名。
+      const privateScope = /^\s*(?:private|fileprivate)\s+(?:class|struct|enum|extension|protocol)/.test(line);
+      typeStack.push({ name: typeDecl[1], depth: depth,
+                       scope: privateScope ? '@' + file.name : '' });
     }
     const fn = line.match(/^\s{0,16}(?:(?:public|private|fileprivate|internal|static|final|override|@\w+|@objc)\s+)*func\s+([A-Za-z_]\w*)/);
     if (fn && typeStack.length > 0) {
@@ -88,7 +92,9 @@ for (const file of files) {
         parenDepth = (text.match(/\(/g) || []).length - (text.match(/\)/g) || []).length;
       }
       const params = text.match(/func\s+[A-Za-z_]\w*\s*(\([\s\S]*?\))\s*(?:->|\{|$|where)/);
-      const owner = typeStack[typeStack.length - 1].name;
+      // 用完整类型路径（`VideoDouyinScreen.State` 而不是 `State`）：
+      // 不同外层类里的同名嵌套类型在 Swift 里合法，只用内层名字会大面积误报。
+      const owner = typeStack.map((t) => t.name + (t.scope || '')).join('.');
       declarations.push({
         type: owner,
         sig: fn[1] + '(' + paramLabels(params ? params[1] : '()') + ')',
@@ -129,7 +135,7 @@ for (const file of files) {
     if (member && typeStack.length > 0) {
       privateMembers.push({
         member: member[1],
-        type: typeStack[typeStack.length - 1].name,
+        type: typeStack.map((t) => t.name + (t.scope || '')).join('.'),
         file: file.name,
         line: i + 1,
       });

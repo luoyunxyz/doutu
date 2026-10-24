@@ -2113,7 +2113,50 @@ final class Router {
             return
         }
         if rest == "contacts" {
-            showToast("支付宝通讯录制作中", ok: false)
+            push(AliContactsScreen(), state: AliContactsScreen.State())
+            return
+        }
+        if rest == "back" {
+            pop()
+            return
+        }
+        if rest == "addFriend" {
+            EditPrompt.present(title: "添加朋友", current: "", numeric: false) { [weak self] text in
+                let name = text.trimmingCharacters(in: .whitespacesAndNewlines)
+                guard !name.isEmpty else { return }
+                AliContactStore.shared.add(name: name)
+                self?.showToast("已添加 \(name)", ok: true)
+                self?.host?.setNeedsDisplay()
+            }
+            return
+        }
+        if rest == "batch" || rest == "search" || rest.hasPrefix("top:") {
+            showToast("该入口制作中", ok: false)
+            return
+        }
+        if rest.hasPrefix("delete:") {
+            confirmDeleteAliContact(String(rest.dropFirst("delete:".count)))
+            return
+        }
+        if rest.hasPrefix("contact:") {
+            let name = String(rest.dropFirst("contact:".count))
+            let sheet = UIAlertController(title: name, message: nil, preferredStyle: .actionSheet)
+            sheet.addAction(UIAlertAction(title: "发起聊天", style: .default) { [weak self] _ in
+                // 会话写进 AliChatStore 后，通讯录的「同步来的联系人」也会带上他
+                AliChatStore.shared.upsert(name: name, avatar: nil, last: nil)
+                self?.showToast("已创建会话（聊天页制作中）", ok: true)
+                self?.host?.setNeedsDisplay()
+            })
+            sheet.addAction(UIAlertAction(title: "删除联系人", style: .destructive) { [weak self] _ in
+                self?.confirmDeleteAliContact(name)
+            })
+            sheet.addAction(UIAlertAction(title: "取消", style: .cancel))
+            if let pop = sheet.popoverPresentationController, let view = host {
+                pop.sourceView = view
+                pop.sourceRect = CGRect(x: view.bounds.midX, y: view.bounds.midY, width: 1, height: 1)
+                pop.permittedArrowDirections = []
+            }
+            UpdatePrompt.topViewController()?.present(sheet, animated: true)
             return
         }
         if rest == "box" {
@@ -2178,6 +2221,20 @@ final class Router {
                 self?.host?.setNeedsDisplay()
             }
         }
+    }
+
+    /// 删联系人要连消息列表一起删（否则「同步来的联系人」会把它带回来）
+    private func confirmDeleteAliContact(_ name: String) {
+        let alert = UIAlertController(title: "删除联系人「\(name)」？",
+                                      message: nil, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "取消", style: .cancel))
+        alert.addAction(UIAlertAction(title: "删除", style: .destructive) { [weak self] _ in
+            AliContactStore.shared.remove(name: name)
+            AliChatStore.shared.delete(name: name)
+            self?.host?.setNeedsDisplay()
+            self?.showToast("已删除 \(name)", ok: true)
+        })
+        UpdatePrompt.topViewController()?.present(alert, animated: true)
     }
 
     // MARK: - 工具 Tab（Android `MainActivity.drawTools`）
@@ -2254,6 +2311,9 @@ final class Router {
             return
         case "alimsg":
             push(AliMsgScreen(), state: AliMsgScreen.State())
+            return
+        case "alicontacts":
+            push(AliContactsScreen(), state: AliContactsScreen.State())
             return
         default:
             break

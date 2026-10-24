@@ -64,6 +64,10 @@ for (const file of files) {
   const lines = file.text.split('\n');
   let typeStack = [];
   let depth = 0;
+  // 类型声明可能跨行（`final class WeChatV2Host: UIViewController,` 换行后才是 `{`），
+  // 这时 line 上没有 `{`，按原来的逻辑整个类的成员都不会被登记，
+  // 于是 `WeChatV2Host.xxx` 全被误报成「未声明」。这里先挂起，等遇到 `{` 再入栈。
+  let pendingType = null;
   for (const rawLine of lines) {
     const line = stripComment(rawLine);
     const typeDecl = line.match(/(?:final\s+)?(?:class|struct|enum|extension)\s+([A-Z]\w*)/);
@@ -73,7 +77,13 @@ for (const file of files) {
     if (typeStack.length > 0 && typeDecl) {
       addMember(typeStack[typeStack.length - 1].name, typeDecl[1]);
     }
-    if (typeDecl && opens > 0) {
+    if (typeDecl && opens === 0) {
+      pendingType = typeDecl[1];
+    } else if (pendingType && opens > 0) {
+      typeStack.push({ name: pendingType, depth: depth });
+      if (!members.has(pendingType)) members.set(pendingType, new Set());
+      pendingType = null;
+    } else if (typeDecl && opens > 0) {
       typeStack.push({ name: typeDecl[1], depth: depth });
       if (!members.has(typeDecl[1])) members.set(typeDecl[1], new Set());
     }
