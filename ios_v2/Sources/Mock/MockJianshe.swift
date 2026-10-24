@@ -28,7 +28,7 @@ enum MockJianshe {
             b.row("付款户名", "李哈哈")
             b.row("收款户名", "张大国")
             b.row("金额", "100.00")
-            b.row("时间", s.time)
+            b.row("时间", state.time)
             b.gap(dp(20))
         case 9:
             // 余额
@@ -43,17 +43,17 @@ enum MockJianshe {
             // 其余 9 个子页：建设版的明细页（标题取子页名）
             if showsTopTitle { b.titleBar(title) }
             b.coloredHeaderBar(title, bg: .white, fg: MockInk.title)
-            b.centerBlock("对方", s.value("对方", "张大国"),
+            b.centerBlock("对方", state.value("对方", "张大国"),
                           size: dp(15), color: MockInk.grey,
                           padTop: dp(24), padBottom: 0)
-            b.centerBlock("金额", s.value("金额", "-100.00"),
+            b.centerBlock("金额", state.value("金额", "-100.00"),
                           size: dp(34), color: MockInk.amount, bold: true,
                           padTop: dp(10), padBottom: dp(30))
             b.statusBar("交易成功", trailing: "进度查询  ›")
             b.row("收款账号", "6227 **** **** 8888")
             b.row("收款银行", "中国建设银行")
             b.row("交易类型", title)
-            b.row("交易时间", s.time)
+            b.row("交易时间", state.time)
             b.gap(dp(20))
         }
         return b.result

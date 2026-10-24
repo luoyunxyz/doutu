@@ -27,7 +27,7 @@ enum MockJiaotong {
             b.row("付款方", "李哈哈")
             b.row("收款账户", "中国银行(**4919)")
             b.row("金额", "100.00")
-            b.row("时间", s.time)
+            b.row("时间", state.time)
             b.gap(dp(20))
         case 9:
             // 付款结果：与转账成功同页，金额取负

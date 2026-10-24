@@ -25,6 +25,8 @@ enum MockUnionPay {
     static func page(state: MockState, metrics: MockMetrics,
                      width: CGFloat, showsTopTitle: Bool) -> MockPage {
         let b = MockBuilder(width: width, metrics: metrics)
+        // 子页分支里统一用 `s` 指代 state（与 transferred 的参数名一致）
+        let s = state
         switch state.sub {
         case 8:
             // 支付助手

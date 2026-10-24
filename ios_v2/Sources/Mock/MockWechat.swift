@@ -15,6 +15,8 @@ enum MockWechat {
     static func page(state: MockState, metrics: MockMetrics,
                      width: CGFloat, showsTopTitle: Bool) -> MockPage {
         let b = MockBuilder(width: width, metrics: metrics)
+        // 子页分支里统一用 `s` 指代 state（与 transfer/billDetail 的参数名一致）
+        let s = state
         let names = MockModule.wechat.subs
         let title = names.indices.contains(state.sub) ? names[state.sub] : "支付成功"
         switch state.sub {
