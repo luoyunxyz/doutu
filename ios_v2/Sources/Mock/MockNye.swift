@@ -97,6 +97,9 @@ enum MockComposer {
         case .liaotian:
             return MockChat.page(state: state, metrics: metrics, width: width,
                                  showsTopTitle: showsTopTitle)
+        case .huafei:
+            return MockHuafei.page(state: state, metrics: metrics, width: width,
+                                   showsTopTitle: showsTopTitle)
         default:
             return placeholder(module: module, metrics: metrics, width: width)
         }
@@ -109,7 +112,7 @@ enum MockComposer {
              .xingye, .jianshe, .pingan, .jiaotong, .zhongxin, .pufa,
              .minsheng, .wechat, .alipay, .huiwang, .shuzi,
              .yunshanfu, .cbi, .tp, .okx, .douyin, .yindu,
-             .duanxin, .huidan, .liushui, .liaotian:
+             .duanxin, .huidan, .liushui, .liaotian, .huafei:
             return true
         }
     }
