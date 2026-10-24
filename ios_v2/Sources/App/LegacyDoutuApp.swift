@@ -2156,11 +2156,14 @@ final class Router {
         }
     }
 
-    /// 当前呈现在最上层的微信 WebView（`presentWeb` 复用它）
+    /// 当前呈现在最上层的微信 WebView（`presentWeb` 复用它）。
+    ///
+    /// ⚠️ 不能对 `host` 取 `presentedViewController`：Router.host 是 `ScreenHostView`（UIView），
+    /// 那个属性只在 UIViewController 上有（编译报「has no member 'presentedViewController'」）。
+    /// `UpdatePrompt.topViewController()` 会沿着 presentedViewController 一路走到最上层，
+    /// 微信页在 present 之后就是它 —— 与 `presentWeb` 里找 host 的方式一致。
     private var presentedWeChat: WeChatV2Host? {
-        if let host = host as? WeChatV2Host { return host }
-        if let presented = host?.presentedViewController as? WeChatV2Host { return presented }
-        return nil
+        UpdatePrompt.topViewController() as? WeChatV2Host
     }
 
     // MARK: - 模拟模块（Android `features/mock`）
