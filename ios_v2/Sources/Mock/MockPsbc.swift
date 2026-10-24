@@ -16,15 +16,12 @@ enum MockPsbc {
         switch state.sub {
         case 0:
             result(b, state, showsTopTitle: showsTopTitle)
-        case 1, 2, 6:
-            txDetail(b, state, sub: state.sub, showsTopTitle: showsTopTitle)
-        case 3, 5:
-            remit(b, state, big: state.sub == 5 ? "521.05" : "100.00",
-                  showsTopTitle: showsTopTitle)
+        case 3:
+            receipt(b, state, showsTopTitle: showsTopTitle)
         case 4:
             record(b, state, showsTopTitle: showsTopTitle)
         default:
-            receipt(b, state, showsTopTitle: showsTopTitle)
+            psbcV2(b, state, showsTopTitle: showsTopTitle)
         }
         return b.result
     }
@@ -193,6 +190,101 @@ enum MockPsbc {
                 inner.pairRow(label, s.value(label, fallback), size: dp(15),
                               padH: dp(14), padV: dp(11))
             }
+        }
+    }
+
+    // MARK: - 1/2/5/6/7 交易详情（安卓 03_01/02/05/06/07 实测）
+
+    private static func psbcV2(_ b: MockBuilder, _ s: MockState, showsTopTitle: Bool) {
+        let sub = s.sub
+        if showsTopTitle { b.headerBar("交易详情", color: MockInk.value, trailing: "  ⌂ ") }
+
+        let padH: CGFloat = (sub == 1 || sub == 2) ? dp(24) : (sub == 7 ? dp(28) : dp(33))
+        if sub == 5 || sub == 6 {
+            b.sectionLabel(s.value("户名", "张三"), size: dp(14), color: MockInk.title,
+                           padH: padH, padTop: dp(18), padBottom: 0)
+        }
+
+        let amount: String
+        let amountSize: CGFloat
+        let balance: String
+        switch sub {
+        case 1:
+            amount = "+ ¥ 100.00"; amountSize = dp(28); balance = "账户余额¥10,129.50"
+        case 2:
+            amount = "+ ¥ 100.00"; amountSize = dp(24); balance = "账户余额 ¥ 10,129.50"
+        case 6:
+            amount = "-￥521.05"; amountSize = dp(21); balance = "余额￥521.05"
+        case 7:
+            amount = "-￥521.05"; amountSize = dp(21); balance = "账户余额￥521.05"
+        default:
+            amount = "+￥521.05"; amountSize = dp(21); balance = "余额￥51.05"
+        }
+        b.sectionLabel(s.value("金额", amount), size: amountSize, color: MockInk.title,
+                       padH: padH, padTop: sub == 5 || sub == 6 ? dp(8) : dp(24),
+                       padBottom: 0)
+        b.sectionLabel(balance, size: dp(12), color: Draw.color(0xff898989),
+                       padH: padH, padTop: dp(4), padBottom: dp(8))
+
+        let size = sub == 1 ? dp(13) : dp(14)
+        let padV = sub == 1 ? dp(5.87) : (sub == 2 ? dp(5.77) : dp(11.77))
+        func row(_ label: String, _ value: String) {
+            b.pairRow(label, s.value(label, value), size: size, padH: padH, padV: padV,
+                      labelColor: Draw.color(0xff898989), valueColor: MockInk.title)
+        }
+
+        switch sub {
+        case 1:
+            row("交易卡号", "6226***9990")
+            row("交易时间", s.time)
+            row("摘要", "他行来账")
+            row("付款人", "李强")
+            row("付款账号", "622143551800063640")
+            row("付款行名", "中国工商银行")
+            row("附言", "手机转账")
+        case 2:
+            row("交易卡号", "6226 **** 9990")
+            row("交易时间", s.time)
+            row("摘要", "付款")
+            row("付款人", "李强")
+            row("付款账号", "6226 **** 9995")
+            row("付款行名", "中国工商银行")
+            row("附言", "张三支付宝转账")
+        case 6:
+            row("交易卡号", "6217 **** 7856")
+            row("交易时间", s.time)
+            row("收款账号", "6217 **** 3918")
+            row("收款银行", "中国农业银行股份有限公司")
+            row("附言", "付款")
+            row("摘要", "跨行汇出")
+            b.sectionLabel("交易类型", size: dp(14), color: MockInk.title,
+                           padH: padH, padTop: dp(18), padBottom: 0)
+            b.sectionLabel("不计入本月收支", size: dp(14), color: MockInk.title,
+                           padH: padH, padTop: dp(24), padBottom: 0)
+        case 7:
+            row("交易卡号", "6217 **** 7856")
+            row("交易时间", s.time)
+            row("摘要", "转账汇出")
+            row("收款人", "付泰")
+            row("收款账号", "6217 **** 3918")
+            row("收款银行", "中国邮政储蓄银行")
+            row("附言", "转账")
+        default:
+            row("交易卡号", "6217 **** 7856")
+            row("交易时间", s.time)
+            row("付款账号", "6217 **** 3918")
+            row("附言", "无附言")
+            row("摘要", "他行汇入")
+            b.sectionLabel("交易类型", size: dp(14), color: MockInk.title,
+                           padH: padH, padTop: dp(18), padBottom: 0)
+            b.sectionLabel("所属账本", size: dp(14), color: MockInk.title,
+                           padH: padH, padTop: dp(18), padBottom: 0)
+            b.sectionLabel("不计入本月收支", size: dp(14), color: MockInk.title,
+                           padH: padH, padTop: dp(18), padBottom: 0)
+            b.sectionLabel("附注", size: dp(14), color: MockInk.title,
+                           padH: padH, padTop: dp(18), padBottom: 0)
+            b.sectionLabel("记录点什么...", size: dp(14), color: Draw.color(0xffaeaeaf),
+                           padH: padH, padTop: dp(6), padBottom: 0)
         }
     }
 }
