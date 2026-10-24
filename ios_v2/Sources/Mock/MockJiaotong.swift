@@ -18,10 +18,24 @@ enum MockJiaotong {
                      width: CGFloat, showsTopTitle: Bool) -> MockPage {
         let b = MockBuilder(width: width, metrics: metrics)
         switch state.sub {
-        case 0:
-            transferSuccess(b, state, showsTopTitle: showsTopTitle)
+        case 8:
+            // 回单：电子受理单结构
+            if showsTopTitle { b.titleBar("回单") }
+            b.coloredHeaderBar("回单", bg: .white, fg: MockInk.title)
+            b.sectionLabel("电子受理单", size: dp(17), color: MockInk.title,
+                           padH: dp(16), padTop: dp(20), padBottom: dp(6))
+            b.row("付款方", "李哈哈")
+            b.row("收款账户", "中国银行(**4919)")
+            b.row("金额", "100.00")
+            b.row("时间", s.time)
+            b.gap(dp(20))
+        case 9:
+            // 付款结果：与转账成功同页，金额取负
+            transferSuccess(b, state, showsTopTitle: showsTopTitle, incoming: false)
         default:
-            return MockComposer.placeholder(module: .jiaotong, metrics: metrics, width: width)
+            // 其余子页：账号转账成功，转入/支付宝转入取正
+            let incoming = state.sub == 1 || state.sub == 3 || state.sub == 4 || state.sub == 5 || state.sub == 6
+            transferSuccess(b, state, showsTopTitle: showsTopTitle, incoming: incoming)
         }
         return b.result
     }
@@ -29,8 +43,8 @@ enum MockJiaotong {
     // MARK: - 子页 0：账号转账成功
 
     private static func transferSuccess(_ b: MockBuilder, _ s: MockState,
-                                        showsTopTitle: Bool) {
-        if showsTopTitle { b.titleBar("账号转账") }
+                                        showsTopTitle: Bool, incoming: Bool = true) {
+        if showsTopTitle { b.titleBar(incoming ? "账号转账" : "付款结果") }
 
         // 顶栏：居中标题 + 右上「完成」
         b.coloredHeaderBar("账号转账", bg: .white, fg: MockInk.title, trailing: "完成")

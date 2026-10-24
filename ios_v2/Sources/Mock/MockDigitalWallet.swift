@@ -15,13 +15,20 @@ enum MockDigitalWallet {
     static func page(state: MockState, metrics: MockMetrics,
                      width: CGFloat, showsTopTitle: Bool) -> MockPage {
         let b = MockBuilder(width: width, metrics: metrics)
-        switch state.sub {
-        case 0:
-            transferred(b, state, showsTopTitle: showsTopTitle)
-        default:
-            return MockComposer.placeholder(module: .shuzi, metrics: metrics, width: width)
-        }
+        // 12 个子页共用「转钱成功」版式：银行从子页名取，转入/存入取正
+        transferred(b, state, showsTopTitle: showsTopTitle)
         return b.result
+    }
+
+    /// 子页名 → (银行, 是否转入)
+    private static func bank(_ sub: Int) -> (name: String, incoming: Bool) {
+        let names = MockModule.shuzi.subs
+        guard names.indices.contains(sub) else { return ("建设银行", false) }
+        let name = names[sub]
+        let incoming = name.contains("转入") || name.contains("存入")
+        let banks = ["建设", "招商", "工商", "农业", "兴业", "邮政"]
+        let hit = banks.first { name.hasPrefix($0) } ?? "建设"
+        return (hit + "银行", incoming)
     }
 
     private static func transferred(_ b: MockBuilder, _ s: MockState,
@@ -44,9 +51,11 @@ enum MockDigitalWallet {
                        padH: 0, padTop: dp(40), padBottom: 0)
 
         // 收款方 + 卡号
-        b.sectionLabel(s.value("收款方", "转钱给 零花钱 ✏"), size: dp(17), color: MockInk.title,
+        b.sectionLabel(s.value("收款方", bank(s.sub).incoming
+                                   ? "收钱从 零花钱 ✏" : "转钱给 零花钱 ✏"),
+                       size: dp(17), color: MockInk.title,
                        padH: 0, padTop: dp(34), padBottom: 0)
-        b.sectionLabel(s.value("收款卡号", "中国建设银行 0051****1679"), size: dp(15),
+        b.sectionLabel(s.value("收款卡号", bank(s.sub).name + " 0051****1679"), size: dp(15),
                        color: MockInk.label, padH: 0, padTop: dp(10), padBottom: 0)
 
         // 完成 / 通知收款人
