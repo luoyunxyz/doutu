@@ -2,9 +2,10 @@ import UIKit
 
 /// 「模拟 → 某家银行」的编辑页 —— 对应 Android 的 `NyeActivity` / `IcbcActivity` / …。
 ///
-/// 结构与 Android 完全一致：
+/// 结构与 Android 基本一致，但**去掉了「选择机型」那一排**（19 个机型按钮是安卓出图才需要的，
+/// iOS 端没有意义）：
 ///   顶部（固定）：`‹` 返回 + 居中标题 + 右侧「切换」
-///   内容（可滚）：19 个机型模板按钮 → 绿色「生成图片」→ 明细预览（点文字即可改）
+///   内容（可滚）：绿色「生成图片」→ 明细预览（点文字即可改）
 ///   底部（固定）：选择模版 / 保存模版 / 恢复默认 / 打开填写
 ///   右侧抽屉：本模块全部子页（进页面自动打开一次，与 Android 的 `showDrawer(true)` 一致）
 ///
@@ -98,22 +99,11 @@ final class MockEditorScreen: Screen {
     // MARK: - 版式（画与点共用）
 
     /// 内容坐标下各块的 y
-    private var chipsTop: CGFloat { Self.topH + Self.chipPadTop }
-    private var chipsBottom: CGFloat {
-        chipsTop + CGFloat(Self.chipRows) * Self.chipH
-            + CGFloat(Self.chipRows - 1) * Self.chipGapV
-    }
-    private var genTop: CGFloat { chipsBottom + Self.genGapTop }
-    private var previewTop: CGFloat { genTop + Self.genH }
-
-    private func chipRect(_ index: Int) -> CGRect {
-        let row = index / 4
-        let col = index % 4
-        let cellW = (Self.W - Self.chipPadH * 2 - 3 * Self.chipGapH) / 4
-        let x = Self.chipPadH + CGFloat(col) * (cellW + Self.chipGapH)
-        let y = chipsTop + CGFloat(row) * (Self.chipH + Self.chipGapV)
-        return CGRect(x: x, y: y, width: cellW, height: Self.chipH)
-    }
+    ///
+    /// iOS 端**不显示机型模板**（那是安卓出图专门要选的），所以「生成图片」直接跟在顶栏下面，
+    /// 预览再往下接 —— 少掉 19 个机型按钮后整页更短，也少一层无意义的选择。
+    private var genTop: CGFloat { Self.topH + dp(10) }
+    private var previewTop: CGFloat { genTop + Self.genH + dp(10) }
 
     private var genRect: CGRect {
         CGRect(x: Self.genPadH, y: genTop, width: Self.W - Self.genPadH * 2, height: Self.genH)
@@ -141,7 +131,6 @@ final class MockEditorScreen: Screen {
         // 底色（只铺可见区，滚动时不会露出未绘制的部分）
         d.rect(CGRect(x: 0, y: scroll, width: Self.W, height: Self.H), MockInk.page)
 
-        drawChips(d, s)
         drawGenerate(d)
 
         // 预览：白底卡片 + 版式
@@ -156,19 +145,6 @@ final class MockEditorScreen: Screen {
         drawTopBar(d, s, scroll: scroll)
         drawBottomBar(d, s, scroll: scroll)
         if s.drawerOpen { drawDrawer(d, s, scroll: scroll) }
-    }
-
-    private func drawChips(_ d: Draw, _ s: State) {
-        let size = dp(13)
-        let baselineOffset = Draw.font(size: size).ascender
-            + (Self.chipH - Draw.font(size: size).lineHeight) / 2
-        for (index, name) in MockDevices.all.enumerated() {
-            let rect = chipRect(index)
-            d.round(rect, radius: dp(8), index == s.device ? MockInk.chipOn : MockInk.chip)
-            d.centerText(name, cx: rect.midX, baseline: rect.minY + baselineOffset,
-                         size: size,
-                         index == s.device ? MockInk.white : MockInk.value, bold: false)
-        }
     }
 
     private func drawGenerate(_ d: Draw) {
@@ -280,11 +256,6 @@ final class MockEditorScreen: Screen {
             case 3: return "mock:fill"
             default: return "noop"
             }
-        }
-
-        // 机型模板
-        for index in MockDevices.all.indices where chipRect(index).contains(CGPoint(x: x, y: y)) {
-            return "mock:device:\(index)"
         }
 
         // 生成图片
