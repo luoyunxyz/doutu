@@ -48,12 +48,14 @@ enum MockWechat {
                        remark: remark, timeLabel: timeLabel,
                        rowPadV: padV, showsTopTitle: showsTopTitle)
         case 4:
-            // 消息盒子：微信支付空页（按 `wx_sub4` 截图复刻）
+            // 消息盒子：微信支付空页（按 `wx_sub4` 截图：整页 #ededed、标题 15sp、底部工具栏）
             if showsTopTitle { b.titleBar("微信支付") }
+            b.pageBackground = MockChat.chatBg
+            b.autoBoard = MockChat.chatBg
             b.sectionLabel("‹            微信支付            ⌕   ⚙",
-                           size: dp(18), color: MockInk.title,
+                           size: dp(15), color: MockInk.title,
                            padH: dp(16), padTop: dp(14), padBottom: dp(10))
-            b.fill(dp(760), MockInk.page)
+            b.gap(dp(680))
             b.sectionLabel("⌨        我的账单        ｜        支付服务",
                            size: dp(15), color: MockInk.title,
                            padH: dp(16), padTop: dp(14), padBottom: dp(16))
