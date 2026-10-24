@@ -2166,6 +2166,14 @@ final class Router {
             push(AliRedPacketDetailScreen(), state: AliRedPacketDetailScreen.State())
             return
         }
+        if rest == "transfer" {
+            push(AliTransferScreen(), state: AliTransferScreen.State())
+            return
+        }
+        if rest.hasPrefix("transfer:") {
+            handleAliTransfer(String(rest.dropFirst("transfer:".count)))
+            return
+        }
         if rest.hasPrefix("rp:") {
             handleAliRedPacket(String(rest.dropFirst("rp:".count)))
             return
@@ -2278,7 +2286,7 @@ final class Router {
             case "2":
                 push(AliRedPacketDetailScreen(), state: AliRedPacketDetailScreen.State())
             default:
-                showToast("转账制作中", ok: false)
+                push(AliTransferScreen(), state: AliTransferScreen.State())
             }
         }
     }
@@ -2290,6 +2298,63 @@ final class Router {
         state.messages.append(message)
         AliChatStore.shared.touch(name: state.title, last: message)
         host?.setNeedsDisplay()
+    }
+
+    /// 转账编辑页的令牌：`amount` / `note` / `sender`（action sheet）/ `income` / `expense` /
+    /// `done`（完成：校验金额 → 落库 → 进详情页；详情页还没移植，先提示）。
+    private func handleAliTransfer(_ rest: String) {
+        let store = AliTransferStore.shared
+        switch rest {
+        case "amount":
+            EditPrompt.present(title: "转账金额", current: store.amount, numeric: true) { [weak self] text in
+                store.setAmount(text)
+                self?.host?.setNeedsDisplay()
+            }
+        case "note":
+            EditPrompt.present(title: "转账说明", current: store.note, numeric: false) { [weak self] text in
+                store.note = text.trimmingCharacters(in: .whitespacesAndNewlines)
+                self?.host?.setNeedsDisplay()
+            }
+        case "sender":
+            let sheet = UIAlertController(title: "切换发送人", message: nil,
+                                          preferredStyle: .actionSheet)
+            for name in store.randomNames.prefix(6) {
+                sheet.addAction(UIAlertAction(title: name, style: .default) { [weak self] _ in
+                    store.sender = AliTransferStore.Sender(name: name, asset: nil)
+                    store.account = ""
+                    store.ensureSender()
+                    self?.host?.setNeedsDisplay()
+                })
+            }
+            sheet.addAction(UIAlertAction(title: "关闭", style: .cancel))
+            if let pop = sheet.popoverPresentationController, let view = host {
+                pop.sourceView = view
+                pop.sourceRect = CGRect(x: view.bounds.midX, y: view.bounds.midY, width: 1, height: 1)
+                pop.permittedArrowDirections = []
+            }
+            UpdatePrompt.topViewController()?.present(sheet, animated: true)
+        case "income":
+            store.income = true
+            host?.setNeedsDisplay()
+        case "expense":
+            store.income = false
+            host?.setNeedsDisplay()
+        case "done":
+            // Java `submit()`：金额必须大于 0，说明为空时默认「转账」
+            let value = Double(store.amount) ?? 0
+            guard value.isFinite, value > 0 else {
+                showToast("请输入大于 0 的金额", ok: false)
+                return
+            }
+            store.amount = String(format: "%.2f", value)
+            if store.note.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                store.note = "转账"
+            }
+            store.stamp()
+            showToast("转账详情页制作中", ok: false)
+        default:
+            break
+        }
     }
 
     /// 红包详情页的令牌：`from` / `sender`（切换发送人）、`amount`（金额）、
@@ -2425,6 +2490,9 @@ final class Router {
             return
         case "alired":
             push(AliRedPacketDetailScreen(), state: AliRedPacketDetailScreen.State())
+            return
+        case "alitransfer":
+            push(AliTransferScreen(), state: AliTransferScreen.State())
             return
         case "alicreatechat":
             // Android 是一个带头像预览的弹窗；iOS 先用输入框收昵称，确定后直接进聊天页
