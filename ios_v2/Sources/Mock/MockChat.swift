@@ -14,6 +14,9 @@ enum MockChat {
     static func page(state: MockState, metrics: MockMetrics,
                      width: CGFloat, showsTopTitle: Bool) -> MockPage {
         let b = MockBuilder(width: width, metrics: metrics)
+        // 聊天页整页就是 #ededed（安卓实测 lt_sub0），所以底板直接用这个灰
+        b.autoBoard = chatBg
+        b.pageBackground = chatBg
         let group = state.sub == 1
         if showsTopTitle { b.titleBar(group ? "微信（群聊）" : "微信") }
         thread(b, group: group)

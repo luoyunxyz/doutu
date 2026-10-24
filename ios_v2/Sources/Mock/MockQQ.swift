@@ -62,10 +62,10 @@ enum MockQQ {
 
         // 三条入口（安卓实测 qq_sub0：从 y=1204 起是 #f0f1f2 底板，入口行 46px 文字、行距 ~109px）
         b.fill(dp(8), MockInk.entryGrey)
+        b.autoBoard = MockInk.entryGrey
         for title in ["联系商户", "修改密码", "客服中心"] {
             b.chevronRow(title, size: dp(15), color: MockInk.title,
                          padH: dp(16), padV: dp(18))
         }
-        b.bottomFill(MockInk.entryGrey)
     }
 }

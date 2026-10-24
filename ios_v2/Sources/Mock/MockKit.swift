@@ -734,8 +734,18 @@ final class MockBuilder {
         self.y = startY
     }
 
+    /// 内容画完后的底板色（自动铺到画布底部）。
+    ///
+    /// 安卓绝大多数页面在内容结束后露出浅灰底板；之前我们白到底就是因为缺这一步。
+    /// 需要保持纯白到底的页面（聊天、长列表、微信支付空页）把它设成 `nil`。
+    var autoBoard: UIColor? = MockInk.board
+
     var result: MockPage {
-        MockPage(ops: ops, hits: hits, height: y, background: pageBackground)
+        var finalOps = ops
+        if let board = autoBoard, y < 2388 {
+            finalOps.append(.fill(CGRect(x: 0, y: y, width: width, height: 2388 - y), board))
+        }
+        return MockPage(ops: finalOps, hits: hits, height: y, background: pageBackground)
     }
 
     // MARK: 基础量算

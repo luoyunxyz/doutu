@@ -54,7 +54,5 @@ enum MockLiushui {
         b.row("2026-10-22 08:30  消费", "-19.90", size: rowSize, padV: rowPadV)
         b.row("2026-10-21 21:10  退款", "+29.00", size: rowSize, padV: rowPadV)
         b.gap(dp(20))
-        // 内容结束后的底板 #eeeeee
-        b.bottomFill(MockInk.board)
     }
 }

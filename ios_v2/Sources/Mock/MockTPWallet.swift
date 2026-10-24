@@ -15,6 +15,11 @@ enum MockTPWallet {
     static func page(state: MockState, metrics: MockMetrics,
                      width: CGFloat, showsTopTitle: Bool) -> MockPage {
         let b = MockBuilder(width: width, metrics: metrics)
+        // TP 整页是 #f1f2f6（安卓实测 tp_sub0）
+        let tpBg = UIColor(red: 0xf1 / 255.0, green: 0xf2 / 255.0,
+                           blue: 0xf6 / 255.0, alpha: 1)
+        b.autoBoard = tpBg
+        b.pageBackground = tpBg
         switch state.sub {
         case 0:
             detail(b, state, showsTopTitle: showsTopTitle, incoming: true)
