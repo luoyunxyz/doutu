@@ -55,20 +55,37 @@ enum MockAlipay {
         return b.result
     }
 
-    /// 转账/话费/明细(转出)：蓝头 + 金额 + 三行状态
+    /// 转账/话费/明细(转出)：蓝块「到账成功」+ 白色通知卡 + 完成
+    /// （按 `ali_sub2` 截图复刻）
     private static func transfer(_ b: MockBuilder, s: MockState, title: String,
                                  showsTopTitle: Bool) {
         if showsTopTitle { b.titleBar(title) }
-        b.coloredHeaderBar(title, bg: .white, fg: MockInk.title)
-        b.checkBadge(diameter: dp(56), color: blue, gapTop: dp(20), symbolSize: dp(32))
-        b.sectionLabel("支付成功", size: dp(20), color: blue,
-                       padH: 0, padTop: dp(10), padBottom: 0)
-        b.sectionLabel(s.value("金额", "¥ 100.00"), size: dp(40), color: MockInk.black,
-                       padH: 0, padTop: dp(10), padBottom: dp(10))
-        b.row("当前状态", "支付成功")
-        b.row("支付方式", "余额宝")
-        b.row("交易时间", s.time)
-        b.gap(dp(20))
+
+        // 蓝块：支 / 到账成功 / 金额 / 三行
+        b.panel(gapTop: 0, margin: 0, pad: dp(16), bg: blue) { p in
+            p.sectionLabel("支                     到账成功                      完成",
+                           size: dp(17), color: .white,
+                           padH: 0, padTop: dp(8), padBottom: dp(6))
+            p.sectionLabel(s.value("金额", "¥ 100.00"), size: dp(44), color: .white,
+                           padH: 0, padTop: dp(10), padBottom: dp(14))
+            p.row("中国邮政储蓄...(2680)张三号", "¥ 100.00")
+            p.row("交易方式", "余额宝(转出资金付款)")
+            p.row("到账时间", s.time)
+        }
+
+        // 白色通知卡
+        b.panel(gapTop: dp(12), margin: dp(12), pad: dp(14), bg: .white) { p in
+            p.sectionLabel("立即通知收款人", size: dp(16), color: MockInk.title,
+                           padH: 0, padTop: 0, padBottom: dp(10))
+            p.sectionLabel("使用转账凭证            信息准确，对账无忧        去通知",
+                           size: dp(15), color: MockInk.title,
+                           padH: 0, padTop: 0, padBottom: dp(4))
+        }
+
+        // 完成
+        b.gap(dp(320))
+        b.fullButton("完成", filled: true, color: blue,
+                     height: dp(48), padH: dp(90), gapTop: dp(10), size: dp(18))
     }
 
     private static func paid(_ b: MockBuilder, _ s: MockState, showsTopTitle: Bool) {
