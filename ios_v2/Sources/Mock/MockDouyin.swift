@@ -15,10 +15,21 @@ enum MockDouyin {
                      width: CGFloat, showsTopTitle: Bool) -> MockPage {
         let b = MockBuilder(width: width, metrics: metrics)
         switch state.sub {
-        case 0:
-            paid(b, state, showsTopTitle: showsTopTitle)
+        case 1:
+            // 零钱明细：列表页
+            if showsTopTitle { b.titleBar("零钱明细") }
+            b.coloredHeaderBar("零钱明细", bg: .white, fg: MockInk.title)
+            b.sectionLabel("零钱余额  ¥ 0.00", size: dp(30), color: MockInk.black,
+                           padH: dp(16), padTop: dp(20), padBottom: dp(10))
+            b.hairlineFull()
+            b.row("抖音支付-消费", "-29.00")
+            b.row("抖音支付-消费", "-19.90")
+            b.row("抖音红包", "+5.00")
+            b.row("抖音支付-退款", "+29.00")
+            b.gap(dp(20))
         default:
-            return MockComposer.placeholder(module: .douyin, metrics: metrics, width: width)
+            // 支付 / 支付-零钱 / 支付2：同一张支付成功页
+            paid(b, state, showsTopTitle: showsTopTitle)
         }
         return b.result
     }

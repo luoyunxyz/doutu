@@ -13,11 +13,26 @@ enum MockQQ {
     static func page(state: MockState, metrics: MockMetrics,
                      width: CGFloat, showsTopTitle: Bool) -> MockPage {
         let b = MockBuilder(width: width, metrics: metrics)
+        // 子页 1/2 是流水列表，其余共用「交易详情」版式
         switch state.sub {
-        case 0:
-            detail(b, state, showsTopTitle: showsTopTitle)
+        case 1, 2:
+            if showsTopTitle { b.titleBar("流水") }
+            b.coloredHeaderBar("流水", bg: .white, fg: MockInk.title)
+            b.row("2026-10-24 19:47", "-1,000.00")
+            b.row("2026-10-23 12:05", "+200.00")
+            b.row("2026-10-22 08:30", "-19.90")
+            b.row("2026-10-21 21:10", "+88.00")
+            b.gap(dp(20))
+        case 3:
+            if showsTopTitle { b.titleBar("广告") }
+            b.coloredHeaderBar("广告", bg: .white, fg: MockInk.title)
+            b.sectionLabel("“充值特惠”", size: dp(22), color: MockInk.title,
+                           padH: dp(16), padTop: dp(24), padBottom: dp(8))
+            b.paragraph("充值 100 元立减 10 元，活动规则见页面底部。",
+                        size: dp(15), color: MockInk.label,
+                        padH: dp(16), padTop: 0, padBottom: dp(20))
         default:
-            return MockComposer.placeholder(module: .qq, metrics: metrics, width: width)
+            detail(b, state, showsTopTitle: showsTopTitle)
         }
         return b.result
     }

@@ -14,19 +14,18 @@ enum MockNongxin {
     static func page(state: MockState, metrics: MockMetrics,
                      width: CGFloat, showsTopTitle: Bool) -> MockPage {
         let b = MockBuilder(width: width, metrics: metrics)
-        switch state.sub {
-        case 0:
-            receipt(b, state, showsTopTitle: showsTopTitle)
-        default:
-            return MockComposer.placeholder(module: .nongxin, metrics: metrics, width: width)
-        }
+        // 五个子页共用「电子回单详情」版式，标题取子页名
+        receipt(b, state, showsTopTitle: showsTopTitle)
         return b.result
     }
 
     private static func receipt(_ b: MockBuilder, _ s: MockState, showsTopTitle: Bool) {
-        if showsTopTitle { b.titleBar("电子回单详情") }
-
-        b.coloredHeaderBar("电子回单详情", bg: blue, fg: .white)
+        let names = MockModule.nongxin.subs
+        if showsTopTitle {
+            b.titleBar("电子回单详情")
+        }
+        b.coloredHeaderBar(names.indices.contains(s.sub) ? names[s.sub] : "电子回单详情",
+                           bg: blue, fg: .white)
 
         b.row("手机银行电子回单", "")
         b.hairlineFull()
