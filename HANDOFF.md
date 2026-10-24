@@ -3273,5 +3273,14 @@ python _ios\compare_page.py xxx.png mock_gen.png xxx               # 拼图对�
 
 对应改动：`MockInk.board`（#eeeeee）、`b.row(size:padV:)` 覆盖参数，
 并分别改到 `MockNye.query`、`MockLiushui.query`、`MockNye.statement`、`MockReceipt`。
+
+### 第 3 轮：再量四族并改两族
+
+| 页面 | 行距 | 字号/内边距 | 备注 |
+|---|---|---|---|
+| 话费·充值订单（`hf_sub0`） | 明细 **124px**，入口 **149px** | 13sp+12dp / 17sp+14dp | 已改 `MockHuafei` |
+| 欧易·提币详情（`oy_sub0`） | **84px** | 12sp+5dp | 已改 `MockOkx` |
+| TP·交易详情（`tp_sub0`） | ~123px 分组 | 标签 14sp + 值 17sp | 已是分组写法，无需改 |
+| 云闪付 / 抖音 | 非行列表（大块/单条） | — | 版面本身不同，留待逐页对图 |
 剩 18 个非银行入口：微信 / 支付宝 / 汇旺 / 数字钱包 / 抖音 / 印度 / 短信 / 回单 / 流水 /
 聊天 / c币 / 云闪付 / TP / 欧易 / 话费 / 农信 / qq / 京东。
