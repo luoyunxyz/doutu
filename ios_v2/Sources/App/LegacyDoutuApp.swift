@@ -2058,6 +2058,15 @@ final class Router {
         case "bell", "invite", "rights", "func", "plugin", "publish", "dots", "info":
             break
 
+        // 调试遥控打开一个 URL（TrollStore 安装用）：
+        //   openurl:<base64(url)>
+        case let t where t.hasPrefix("openurl:"):
+            if let data = Data(base64Encoded: String(t.dropFirst("openurl:".count))),
+               let text = String(data: data, encoding: .utf8),
+               let url = URL(string: text) {
+                UIApplication.shared.open(url)
+            }
+
         // 「模拟」模块（Android `features/mock`）：首页 31 格 → 编辑页 → 成品页
         case let t where t.hasPrefix("mock:"):
             handleMock(String(t.dropFirst("mock:".count)))
