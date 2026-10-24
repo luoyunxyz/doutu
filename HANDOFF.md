@@ -3351,5 +3351,28 @@ qq 原本 +2.4px 超差 → 内边距改 6.5dp 后归零。
 
 `titleSize` 由 19 改成 **18**（银行页占多数，17~18 之间取 18；回单那页差 1sp）。
 金额 32sp 与实测一致，不动。
+
+### 第 8 轮：底板改成「构建器自动补」
+
+查下来 **32 个页面文件里只有 3 个调用过 `bottomFill`** —— 也就是绝大多数页面本来就会白到底。
+与其一页页加调用，改成构建器自己收尾：
+
+```swift
+// MockBuilder
+var autoBoard: UIColor? = MockInk.board
+var result: MockPage {
+    var finalOps = ops
+    if let board = autoBoard, y < 2388 {
+        finalOps.append(.fill(CGRect(x: 0, y: y, width: width, height: 2388 - y), board))
+    }
+    …
+}
+```
+
+- 默认灰 `#eeeeee`（明细查询实测值），一次覆盖那 29 个文件；
+- 整页是别的颜色的页面显式声明：**聊天 `#ededed`**、**TP `#f1f2f6`**、**qq 入口区 `#f0f1f2`**；
+- 原来那三处显式 `bottomFill` 变成冗余，已删掉（否则会被自动底板覆盖成错误颜色）。
+
+新增 `_ios/v2/check-board.mjs` 做这项排查。
 剩 18 个非银行入口：微信 / 支付宝 / 汇旺 / 数字钱包 / 抖音 / 印度 / 短信 / 回单 / 流水 /
 聊天 / c币 / 云闪付 / TP / 欧易 / 话费 / 农信 / qq / 京东。
