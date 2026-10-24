@@ -50,26 +50,30 @@ enum MockReceipt {
                        padH: dp(16), padTop: dp(2), padBottom: dp(8))
         b.hairlineFull()
 
+        // 行距按安卓实测（hd_sub0）：12sp 字 + 上下 4dp，行距 66px
+        let rs = dp(12)
+        let rp = dp(4)
+
         // 收款段
-        b.row("收款户名", s.value("收款户名", "张三"))
-        b.row("收款卡号", s.value("收款卡号", "6229****2199"))
-        b.row("收款银行", s.value("收款银行", "兴业银行"))
-        b.row("收款金额", s.value("收款金额", "0.10 元(人民币)"))
-        b.row("手续费", s.value("手续费", "免费"))
-        b.row("合计", s.value("合计", "零角零分"))
+        b.row("收款户名", s.value("收款户名", "张三"), size: rs, padV: rp)
+        b.row("收款卡号", s.value("收款卡号", "6229****2199"), size: rs, padV: rp)
+        b.row("收款银行", s.value("收款银行", "兴业银行"), size: rs, padV: rp)
+        b.row("收款金额", s.value("收款金额", "0.10 元(人民币)"), size: rs, padV: rp)
+        b.row("手续费", s.value("手续费", "免费"), size: rs, padV: rp)
+        b.row("合计", s.value("合计", "零角零分"), size: rs, padV: rp)
         b.hairlineFull()
 
         // 付款段
-        b.row("付款户名", s.value("付款户名", "李四"))
-        b.row("付款卡号", s.value("付款卡号", "6222****8198"))
-        b.row("付款银行", s.value("付款银行", "中国工商银行"))
+        b.row("付款户名", s.value("付款户名", "李四"), size: rs, padV: rp)
+        b.row("付款卡号", s.value("付款卡号", "6222****8198"), size: rs, padV: rp)
+        b.row("付款银行", s.value("付款银行", "中国工商银行"), size: rs, padV: rp)
         b.hairlineFull()
 
         // 回单段
-        b.row("回单编号", s.value("回单编号", "ZZHK-0004-1234-6845-0016"))
-        b.row("指令序号", s.value("指令序号", "374878806332417757147418227"))
-        b.row("交易时间", s.value("交易时间", "2026/10/24 19:38"))
-        b.row("附言", s.value("附言", "--"))
+        b.row("回单编号", s.value("回单编号", "ZZHK-0004-1234-6845-0016"), size: rs, padV: rp)
+        b.row("指令序号", s.value("指令序号", "374878806332417757147418227"), size: rs, padV: rp)
+        b.row("交易时间", s.value("交易时间", "2026/10/24 19:38"), size: rs, padV: rp)
+        b.row("附言", s.value("附言", "--"), size: rs, padV: rp)
 
         // 隐藏卡号 + 模板缩略图 + 导出
         b.gap(dp(10))
