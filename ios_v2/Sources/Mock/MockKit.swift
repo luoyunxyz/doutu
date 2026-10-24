@@ -627,7 +627,8 @@ final class MockBuilder {
         let textW = Draw.width(text, size: metrics.kindSize)
         let total = metrics.kindIcon + dp(6) + textW
         let startX = (width - total) / 2
-        ops.append(.image(asset, CGRect(x: startX, y: top + (h - metrics.kindIcon) / 2,
+        let iconY: CGFloat = top + (h - metrics.kindIcon) / 2
+        ops.append(.image(asset, CGRect(x: startX, y: iconY,
                                        width: metrics.kindIcon, height: metrics.kindIcon)))
         let baseline = top + (h - lh) / 2 + ascender(metrics.kindSize)
         let rect = CGRect(x: startX, y: top, width: total, height: h)
@@ -642,7 +643,8 @@ final class MockBuilder {
         let lh = lineHeight(metrics.cardNoSize)
         let h = max(lh, metrics.cardLogo) + metrics.cardPadV * 2
         let top = y + metrics.cardPadV
-        ops.append(.image(logo, CGRect(x: metrics.cardPadH, y: top + (max(lh, metrics.cardLogo) - metrics.cardLogo) / 2,
+        let logoY: CGFloat = top + (max(lh, metrics.cardLogo) - metrics.cardLogo) / 2
+        ops.append(.image(logo, CGRect(x: metrics.cardPadH, y: logoY,
                                        width: metrics.cardLogo, height: metrics.cardLogo)))
         let baseline = top + (max(lh, metrics.cardLogo) - lh) / 2 + ascender(metrics.cardNoSize)
         let x = metrics.cardPadH + metrics.cardLogo + metrics.cardGap
@@ -766,10 +768,17 @@ final class MockBuilder {
     }
 
     /// 居中的绿色圆形 ✓（中行「操作结果」页）
+    ///
+    /// 注意：`MockOp.circle` 是**枚举 case**，参数没有标签，只能按位置传。
+    /// 拆成本地常量再 append，避免 Swift 6 编译器在「4 个 CGFloat 表达式」上超时
+    /// （Codemagic 的 Xcode 26.6 上就是这样报的：unable to type-check in reasonable time）。
     func checkBadge(diameter: CGFloat, color: UIColor, gapTop: CGFloat, symbolSize: CGFloat) {
         y += gapTop
-        ops.append(.circle(cx: width / 2, cy: y + diameter / 2, r: diameter / 2, color))
-        let baseline = y + diameter / 2 + ascender(symbolSize) / 2 - symbolSize * 0.06
+        let cx: CGFloat = width / 2
+        let cy: CGFloat = y + diameter / 2
+        let radius: CGFloat = diameter / 2
+        ops.append(.circle(cx, cy, radius, color))
+        let baseline = cy + ascender(symbolSize) / 2 - symbolSize * 0.06
         ops.append(.center("✓", width / 2, baseline, symbolSize, MockInk.white, false))
         y += diameter
     }
@@ -1001,9 +1010,11 @@ final class MockBuilder {
         y += gapTop
         let cx = width / 2
         let cy = y + diameter / 2
-        // 外圈整圆 + 内圈白圆 = 描边圆环
-        ops.append(.circle(cx: cx, cy: cy, r: diameter / 2, stroke))
-        ops.append(.circle(cx: cx, cy: cy, r: diameter / 2 - strokeWidth, MockInk.white))
+        // 外圈整圆 + 内圈白圆 = 描边圆环（枚举 case 无标签，按位置传）
+        let outer: CGFloat = diameter / 2
+        let inner: CGFloat = diameter / 2 - strokeWidth
+        ops.append(.circle(cx, cy, outer, stroke))
+        ops.append(.circle(cx, cy, inner, MockInk.white))
         let baseline = cy + ascender(symbolSize) / 2 - symbolSize * 0.06
         ops.append(.center(symbol, width / 2, baseline, symbolSize, symbolColor, false))
         y += diameter
@@ -1038,8 +1049,10 @@ final class MockBuilder {
         let baseline = top + ascender(size)
         for (index, title) in titles.enumerated() {
             let isSelected = index == selected
-            ops.append(.center(title, padH + cellW * (CGFloat(index) + 0.5), baseline, size,
-                               isSelected ? selectedColor : normalColor, bold: isSelected))
+            let cx: CGFloat = padH + cellW * (CGFloat(index) + 0.5)
+            // 枚举 case 的最后一个参数是位置 Bool，不能写 `bold:`
+            ops.append(.center(title, cx, baseline, size,
+                               isSelected ? selectedColor : normalColor, isSelected))
         }
         y = top + lh + padBottom
     }

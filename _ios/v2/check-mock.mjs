@@ -136,6 +136,35 @@ console.log('=== 2. MockBuilder 调用（方法名 + 参数标签）===');
   console.log(`  ${methods.size} 个方法，${calls} 处带标签调用`);
 }
 
+console.log('=== 2b. MockOp 枚举 case 构造不能带标签 ===');
+{
+  // 这一条是 2026-10-24 云端构建报出来后补的：
+  //   error: extraneous argument label 'bold:' in call
+  //   error: type 'Sequence' has no member 'circle'
+  // 原因是把枚举 case 当函数调用了（`.circle(cx:cy:r:)` / `.center(..., bold:)`），
+  // 而 Swift 的 case 参数**没有标签**。静态检查脚本之前只看 `d.xxx` 与 `b.xxx`，漏了 `.case(...)`。
+  const names = ['fill', 'roundStroke', 'round', 'circle', 'text', 'center', 'right',
+    'image', 'hairline', 'chevronDown', 'gradient'];
+  const offenders = [];
+  for (const file of fs.readdirSync(MOCK_DIR).filter((f) => f.endsWith('.swift'))) {
+    const text = read(path.join(MOCK_DIR, file));
+    const re = new RegExp(`(?:append\\(|return\\s+)\\.(${names.join('|')})\\(`, 'g');
+    for (const match of text.matchAll(re)) {
+      const open = match.index + match[0].length - 1;
+      const labels = [];
+      for (const part of splitTopLevel(parenBody(text, open))) {
+        const label = part.trim().match(/^([A-Za-z_]\w*):/);
+        if (label) labels.push(label[1]);
+      }
+      if (labels.length) {
+        const line = text.slice(0, match.index).split(/\r?\n/).length;
+        offenders.push(`${file}:${line} .${match[1]}(${labels.join(',')})`);
+      }
+    }
+  }
+  ok('枚举 case 构造没有多余标签', offenders.length === 0, offenders.join(' | '));
+}
+
 console.log('=== 3. 子页名与 Android SUBS 一致 ===');
 {
   const modules = {
