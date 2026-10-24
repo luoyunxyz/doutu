@@ -42,12 +42,15 @@ enum MockAlipay {
                                padH: 0, padTop: dp(4), padBottom: dp(4))
                 p.sectionLabel("交易成功", size: dp(15), color: MockInk.label,
                                padH: 0, padTop: 0, padBottom: dp(12))
-                p.row("付款方式", "花呗 ›")
-                p.row("支付宝积分", "立即领取25积分(已翻5倍)")
-                p.row("商品说明", "收钱码收款")
-                p.row("收款方全称", "**岚(个人)")
-                p.row("支付日期", s.time)
-                p.row("订单号", "2022100822001454681448487984")
+                // 行距按安卓实测（ali_sub6）：14sp + 8dp，行距 97px
+                let rs = dp(14)
+                let rp = dp(8)
+                p.row("付款方式", "花呗 ›", size: rs, padV: rp)
+                p.row("支付宝积分", "立即领取25积分(已翻5倍)", size: rs, padV: rp)
+                p.row("商品说明", "收钱码收款", size: rs, padV: rp)
+                p.row("收款方全称", "**岚(个人)", size: rs, padV: rp)
+                p.row("支付日期", s.time, size: rs, padV: rp)
+                p.row("订单号", "2022100822001454681448487984", size: rs, padV: rp)
             }
             b.panel(gapTop: dp(12), margin: dp(12), pad: dp(14), bg: .white) { p in
                 p.chevronRow("联系收款方", size: dp(16), color: MockInk.title,

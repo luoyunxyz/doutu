@@ -106,11 +106,14 @@ enum MockWechat {
         b.sectionLabel(s.value("金额", "-100.00"), size: dp(44),
                        color: MockInk.black, padH: 0, padTop: dp(12), padBottom: dp(20))
         b.hairlineFull()
-        b.row("当前状态", status)
-        b.row("收款方备注", remark)
-        b.row(timeLabel, s.time)
-        b.row("支付方式", "零钱")
-        b.row("转账单号", "10000499012022092600801723318157")
+        // 行距按安卓实测（wx_sub8）：14sp + 6.5dp，行距 89px
+        let bs = dp(14)
+        let bp = dp(6.5)
+        b.row("当前状态", status, size: bs, padV: bp)
+        b.row("收款方备注", remark, size: bs, padV: bp)
+        b.row(timeLabel, s.time, size: bs, padV: bp)
+        b.row("支付方式", "零钱", size: bs, padV: bp)
+        b.row("转账单号", "10000499012022092600801723318157", size: bs, padV: bp)
         b.fill(dp(10), MockInk.page)
         b.sectionLabel("账单服务", size: dp(16), color: MockInk.title,
                        padH: dp(16), padTop: dp(14), padBottom: dp(8))
