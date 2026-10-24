@@ -107,19 +107,31 @@ if (unique.length) {
   for (const p of unique) console.log('    ' + p);
 }
 
-// ③ 每个 Screen 子类都实现了协议要求的两件事
+// ③ 每个 Screen 子类都实现了协议要求的四件事
+//
+// 2026-10-24 补：原来只看路径里带 `Screens/` 的文件，于是新加的 `Sources/Video/*`
+// 整个被跳过；而且只查了 canvasSize / hitTest —— 视频模块三个页面就是**漏了 maxScroll**
+// 才被云端编译器拦下来的（`Screen` 协议里它是必填，扩展里没有默认实现）。
 {
-  const screenFiles = files.filter((f) => f.includes('Screens'));
   let missingCanvas = [];
   let missingHit = [];
-  for (const f of screenFiles) {
+  let missingDraw = [];
+  let missingScroll = [];
+  for (const f of files) {
     const code = stripNoise(texts.get(f));
-    if (!/:\s*Screen\b/.test(code)) continue;
-    if (!/let canvasSize/.test(code) && !/var canvasSize/.test(code)) missingCanvas.push(path.basename(f));
-    if (!/func hitTest\(/.test(code)) missingHit.push(path.basename(f));
+    // 只认「类型声明」里的 `: Screen`；`func push(_ screen: Screen)` 这种参数不算
+    if (!/(?:final\s+)?class\s+\w+\s*:\s*Screen\b/.test(code)) continue;
+    const base = path.basename(f);
+    if (!/let canvasSize|var canvasSize/.test(code)) missingCanvas.push(base);
+    if (!/func hitTest\(/.test(code)) missingHit.push(base);
+    if (!/func draw\(/.test(code)) missingDraw.push(base);
+    if (!/func maxScroll\(/.test(code)) missingScroll.push(base);
   }
   ok('每个 Screen 都声明了 canvasSize', missingCanvas.length === 0, missingCanvas.join(','));
   ok('每个 Screen 都实现了 hitTest', missingHit.length === 0, missingHit.join(','));
+  ok('每个 Screen 都实现了 draw', missingDraw.length === 0, missingDraw.join(','));
+  ok('每个 Screen 都实现了 maxScroll（协议没有默认实现）',
+    missingScroll.length === 0, missingScroll.join(','));
 }
 
 // ④ 每个 Screen 的 State 必须继承 ScreenState

@@ -2328,3 +2328,19 @@ node _ios/v2/check-video.mjs       # 9 项全绿（图标 25 张 / 字段键闭�
 
 - `DyCommentActivity`（评论切片，371 行）—— 工具页「评论切片」入口还是「制作中」；
 - 视频选择与播放（见上面第 1 条）。
+
+### 第三个被复核抓到的编译错误：协议必填项没有默认值
+
+三个视频页都写了 `let selfScrolls = false`，却没写 `func maxScroll(...)` ——
+`Screen` 协议里 `maxScroll` 是**必填**，扩展里没有默认实现，于是报
+「does not conform to protocol 'Screen'」；连带 `push(VideoDouyinScreen(), …)` 一起红。
+
+修法就是每页补一行 `func maxScroll(_ state: ScreenState) -> CGFloat { 0 }`。
+
+**更重要的是把检查器补上了**：`_ios/v2/check-symbols.mjs` 的第 ③ 组原来
+只看路径里带 `Screens/` 的文件、只查 canvasSize/hitTest —— 新加的 `Sources/Video/`
+整个没被检查过。现在改成「所有文件里声明 `class X: Screen` 的都要有
+canvasSize / hitTest / draw / maxScroll 四项」，67 个 Screen 子类全过。
+
+三次教训连起来看：**静态检查的覆盖面（查哪些文件、查哪几项）比检查本身更容易漏**。
+每新增一个目录，都要问一句「检查器看得见它吗」。

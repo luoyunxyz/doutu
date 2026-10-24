@@ -7,6 +7,9 @@ final class VideoWeishiScreen: Screen {
     let canvasSize = CGSize(width: 1080, height: 2388)
     let selfScrolls = false
 
+    /// 单屏页：内容就是一屏，不做滚动（所有交互都是点击）
+    func maxScroll(_ state: ScreenState) -> CGFloat { 0 }
+
     static let W: CGFloat = 1080
     static let H: CGFloat = 2388
 
