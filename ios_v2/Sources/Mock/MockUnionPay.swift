@@ -26,24 +26,46 @@ enum MockUnionPay {
                      width: CGFloat, showsTopTitle: Bool) -> MockPage {
         let b = MockBuilder(width: width, metrics: metrics)
         switch state.sub {
-        case 0:
-            transferred(b, state, showsTopTitle: showsTopTitle)
+        case 8:
+            // 支付助手
+            if showsTopTitle { b.titleBar("支付助手") }
+            b.coloredHeaderBar("支付助手", bg: .white, fg: MockInk.title)
+            b.row("今日支付", "3 笔")
+            b.row("今日金额", "¥ 260.00")
+            b.row("本月支付", "18 笔")
+            b.row("本月金额", "¥ 1,860.00")
+            b.gap(dp(20))
+        case 9:
+            // 回单
+            if showsTopTitle { b.titleBar("回单") }
+            b.coloredHeaderBar("回单", bg: .white, fg: MockInk.title)
+            b.sectionLabel("电子回单", size: dp(17), color: MockInk.title,
+                           padH: dp(16), padTop: dp(20), padBottom: dp(6))
+            b.row("付款方", "李哈哈")
+            b.row("收款方", "张大国")
+            b.row("金额", "200.00")
+            b.row("时间", s.time)
+            b.gap(dp(20))
         default:
-            return MockComposer.placeholder(module: .yunshanfu, metrics: metrics, width: width)
+            // 转账 / 转账2 / 转出1..4 / 支付宝转入 / 转出2 / 通知收款人
+            transferred(b, state, showsTopTitle: showsTopTitle,
+                        incoming: state.sub == 6)
         }
         return b.result
     }
 
     private static func transferred(_ b: MockBuilder, _ s: MockState,
-                                    showsTopTitle: Bool) {
-        if showsTopTitle { b.titleBar("转账成功") }
+                                    showsTopTitle: Bool, incoming: Bool) {
+        let names = MockModule.yunshanfu.subs
+        let title = names.indices.contains(s.sub) ? names[s.sub] : "转账成功"
+        if showsTopTitle { b.titleBar(title) }
 
         // 绿勾 + 转账成功 + 完成
-        b.sectionLabel("✓  转账成功                              完成",
+        b.sectionLabel("✓  \(title)                              完成",
                        size: dp(18), color: green, padH: dp(16), padTop: dp(14), padBottom: 0)
 
         // 金额 + 说明
-        b.sectionLabel(s.value("金额", "¥ 200.00"), size: dp(44),
+        b.sectionLabel(s.value("金额", incoming ? "¥ +200.00" : "¥ 200.00"), size: dp(44),
                        color: UIColor(red: 0x33 / 255.0, green: 0x33 / 255.0,
                                       blue: 0x33 / 255.0, alpha: 1),
                        padH: 0, padTop: dp(24), padBottom: 0)
