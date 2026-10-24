@@ -13,9 +13,14 @@ enum MockBoc {
     static func page(state: MockState, metrics: MockMetrics,
                      width: CGFloat, showsTopTitle: Bool) -> MockPage {
         let b = MockBuilder(width: width, metrics: metrics)
-        if state.sub == 0 || state.sub == 5 {
+        switch state.sub {
+        case 0:
             result(b, state, showsTopTitle: showsTopTitle)
-        } else {
+        case 2:
+            share(b, state, showsTopTitle: showsTopTitle)
+        case 5:
+            receipt(b, state, showsTopTitle: showsTopTitle)
+        default:
             detail(b, state, showsTopTitle: showsTopTitle)
         }
         return b.result
@@ -130,5 +135,65 @@ enum MockBoc {
                         size: dp(13), color: Draw.color(0xff5d5d5d),
                         padH: dp(16), padTop: dp(10), padBottom: dp(10))
         }
+    }
+
+    // MARK: - 中国 02/02：分享信息（14sp / 88px）
+
+    private static func share(_ b: MockBuilder, _ s: MockState, showsTopTitle: Bool) {
+        if showsTopTitle { b.titleBar("分享信息") }
+
+        b.sectionLabel("转账交易成功", size: dp(15), color: MockInk.title,
+                       padH: dp(16), padTop: dp(20), padBottom: 0)
+        b.paragraph("此回单为客户自行打印，表示汇款申请已提交，仅供参考。资金到账状态以收款方账户为准。",
+                    size: dp(16), color: Draw.color(0xffa8b2b1),
+                    padH: dp(16), padTop: dp(10), padBottom: dp(10))
+
+        let size = dp(14)
+        let padV = dp(6.27)
+        func row(_ label: String, _ value: String) {
+            b.kvRow(label, s.value(label, value), labelWidth: dp(130), size: size,
+                    padH: dp(16), padV: padV, labelColor: MockInk.value)
+        }
+        row("转账金额", "100.00 元")
+        row("交易日期", "2026/10/24")
+        row("收款人名称", "李哈哈")
+        row("收款账号", "6226 ****** 9990")
+        row("收款银行", "中国工商银行")
+        row("付款人名称", "李哈哈")
+        row("付款账号", "6226 ****** 9990")
+        row("交易序号", "75802482610")
+
+        b.fullButton("分享给微信好友", filled: true, color: Draw.color(0xff2fae4f),
+                     height: dp(46), padH: dp(16), gapTop: dp(18), size: dp(16))
+    }
+
+    // MARK: - 中国 02/05：支付宝到账回单（12sp / 105px）
+
+    private static func receipt(_ b: MockBuilder, _ s: MockState, showsTopTitle: Bool) {
+        if showsTopTitle { b.titleBar("转账金额") }
+
+        b.sectionLabel("转账金额（人民币）", size: dp(13), color: MockInk.title,
+                       padH: dp(12), padTop: dp(20), padBottom: 0)
+        b.sectionLabel("500.00", size: dp(24), color: MockInk.title,
+                       padH: dp(12), padTop: dp(8), padBottom: 0)
+        b.paragraph("收款行处理成功，具体入账情况可凭人行报文号联系对方银行查询。",
+                    size: dp(12), color: Draw.color(0xff666666),
+                    padH: dp(12), padTop: dp(8), padBottom: dp(10))
+
+        let size = dp(12)
+        let padV = dp(10.3)
+        func row(_ label: String, _ value: String) {
+            b.kvRow(label, s.value(label, value), labelWidth: dp(84), size: size,
+                    padH: dp(12), padV: padV, labelColor: Draw.color(0xff666666))
+        }
+        row("人行报文号", "1041000000042023081423844751")
+        row("优惠后费用", "人民币元 0.00")
+        row("收款人名称", "李哈哈")
+        row("收款账号", "6217 ****** 2284")
+        row("收款开户行", "上海浦东发展银行")
+        row("付款账户", "张珊珊 6217 ****** 8765")
+        row("交易渠道", "手机银行")
+        row("交易序号", "44662595972")
+        row("交易时间", "2026/10/24 21:41:55")
     }
 }
