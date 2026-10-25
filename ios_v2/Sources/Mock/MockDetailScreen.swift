@@ -10,6 +10,8 @@ import UIKit
 final class MockDetailScreen: Screen {
     let canvasSize = CGSize(width: 1080, height: 2388)
     let selfScrolls = false
+    /// 成品页是一张「整屏截图」：按参考画布原比例铺满，避免安全区把整页纵向压扁 11.5%
+    let keepsReferenceAspect = true
 
     static let W: CGFloat = 1080
     static let H: CGFloat = 2388
@@ -69,6 +71,11 @@ final class MockDetailScreen: Screen {
             let page = MockRemote.page(from: spec)
             d.rect(CGRect(x: 0, y: 0, width: Self.W, height: Self.H), .white)
             page.draw(d)
+            // 回退箭头在安卓是图标（不在 DOM 文本里），spec 里没有，这里补画，
+            // 让「‹ 明细」和参考图一致。
+            let barH = MockRemote.headerHeight(spec)
+            d.centerText("‹", cx: dp(26), baseline: barH / 2 + dp(9),
+                         size: dp(28), MockInk.value)
             return
         }
         let scroll = s.scroll
@@ -89,11 +96,13 @@ final class MockDetailScreen: Screen {
         d.rect(CGRect(x: 0, y: y, width: Self.W, height: Self.headH), MockInk.white)
         d.centerText("‹", cx: dp(26), baseline: y + Self.headH / 2 + dp(9),
                      size: dp(28), MockInk.value)
-        let size = dp(19)
+        let size = dp(17)
         d.centerText(title(s), cx: Self.W / 2,
                      baseline: y + Self.headH / 2 + Draw.font(size: size, bold: true).ascender / 2
                         - size * 0.06,
                      size: size, MockInk.title, bold: true)
+        // 参考图（农业明细）标题栏底部有一条 1px 浅灰分割线，之前漏画了
+        d.hairline(y + Self.headH, from: 0, to: Self.W, MockInk.line)
     }
 
     func hitTest(_ state: ScreenState, x: CGFloat, y: CGFloat) -> ActionToken {

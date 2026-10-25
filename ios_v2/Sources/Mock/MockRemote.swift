@@ -27,6 +27,14 @@ struct MockRemoteSpec: Decodable {
 }
 
 enum MockRemote {
+    /// 调试总开关：默认 **关**。
+    ///
+    /// 远程 spec 只用来在电脑上改 JSON 调版式；成品页必须只由 App 内的版式决定，
+    /// 否则同一页会随「debug_server 是否可达」变样（开着电脑是一种样子、拔掉网线
+    /// 又是另一种），用户点「生成图片」得到的图就不可复现。
+    /// 需要临时用远程 spec 对版式时，把它改成 `true` 重新打包即可。
+    static let enabled = false
+
     private static var cache: [String: MockRemoteSpec] = [:]
     private static var images: [String: UIImage] = [:]
     private static var loading: Set<String> = []
@@ -36,10 +44,12 @@ enum MockRemote {
     }
 
     static func spec(_ module: MockModule, _ sub: Int) -> MockRemoteSpec? {
-        cache[key(module, sub)]
+        guard enabled else { return nil }
+        return cache[key(module, sub)]
     }
 
     static func load(_ module: MockModule, _ sub: Int, done: @escaping () -> Void) {
+        guard enabled else { return }
         let k = key(module, sub)
         if cache[k] != nil || loading.contains(k) { return }
         loading.insert(k)
@@ -83,6 +93,9 @@ enum MockRemote {
 
     static func page(from spec: MockRemoteSpec) -> MockPage {
         var ops: [MockOp] = []
+        // 分割线单独收着，最后再画：spec 是按 DOM 顺序导出的，标题栏那条线排在
+        // 白色底块**前面**，照原顺序画会被后面的底块盖住（参考图里标题下面那条线就丢了）。
+        var lines: [MockOp] = []
         for o in spec.ops {
             let x = (o.x ?? 0) * 3
             let y = (o.y ?? 0) * 3
@@ -98,7 +111,7 @@ enum MockRemote {
                     ops.append(.fill(CGRect(x: x, y: y, width: w, height: h), color))
                 }
             case "l":
-                ops.append(.hairline(y, x, x + w, CssColor.parse(o.c) ?? .clear))
+                lines.append(.hairline(y, x, x + w, CssColor.parse(o.c) ?? .clear))
             case "i":
                 if let src = o.src, let img = images[src] {
                     ops.append(.bitmap(img, CGRect(x: x, y: y, width: w, height: h)))
@@ -106,12 +119,27 @@ enum MockRemote {
             case "t":
                 let size = (o.s ?? 14) * 3
                 let bold = o.b ?? false
-                let baseline = y + Draw.font(size: size, bold: bold).ascender
+                let font = Draw.font(size: size, bold: bold)
+                // CSS 盒比一行字高很多时（按钮、标题栏），文字在盒内**垂直居中**；
+                // 否则按「盒顶 + ascender」落基线（等价于 Android TextView 的 top padding）。
+                let tall = h > size * 1.2 * 1.3
+                let baseline = tall
+                    ? y + h / 2 + font.ascender / 2 - size * 0.06
+                    : y + font.ascender
                 let color = CssColor.parse(o.c) ?? .black
                 let text = o.t ?? ""
-                switch o.a {
+                var align = o.a
+                var cx = x + w / 2
+                // 标题栏：DOM 里标题盒是占满整栏的居中盒，但 `text-align` 是 start，
+                // 直接按 start 画会偏在左边；参考图（以及安卓原生页）都是居中的。
+                if (align == nil || align == "start"), y < 60 * 3, tall,
+                   abs((x + w / 2) - spec.w * 1.5) < 12 {
+                    align = "center"
+                    cx = spec.w * 1.5
+                }
+                switch align {
                 case "center":
-                    ops.append(.center(text, x + w / 2, baseline, size, color, bold))
+                    ops.append(.center(text, cx, baseline, size, color, bold))
                 case "right":
                     ops.append(.right(text, x + w, baseline, size, color, bold))
                 default:
@@ -121,6 +149,15 @@ enum MockRemote {
                 break
             }
         }
-        return MockPage(ops: ops, hits: [], height: spec.h * 3, background: .white)
+        return MockPage(ops: ops + lines, hits: [], height: spec.h * 3, background: .white)
+    }
+
+    /// 规格页顶部标题栏的高度：spec 里第一条 `y < 60` 的分割线（没有就按 44dp 兜底）。
+    /// 用来补画 DOM 里没有的回退箭头 `‹`。
+    static func headerHeight(_ spec: MockRemoteSpec) -> CGFloat {
+        for o in spec.ops where o.k == "l" {
+            if let y = o.y, y > 0, y < 60 { return y * 3 }
+        }
+        return dp(44)
     }
 }

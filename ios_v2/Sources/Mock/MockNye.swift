@@ -166,35 +166,63 @@ enum MockNye {
     // MARK: - 明细转出1：明细（`buildStatement()`）
 
     private static func statement(_ b: MockBuilder, _ s: MockState, showsTopTitle: Bool) {
-        let m = b.metrics
-        if showsTopTitle { b.titleBar("明细") }
+        if showsTopTitle { b.titleBar("明细", line: true) }
 
+        // 整页几何按**参考图**（1280×2816，去掉 90px 状态栏后 × 1080/1280）逐块量出来，
+        // 不再沿用安卓 DOM 那份（它把标题画在左上角、按钮文字顶在按钮上沿）。
+        // 成品页的标题栏由 `MockDetailScreen` 统一画（headH = 156），所以这里 b.y = 0
+        // 对应的屏幕位置是标题栏下沿；编辑页预览则先用 titleBar() 画 156 的标题栏，坐标一致。
+        //
+        //   收款人中心 262   金额中心 387   灰隔条 536…566   状态行中心 629
+        //   明细首行中心 776 行距 84        第二组前隔断 86
+        //   链接条 1487…1607  按钮 1695…1823  底部灰到 2388
+        // 减掉 156 的标题栏后就是下面这些常量。
         b.centerBlock("收款人", s.value("收款人", "转给李强"),
-                      size: m.nameSize, color: MockInk.grey,
-                      padTop: m.namePadTop, padBottom: 0)
+                      size: dp(16), color: MockInk.grey,
+                      padTop: dp(25.7), padBottom: 0)
         b.centerBlock("金额", s.value("金额", "-100.00"),
-                      size: m.amountSize, color: MockInk.amount, bold: true,
-                      padTop: m.amountPadTop, padBottom: m.amountPadBottom)
-        b.gap(dp(6))
+                      size: dp(30), color: MockInk.amount,
+                      padTop: dp(14.1), padBottom: dp(31.7))
+        b.fill(dp(10), MockInk.board)
 
-        // 明细页行距按安卓实测：15sp 字 + 上下各 5dp（行距 83px）
+        b.statusRow("交易成功", trailing: "进度查询  ›",
+                    height: dp(42), bg: MockInk.white,
+                    size: dp(15), check: dp(15),
+                    padH: dp(13), gap: dp(10), trailingInset: dp(18))
+        b.gap(dp(14))
+
+        // 行距按参考图：15sp 字 + 上下各 5dp（行距 84px）
         let stmtSize = dp(15)
         let stmtPadV = dp(5)
+        let stmtPadH = dp(13.3)
 
-        b.statusBar("交易成功", trailing: "进度查询  ›")
+        b.row("收款账号", s.value("收款账号", "622143551800063640"),
+              size: stmtSize, padV: stmtPadV, padH: stmtPadH)
+        b.row("收款银行", s.value("收款银行", "中国农业银行"),
+              size: stmtSize, padV: stmtPadV, padH: stmtPadH)
+        // 两组之间的分断线：上面留 14.7dp、下面留 13dp（线心落在两行正中，合计 86px）
+        b.divider(stmtPadH, padV: dp(14.7), after: dp(13))
+        b.row("付款户名", s.value("付款户名", "李东"),
+              size: stmtSize, padV: stmtPadV, padH: stmtPadH)
+        b.row("付款账号", s.value("付款账号", "6221****3646"),
+              size: stmtSize, padV: stmtPadV, padH: stmtPadH)
+        b.row("转账方式", s.value("转账方式", "实时转账"),
+              size: stmtSize, padV: stmtPadV, padH: stmtPadH)
+        b.row("转账附言", s.value("转账附言", "--"),
+              size: stmtSize, padV: stmtPadV, padH: stmtPadH)
+        b.row("交易时间", s.value("交易时间", s.time),
+              size: stmtSize, padV: stmtPadV, padH: stmtPadH)
 
-        b.row("收款账号", s.value("收款账号", "622143551800063640"), size: stmtSize, padV: stmtPadV)
-        b.row("收款银行", s.value("收款银行", "中国农业银行"), size: stmtSize, padV: stmtPadV)
-        b.divider(m.rowPadH)
-        b.row("付款户名", s.value("付款户名", "李东"), size: stmtSize, padV: stmtPadV)
-        b.row("付款账号", s.value("付款账号", "6221****3646"), size: stmtSize, padV: stmtPadV)
-        b.row("转账方式", s.value("转账方式", "实时转账"), size: stmtSize, padV: stmtPadV)
-        b.row("转账附言", s.value("转账附言", "--"), size: stmtSize, padV: stmtPadV)
-        b.row("交易时间", s.value("交易时间", s.time), size: stmtSize, padV: stmtPadV)
-
-        b.gap(dp(12))
-        b.linkBlock("查看和TA的转账记录", trailing: "›")
-        b.twoButtons("再转一笔", "通知收款人")
+        // 行下方灰隔条 → 白底链接条 → 整块灰底（按钮就落在这块灰上）
+        b.gap(dp(16.3))
+        b.fill(dp(10), MockInk.board)
+        b.linkBlock("查看和TA的转账记录", trailing: "›",
+                    bg: MockInk.white, padV: dp(11), size: dp(15), padH: stmtPadH)
+        b.bottomFill(MockInk.board,
+                     canvasHeight: showsTopTitle ? 2388 : 2388 - MockDetailScreen.headH)
+        b.twoButtons("再转一笔", "通知收款人",
+                     padV: dp(29.3), h: dp(42.7), padH: dp(21.7),
+                     gap: dp(14.3), radius: dp(5), size: dp(16))
     }
 
     // MARK: - 明细转出2 / 明细转入 / 支付宝转入：明细查询（`buildQuery()`）

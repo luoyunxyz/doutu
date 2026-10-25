@@ -66,6 +66,8 @@ protocol Screen: AnyObject {
     var selfScrolls: Bool { get }
     /// 是否在页面底下垫相机预览（扫码页）。同上。
     var usesCameraBackground: Bool { get }
+    /// 是否按参考画布的**原比例**铺满（见 `ScreenHostView.canvasBounds`）。
+    var keepsReferenceAspect: Bool { get }
 }
 
 extension Screen {
@@ -135,6 +137,18 @@ extension Screen {
     /// 页面只画自己的浮层（边框、扫描线、按钮）—— 与 Android 的
     /// `TextureView` + `ScanOverlayScreen` 叠放关系一致。
     var usesCameraBackground: Bool { false }
+
+    /// 是否按参考画布的**原比例**铺满屏幕。
+    ///
+    /// 默认 `false`：画布只铺安全区，横纵比例分别缩放 —— 这是 Android 的
+    /// `canvas.scale(getWidth()/W, getHeight()/H)`，对带底栏/顶栏的常规页面最稳。
+    ///
+    /// 但「生成图片」的模拟成品页是一张**整屏截图**，参考图（1080×2388 / 实机 1280×2816）
+    /// 的纵横比≈0.452，而 iPhone 12 去掉安全区后是 390×763（≈0.511）。若仍按
+    /// 「横纵分别缩放」，整页会被纵向压扁 11.5%，文字看起来全被挤在一起。
+    /// 这类页面把本项置 `true`：按**宽度**等比缩放，画布底部超出屏幕的部分被裁掉
+    /// （模拟成品页下方本来就是空白），上下比例与参考图一致。
+    var keepsReferenceAspect: Bool { false }
 
     /// 支模块五格底栏的当前选中项（0 首页 / 1 理财 / 2 视频 / 3 消息 / 4 我的）。
     ///
@@ -601,8 +615,17 @@ final class ScreenHostView: UIView, UIScrollViewDelegate {
     /// Android 参考图（1080×2388）是不含状态栏的，铺满屏幕也不会被挡住；
     /// iOS 有刘海/灵动岛，如果照原样从 y=0 画，顶栏文字会整条压在传感器区下面。
     /// 所以这里统一让步：内容整体下移 `safeAreaInsets.top`，底部也避开手势条。
+    ///
+    /// 例外：`keepsReferenceAspect == true` 的页面（模拟成品页）按宽度等比铺满，
+    /// 高度 = 宽度 × 画布纵横比，顶部仍从安全区开始，底部超出屏幕的部分裁掉。
+    /// 这样文字不会被纵向压扁（390×763 铺 1080×2388 会压掉 11.5%）。
     private var canvasBounds: CGRect {
-        bounds.inset(by: safeAreaInsets)
+        if screen.keepsReferenceAspect,
+           bounds.width > 0, screen.canvasSize.width > 0 {
+            let h = bounds.width * screen.canvasSize.height / screen.canvasSize.width
+            return CGRect(x: 0, y: safeAreaInsets.top, width: bounds.width, height: h)
+        }
+        return bounds.inset(by: safeAreaInsets)
     }
 
     // MARK: - 绘制

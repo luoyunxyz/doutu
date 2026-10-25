@@ -789,22 +789,32 @@ final class MockBuilder {
         return rect
     }
 
-    /// 细分割线（`thinLine()`：1dp 高、左右各留 padH、上下各 8dp）
-    func divider(_ padH: CGFloat) {
-        gap(dp(8))
+    /// 细分割线（`thinLine()`：1dp 高、左右各留 padH、上下各 `padV`）
+    ///
+    /// `after` 用来给「上下留白不一样」的页面单独调（农业明细的两组行之间
+    /// 上留白 14.7dp、下留白 13dp，线心落在两行正中，总间隔 86px）。
+    func divider(_ padH: CGFloat, padV: CGFloat = dp(8), after: CGFloat? = nil) {
+        gap(padV)
         ops.append(.hairline(y, padH, width - padH, MockInk.line))
         y += dp(1)
-        gap(dp(8))
+        gap(after ?? padV)
     }
 
     /// 顶部标题条：`‹` + 居中粗体标题 + 右侧占位（`topTitle()`）
-    func titleBar(_ title: String) {
+    ///
+    /// `line` 为真时在标题条底部补一条 1px 浅灰分割线（参考图里农业明细有这条线，
+    /// 编辑页的预览也要有，所以放在这里而不是只画在成品页）。
+    func titleBar(_ title: String, line: Bool = false) {
         let h = metrics.titleBarH
         let size = metrics.titleSize
         let baseline = y + h / 2 + ascender(size, bold: true) / 2 - size * 0.06
         ops.append(.text("‹", dp(10), baseline, dp(22), MockInk.value, false))
         ops.append(.center(title, width / 2, baseline, size, MockInk.title, true))
         y += h
+        if line {
+            ops.append(.hairline(y, 0, width, MockInk.line))
+            y += dp(1)
+        }
     }
 
     /// 居中的一行大字（收款人 / 金额 / 余额）
@@ -839,6 +849,28 @@ final class MockBuilder {
         y += h
     }
 
+    /// 可调高度的状态条（农业明细用：白底、绿色 ✓ 直径 15dp、左内边距 13dp）。
+    ///
+    /// 参考图里这一行是**白底**（不是 #f5f6f8），高度也比 `statusBar` 的默认值大，
+    /// 所以单开一个方法；参数全部显式传入，避免影响其它银行的 `statusBar`。
+    func statusRow(_ text: String, trailing: String,
+                   height: CGFloat, bg: UIColor,
+                   size: CGFloat, check: CGFloat,
+                   padH: CGFloat, gap: CGFloat, trailingInset: CGFloat) {
+        let h = height
+        ops.append(.fill(CGRect(x: 0, y: y, width: width, height: h), bg))
+        let cy = y + h / 2
+        let r = check / 2
+        ops.append(.circle(padH + r, cy, r, MockInk.green))
+        let symbol = check * 0.66
+        let checkBaseline = cy + ascender(symbol) / 2 - symbol * 0.06
+        ops.append(.center("✓", padH + r, checkBaseline, symbol, MockInk.white, false))
+        let baseline = cy + ascender(size) / 2 - size * 0.06
+        ops.append(.text(text, padH + check + gap, baseline, size, MockInk.title, false))
+        ops.append(.right(trailing, width - trailingInset, baseline, size, MockInk.grey, false))
+        y += h
+    }
+
     /// 内容结束后的「底板」：从当前 y 铺到画布底部。
     ///
     /// 安卓的列表类页面是「白内容 + 底下露出浅灰底板」，所以内容画完要补这一块，
@@ -852,53 +884,77 @@ final class MockBuilder {
     /// 通用「标签 —— 值」行：值可点（`bind(v, label)`），键就是标签名
     ///
     /// `bg` 非空时先铺一条该色的行底 —— 列表类页面（浅灰底 + 白行）要用。
-    /// `size` / `padV` 可按页面族覆盖（明细查询族是 13sp + 4dp，比明细页的 15sp 更紧）。
+    /// `size` / `padV` / `padH` 可按页面族覆盖（明细查询族是 13sp + 4dp，比明细页的 15sp 更紧；
+    /// 农业明细的左右留白按参考图量到 13.3dp）。
     func row(_ label: String, _ value: String, bg: UIColor? = nil,
-             size overrideSize: CGFloat? = nil, padV overridePadV: CGFloat? = nil) {
+             size overrideSize: CGFloat? = nil, padV overridePadV: CGFloat? = nil,
+             padH overridePadH: CGFloat? = nil) {
         let size = overrideSize ?? metrics.rowSize
         let padV = overridePadV ?? metrics.rowPadV
+        let padH = overridePadH ?? metrics.rowPadH
         let lh = lineHeight(size)
         let h = lh + padV * 2
         if let bg {
             ops.append(.fill(CGRect(x: 0, y: y, width: width, height: h), bg))
         }
         let baseline = y + padV + ascender(size)
-        ops.append(.text(label, metrics.rowPadH, baseline, size, MockInk.label, false))
-        ops.append(.right(value, width - metrics.rowPadH, baseline, size, MockInk.value, false))
+        ops.append(.text(label, padH, baseline, size, MockInk.label, false))
+        ops.append(.right(value, width - padH, baseline, size, MockInk.value, false))
         hits.append(MockHit(rect: CGRect(x: 0, y: y, width: width, height: h),
                             token: "mock:field:\(label)"))
         y += h
     }
 
-    /// 灰底链接块：「查看和TA的转账记录  ›」
-    func linkBlock(_ text: String, trailing: String) {
-        let size = metrics.linkSize
+    /// 链接块：「查看和TA的转账记录  ›」
+    ///
+    /// 默认灰底（多数银行）；农业明细的参考图是**白底**，所以 `bg` 可由调用方覆盖。
+    func linkBlock(_ text: String, trailing: String,
+                   bg: UIColor = MockInk.statusBg,
+                   padV: CGFloat? = nil,
+                   size overrideSize: CGFloat? = nil,
+                   padH: CGFloat? = nil) {
+        let size = overrideSize ?? metrics.linkSize
+        let padV = padV ?? metrics.linkPadV
+        let padH = padH ?? metrics.linkPadH
         let lh = lineHeight(size)
-        let h = lh + metrics.linkPadV * 2
-        ops.append(.fill(CGRect(x: 0, y: y, width: width, height: h), MockInk.statusBg))
-        let baseline = y + metrics.linkPadV + ascender(size)
-        ops.append(.text(text, metrics.linkPadH, baseline, size, MockInk.title, false))
-        ops.append(.right(trailing, width - metrics.linkPadH, baseline, size, MockInk.label, false))
+        let h = lh + padV * 2
+        ops.append(.fill(CGRect(x: 0, y: y, width: width, height: h), bg))
+        let baseline = y + padV + ascender(size)
+        ops.append(.text(text, padH, baseline, size, MockInk.title, false))
+        ops.append(.right(trailing, width - padH, baseline, size, MockInk.label, false))
         y += h
     }
 
     /// 底部两个按钮：左边描边、右边实心（都是橙色）
-    func twoButtons(_ left: String, _ right: String) {
-        y += metrics.buttonPadV
-        let h = metrics.buttonH
-        let padH = metrics.rowPadH
-        let gapW = dp(8)
+    ///
+    /// 尺寸默认取 `MockMetrics`；农业明细按参考图覆盖（padH 65、gap 43、高 128、
+    /// 圆角 15 —— 参考图的按钮比默认值更高、更窄、左右留白更大）。
+    func twoButtons(_ left: String, _ right: String,
+                    padV: CGFloat? = nil,
+                    h overrideH: CGFloat? = nil,
+                    padH overridePadH: CGFloat? = nil,
+                    gap: CGFloat? = nil,
+                    radius: CGFloat? = nil,
+                    size overrideSize: CGFloat? = nil) {
+        let padV = padV ?? metrics.buttonPadV
+        let h = overrideH ?? metrics.buttonH
+        let padH = overridePadH ?? metrics.rowPadH
+        let gapW = gap ?? dp(8)
+        let radius = radius ?? dp(6)
+        let size = overrideSize ?? metrics.buttonSize
+        y += padV
         let w = (width - padH * 2 - gapW) / 2
         let leftRect = CGRect(x: padH, y: y, width: w, height: h)
         let rightRect = CGRect(x: padH + w + gapW, y: y, width: w, height: h)
-        ops.append(.round(leftRect, dp(6), MockInk.white))
-        ops.append(.roundStroke(leftRect, dp(6), MockInk.orange, dp(1)))
-        ops.append(.round(rightRect, dp(6), MockInk.orange))
-        let baseline = y + h / 2 + ascender(metrics.buttonSize) / 2 - metrics.buttonSize * 0.06
-        ops.append(.center(left, leftRect.midX, baseline, metrics.buttonSize, MockInk.orange, false))
-        ops.append(.center(right, rightRect.midX, baseline, metrics.buttonSize,
-                           MockInk.white, false))
-        y += h + metrics.buttonPadV
+        ops.append(.round(leftRect, radius, MockInk.white))
+        ops.append(.roundStroke(leftRect, radius, MockInk.orange, dp(1)))
+        ops.append(.round(rightRect, radius, MockInk.orange))
+        // 垂直居中：基线与按钮中线的关系按「CJK 字面中心 ≈ 基线 − 0.36×字号」推，
+        // 与 centerBlock / statusBar 用同一套公式，避免不同块之间的高低差。
+        let baseline = y + h / 2 + ascender(size) / 2 - size * 0.06
+        ops.append(.center(left, leftRect.midX, baseline, size, MockInk.orange, false))
+        ops.append(.center(right, rightRect.midX, baseline, size, MockInk.white, false))
+        y += h + padV
     }
 
     /// 「消费」类型行：小图标 + 文字，居中（`buildLedger()` 的 kindRow）
