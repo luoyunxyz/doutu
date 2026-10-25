@@ -310,6 +310,17 @@ enum MockPsbc {
         case 5:
             row("交易卡号", "6217 **** 7856")
             row("交易时间", s.time)
+            row("收款账号", "6217 **** 3918")
+            row("收款银行", "中国农业银行股份有限公司")
+            row("附言", "付款")
+            row("摘要", "跨行汇出")
+            b.sectionLabel("交易类型", size: dp(14), color: MockInk.title,
+                           padH: padH, padTop: dp(18), padBottom: 0)
+            b.sectionLabel("不计入本月收支", size: dp(14), color: MockInk.title,
+                           padH: padH, padTop: dp(24), padBottom: 0)
+        case 6:
+            row("交易卡号", "6217 **** 7856")
+            row("交易时间", s.time)
             row("付款账号", "6217 **** 3918")
             row("附言", "无附言")
             row("摘要", "他行汇入")
