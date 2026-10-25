@@ -103,23 +103,24 @@ enum MockIcbc {
         b.centerBlock("金额", s.value("金额", "-70.00"), size: dp(32),
                       color: Draw.color(0xff2e7d6f), padTop: dp(30.4), padBottom: 0)
         b.centerBlock("余额", s.value("余额", "余额：72.09"), size: dp(16),
-                      color: Draw.color(0xff555555), padTop: 0, padBottom: 0)
+                      color: Draw.color(0xff5f5f5f), padTop: 0, padBottom: 0)
 
         let size = dp(14), padV = dp(6.27), padH = dp(20)
-        func row(_ label: String, _ value: String, color: UIColor = MockInk.value) {
+        func row(_ label: String, _ value: String,
+                 color: UIColor = Draw.color(0xff2e2e2e)) {
             b.pairRow(label, s.value(label, value), size: size, padH: padH, padV: padV,
-                      labelColor: Draw.color(0xff666666), valueColor: color)
+                      labelColor: Draw.color(0xff5f5f5f), valueColor: color)
         }
         row("交易卡号", "6222****7958")
         row("交易账户", "2108****5507")
         row("交易户名", "21083555555545507")
         row("交易时间", s.time)
-        row("业务摘要", "消费", color: Draw.color(0xff3b6d99))
+        row("业务摘要", "消费", color: Draw.color(0xff4268af))
         row("交易场所", "支付宝-杭州易充宝电子商务有限公司")
         row("交易金额", "70.00")
 
         b.gap(dp(3.7))
-        b.collapsibleLink("查看全部", size: dp(14), color: MockInk.grey,
+        b.collapsibleLink("查看全部", size: dp(14), color: Draw.color(0xff5f5f5f),
                           padV: dp(6.7), up: false)
         b.gap(dp(5.7))
         // 「详情设置（分类/不计入收支/备注）+ 为您推荐」整块按参考图裁切，
@@ -135,7 +136,7 @@ enum MockIcbc {
     ///   对方账户 1160 / 户名 1258 / 行别 1356  灰底 1408 起，蓝链接中心 1509
     private static func detail02(_ b: MockBuilder, _ s: MockState, showsTopTitle: Bool) {
         if showsTopTitle {
-            b.headerBar("明细详情", color: Draw.color(0xff888888), icon: "mock_icbc_download",
+            b.headerBar("明细详情", color: Draw.color(0xff909090), icon: "mock_icbc_download",
                         iconSize: CGSize(width: dp(17.7), height: dp(17.7)))
         }
 
@@ -146,7 +147,7 @@ enum MockIcbc {
         let size = dp(16), padV = dp(6.73), padH = dp(15)
         func row(_ label: String, _ value: String) {
             b.pairRow(label, s.value(label, value), size: size, padH: padH, padV: padV,
-                      labelColor: Draw.color(0xff333333), valueColor: MockInk.value)
+                      labelColor: Draw.color(0xff333333), valueColor: Draw.color(0xff000000))
         }
 
         row("交易时间", s.time)
@@ -155,7 +156,7 @@ enum MockIcbc {
         // 两行标签，值（CHN）落在第二行
         b.pairRow("交易国家或地区\n简称", s.value("交易国家或地区简称", "\nCHN"),
                   size: size, padH: padH, padV: dp(1.33),
-                  labelColor: Draw.color(0xff333333), valueColor: MockInk.value)
+                  labelColor: Draw.color(0xff333333), valueColor: Draw.color(0xff000000))
         row("交易金额", "100.00")
         row("记账金额", "100.00")
         row("记账币种", "人民币")
@@ -173,7 +174,7 @@ enum MockIcbc {
         b.bottomFill(MockInk.board,
                      canvasHeight: showsTopTitle ? 2388 : 2388 - MockDetailScreen.headH)
         b.centeredLink("对该笔订单有疑问？立即咨询", size: dp(16),
-                       color: Draw.color(0xff2f9fd6), padV: dp(24.4))
+                       color: Draw.color(0xff2e93c8), padV: dp(24.4))
     }
 
     private static func detail(_ b: MockBuilder, _ s: MockState, showsTopTitle: Bool) {

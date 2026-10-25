@@ -148,8 +148,8 @@ final class MockDetailScreen: Screen {
                                ])
         }
         if s.module == .icbc && s.sub == 2 {
-            return HeaderStyle(titleColor: Draw.color(0xff888888), titleSize: dp(19), bold: false,
-                               backColor: Draw.color(0xff888888),
+            return HeaderStyle(titleColor: Draw.color(0xff909090), titleSize: dp(19), bold: false,
+                               backColor: Draw.color(0xff909090),
                                divider: MockInk.line, dividerWidth: dp(1),
                                icons: [
                                    HeaderIcon(name: "mock_icbc_download",
