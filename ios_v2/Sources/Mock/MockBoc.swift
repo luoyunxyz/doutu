@@ -104,7 +104,8 @@ enum MockBoc {
         b.leftBlock("收入金额（人民币元）", x: dp(16.9), size: dp(17),
                     color: MockInk.title, bold: true, padTop: dp(27.7))
         b.leftBlock(s.value("金额", "100.00"), x: dp(16.9), size: dp(30),
-                    color: MockInk.title, bold: true, padTop: dp(10.9), padBottom: dp(16.3))
+                    color: MockInk.title, bold: true, padTop: dp(10.9), padBottom: dp(16.3),
+                    key: "金额")
         b.hairlineFull()
 
         b.fixedRow("对方账户名称/\n账号", s.value("对方账户",
@@ -151,7 +152,8 @@ enum MockBoc {
         b.leftBlock("收入金额(人民币元)", x: dp(12.7), size: dp(13),
                     color: MockInk.title, bold: true, padTop: dp(28.1))
         b.leftBlock(s.value("金额", "500.00"), x: dp(12.7), size: dp(27),
-                    color: MockInk.title, bold: true, padTop: dp(13.5), padBottom: dp(18))
+                    color: MockInk.title, bold: true, padTop: dp(13.5), padBottom: dp(18),
+                    key: "金额")
         b.hairlineFull()
 
         let size = dp(13), padH = dp(12.7), valueX = dp(114)
@@ -201,7 +203,8 @@ enum MockBoc {
                            size: dp(13), actionSize: dp(13), padH: dp(12.7),
                            iconSize: .zero, padTop: dp(12), padBottom: dp(2))
         b.leftBlock(s.value("金额", "500.00"), x: dp(12.7), size: dp(27),
-                    color: MockInk.title, bold: true, padTop: 0, padBottom: dp(3))
+                    color: MockInk.title, bold: true, padTop: 0, padBottom: dp(3),
+                    key: "金额")
         b.paragraph("收款行处理成功，具体入账情况可凭人行报文号联系对方银行查询。",
                     size: dp(11), color: Draw.color(0xff999999),
                     padH: dp(12.7), padTop: dp(3), padBottom: dp(10))

@@ -1393,9 +1393,15 @@ final class MockBuilder {
 
     /// 左对齐的一段大字（中行「收入金额 / 100.00」）
     func leftBlock(_ text: String, x: CGFloat, size: CGFloat, color: UIColor,
-                   bold: Bool = false, padTop: CGFloat, padBottom: CGFloat = 0) {
+                   bold: Bool = false, padTop: CGFloat, padBottom: CGFloat = 0,
+                   key: String? = nil) {
+        let lh = lineHeight(size, bold: bold)
+        if let key {
+            hits.append(MockHit(rect: CGRect(x: 0, y: y + padTop, width: width, height: lh),
+                                token: "mock:field:\(key)"))
+        }
         ops.append(.text(text, x, y + padTop + ascender(size, bold: bold), size, color, bold))
-        y += padTop + lineHeight(size, bold: bold) + padBottom
+        y += padTop + lh + padBottom
     }
 
     /// 居中的固定尺寸切图（中行「操作结果」的绿色 ✓）
