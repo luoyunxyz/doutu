@@ -39,5 +39,28 @@
       if (src) ops.push({ k: "i", x, y, w, h, src });
     }
   }
-  return { w: 360, h: 820, ops };
+
+  // 行内文字合并：安卓把「转给 / 李强」拆成多个 span，各自按自己的盒子居中，
+  // 在 iOS 上分别绘制会重叠；按同一行、x 区间重叠的规则合并成一条。
+  const texts = ops.filter(o => o.k === "t");
+  const others = ops.filter(o => o.k !== "t");
+  texts.sort((a, b) => a.y - b.y || a.x - b.x);
+  const merged = [];
+  for (const t of texts) {
+    const last = merged[merged.length - 1];
+    if (last && Math.abs(t.y - last.y) < 2 &&
+        t.x < last.x + last.w + 8 && t.x + t.w > last.x - 8) {
+      last.t += t.t;
+      const x1 = Math.min(last.x, t.x);
+      const x2 = Math.max(last.x + last.w, t.x + t.w);
+      last.x = x1;
+      last.w = x2 - x1;
+      if (last.a === "center" || t.a === "center") last.a = "center";
+      last.s = Math.max(last.s, t.s);
+      last.b = last.b || t.b;
+    } else {
+      merged.push(Object.assign({}, t));
+    }
+  }
+  return { w: 360, h: 820, ops: others.concat(merged) };
 })()
