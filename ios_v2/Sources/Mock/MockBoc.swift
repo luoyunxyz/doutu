@@ -16,10 +16,8 @@ enum MockBoc {
         switch state.sub {
         case 0:
             resultV2(b, state, showsTopTitle: showsTopTitle)
-        case 1:
+        case 1, 2:
             detailIncoming(b, state, showsTopTitle: showsTopTitle)
-        case 2:
-            share(b, state, showsTopTitle: showsTopTitle)
         case 5:
             receipt(b, state, showsTopTitle: showsTopTitle)
         default:
@@ -118,10 +116,16 @@ enum MockBoc {
         }
         row("交易时间", slashed(s.time))
         row("记账时间", slashed(s.time))
-        row("交易类型", "跨行转账")
+        let alipay = s.sub == 2
+        row("交易类型", alipay ? "网上快捷提现" : "跨行转账")
         row("交易后余额", "人民币元 100.00")
-        row("交易渠道/场所", "网上银行")
-        row("附言", "手机转账")
+        row("交易渠道/场所", alipay ? "在线交易网关" : "网上银行")
+        b.fixedRow("附言",
+                   s.value("附言", alipay
+                           ? "支付宝-刘石军-刘石军支付宝转\n账-刘石军支付宝转账"
+                           : "手机转账"),
+                   labelX: dp(16.9), valueX: dp(103), size: size, padV: dp(5.05),
+                   labelColor: MockInk.title, valueColor: Draw.color(0xff666666))
 
         b.bottomFill(Draw.color(0xffeeeeee),
                      canvasHeight: showsTopTitle ? 2388 : 2388 - MockDetailScreen.headH)

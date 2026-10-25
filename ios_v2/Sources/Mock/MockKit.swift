@@ -1401,15 +1401,22 @@ final class MockBuilder {
                   valueColor: UIColor = MockInk.value) {
         let lh = lineHeight(size)
         let lines = label.split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
-        let rows = max(1, lines.count)
+        let values = value.split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
+        let rows = max(max(1, lines.count), max(1, values.count))
         let h = lh * CGFloat(rows) + padV * 2
+        // 值有多行时，单行标签放整行垂直居中（参考图「附言」就是这种）
         var baseline = y + padV + ascender(size)
+        if lines.count == 1 && rows > 1 {
+            baseline = y + h / 2 + ascender(size) / 2 - size * 0.06
+        }
         for line in lines {
             ops.append(.text(line, labelX, baseline, size, labelColor, false))
             baseline += lh
         }
-        let valueBaseline = y + padV + ascender(size) + CGFloat(rows - 1) * lh / 2
-        ops.append(.text(value, valueX, valueBaseline, size, valueColor, false))
+        for (i, line) in values.enumerated() {
+            ops.append(.text(line, valueX, y + padV + ascender(size) + CGFloat(i) * lh,
+                             size, valueColor, false))
+        }
         hits.append(MockHit(rect: CGRect(x: 0, y: y, width: width, height: h),
                             token: "mock:field:\(label.replacingOccurrences(of: "\n", with: ""))"))
         y += h
