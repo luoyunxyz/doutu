@@ -147,7 +147,17 @@ final class MockDetailScreen: Screen {
                                                            width: 61.8, height: 14.4)),
                                ])
         }
-        if s.module == .icbc && s.sub == 1 {
+        if s.module == .icbc && s.sub == 2 {
+            return HeaderStyle(titleColor: Draw.color(0xff888888), titleSize: dp(19), bold: false,
+                               backColor: Draw.color(0xff888888),
+                               divider: MockInk.line, dividerWidth: dp(1),
+                               icons: [
+                                   HeaderIcon(name: "mock_icbc_download",
+                                              rect: CGRect(x: 995.6, y: 51.5,
+                                                           width: 53, height: 53)),
+                               ])
+        }
+        if s.module == .icbc && s.sub == 3 {
             return HeaderStyle(titleColor: MockInk.grey, titleSize: dp(19), bold: false,
                                backColor: MockInk.grey,
                                divider: MockInk.line, dividerWidth: dp(1),

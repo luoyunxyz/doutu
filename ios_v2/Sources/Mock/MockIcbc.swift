@@ -13,11 +13,14 @@ enum MockIcbc {
     static func page(state: MockState, metrics: MockMetrics,
                      width: CGFloat, showsTopTitle: Bool) -> MockPage {
         let b = MockBuilder(width: width, metrics: metrics)
-        if state.sub == 0 {
+        switch state.sub {
+        case 0:
             remit(b, state, showsTopTitle: showsTopTitle)
-        } else if state.sub == 1 {
-            detail01(b, state, showsTopTitle: showsTopTitle)
-        } else {
+        case 2:
+            detail02(b, state, showsTopTitle: showsTopTitle)
+        case 3:
+            detail03(b, state, showsTopTitle: showsTopTitle)
+        default:
             detailV2(b, state, showsTopTitle: showsTopTitle)
         }
         return b.result
@@ -85,12 +88,13 @@ enum MockIcbc {
 
     // MARK: - 其余五个子页：明细详情（`buildDetail()`）
 
-    /// 01/01「明细详情」：金额 + 余额 + 7 行 +「查看全部」+ 详情设置 / 为您推荐。
+    /// 01/03「明细支付宝转入」：金额 -70.00 + 余额 + 7 行 +「查看全部」
+    /// + 详情设置 / 为您推荐。
     ///
     /// 参考图 1280×3249（状态栏下 342px 起算），×1080/1280、标题栏 156 之下：
     ///   金额中心 149  余额 233  首行 295（行距 88）
     ///   查看全部 927  灰隔条 993 起；设置 + 推荐整块是从参考图裁的切图。
-    private static func detail01(_ b: MockBuilder, _ s: MockState, showsTopTitle: Bool) {
+    private static func detail03(_ b: MockBuilder, _ s: MockState, showsTopTitle: Bool) {
         if showsTopTitle {
             b.headerBar("明细详情", color: MockInk.grey, icon: "mock_icbc_hdricons",
                         iconSize: CGSize(width: dp(44), height: dp(24)))
@@ -121,6 +125,55 @@ enum MockIcbc {
         // 「详情设置（分类/不计入收支/备注）+ 为您推荐」整块按参考图裁切，
         // 里面的文字/图标太多且随时会变，直接用位图对齐最稳。
         b.fullWidthImage("mock_icbc_setrec", gapTop: 0)
+    }
+
+    /// 01/02「明细转入1」：+100.00 收入页（橙字），8 行 + 分隔线 + 3 行对方信息，
+    /// 底部灰底上一条蓝色咨询链接。
+    ///
+    /// 参考图 1280×2816（内容顶 294px），×1080/1280、标题栏 156 之下：
+    ///   金额中心 127  首行 308（行距 98）  分隔线 1086
+    ///   对方账户 1160 / 户名 1258 / 行别 1356  灰底 1408 起，蓝链接中心 1509
+    private static func detail02(_ b: MockBuilder, _ s: MockState, showsTopTitle: Bool) {
+        if showsTopTitle {
+            b.headerBar("明细详情", color: Draw.color(0xff888888), icon: "mock_icbc_download",
+                        iconSize: CGSize(width: dp(17.7), height: dp(17.7)))
+        }
+
+        b.centerBlock("金额", s.value("金额", "+100.00"), size: dp(32),
+                      color: Draw.color(0xffff5500), padTop: dp(23.1), padBottom: 0)
+        b.gap(dp(25))
+
+        let size = dp(16), padV = dp(6.73), padH = dp(15)
+        func row(_ label: String, _ value: String) {
+            b.pairRow(label, s.value(label, value), size: size, padH: padH, padV: padV,
+                      labelColor: Draw.color(0xff333333), valueColor: MockInk.value)
+        }
+
+        row("交易时间", s.time)
+        row("交易卡号", "6221****3640")
+        row("业务摘要", "他行汇入")
+        // 两行标签，值（CHN）落在第二行
+        b.pairRow("交易国家或地区\n简称", s.value("交易国家或地区简称", "\nCHN"),
+                  size: size, padH: padH, padV: dp(1.33),
+                  labelColor: Draw.color(0xff333333), valueColor: MockInk.value)
+        row("交易金额", "100.00")
+        row("记账金额", "100.00")
+        row("记账币种", "人民币")
+        row("交易卡余额", "100.00")
+
+        b.gap(dp(5.7))
+        b.hairlineFull()
+        b.gap(dp(7.9))
+
+        row("对方账户", "6221****3640")
+        row("对方户名", "李哈哈")
+        row("对方账户行别", "中国农业银行")
+
+        // 底部灰底 + 蓝色咨询链接（链接中心 1509，灰底从这里一直到画布底）
+        b.bottomFill(MockInk.board,
+                     canvasHeight: showsTopTitle ? 2388 : 2388 - MockDetailScreen.headH)
+        b.centeredLink("对该笔订单有疑问？立即咨询", size: dp(16),
+                       color: Draw.color(0xff2f9fd6), padV: dp(24.4))
     }
 
     private static func detail(_ b: MockBuilder, _ s: MockState, showsTopTitle: Bool) {
