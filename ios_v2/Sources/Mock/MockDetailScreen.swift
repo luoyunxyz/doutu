@@ -93,19 +93,61 @@ final class MockDetailScreen: Screen {
 
         // 固定标题栏
         let y = scroll
+        let style = headerStyle(s)
         d.rect(CGRect(x: 0, y: y, width: Self.W, height: Self.headH), MockInk.white)
         d.centerText("‹", cx: dp(26), baseline: y + Self.headH / 2 + dp(9),
-                     size: dp(28), MockInk.value)
-        let size = dp(17)
+                     size: dp(28), style.backColor)
+        let size = style.titleSize
         d.centerText(title(s), cx: Self.W / 2,
-                     baseline: y + Self.headH / 2 + Draw.font(size: size, bold: true).ascender / 2
+                     baseline: y + Self.headH / 2 + Draw.font(size: size, bold: style.bold).ascender / 2
                         - size * 0.06,
-                     size: size, MockInk.title, bold: true)
-        // 参考图里农业「明细」标题栏底部有一条 1px 浅灰分割线；
-        // 「收支详情」等其它成品页没有这条线，所以按页判断。
-        if s.module == .nye && s.sub == 0 {
-            d.hairline(y + Self.headH, from: 0, to: Self.W, MockInk.line)
+                     size: size, style.titleColor, bold: style.bold)
+        // 工行「汇款明细查询」右上角：耳机客服 + ⋯（都是从参考图抠出来的）
+        if let icon = style.supportIcon {
+            let w = dp(24.2), h = dp(18.8)
+            d.art(UIImage(named: icon),
+                  CGRect(x: Self.W - dp(56) - w, y: y + (Self.headH - h) / 2,
+                         width: w, height: h))
         }
+        if let icon = style.moreIcon {
+            let w = dp(20.6), h = dp(4.8)
+            d.art(UIImage(named: icon),
+                  CGRect(x: Self.W - dp(13.3) - w, y: y + (Self.headH - h) / 2,
+                         width: w, height: h))
+        }
+        if let line = style.divider {
+            d.hairline(y + Self.headH, from: 0, to: Self.W, line,
+                       width: style.dividerWidth)
+        }
+    }
+
+    /// 成品页标题栏的差异（各家银行不一样）：
+    /// - 农业「明细」：黑色粗体 + 底部 1px 浅灰线；
+    /// - 工商「汇款明细查询」：灰蓝常规体 + 耳机 / ⋯ 两个图标 + 底部 1px 灰绿线；
+    /// - 其余：黑色粗体，无图标、无分割线。
+    private struct HeaderStyle {
+        var titleColor: UIColor = MockInk.title
+        var titleSize: CGFloat = dp(17)
+        var bold = true
+        var backColor: UIColor = MockInk.value
+        var divider: UIColor? = nil
+        var dividerWidth: CGFloat = 1
+        var supportIcon: String? = nil
+        var moreIcon: String? = nil
+    }
+
+    private func headerStyle(_ s: State) -> HeaderStyle {
+        if s.module == .icbc && s.sub == 0 {
+            return HeaderStyle(titleColor: MockInk.steel, titleSize: dp(19), bold: false,
+                               backColor: MockInk.steel,
+                               divider: Draw.color(0xffc8d2ce), dividerWidth: dp(1),
+                               supportIcon: "mock_icbc_support",
+                               moreIcon: "mock_icbc_more")
+        }
+        if s.module == .nye && s.sub == 0 {
+            return HeaderStyle(divider: MockInk.line)
+        }
+        return HeaderStyle()
     }
 
     func hitTest(_ state: ScreenState, x: CGFloat, y: CGFloat) -> ActionToken {
