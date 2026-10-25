@@ -61,7 +61,7 @@ final class MockDetailScreen: Screen {
 
     /// 各页标题栏高度（中行「操作结果」的标题栏比默认的 52dp 矮得多）
     private func headH(_ s: State) -> CGFloat {
-        s.module == .boc && s.sub <= 3 ? dp(31.5) : Self.headH
+        s.module == .boc && s.sub <= 4 ? dp(31.5) : Self.headH
     }
 
     func maxScroll(_ state: ScreenState) -> CGFloat {
@@ -185,15 +185,15 @@ final class MockDetailScreen: Screen {
                                                            width: 62, height: 60)),
                                ])
         }
-        if s.module == .boc && s.sub == 3 {
+        if s.module == .boc && (s.sub == 3 || s.sub == 4) {
             return HeaderStyle(titleColor: MockInk.title, titleSize: dp(17), bold: true,
                                backColor: MockInk.value, divider: MockInk.line,
                                dividerWidth: 1,
-                               icons: [
+                               icons: s.sub == 3 ? [
                                    HeaderIcon(name: "mock_boc_headset",
                                               rect: CGRect(x: 969.4, y: 17.25,
                                                            width: 62, height: 60)),
-                               ])
+                               ] : [])
         }
         if s.module == .nye && s.sub == 0 {
             return HeaderStyle(divider: MockInk.line)

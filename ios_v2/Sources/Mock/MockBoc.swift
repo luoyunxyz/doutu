@@ -20,6 +20,8 @@ enum MockBoc {
             detailIncoming(b, state, showsTopTitle: showsTopTitle)
         case 3:
             detailSettings(b, state, showsTopTitle: showsTopTitle)
+        case 4:
+            detailOutgoing(b, state, showsTopTitle: showsTopTitle)
         case 5:
             receipt(b, state, showsTopTitle: showsTopTitle)
         default:
@@ -182,6 +184,45 @@ enum MockBoc {
         b.actionRow("计入收支", value: s.value("计入收支", "计入"), action: nil,
                     size: size, height: h, padH: padH, valueX: valueX,
                     actionColor: blue, toggle: true)
+        b.bottomFill(Draw.color(0xffeeeeee),
+                     canvasHeight: showsTopTitle ? 2388 : 2388 - MockDetailScreen.headH)
+    }
+
+    /// 中国 02/04「明细转出2」：转账金额 + 交易成功 + 说明 + 两组明细 + 三个链接。
+    private static func detailOutgoing(_ b: MockBuilder, _ s: MockState,
+                                       showsTopTitle: Bool) {
+        if showsTopTitle { b.titleBar("明细") }
+        b.sectionActionRow("转账金额（人民币）", action: "✓ 交易成功", icon: nil,
+                           size: dp(13), actionSize: dp(13), padH: dp(12.7),
+                           iconSize: .zero, padTop: dp(12), padBottom: dp(2))
+        b.leftBlock(s.value("金额", "500.00"), x: dp(12.7), size: dp(27),
+                    color: MockInk.title, bold: true, padTop: 0, padBottom: dp(3))
+        b.paragraph("收款行处理成功，具体入账情况可凭人行报文号联系对方银行查询。",
+                    size: dp(11), color: Draw.color(0xff999999),
+                    padH: dp(12.7), padTop: dp(3), padBottom: dp(10))
+
+        let size = dp(13), padH = dp(12.7), valueX = dp(96.5), h: CGFloat = 105.5
+        func row(_ label: String, _ value: String) {
+            b.fixedRow(label, s.value(label, value), labelX: padH, valueX: valueX,
+                       size: size, padV: (h - 46.8) / 2,
+                       labelColor: Draw.color(0xff666666), valueColor: Draw.color(0xff333333))
+        }
+        row("人行报文号", "1041000000042023081423844751")
+        row("优惠后费用", "人民币元 0.00")
+        b.fill(dp(9), Draw.color(0xffeeeeee))
+        row("收款人名称", "李哈哈")
+        row("收款账号", "6217 ****** 2284")
+        row("收款开户行", "上海浦东发展银行")
+        row("付款账户", "张珊珊 6217 ****** 8765")
+        row("交易渠道", "手机银行")
+        row("交易序号", "44662595972")
+        row("交易时间", slashed(s.time))
+        b.fill(dp(9), Draw.color(0xffeeeeee))
+        b.centeredLink("分享给微信好友", size: dp(14), color: Draw.color(0xff2f6fd0), padV: dp(8))
+        b.fill(dp(9), Draw.color(0xffeeeeee))
+        b.centeredLink("再转一笔", size: dp(14), color: Draw.color(0xff2f6fd0), padV: dp(8))
+        b.fill(dp(9), Draw.color(0xffeeeeee))
+        b.centeredLink("和TA的转账记录", size: dp(14), color: Draw.color(0xff2f6fd0), padV: dp(8))
         b.bottomFill(Draw.color(0xffeeeeee),
                      canvasHeight: showsTopTitle ? 2388 : 2388 - MockDetailScreen.headH)
     }
