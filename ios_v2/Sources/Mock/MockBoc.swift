@@ -99,20 +99,20 @@ enum MockBoc {
                                        showsTopTitle: Bool) {
         if showsTopTitle { b.titleBar("明细") }
 
-        b.leftBlock("收入金额（人民币元）", x: dp(11.3), size: dp(16),
-                    color: MockInk.title, bold: true, padTop: dp(28.7))
-        b.leftBlock(s.value("金额", "100.00"), x: dp(11.3), size: dp(30),
-                    color: MockInk.title, bold: true, padTop: dp(11.2), padBottom: dp(16.3))
+        b.leftBlock("收入金额（人民币元）", x: dp(16.9), size: dp(17),
+                    color: MockInk.title, bold: true, padTop: dp(27.7))
+        b.leftBlock(s.value("金额", "100.00"), x: dp(16.9), size: dp(30),
+                    color: MockInk.title, bold: true, padTop: dp(10.9), padBottom: dp(16.3))
         b.hairlineFull()
 
         b.fixedRow("对方账户名称/\n账号", s.value("对方账户", "李哈哈 6221 ****** 3640"),
-                   labelX: dp(11.3), valueX: dp(104), size: dp(14), padV: dp(5.2),
+                   labelX: dp(16.9), valueX: dp(103), size: dp(12.7), padV: dp(6.7),
                    labelColor: MockInk.title, valueColor: Draw.color(0xff333333))
         b.fill(dp(10.1), Draw.color(0xffeeeeee))
 
-        let size = dp(14), pitchV = dp(11.8)
+        let size = dp(12.7), pitchV = dp(12.65)
         func row(_ label: String, _ value: String) {
-            b.fixedRow(label, s.value(label, value), labelX: dp(11.3), valueX: dp(70.3),
+            b.fixedRow(label, s.value(label, value), labelX: dp(16.9), valueX: dp(103),
                        size: size, padV: pitchV,
                        labelColor: MockInk.title, valueColor: Draw.color(0xff666666))
         }
