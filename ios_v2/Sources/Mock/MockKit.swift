@@ -1429,7 +1429,8 @@ final class MockBuilder {
                   labelX: CGFloat, valueX: CGFloat,
                   size: CGFloat, padV: CGFloat,
                   labelColor: UIColor = MockInk.label,
-                  valueColor: UIColor = MockInk.value) {
+                  valueColor: UIColor = MockInk.value,
+                  key: String? = nil) {
         let lh = lineHeight(size)
         let lines = label.split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
         let values = value.split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
@@ -1449,7 +1450,7 @@ final class MockBuilder {
                              size, valueColor, false))
         }
         hits.append(MockHit(rect: CGRect(x: 0, y: y, width: width, height: h),
-                            token: "mock:field:\(label.replacingOccurrences(of: "\n", with: ""))"))
+                            token: "mock:field:\(key ?? label.replacingOccurrences(of: "\n", with: ""))"))
         y += h
     }
 

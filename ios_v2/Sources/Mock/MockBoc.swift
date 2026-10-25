@@ -111,7 +111,8 @@ enum MockBoc {
         b.fixedRow("对方账户名称/\n账号", s.value("对方账户",
                    s.sub == 5 ? "黄欢易 2088 ****** 0156" : "李哈哈 6221 ****** 3640"),
                    labelX: dp(16.9), valueX: dp(103), size: dp(12.7), padV: dp(6.7),
-                   labelColor: MockInk.title, valueColor: Draw.color(0xff333333))
+                   labelColor: MockInk.title, valueColor: Draw.color(0xff333333),
+                   key: "对方账户")
         b.fill(dp(10.1), Draw.color(0xffeeeeee))
 
         let size = dp(12.7), pitchV = dp(12.65)
