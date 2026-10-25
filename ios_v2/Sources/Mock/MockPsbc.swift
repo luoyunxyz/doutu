@@ -15,15 +15,20 @@ enum MockPsbc {
         let b = MockBuilder(width: width, metrics: metrics)
         switch state.sub {
         case 0:
-            result(b, state, showsTopTitle: showsTopTitle)
+            resultV2(b, state, showsTopTitle: showsTopTitle)
         case 3:
-            receipt(b, state, showsTopTitle: showsTopTitle)
+            receiptV2(b, state, showsTopTitle: showsTopTitle)
         case 4:
-            record(b, state, showsTopTitle: showsTopTitle)
+            recordV2(b, state, showsTopTitle: showsTopTitle)
         default:
             psbcV2(b, state, showsTopTitle: showsTopTitle)
         }
         return b.result
+    }
+
+    /// `yyyy-MM-dd HH:mm:ss` → `yyyy/MM/dd HH:mm:ss`
+    private static func slashed(_ text: String) -> String {
+        text.replacingOccurrences(of: "-", with: "/")
     }
 
     // MARK: - 0 转账结果
@@ -286,5 +291,105 @@ enum MockPsbc {
             b.sectionLabel("记录点什么...", size: dp(14), color: Draw.color(0xffaeaeaf),
                            padH: padH, padTop: dp(6), padBottom: 0)
         }
+    }
+
+    // MARK: - 03/00 转账结果（14sp / 85px）
+
+    private static func resultV2(_ b: MockBuilder, _ s: MockState, showsTopTitle: Bool) {
+        if showsTopTitle {
+            b.headerBar("转账结果", color: MockInk.value, trailing: "  ⌂ ")
+        }
+        b.checkBadge(diameter: dp(40), color: Draw.color(0xff58c04a),
+                     gapTop: dp(18), symbolSize: dp(22))
+        b.centerBlock("金额与状态", s.value("金额与状态", "¥100.00 转账成功"),
+                      size: dp(17), color: Draw.color(0xff2c892e), bold: false,
+                      padTop: dp(12), padBottom: dp(6))
+        b.dualLinks("继续转账", "转账记录", size: dp(14),
+                    color: Draw.color(0xff2c892e),
+                    separatorColor: Draw.color(0xffdddddd), padBottom: dp(12))
+        b.hairlineFull()
+
+        let size = dp(14)
+        let padV = dp(5.77)
+        func row(_ label: String, _ value: String) {
+            b.pairRow(label, s.value(label, value), size: size, padH: dp(12), padV: padV,
+                      labelColor: Draw.color(0xff6a6a6a), valueColor: Draw.color(0xff6c6c6c))
+        }
+        row("付款账号：", "6221***8142")
+        row("收款人：", "周虞虎")
+        row("收款账号：", "6217 9958 0020 8094 158")
+        row("开户行：", "中国邮政储蓄银行")
+        row("手续费：", "¥ 0.00")
+        row("受理方式：", "实时")
+        row("交易日期：", "2026/10/24 21:41")
+
+        b.twoButtons("完成", "电子回单")
+    }
+
+    // MARK: - 03/03 电子回单（14sp / 52px）
+
+    private static func receiptV2(_ b: MockBuilder, _ s: MockState, showsTopTitle: Bool) {
+        if showsTopTitle {
+            b.headerBar("电子回单", color: MockInk.value, trailing: "  ⌂ ")
+        }
+        b.paragraph("交易已受理，请查询余额和交易明细",
+                    size: dp(15), color: Draw.color(0xff35910a),
+                    padH: dp(20), padTop: dp(20), padBottom: dp(0))
+        b.paragraph("实际到账时间以收款方银行到账时间为准",
+                    size: dp(14), color: Draw.color(0xff959595),
+                    padH: dp(20), padTop: dp(8), padBottom: dp(10))
+
+        let size = dp(14)
+        let padV = dp(0.27)
+        func row(_ label: String, _ value: String) {
+            b.pairRow(label, s.value(label, value), size: size, padH: dp(32), padV: padV,
+                      labelColor: Draw.color(0xff7f7f7f), valueColor: Draw.color(0xff3c3c3c))
+        }
+        row("交易时间：", slashed(s.time))
+        row("收款人：", "李哈哈")
+        row("收款账号：", "6226 **** 3946")
+        row("转账金额：", "¥ 100.00")
+        row("附言：", "转账")
+        row("开户行：", "中国工商银行")
+        row("付款人：", "李强")
+        row("付款账号：", "6226 **** 9990")
+        row("受理方式：", "实时")
+
+        b.paragraph("此单不作为收付款双方交易确认的最终依据",
+                    size: dp(14), color: Draw.color(0xffea2d1d),
+                    padH: dp(22), padTop: dp(10), padBottom: dp(10))
+        b.twoButtons("保存", "分享")
+    }
+
+    // MARK: - 03/04 转账成功（15sp / 89px）
+
+    private static func recordV2(_ b: MockBuilder, _ s: MockState, showsTopTitle: Bool) {
+        if showsTopTitle {
+            b.headerBar("转账成功", color: MockInk.value, trailing: "  ⌂ ")
+        }
+        b.centerBlock("金额", s.value("金额", "¥ 100.00"), size: dp(26),
+                      color: MockInk.title, bold: false, padTop: dp(20), padBottom: 0)
+        b.centerBlock(nil, "转账成功", size: dp(16), color: MockInk.title,
+                      padTop: dp(4), padBottom: dp(8))
+        b.centeredCells(["继续转账", "转账记录", "转入天天盈"],
+                        height: dp(30), size: dp(15), padV: dp(8))
+
+        let size = dp(15)
+        let padV = dp(5.83)
+        func row(_ label: String, _ value: String) {
+            b.pairRow(label, s.value(label, value), size: size, padH: dp(12), padV: padV,
+                      labelColor: Draw.color(0xffb9b9b9), valueColor: MockInk.title)
+        }
+        row("收款人", "李哈哈")
+        row("收款账号", "6228 4809 0860 0283 7175")
+        row("开户行", "中国工商银行")
+        row("手续费", "￥ 0.00")
+        row("受理方式", "实时")
+        row("附言", "转账")
+        row("付款账号", "6228 **** 8185")
+        row("可用余额", "￥ 19.50")
+        row("交易日期", "2026-10-24 21:42")
+
+        b.twoButtons("完成", "通知收款人")
     }
 }
