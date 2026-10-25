@@ -23,7 +23,7 @@ enum MockBoc {
         case 4:
             detailOutgoing(b, state, showsTopTitle: showsTopTitle)
         case 5:
-            receipt(b, state, showsTopTitle: showsTopTitle)
+            detailIncoming(b, state, showsTopTitle: showsTopTitle)
         default:
             detail(b, state, showsTopTitle: showsTopTitle)
         }
@@ -107,7 +107,8 @@ enum MockBoc {
                     color: MockInk.title, bold: true, padTop: dp(10.9), padBottom: dp(16.3))
         b.hairlineFull()
 
-        b.fixedRow("对方账户名称/\n账号", s.value("对方账户", "李哈哈 6221 ****** 3640"),
+        b.fixedRow("对方账户名称/\n账号", s.value("对方账户",
+                   s.sub == 5 ? "黄欢易 2088 ****** 0156" : "李哈哈 6221 ****** 3640"),
                    labelX: dp(16.9), valueX: dp(103), size: dp(12.7), padV: dp(6.7),
                    labelColor: MockInk.title, valueColor: Draw.color(0xff333333))
         b.fill(dp(10.1), Draw.color(0xffeeeeee))
@@ -120,20 +121,24 @@ enum MockBoc {
         }
         row("交易时间", slashed(s.time))
         row("记账时间", slashed(s.time))
-        let alipay = s.sub == 2
+        let alipay = s.sub == 2 || s.sub == 5
         row("交易类型", alipay ? "网上快捷提现" : "跨行转账")
-        row("交易后余额", "人民币元 100.00")
-        row("交易渠道/场所", alipay ? "在线交易网关" : "网上银行")
+        row("交易后余额", alipay ? "人民币元 345.02" : "人民币元 100.00")
+        b.fixedRow("交易渠道/\n场所", s.value("交易渠道/场所", alipay ? "在线交易网关" : "网上银行"),
+                   labelX: dp(16.9), valueX: dp(103), size: size, padV: dp(5.05),
+                   labelColor: MockInk.title, valueColor: Draw.color(0xff666666))
         b.fixedRow("附言",
                    s.value("附言", alipay
-                           ? "支付宝-刘石军-刘石军支付宝转\n账-刘石军支付宝转账"
+                           ? (s.sub == 5
+                              ? "支付宝-黄欢易-黄欢易支付宝转账-黄欢\n易支付宝转账"
+                              : "支付宝-刘石军-刘石军支付宝转\n账-刘石军支付宝转账")
                            : "手机转账"),
                    labelX: dp(16.9), valueX: dp(103), size: size, padV: dp(5.05),
                    labelColor: MockInk.title, valueColor: Draw.color(0xff666666))
 
         b.bottomFill(Draw.color(0xffeeeeee),
                      canvasHeight: showsTopTitle ? 2388 : 2388 - MockDetailScreen.headH)
-        b.paragraph("\"交易时间\"为该笔交易提交的时间：\"记账时间\"为后台系统对该笔交易的实际处理时间。",
+        b.paragraph("“交易时间”为该笔交易的提交时间；“记账时间”为后台系统对该笔交易的实际处理时间。",
                     size: dp(12), color: Draw.color(0xff5d5d5d),
                     padH: dp(15), padTop: dp(12.1), padBottom: dp(20))
     }
@@ -270,7 +275,7 @@ enum MockBoc {
                   size: rowSize, padH: padH, padV: rowV, labelColor: MockInk.value)
 
         if s.sub == 1 || s.sub == 3 {
-            b.paragraph("\"交易时间\"为该笔交易提交的时间：\"记账时间\"为后台系统对该笔交易的实际处理时间。",
+            b.paragraph("“交易时间”为该笔交易的提交时间；“记账时间”为后台系统对该笔交易的实际处理时间。",
                         size: dp(13), color: Draw.color(0xff5d5d5d),
                         padH: dp(16), padTop: dp(10), padBottom: dp(10))
         }
