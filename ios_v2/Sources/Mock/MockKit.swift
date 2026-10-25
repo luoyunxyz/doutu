@@ -895,8 +895,8 @@ final class MockBuilder {
 
     // MARK: - 收支详情（农业「支付宝转入」）
 
-    /// 顶部「⊕ 代付」：灰圈 + 金色加号 + 居中文字（按参考图 1280 版量出来的组合）
-    func kindBadgeRow(_ key: String, text: String,
+    /// 顶部「⊕ 代付」：图标 + 居中文字（图标直接从参考图抠出来，见 `mock_kind_plus`）
+    func kindBadgeRow(_ key: String, text: String, asset: String,
                       size: CGFloat, icon: CGFloat, gap: CGFloat,
                       padTop: CGFloat, padBottom: CGFloat = 0) {
         let lh = lineHeight(size)
@@ -906,15 +906,8 @@ final class MockBuilder {
         let top = y + padTop
         let startX = (width - total) / 2
         let cy = top + h / 2
-        let r = icon / 2
-        ops.append(.roundStroke(CGRect(x: startX, y: cy - r, width: icon, height: icon),
-                                r, Draw.color(0xffbdbdbd), dp(0.6)))
-        let plus = icon * 0.44
-        let bar = dp(0.9)
-        ops.append(.fill(CGRect(x: startX + (icon - plus) / 2, y: cy - bar / 2,
-                                width: plus, height: bar), MockInk.gold))
-        ops.append(.fill(CGRect(x: startX + icon / 2 - bar / 2, y: cy - plus / 2,
-                                width: bar, height: plus), MockInk.gold))
+        ops.append(.image(asset, CGRect(x: startX, y: cy - icon / 2 + dp(1.6),
+                                        width: icon, height: icon)))
         let baseline = cy + ascender(size) / 2 - size * 0.06
         ops.append(.text(text, startX + icon + gap, baseline, size, MockInk.title, false))
         hits.append(MockHit(rect: CGRect(x: startX, y: top, width: total, height: h),

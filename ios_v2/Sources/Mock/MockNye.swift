@@ -244,14 +244,14 @@ enum MockNye {
         let header: CGFloat = showsTopTitle ? b.metrics.titleBarH : 0
         let board = Draw.color(0xfff7f7f7)
 
-        b.kindBadgeRow("类型", text: s.value("类型", "代付"),
-                       size: dp(17), icon: dp(13.3), gap: dp(4), padTop: dp(39.1))
+        b.kindBadgeRow("类型", text: s.value("类型", "代付"), asset: "mock_kind_plus",
+                       size: dp(15), icon: dp(15), gap: dp(6), padTop: dp(40.4))
         b.centerBlock("金额", s.value("金额", "+264.00"),
                       size: dp(32), color: MockInk.amount, bold: true,
-                      padTop: dp(2.4), padBottom: 0)
+                      padTop: dp(3.3), padBottom: 0)
         b.centerBlock("余额", s.value("余额", "余额 ¥ 289.25"),
                       size: dp(16), color: MockInk.label,
-                      padTop: dp(7.5), padBottom: 0)
+                      padTop: dp(7.7), padBottom: 0)
         b.gap(dp(32.7))
 
         let size = dp(15), padV = dp(5.3), padH = dp(15)
