@@ -1366,6 +1366,81 @@ final class MockBuilder {
         y += h
     }
 
+    /// 居中的固定尺寸切图（中行「操作结果」的绿色 ✓）
+    func centeredImage(_ name: String, width imgW: CGFloat, height imgH: CGFloat,
+                       gapTop: CGFloat = 0) {
+        y += gapTop
+        ops.append(.image(name, CGRect(x: (width - imgW) / 2, y: y,
+                                       width: imgW, height: imgH)))
+        y += imgH
+    }
+
+    /// 左右留白的切图（按图片自身比例算高，中行广告位）
+    func insetImage(_ name: String, padH: CGFloat, gapTop: CGFloat = 0) {
+        y += gapTop
+        let image = UIImage(named: name)
+        let ratio = image.map { $0.size.height / max(1, $0.size.width) } ?? 0.3
+        let w = width - padH * 2
+        let h = w * ratio
+        ops.append(.image(name, CGRect(x: padH, y: y, width: w, height: h)))
+        y += h
+    }
+
+    /// 表格行：标签左对齐、值固定列（中行「优惠后费用 / 0.00」）
+    func fixedRow(_ label: String, _ value: String,
+                  labelX: CGFloat, valueX: CGFloat,
+                  size: CGFloat, padV: CGFloat,
+                  labelColor: UIColor = MockInk.label,
+                  valueColor: UIColor = MockInk.value) {
+        let lh = lineHeight(size)
+        let lines = label.split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
+        let rows = max(1, lines.count)
+        let h = lh * CGFloat(rows) + padV * 2
+        var baseline = y + padV + ascender(size)
+        for line in lines {
+            ops.append(.text(line, labelX, baseline, size, labelColor, false))
+            baseline += lh
+        }
+        let valueBaseline = y + padV + ascender(size) + CGFloat(rows - 1) * lh / 2
+        ops.append(.text(value, valueX, valueBaseline, size, valueColor, false))
+        hits.append(MockHit(rect: CGRect(x: 0, y: y, width: width, height: h),
+                            token: "mock:field:\(label.replacingOccurrences(of: "\n", with: ""))"))
+        y += h
+    }
+
+    /// 灰底小节标题（中行「您可能需要」）
+    func bandLabel(_ text: String, height: CGFloat, bg: UIColor,
+                   size: CGFloat, color: UIColor, padH: CGFloat) {
+        ops.append(.fill(CGRect(x: 0, y: y, width: width, height: height), bg))
+        let baseline = y + height / 2 + ascender(size) / 2 - size * 0.06
+        ops.append(.text(text, padH, baseline, size, color, false))
+        y += height
+    }
+
+    /// 左标题 + 右侧图标/文字（中行「更多推荐 —— 换一换」）
+    func sectionActionRow(_ title: String, action: String?, icon: String?,
+                          size: CGFloat, actionSize: CGFloat,
+                          padH: CGFloat, iconSize: CGSize,
+                          padTop: CGFloat, padBottom: CGFloat) {
+        let lh = lineHeight(size)
+        let top = y + padTop
+        ops.append(.text(title, padH, top + ascender(size), size, MockInk.title, true))
+        var right = width - padH
+        if let icon {
+            right -= iconSize.width
+            ops.append(.image(icon, CGRect(x: right,
+                                           y: top + (lh - iconSize.height) / 2,
+                                           width: iconSize.width, height: iconSize.height)))
+            right -= dp(3)
+        }
+        if let action {
+            let w = Draw.width(action, size: actionSize)
+            let base = top + lh / 2 + ascender(actionSize) / 2 - actionSize * 0.06
+            ops.append(.text(action, right - w, base, actionSize, MockInk.label, false))
+        }
+        y = top + lh + padBottom
+    }
+
     /// 页面头部（`‹` + 居中标题 + 可选右侧切图 / 文字）—— 工行、中行那几张表的卡片头
     func headerBar(_ title: String, color: UIColor,
                    icon: String? = nil, iconSize: CGSize = .zero,

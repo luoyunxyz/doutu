@@ -59,9 +59,14 @@ final class MockDetailScreen: Screen {
         s.module.detailTitle(s.sub)
     }
 
+    /// 各页标题栏高度（中行「操作结果」的标题栏比默认的 52dp 矮得多）
+    private func headH(_ s: State) -> CGFloat {
+        s.module == .boc && s.sub == 0 ? dp(31.5) : Self.headH
+    }
+
     func maxScroll(_ state: ScreenState) -> CGFloat {
         guard let s = state as? State else { return 0 }
-        return max(0, Self.headH + page(s).height - Self.H)
+        return max(0, headH(s) + page(s).height - Self.H)
     }
 
     func draw(_ d: Draw, state: ScreenState) {
@@ -82,24 +87,25 @@ final class MockDetailScreen: Screen {
 
         // 底板：内容之外露出来的部分用页面自己的底板色（列表类是浅灰）
         let page = self.page(s)
+        let barH = headH(s)
         d.rect(CGRect(x: 0, y: scroll, width: Self.W, height: Self.H), page.background)
 
         // 成品页内容
-        d.rect(CGRect(x: 0, y: Self.headH, width: Self.W, height: page.height), page.background)
+        d.rect(CGRect(x: 0, y: barH, width: Self.W, height: page.height), page.background)
         d.ctx.saveGState()
-        d.ctx.translateBy(x: 0, y: Self.headH)
+        d.ctx.translateBy(x: 0, y: barH)
         page.draw(d)
         d.ctx.restoreGState()
 
         // 固定标题栏
         let y = scroll
         let style = headerStyle(s)
-        d.rect(CGRect(x: 0, y: y, width: Self.W, height: Self.headH), MockInk.white)
-        d.centerText("‹", cx: dp(26), baseline: y + Self.headH / 2 + dp(9),
+        d.rect(CGRect(x: 0, y: y, width: Self.W, height: barH), MockInk.white)
+        d.centerText("‹", cx: dp(26), baseline: y + barH / 2 + dp(9),
                      size: dp(28), style.backColor)
         let size = style.titleSize
         d.centerText(title(s), cx: Self.W / 2,
-                     baseline: y + Self.headH / 2 + Draw.font(size: size, bold: style.bold).ascender / 2
+                     baseline: y + barH / 2 + Draw.font(size: size, bold: style.bold).ascender / 2
                         - size * 0.06,
                      size: size, style.titleColor, bold: style.bold)
         // 右上角图标（工行客服 / ⋯ / 下载等，都是从参考图抠出来的）
@@ -107,7 +113,7 @@ final class MockDetailScreen: Screen {
             d.art(UIImage(named: icon.name), icon.rect.offsetBy(dx: 0, dy: y))
         }
         if let line = style.divider {
-            d.hairline(y + Self.headH, from: 0, to: Self.W, line,
+            d.hairline(y + barH, from: 0, to: Self.W, line,
                        width: style.dividerWidth)
         }
     }
@@ -170,6 +176,15 @@ final class MockDetailScreen: Screen {
                                                            width: 60, height: 64)),
                                ])
         }
+        if s.module == .boc && s.sub == 0 {
+            return HeaderStyle(titleColor: MockInk.title, titleSize: dp(15), bold: true,
+                               backColor: MockInk.value,
+                               icons: [
+                                   HeaderIcon(name: "mock_boc_headset",
+                                              rect: CGRect(x: 969.4, y: 17.25,
+                                                           width: 62, height: 60)),
+                               ])
+        }
         if s.module == .nye && s.sub == 0 {
             return HeaderStyle(divider: MockInk.line)
         }
@@ -179,13 +194,14 @@ final class MockDetailScreen: Screen {
     func hitTest(_ state: ScreenState, x: CGFloat, y: CGFloat) -> ActionToken {
         guard let s = state as? State else { return "noop" }
         let scroll = s.scroll
-        if y >= scroll && y < scroll + Self.headH {
+        let barH = headH(s)
+        if y >= scroll && y < scroll + barH {
             if x < dp(60) { return "back" }
             return "noop"
         }
         // 成品页里的文字同样可点改（Android 的成品页也 `bind()` 了每一个值）
         let page = self.page(s)
-        let local = CGPoint(x: x, y: y - Self.headH)
+        let local = CGPoint(x: x, y: y - barH)
         if local.y >= 0, let token = page.token(at: local) { return token }
         return "noop"
     }

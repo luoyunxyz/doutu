@@ -199,25 +199,48 @@ enum MockBoc {
 
     // MARK: - 中国 02/00：转账结果（14sp 金额、12sp 明细、完成按钮）
 
+    /// 中国 02/00「操作结果」：按参考图（1280×2816，标题栏底 252px）逐块量。
+    /// 标题栏 94.5（本页比默认的 156 矮），其下：
+    ///   ✓ 100.4  「100.00元交易成功」298  副标题 366  分隔线 424
+    ///   优惠后费用 473  付款后/可用余额 579  交易详情 694
+    ///   手机盾 banner 785  您可能需要 1182  三行 1329/1430/1530
+    ///   更多推荐 1637  广告 1691  完成 1963
     private static func resultV2(_ b: MockBuilder, _ s: MockState, showsTopTitle: Bool) {
         if showsTopTitle { b.titleBar("操作结果") }
 
-        b.gap(dp(20))
-        b.centerBlock("金额", s.value("金额", "100.00元交易成功"), size: dp(14),
-                      color: MockInk.title, bold: false, padTop: dp(10), padBottom: 0)
-        b.centerBlock(nil, "预计10秒内到账，实际时间取决于对方银行", size: dp(12),
-                      color: MockInk.noteTitle, padTop: dp(6), padBottom: dp(8))
+        b.centeredImage("mock_boc_check", width: dp(42.8), height: dp(42.8), gapTop: dp(33.5))
+        b.centerBlock("金额", s.value("金额", "100.00元交易成功"), size: dp(15),
+                      color: MockInk.title, bold: true, padTop: dp(14.2), padBottom: 0)
+        b.centerBlock(nil, "预计10秒内到账，实际时间取决于对方银行", size: dp(11.3),
+                      color: Draw.color(0xff999999), padTop: dp(6.7), padBottom: dp(12.6))
         b.hairlineFull()
 
-        let size = dp(12)
-        let padV = dp(6)
-        b.pairRow("优惠后费用", s.value("优惠后费用", "0.00"), size: size,
-                  padH: dp(14), padV: padV, labelColor: MockInk.value)
-        b.pairRow("付款后\n可用余额", s.value("付款后可用余额", "100.00"), size: size,
-                  padH: dp(14), padV: padV, labelColor: MockInk.value)
+        let size = dp(13)
+        b.fixedRow("优惠后费用", s.value("优惠后费用", "0.00"),
+                   labelX: dp(15), valueX: dp(115.3), size: size, padV: dp(7.2),
+                   labelColor: Draw.color(0xff666666), valueColor: Draw.color(0xff333333))
+        b.hairlineFull()
+        b.fixedRow("付款后\n可用余额", s.value("付款后可用余额", "100.00"),
+                   labelX: dp(15), valueX: dp(115.3), size: size, padV: dp(5.1),
+                   labelColor: Draw.color(0xff666666), valueColor: Draw.color(0xff333333))
+        b.hairlineFull()
 
-        b.centeredLink("交易详情", size: dp(12), color: Draw.color(0xff3f6ee5), padV: dp(8))
-        b.fullButton("完成", filled: true, color: Draw.color(0xffff0000),
-                     height: dp(44), padH: dp(16), gapTop: dp(36), size: dp(13))
+        b.centeredLink("交易详情", size: dp(14), color: Draw.color(0xff3f6ee5), padV: dp(7.4))
+
+        b.fullWidthImage("mock_boc_banner_r", gapTop: dp(14.5))
+        b.bandLabel("您可能需要", height: dp(32.3), bg: Draw.color(0xfff5f5f5),
+                    size: dp(12), color: Draw.color(0xff999999), padH: dp(15))
+        for item in ["分享给微信好友", "继续转账", "转账记录"] {
+            b.chevronRow(item, size: dp(14), color: MockInk.title,
+                         padH: dp(15), padV: dp(8.3))
+            b.hairlineFull()
+        }
+
+        b.sectionActionRow("更多推荐", action: "换一换", icon: "mock_boc_refresh",
+                           size: dp(16), actionSize: dp(13), padH: dp(15),
+                           iconSize: CGSize(width: dp(11.5), height: dp(11.5)),
+                           padTop: dp(8.5), padBottom: dp(5.1))
+        b.insetImage("mock_boc_ad_r", padH: dp(12.9), gapTop: 0)
+        b.centeredLink("完成", size: dp(15), color: Draw.color(0xffe8452f), padV: dp(11.9))
     }
 }
