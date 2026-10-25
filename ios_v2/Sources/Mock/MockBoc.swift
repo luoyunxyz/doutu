@@ -16,6 +16,8 @@ enum MockBoc {
         switch state.sub {
         case 0:
             resultV2(b, state, showsTopTitle: showsTopTitle)
+        case 1:
+            detailIncoming(b, state, showsTopTitle: showsTopTitle)
         case 2:
             share(b, state, showsTopTitle: showsTopTitle)
         case 5:
@@ -86,6 +88,46 @@ enum MockBoc {
                      padH: detail ? dp(16) : dp(14),
                      gapTop: detail ? dp(16) : dp(14),
                      size: detail ? dp(17) : dp(16))
+    }
+
+    /// 中国 02/01「明细转入1」：收入金额 + 对方账户块 + 6 行 + 灰底说明。
+    ///
+    /// 参考图 1280×2816（标题栏底 252px）逐块量，×1080/1280、标题栏 94.5 之下：
+    ///   收入金额 86  金额 181  分隔线 334  对方账户块 364…437
+    ///   灰条 469…499  首行中心 556（行距 121.5）  灰底说明 1225 起。
+    private static func detailIncoming(_ b: MockBuilder, _ s: MockState,
+                                       showsTopTitle: Bool) {
+        if showsTopTitle { b.titleBar("明细") }
+
+        b.leftBlock("收入金额（人民币元）", x: dp(11.3), size: dp(16),
+                    color: MockInk.title, bold: true, padTop: dp(28.7))
+        b.leftBlock(s.value("金额", "100.00"), x: dp(11.3), size: dp(30),
+                    color: MockInk.title, bold: true, padTop: dp(11.2), padBottom: dp(16.3))
+        b.hairlineFull()
+
+        b.fixedRow("对方账户名称/\n账号", s.value("对方账户", "李哈哈 6221 ****** 3640"),
+                   labelX: dp(11.3), valueX: dp(104), size: dp(14), padV: dp(5.2),
+                   labelColor: MockInk.title, valueColor: Draw.color(0xff333333))
+        b.fill(dp(10.1), Draw.color(0xffeeeeee))
+
+        let size = dp(14), pitchV = dp(11.8)
+        func row(_ label: String, _ value: String) {
+            b.fixedRow(label, s.value(label, value), labelX: dp(11.3), valueX: dp(70.3),
+                       size: size, padV: pitchV,
+                       labelColor: MockInk.title, valueColor: Draw.color(0xff666666))
+        }
+        row("交易时间", slashed(s.time))
+        row("记账时间", slashed(s.time))
+        row("交易类型", "跨行转账")
+        row("交易后余额", "人民币元 100.00")
+        row("交易渠道/场所", "网上银行")
+        row("附言", "手机转账")
+
+        b.bottomFill(Draw.color(0xffeeeeee),
+                     canvasHeight: showsTopTitle ? 2388 : 2388 - MockDetailScreen.headH)
+        b.paragraph("\"交易时间\"为该笔交易提交的时间：\"记账时间\"为后台系统对该笔交易的实际处理时间。",
+                    size: dp(12), color: Draw.color(0xff5d5d5d),
+                    padH: dp(15), padTop: dp(12.1), padBottom: dp(20))
     }
 
     // MARK: - 其余子页：明细（`buildDetail()`）

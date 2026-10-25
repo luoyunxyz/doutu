@@ -61,7 +61,7 @@ final class MockDetailScreen: Screen {
 
     /// 各页标题栏高度（中行「操作结果」的标题栏比默认的 52dp 矮得多）
     private func headH(_ s: State) -> CGFloat {
-        s.module == .boc && s.sub == 0 ? dp(31.5) : Self.headH
+        s.module == .boc && (s.sub == 0 || s.sub == 1) ? dp(31.5) : Self.headH
     }
 
     func maxScroll(_ state: ScreenState) -> CGFloat {
