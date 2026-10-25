@@ -158,7 +158,7 @@ enum MockNye {
         case 3:
             alipayIncoming(b, state, showsTopTitle: showsTopTitle)
         case 4:
-            ledger(b, state, showsTopTitle: showsTopTitle)
+            alipayOutgoing(b, state, showsTopTitle: showsTopTitle)
         default:
             query(b, state, out: state.sub == 1, showsTopTitle: showsTopTitle)
         }
@@ -285,6 +285,63 @@ enum MockNye {
                     titleSize: dp(17), placeholderSize: dp(15),
                     padH: padH, padTop: dp(7.7), phGap: dp(9.5),
                     underlineGap: dp(7.6), bottom: header + dp(649))
+        b.bottomFill(board, canvasHeight: showsTopTitle ? 2388
+                      : 2388 - MockDetailScreen.headH)
+    }
+
+    // MARK: - 明细转出3：收支详情（支出、收起的 5 行版本）
+
+    /// 与「支付宝转入」同一个壳：类型 / 金额 / 余额 + 5 行 +「查看更多」
+    /// + 计入收支 / 分类 / 归属账本 / 备注。数值按这张参考图（1279 宽）量，
+    /// 折算系数 1080/1279，标题栏 156 之下的本页坐标：
+    ///   类型中心 150  金额 243  余额 352  首行 522（行距 86）
+    ///   查看更多 972  灰隔条 1035  开关行 1130  分类 1261  归属账本 1392
+    ///   备注 1539 / 占位 1629 / 下划线 1679  底部浅灰 1708
+    private static func alipayOutgoing(_ b: MockBuilder, _ s: MockState,
+                                       showsTopTitle: Bool) {
+        if showsTopTitle { b.titleBar("收支详情") }
+        let header: CGFloat = showsTopTitle ? b.metrics.titleBarH : 0
+        let board = Draw.color(0xfff7f7f7)
+
+        b.kindBadgeRow("类型", text: s.value("类型", "消费"), asset: "mock_kind_minus",
+                       size: dp(16), icon: dp(13.3), gap: dp(2.7), padTop: dp(39.4))
+        b.centerBlock("金额", s.value("金额", "-264.00"),
+                      size: dp(32), color: MockInk.amount, bold: true,
+                      padTop: dp(3.3), padBottom: 0)
+        b.centerBlock("余额", s.value("余额", "余额 ¥ 289.25"),
+                      size: dp(16), color: MockInk.label,
+                      padTop: dp(7.7), padBottom: 0)
+        b.gap(dp(32.7))
+
+        let size = dp(15), padV = dp(5.3), padH = dp(15)
+        b.pairRow("交易时间", s.value("交易时间", s.time), size: size, padH: padH, padV: padV)
+        b.pairRow("收款方", s.value("收款方", "海州区好客士便利店"),
+                  size: size, padH: padH, padV: padV)
+        b.pairRow("收款账户", s.value("收款账户", "1050****5157"),
+                  size: size, padH: padH, padV: padV)
+        b.pairRow("交易摘要", s.value("交易摘要", "代付"), size: size, padH: padH, padV: padV)
+        b.pairRow("交易附言", s.value("交易附言", "TH404022415986431658"),
+                  size: size, padH: padH, padV: padV)
+
+        b.gap(dp(4.5))
+        b.collapsibleLink("查看更多", size: dp(16), color: MockInk.gold,
+                          padV: dp(6.7), up: false)
+
+        b.gap(dp(5.0))
+        b.fill(dp(9.6), board)
+        b.toggleRow("计入收支", on: true, size: dp(16), height: dp(43.3), padH: padH)
+        b.settingRow("分类", value: s.value("分类", "其他支出"), valueColor: MockInk.value,
+                     size: dp(16), height: dp(43.3), padH: padH, chevron: true)
+        b.settingRow("归属账本", value: s.value("归属账本", "请选择"),
+                     valueColor: Draw.color(0xffbfbfbf),
+                     size: dp(16), height: dp(43.3), padH: padH,
+                     chevron: true, divider: false)
+        b.fill(dp(9.6), board)
+
+        b.noteBlock("备注", placeholder: "记录点什么……",
+                    titleSize: dp(17), placeholderSize: dp(15),
+                    padH: padH, padTop: dp(7.7), phGap: dp(10.9),
+                    underlineGap: dp(7.6), bottom: header + dp(569.5))
         b.bottomFill(board, canvasHeight: showsTopTitle ? 2388
                       : 2388 - MockDetailScreen.headH)
     }

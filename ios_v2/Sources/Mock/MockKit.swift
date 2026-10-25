@@ -328,8 +328,7 @@ enum MockModule: Int, CaseIterable {
         switch self {
         case .nye:
             if sub == 0 { return "明细" }
-            if sub == 3 { return "收支详情" }
-            if sub == 4 { return "明细" }
+            if sub == 3 || sub == 4 { return "收支详情" }
             return "明细查询"
         case .icbc:
             return sub == 0 ? "汇款明细查询" : "明细详情"
@@ -915,18 +914,23 @@ final class MockBuilder {
         y = top + h + padBottom
     }
 
-    /// 居中的「收起 ︿」
-    func collapsibleLink(_ text: String, size: CGFloat, color: UIColor, padV: CGFloat) {
+    /// 居中的「收起 ︿ / 查看更多 ⌄」
+    func collapsibleLink(_ text: String, size: CGFloat, color: UIColor,
+                         padV: CGFloat, up: Bool = true) {
         let lh = lineHeight(size)
         let w = Draw.width(text, size: size)
         let caretGap = dp(3)
         let caret = dp(9)
         let total = w + caretGap + caret
         let startX = (width - total) / 2
+        let cy = y + padV + lh / 2
         let baseline = y + padV + ascender(size)
         ops.append(.text(text, startX, baseline, size, color, false))
-        ops.append(.chevronUp(startX + w + caretGap + caret / 2, y + padV + lh / 2,
-                              caret, color))
+        if up {
+            ops.append(.chevronUp(startX + w + caretGap + caret / 2, cy, caret, color))
+        } else {
+            ops.append(.chevronDown(startX + w + caretGap + caret / 2, cy, caret, color))
+        }
         y += padV + lh + padV
     }
 
