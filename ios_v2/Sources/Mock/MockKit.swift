@@ -618,6 +618,8 @@ enum MockOp {
     case right(String, CGFloat, CGFloat, CGFloat, UIColor, Bool)
     /// 切图：资源名, 目标矩形
     case image(String, CGRect)
+    /// 远程位图（从电脑 8000 端口拉下来的图片）
+    case bitmap(UIImage, CGRect)
     /// 横线：y, x1, x2, 颜色
     case hairline(CGFloat, CGFloat, CGFloat, UIColor)
     /// 金色向下箭头：中心 x, 中心 y, 尺寸, 颜色
@@ -644,6 +646,8 @@ enum MockOp {
             return .right(string, right + dx, baseline + dy, size, color, bold)
         case let .image(name, rect):
             return .image(name, rect.offsetBy(dx: dx, dy: dy))
+        case let .bitmap(img, rect):
+            return .bitmap(img, rect.offsetBy(dx: dx, dy: dy))
         case let .hairline(y, x1, x2, color):
             return .hairline(y + dy, x1 + dx, x2 + dx, color)
         case let .chevronDown(cx, cy, size, color):
@@ -688,6 +692,8 @@ struct MockPage {
                 d.rightText(string, right: right, baseline: baseline, size: size, color, bold: bold)
             case let .image(name, rect):
                 d.art(UIImage(named: name), rect)
+            case let .bitmap(img, rect):
+                d.artFill(img, in: rect)
             case let .hairline(y, x1, x2, color):
                 d.hairline(y, from: x1, to: x2, color, width: 1)
             case let .chevronDown(cx, cy, size, color):

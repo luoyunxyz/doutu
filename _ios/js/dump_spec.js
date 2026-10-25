@@ -1,5 +1,6 @@
 (() => {
-  const root = document.querySelector(".content");
+  const content = document.querySelector(".content");
+  const root = content ? (content.parentElement || content) : null;
   if (!root) return { error: "no .content" };
   const rt = root.getBoundingClientRect();
   const ops = [];
@@ -35,8 +36,13 @@
                  t: text.slice(0, 100) });
     }
     if (el.tagName === "IMG" || el.tagName === "UNI-IMAGE") {
-      const src = el.getAttribute("src") || "";
-      if (src) ops.push({ k: "i", x, y, w, h, src });
+      let src = el.getAttribute("src") || "";
+      if (src) {
+        src = src.replace(
+          "file:///data/user/0/uni.UNIE8A9C59/files/apps/__UNI__E8A9C59/www/",
+          "http://192.168.1.96:8000/android_assets/");
+        ops.push({ k: "i", x, y, w, h, src });
+      }
     }
   }
 

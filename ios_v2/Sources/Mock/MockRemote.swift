@@ -28,6 +28,7 @@ struct MockRemoteSpec: Decodable {
 
 enum MockRemote {
     private static var cache: [String: MockRemoteSpec] = [:]
+    private static var images: [String: UIImage] = [:]
     private static var loading: Set<String> = []
 
     static func key(_ module: MockModule, _ sub: Int) -> String {
@@ -46,13 +47,37 @@ enum MockRemote {
         var request = URLRequest(url: url)
         request.timeoutInterval = 2.5
         URLSession.shared.dataTask(with: request) { data, _, _ in
-            DispatchQueue.main.async {
-                loading.remove(k)
-                if let data, let spec = try? JSONDecoder().decode(MockRemoteSpec.self, from: data) {
-                    cache[k] = spec
-                    done()
+            guard let data, let spec = try? JSONDecoder().decode(MockRemoteSpec.self, from: data) else {
+                DispatchQueue.main.async { loading.remove(k) }
+                return
+            }
+            let srcs = spec.ops.filter { $0.k == "i" }.compactMap { $0.src }
+            if srcs.isEmpty {
+                DispatchQueue.main.async { loading.remove(k); cache[k] = spec; done() }
+                return
+            }
+            let group = DispatchGroup()
+            for src in srcs where images[src] == nil {
+                group.enter()
+                fetchImage(src) { img in
+                    if let img { images[src] = img }
+                    group.leave()
                 }
             }
+            group.notify(queue: .main) {
+                loading.remove(k)
+                cache[k] = spec
+                done()
+            }
+        }.resume()
+    }
+
+    private static func fetchImage(_ src: String, done: @escaping (UIImage?) -> Void) {
+        guard let url = URL(string: src) else { done(nil); return }
+        var request = URLRequest(url: url)
+        request.timeoutInterval = 4
+        URLSession.shared.dataTask(with: request) { data, _, _ in
+            done(data.flatMap { UIImage(data: $0) })
         }.resume()
     }
 
@@ -74,6 +99,10 @@ enum MockRemote {
                 }
             case "l":
                 ops.append(.hairline(y, x, x + w, CssColor.parse(o.c) ?? .clear))
+            case "i":
+                if let src = o.src, let img = images[src] {
+                    ops.append(.bitmap(img, CGRect(x: x, y: y, width: w, height: h)))
+                }
             case "t":
                 let size = (o.s ?? 14) * 3
                 let bold = o.b ?? false
