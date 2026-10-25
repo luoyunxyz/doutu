@@ -16,9 +16,9 @@ enum MockIcbc {
         switch state.sub {
         case 0:
             remit(b, state, showsTopTitle: showsTopTitle)
-        case 2:
+        case 1:
             detail02(b, state, showsTopTitle: showsTopTitle)
-        case 3:
+        case 2:
             detail03(b, state, showsTopTitle: showsTopTitle)
         default:
             detailV2(b, state, showsTopTitle: showsTopTitle)
@@ -88,7 +88,7 @@ enum MockIcbc {
 
     // MARK: - 其余五个子页：明细详情（`buildDetail()`）
 
-    /// 01/03「明细支付宝转入」：金额 -70.00 + 余额 + 7 行 +「查看全部」
+    /// 01/02「明细转入1」：金额 -70.00 + 余额 + 7 行 +「查看全部」
     /// + 详情设置 / 为您推荐。
     ///
     /// 参考图 1280×3249（状态栏下 342px 起算），×1080/1280、标题栏 156 之下：
@@ -102,10 +102,12 @@ enum MockIcbc {
 
         b.centerBlock("金额", s.value("金额", "-70.00"), size: dp(32),
                       color: Draw.color(0xff2e7d6f), padTop: dp(30.4), padBottom: 0)
-        b.centerBlock("余额", s.value("余额", "余额：72.09"), size: dp(16),
-                      color: Draw.color(0xff5f5f5f), padTop: 0, padBottom: 0)
+        b.centerBlock("余额", s.value("余额", "余额：72.09"), size: dp(14),
+                      color: Draw.color(0xff5f5f5f), padTop: dp(0.5), padBottom: 0)
 
-        let size = dp(14), padV = dp(6.27), padH = dp(20)
+        // 参考图里余额和首行贴得很紧，行盒的上下留白会把首行推低几像素，这里补回来
+        b.gap(-dp(2.5))
+        let size = dp(13.3), padV = dp(6.67), padH = dp(20)
         func row(_ label: String, _ value: String,
                  color: UIColor = Draw.color(0xff2e2e2e)) {
             b.pairRow(label, s.value(label, value), size: size, padH: padH, padV: padV,
@@ -119,16 +121,14 @@ enum MockIcbc {
         row("交易场所", "支付宝-杭州易充宝电子商务有限公司")
         row("交易金额", "70.00")
 
-        b.gap(dp(3.7))
-        b.collapsibleLink("查看全部", size: dp(14), color: Draw.color(0xff5f5f5f),
-                          padV: dp(6.7), up: false)
-        b.gap(dp(5.7))
+        b.collapsibleLink("查看全部", size: dp(13.3), color: Draw.color(0xff5f5f5f),
+                          padV: dp(13.8), up: false)
         // 「详情设置（分类/不计入收支/备注）+ 为您推荐」整块按参考图裁切，
         // 里面的文字/图标太多且随时会变，直接用位图对齐最稳。
         b.fullWidthImage("mock_icbc_setrec", gapTop: 0)
     }
 
-    /// 01/02「明细转入1」：+100.00 收入页（橙字），8 行 + 分隔线 + 3 行对方信息，
+    /// 01/01「明细转出2」：+100.00 收入页（橙字），8 行 + 分隔线 + 3 行对方信息，
     /// 底部灰底上一条蓝色咨询链接。
     ///
     /// 参考图 1280×2816（内容顶 294px），×1080/1280、标题栏 156 之下：
@@ -140,11 +140,11 @@ enum MockIcbc {
                         iconSize: CGSize(width: dp(17.7), height: dp(17.7)))
         }
 
-        b.centerBlock("金额", s.value("金额", "+100.00"), size: dp(32),
-                      color: Draw.color(0xffff5500), padTop: dp(23.1), padBottom: 0)
-        b.gap(dp(25))
+        b.centerBlock("金额", s.value("金额", "+100.00"), size: dp(28),
+                      color: Draw.color(0xffff5500), padTop: dp(25.5), padBottom: 0)
+        b.gap(dp(27.4))
 
-        let size = dp(16), padV = dp(6.73), padH = dp(15)
+        let size = dp(14), padV = dp(7.93), padH = dp(15)
         func row(_ label: String, _ value: String) {
             b.pairRow(label, s.value(label, value), size: size, padH: padH, padV: padV,
                       labelColor: Draw.color(0xff333333), valueColor: Draw.color(0xff000000))
@@ -155,8 +155,9 @@ enum MockIcbc {
         row("业务摘要", "他行汇入")
         // 两行标签，值（CHN）落在第二行
         b.pairRow("交易国家或地区\n简称", s.value("交易国家或地区简称", "\nCHN"),
-                  size: size, padH: padH, padV: dp(1.33),
+                  size: size, padH: padH, padV: 0,
                   labelColor: Draw.color(0xff333333), valueColor: Draw.color(0xff000000))
+        b.gap(dp(7.5))
         row("交易金额", "100.00")
         row("记账金额", "100.00")
         row("记账币种", "人民币")
@@ -173,8 +174,8 @@ enum MockIcbc {
         // 底部灰底 + 蓝色咨询链接（链接中心 1509，灰底从这里一直到画布底）
         b.bottomFill(MockInk.board,
                      canvasHeight: showsTopTitle ? 2388 : 2388 - MockDetailScreen.headH)
-        b.centeredLink("对该笔订单有疑问？立即咨询", size: dp(16),
-                       color: Draw.color(0xff2e93c8), padV: dp(24.4))
+        b.centeredLink("对该笔订单有疑问？立即咨询", size: dp(15),
+                       color: Draw.color(0xff2e93c8), padV: dp(24.2))
     }
 
     private static func detail(_ b: MockBuilder, _ s: MockState, showsTopTitle: Bool) {
