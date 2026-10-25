@@ -155,7 +155,9 @@ enum MockNye {
         switch state.sub {
         case 0:
             statement(b, state, showsTopTitle: showsTopTitle)
-        case 3, 4:
+        case 3:
+            alipayIncoming(b, state, showsTopTitle: showsTopTitle)
+        case 4:
             ledger(b, state, showsTopTitle: showsTopTitle)
         default:
             query(b, state, out: state.sub == 1, showsTopTitle: showsTopTitle)
@@ -225,7 +227,69 @@ enum MockNye {
                      gap: dp(14.3), radius: dp(5), size: dp(16))
     }
 
-    // MARK: - 明细转出2 / 明细转入 / 支付宝转入：明细查询（`buildQuery()`）
+    // MARK: - 支付宝转入：收支详情（参考图 1280×2816 逐块量）
+
+    /// 这一页比其它子页长得多：类型 / 金额 / 余额 + 7 行明细 +「收起」
+    /// + 计入收支开关 + 分类 / 归属账本 + 备注。
+    ///
+    /// 数值都按参考图（去掉 90px 状态栏后 ×1080/1280）量，再减掉 156 的成品页标题栏：
+    ///   类型中心 151  金额中心 243  余额中心 352  首行中心 522（行距 86）
+    ///   收起 1203  灰隔条 1272…1300  开关行 1300…1430  分类 1430…1562
+    ///   归属账本 1562…1698  备注 1723…1947  底部浅灰 1947…2232
+    private static func alipayIncoming(_ b: MockBuilder, _ s: MockState,
+                                       showsTopTitle: Bool) {
+        if showsTopTitle { b.titleBar("收支详情") }
+        // 编辑页预览的页内先画了 156 的标题栏；成品页的标题栏在屏上、页面坐标从 0 起。
+        // 页面内部都用相对坐标，只有「备注块终点」是绝对值，需要补上这段偏移。
+        let header: CGFloat = showsTopTitle ? b.metrics.titleBarH : 0
+        let board = Draw.color(0xfff7f7f7)
+
+        b.kindBadgeRow("类型", text: s.value("类型", "代付"),
+                       size: dp(17), icon: dp(13.3), gap: dp(4), padTop: dp(39.1))
+        b.centerBlock("金额", s.value("金额", "+264.00"),
+                      size: dp(32), color: MockInk.amount, bold: true,
+                      padTop: dp(2.4), padBottom: 0)
+        b.centerBlock("余额", s.value("余额", "余额 ¥ 289.25"),
+                      size: dp(16), color: MockInk.label,
+                      padTop: dp(7.5), padBottom: 0)
+        b.gap(dp(32.7))
+
+        let size = dp(15), padV = dp(5.3), padH = dp(15)
+        b.pairRow("交易时间", s.value("交易时间", s.time), size: size, padH: padH, padV: padV)
+        b.pairRow("付款方", s.value("付款方", "支付宝(中国)网络技术\n有限公司"),
+                  size: size, padH: padH, padV: padV)
+        b.pairRow("付款账户", s.value("付款账户", "1058****2456"),
+                  size: size, padH: padH, padV: padV)
+        b.pairRow("交易摘要", s.value("交易摘要", "代付"), size: size, padH: padH, padV: padV)
+        b.pairRow("交易附言", s.value("交易附言", "李哈哈支付宝转账"),
+                  size: size, padH: padH, padV: padV)
+        b.pairRow("交易卡号", s.value("交易卡号", "6228****9073"),
+                  size: size, padH: padH, padV: padV)
+        b.pairRow("交易类型", s.value("交易类型", "转账"), size: size, padH: padH, padV: padV)
+
+        b.gap(dp(6.5))
+        b.collapsibleLink("收起", size: dp(16), color: MockInk.gold, padV: dp(6.7))
+
+        b.gap(dp(6.4))
+        b.fill(dp(9.3), board)
+        b.toggleRow("计入收支", on: true, size: dp(16), height: dp(43.6), padH: padH)
+        b.settingRow("分类", value: s.value("分类", "其他收入"), valueColor: MockInk.value,
+                     size: dp(16), height: dp(43.9), padH: padH, chevron: true)
+        b.settingRow("归属账本", value: s.value("归属账本", "请选择"),
+                     valueColor: Draw.color(0xffbfbfbf),
+                     size: dp(16), height: dp(45.2), padH: padH,
+                     chevron: true, divider: false)
+        b.fill(dp(8.5), board)
+
+        b.noteBlock("备注", placeholder: "记录点什么……",
+                    titleSize: dp(17), placeholderSize: dp(15),
+                    padH: padH, padTop: dp(7.7), phGap: dp(9.5),
+                    underlineGap: dp(7.6), bottom: header + dp(649))
+        b.bottomFill(board, canvasHeight: showsTopTitle ? 2388
+                      : 2388 - MockDetailScreen.headH)
+    }
+
+    // MARK: - 明细转出2 / 明细转入：明细查询（`buildQuery()`）
 
     private static func query(_ b: MockBuilder, _ s: MockState, out: Bool,
                               showsTopTitle: Bool) {

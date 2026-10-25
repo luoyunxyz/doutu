@@ -328,7 +328,8 @@ enum MockModule: Int, CaseIterable {
         switch self {
         case .nye:
             if sub == 0 { return "明细" }
-            if sub == 3 || sub == 4 { return "明细" }
+            if sub == 3 { return "收支详情" }
+            if sub == 4 { return "明细" }
             return "明细查询"
         case .icbc:
             return sub == 0 ? "汇款明细查询" : "明细详情"
@@ -624,6 +625,8 @@ enum MockOp {
     case hairline(CGFloat, CGFloat, CGFloat, UIColor)
     /// 金色向下箭头：中心 x, 中心 y, 尺寸, 颜色
     case chevronDown(CGFloat, CGFloat, CGFloat, UIColor)
+    /// 向上箭头（「收起 ︿」用）：中心 x, 中心 y, 尺寸, 颜色
+    case chevronUp(CGFloat, CGFloat, CGFloat, UIColor)
     /// 圆角渐变块：矩形, 圆角, 起色, 止色, 是否上下渐变
     case gradient(CGRect, CGFloat, UIColor, UIColor, Bool)
 
@@ -652,6 +655,8 @@ enum MockOp {
             return .hairline(y + dy, x1 + dx, x2 + dx, color)
         case let .chevronDown(cx, cy, size, color):
             return .chevronDown(cx + dx, cy + dy, size, color)
+        case let .chevronUp(cx, cy, size, color):
+            return .chevronUp(cx + dx, cy + dy, size, color)
         case let .gradient(rect, radius, from, to, vertical):
             return .gradient(rect.offsetBy(dx: dx, dy: dy), radius, from, to, vertical)
         }
@@ -703,6 +708,13 @@ struct MockPage {
                        cx - w / 2 + w * 0.5, cy - h / 2 + h * 0.7, color, width: dp(1.2))
                 d.line(cx - w / 2 + w * 0.5, cy - h / 2 + h * 0.7,
                        cx - w / 2 + w * 0.85, cy - h / 2 + h * 0.3, color, width: dp(1.2))
+            case let .chevronUp(cx, cy, size, color):
+                // 「收起」的上箭头：与 chevronDown 上下镜像
+                let w = size, h = size * 0.8
+                d.line(cx - w / 2 + w * 0.15, cy + h / 2 - h * 0.3,
+                       cx - w / 2 + w * 0.5, cy + h / 2 - h * 0.7, color, width: dp(1.2))
+                d.line(cx - w / 2 + w * 0.5, cy + h / 2 - h * 0.7,
+                       cx - w / 2 + w * 0.85, cy + h / 2 - h * 0.3, color, width: dp(1.2))
             case let .gradient(rect, radius, from, to, vertical):
                 d.clipped(to: rect, radius: radius) {
                     d.gradient(rect, from: from, to: to, vertical: vertical)
@@ -879,6 +891,109 @@ final class MockBuilder {
         let h = max(0, canvasHeight - y)
         guard h > 0 else { return }
         ops.append(.fill(CGRect(x: 0, y: y, width: width, height: h), color))
+    }
+
+    // MARK: - 收支详情（农业「支付宝转入」）
+
+    /// 顶部「⊕ 代付」：灰圈 + 金色加号 + 居中文字（按参考图 1280 版量出来的组合）
+    func kindBadgeRow(_ key: String, text: String,
+                      size: CGFloat, icon: CGFloat, gap: CGFloat,
+                      padTop: CGFloat, padBottom: CGFloat = 0) {
+        let lh = lineHeight(size)
+        let h = max(lh, icon)
+        let textW = Draw.width(text, size: size)
+        let total = icon + gap + textW
+        let top = y + padTop
+        let startX = (width - total) / 2
+        let cy = top + h / 2
+        let r = icon / 2
+        ops.append(.roundStroke(CGRect(x: startX, y: cy - r, width: icon, height: icon),
+                                r, Draw.color(0xffbdbdbd), dp(0.6)))
+        let plus = icon * 0.44
+        let bar = dp(0.9)
+        ops.append(.fill(CGRect(x: startX + (icon - plus) / 2, y: cy - bar / 2,
+                                width: plus, height: bar), MockInk.gold))
+        ops.append(.fill(CGRect(x: startX + icon / 2 - bar / 2, y: cy - plus / 2,
+                                width: bar, height: plus), MockInk.gold))
+        let baseline = cy + ascender(size) / 2 - size * 0.06
+        ops.append(.text(text, startX + icon + gap, baseline, size, MockInk.title, false))
+        hits.append(MockHit(rect: CGRect(x: startX, y: top, width: total, height: h),
+                            token: "mock:field:\(key)"))
+        y = top + h + padBottom
+    }
+
+    /// 居中的「收起 ︿」
+    func collapsibleLink(_ text: String, size: CGFloat, color: UIColor, padV: CGFloat) {
+        let lh = lineHeight(size)
+        let w = Draw.width(text, size: size)
+        let caretGap = dp(3)
+        let caret = dp(9)
+        let total = w + caretGap + caret
+        let startX = (width - total) / 2
+        let baseline = y + padV + ascender(size)
+        ops.append(.text(text, startX, baseline, size, color, false))
+        ops.append(.chevronUp(startX + w + caretGap + caret / 2, y + padV + lh / 2,
+                              caret, color))
+        y += padV + lh + padV
+    }
+
+    /// 设置卡片的一行：左标题 + 右值 + 下箭头 + 行底分割线
+    func settingRow(_ title: String, value: String? = nil,
+                    valueColor: UIColor = MockInk.grey,
+                    size: CGFloat, height: CGFloat, padH: CGFloat,
+                    chevron: Bool = false, divider: Bool = true) {
+        let mid = y + height / 2
+        let baseline = mid + ascender(size) / 2 - size * 0.06
+        ops.append(.text(title, padH, baseline, size, MockInk.title, true))
+        if let value {
+            let vx = width - padH - (chevron ? dp(16) : 0)
+            ops.append(.right(value, vx, baseline, size, valueColor, false))
+        }
+        if chevron {
+            ops.append(.chevronDown(width - padH - dp(7), mid, dp(9),
+                                    Draw.color(0xffc2c2c2)))
+        }
+        y += height
+        if divider {
+            ops.append(.hairline(y, padH, width - padH, MockInk.line))
+            y += 1
+        }
+    }
+
+    /// 设置卡片的「标题 + 开关」行
+    func toggleRow(_ title: String, on: Bool,
+                   size: CGFloat, height: CGFloat, padH: CGFloat,
+                   divider: Bool = true) {
+        let mid = y + height / 2
+        let baseline = mid + ascender(size) / 2 - size * 0.06
+        ops.append(.text(title, padH, baseline, size, MockInk.title, true))
+        let tw = dp(47.5), th = dp(25.9)
+        let rect = CGRect(x: width - padH - tw, y: mid - th / 2, width: tw, height: th)
+        ops.append(.round(rect, th / 2, on ? Draw.color(0xff00b894) : Draw.color(0xffd9d9d9)))
+        let knob = th - dp(2.4)
+        let cx = on ? rect.maxX - dp(1.2) - knob / 2 : rect.minX + dp(1.2) + knob / 2
+        ops.append(.circle(cx, mid, knob / 2, MockInk.white))
+        y += height
+        if divider {
+            ops.append(.hairline(y, padH, width - padH, MockInk.line))
+            y += 1
+        }
+    }
+
+    /// 「备注」块：标题 + 占位文字 + 下划线，然后把 y 推到 `bottom`
+    func noteBlock(_ title: String, placeholder: String,
+                   titleSize: CGFloat, placeholderSize: CGFloat,
+                   padH: CGFloat, padTop: CGFloat, phGap: CGFloat,
+                   underlineGap: CGFloat, bottom: CGFloat) {
+        let top = y + padTop
+        ops.append(.text(title, padH, top + ascender(titleSize), titleSize,
+                         MockInk.title, true))
+        let phTop = top + lineHeight(titleSize) + phGap
+        ops.append(.text(placeholder, padH, phTop + ascender(placeholderSize),
+                         placeholderSize, MockInk.label, false))
+        let lineY = phTop + lineHeight(placeholderSize) + underlineGap
+        ops.append(.hairline(lineY, padH, width - padH, Draw.color(0xffe5e5e5)))
+        y = bottom
     }
 
     /// 通用「标签 —— 值」行：值可点（`bind(v, label)`），键就是标签名

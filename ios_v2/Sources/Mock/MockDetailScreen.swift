@@ -101,8 +101,11 @@ final class MockDetailScreen: Screen {
                      baseline: y + Self.headH / 2 + Draw.font(size: size, bold: true).ascender / 2
                         - size * 0.06,
                      size: size, MockInk.title, bold: true)
-        // 参考图（农业明细）标题栏底部有一条 1px 浅灰分割线，之前漏画了
-        d.hairline(y + Self.headH, from: 0, to: Self.W, MockInk.line)
+        // 参考图里农业「明细」标题栏底部有一条 1px 浅灰分割线；
+        // 「收支详情」等其它成品页没有这条线，所以按页判断。
+        if s.module == .nye && s.sub == 0 {
+            d.hairline(y + Self.headH, from: 0, to: Self.W, MockInk.line)
+        }
     }
 
     func hitTest(_ state: ScreenState, x: CGFloat, y: CGFloat) -> ActionToken {
