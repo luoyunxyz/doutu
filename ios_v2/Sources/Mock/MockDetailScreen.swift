@@ -102,18 +102,9 @@ final class MockDetailScreen: Screen {
                      baseline: y + Self.headH / 2 + Draw.font(size: size, bold: style.bold).ascender / 2
                         - size * 0.06,
                      size: size, style.titleColor, bold: style.bold)
-        // 工行「汇款明细查询」右上角：耳机客服 + ⋯（都是从参考图抠出来的）
-        if let icon = style.supportIcon {
-            let w = dp(24.2), h = dp(18.8)
-            d.art(UIImage(named: icon),
-                  CGRect(x: Self.W - dp(56) - w, y: y + (Self.headH - h) / 2,
-                         width: w, height: h))
-        }
-        if let icon = style.moreIcon {
-            let w = dp(20.6), h = dp(4.8)
-            d.art(UIImage(named: icon),
-                  CGRect(x: Self.W - dp(13.3) - w, y: y + (Self.headH - h) / 2,
-                         width: w, height: h))
+        // 右上角图标（工行客服 / ⋯ / 下载等，都是从参考图抠出来的）
+        for icon in style.icons {
+            d.art(UIImage(named: icon.name), icon.rect.offsetBy(dx: 0, dy: y))
         }
         if let line = style.divider {
             d.hairline(y + Self.headH, from: 0, to: Self.W, line,
@@ -121,9 +112,16 @@ final class MockDetailScreen: Screen {
         }
     }
 
+    /// 标题栏右侧的一个切图（坐标是参考画布坐标，`y` 以标题栏顶为 0）
+    private struct HeaderIcon {
+        let name: String
+        let rect: CGRect
+    }
+
     /// 成品页标题栏的差异（各家银行不一样）：
     /// - 农业「明细」：黑色粗体 + 底部 1px 浅灰线；
-    /// - 工商「汇款明细查询」：灰蓝常规体 + 耳机 / ⋯ 两个图标 + 底部 1px 灰绿线；
+    /// - 工商「汇款明细查询」：灰蓝常规体 + 耳机 / ⋯ + 底部灰绿线；
+    /// - 工商「明细详情」：灰色常规体 + 耳机 / 下载 + 底部浅灰线；
     /// - 其余：黑色粗体，无图标、无分割线。
     private struct HeaderStyle {
         var titleColor: UIColor = MockInk.title
@@ -132,8 +130,7 @@ final class MockDetailScreen: Screen {
         var backColor: UIColor = MockInk.value
         var divider: UIColor? = nil
         var dividerWidth: CGFloat = 1
-        var supportIcon: String? = nil
-        var moreIcon: String? = nil
+        var icons: [HeaderIcon] = []
     }
 
     private func headerStyle(_ s: State) -> HeaderStyle {
@@ -141,8 +138,27 @@ final class MockDetailScreen: Screen {
             return HeaderStyle(titleColor: MockInk.steel, titleSize: dp(19), bold: false,
                                backColor: MockInk.steel,
                                divider: Draw.color(0xffc8d2ce), dividerWidth: dp(1),
-                               supportIcon: "mock_icbc_support",
-                               moreIcon: "mock_icbc_more")
+                               icons: [
+                                   HeaderIcon(name: "mock_icbc_support",
+                                              rect: CGRect(x: 839.4, y: 49.8,
+                                                           width: 72.6, height: 56.4)),
+                                   HeaderIcon(name: "mock_icbc_more",
+                                              rect: CGRect(x: 978.2, y: 70.8,
+                                                           width: 61.8, height: 14.4)),
+                               ])
+        }
+        if s.module == .icbc && s.sub == 1 {
+            return HeaderStyle(titleColor: MockInk.grey, titleSize: dp(19), bold: false,
+                               backColor: MockInk.grey,
+                               divider: MockInk.line, dividerWidth: dp(1),
+                               icons: [
+                                   HeaderIcon(name: "mock_icbc_support2",
+                                              rect: CGRect(x: 884, y: 45.5,
+                                                           width: 65, height: 65)),
+                                   HeaderIcon(name: "mock_icbc_download",
+                                              rect: CGRect(x: 989, y: 46,
+                                                           width: 60, height: 64)),
+                               ])
         }
         if s.module == .nye && s.sub == 0 {
             return HeaderStyle(divider: MockInk.line)

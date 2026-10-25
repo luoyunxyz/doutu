@@ -15,6 +15,8 @@ enum MockIcbc {
         let b = MockBuilder(width: width, metrics: metrics)
         if state.sub == 0 {
             remit(b, state, showsTopTitle: showsTopTitle)
+        } else if state.sub == 1 {
+            detail01(b, state, showsTopTitle: showsTopTitle)
         } else {
             detailV2(b, state, showsTopTitle: showsTopTitle)
         }
@@ -82,6 +84,44 @@ enum MockIcbc {
     }
 
     // MARK: - 其余五个子页：明细详情（`buildDetail()`）
+
+    /// 01/01「明细详情」：金额 + 余额 + 7 行 +「查看全部」+ 详情设置 / 为您推荐。
+    ///
+    /// 参考图 1280×3249（状态栏下 342px 起算），×1080/1280、标题栏 156 之下：
+    ///   金额中心 149  余额 233  首行 295（行距 88）
+    ///   查看全部 927  灰隔条 993 起；设置 + 推荐整块是从参考图裁的切图。
+    private static func detail01(_ b: MockBuilder, _ s: MockState, showsTopTitle: Bool) {
+        if showsTopTitle {
+            b.headerBar("明细详情", color: MockInk.grey, icon: "mock_icbc_hdricons",
+                        iconSize: CGSize(width: dp(44), height: dp(24)))
+        }
+
+        b.centerBlock("金额", s.value("金额", "-70.00"), size: dp(32),
+                      color: Draw.color(0xff2e7d6f), padTop: dp(30.4), padBottom: 0)
+        b.centerBlock("余额", s.value("余额", "余额：72.09"), size: dp(16),
+                      color: Draw.color(0xff555555), padTop: 0, padBottom: 0)
+
+        let size = dp(14), padV = dp(6.27), padH = dp(20)
+        func row(_ label: String, _ value: String, color: UIColor = MockInk.value) {
+            b.pairRow(label, s.value(label, value), size: size, padH: padH, padV: padV,
+                      labelColor: Draw.color(0xff666666), valueColor: color)
+        }
+        row("交易卡号", "6222****7958")
+        row("交易账户", "2108****5507")
+        row("交易户名", "21083555555545507")
+        row("交易时间", s.time)
+        row("业务摘要", "消费", color: Draw.color(0xff3b6d99))
+        row("交易场所", "支付宝-杭州易充宝电子商务有限公司")
+        row("交易金额", "70.00")
+
+        b.gap(dp(3.7))
+        b.collapsibleLink("查看全部", size: dp(14), color: MockInk.grey,
+                          padV: dp(6.7), up: false)
+        b.gap(dp(5.7))
+        // 「详情设置（分类/不计入收支/备注）+ 为您推荐」整块按参考图裁切，
+        // 里面的文字/图标太多且随时会变，直接用位图对齐最稳。
+        b.fullWidthImage("mock_icbc_setrec", gapTop: 0)
+    }
 
     private static func detail(_ b: MockBuilder, _ s: MockState, showsTopTitle: Bool) {
         let detail = b.metrics.isDetail
