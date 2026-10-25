@@ -2914,6 +2914,10 @@ final class Router {
             let detail = MockDetailScreen()
             push(detail, state: MockDetailScreen.State(module: es.module, sub: es.sub,
                                                        time: es.time, fields: es.fields))
+            // 调试用：有远程 spec 就拉下来，到了之后按安卓页面的视觉块重绘
+            MockRemote.load(es.module, es.sub) { [weak self] in
+                self?.host?.setNeedsDisplay()
+            }
         case "reset":
             es.time = MockState.nowString()
             host?.setNeedsDisplay()

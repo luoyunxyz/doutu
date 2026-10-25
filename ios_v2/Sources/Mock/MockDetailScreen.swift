@@ -64,6 +64,13 @@ final class MockDetailScreen: Screen {
 
     func draw(_ d: Draw, state: ScreenState) {
         guard let s = state as? State else { return }
+        // 远程布局优先：电脑上有该页的 spec 时，直接按安卓页面的视觉块重绘
+        if let spec = MockRemote.spec(s.module, s.sub) {
+            let page = MockRemote.page(from: spec)
+            d.rect(CGRect(x: 0, y: 0, width: Self.W, height: Self.H), .white)
+            page.draw(d)
+            return
+        }
         let scroll = s.scroll
 
         // 底板：内容之外露出来的部分用页面自己的底板色（列表类是浅灰）
