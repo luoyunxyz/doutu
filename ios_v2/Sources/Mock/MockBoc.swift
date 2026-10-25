@@ -18,6 +18,8 @@ enum MockBoc {
             resultV2(b, state, showsTopTitle: showsTopTitle)
         case 1, 2:
             detailIncoming(b, state, showsTopTitle: showsTopTitle)
+        case 3:
+            detailSettings(b, state, showsTopTitle: showsTopTitle)
         case 5:
             receipt(b, state, showsTopTitle: showsTopTitle)
         default:
@@ -132,6 +134,56 @@ enum MockBoc {
         b.paragraph("\"交易时间\"为该笔交易提交的时间：\"记账时间\"为后台系统对该笔交易的实际处理时间。",
                     size: dp(12), color: Draw.color(0xff5d5d5d),
                     padH: dp(15), padTop: dp(12.1), padBottom: dp(20))
+    }
+
+    /// 中国 02/03「明细转入2」：收入金额 + 两行账户 + 灰条 + 七行 + 设置区。
+    /// 参考图 1280×2816（标题栏底 267px，×1080/1280、标题栏 94.5 之下）。
+    private static func detailSettings(_ b: MockBuilder, _ s: MockState,
+                                       showsTopTitle: Bool) {
+        if showsTopTitle { b.titleBar("明细") }
+        b.leftBlock("收入金额(人民币元)", x: dp(12.7), size: dp(13),
+                    color: MockInk.title, bold: true, padTop: dp(28.1))
+        b.leftBlock(s.value("金额", "500.00"), x: dp(12.7), size: dp(27),
+                    color: MockInk.title, bold: true, padTop: dp(13.5), padBottom: dp(18))
+        b.hairlineFull()
+
+        let size = dp(13), padH = dp(12.7), valueX = dp(114)
+        let single: CGFloat = 105.5, double: CGFloat = 139.6
+        func row(_ label: String, _ value: String, _ h: CGFloat) {
+            b.fixedRow(label, s.value(label, value), labelX: padH, valueX: valueX,
+                       size: size, padV: (h - 46.8) / 2,
+                       labelColor: MockInk.title, valueColor: Draw.color(0xff333333))
+            b.hairlineFull()
+        }
+        row("交易账户", "借记卡6221 ****** 3879", single)
+        row("交易后余额", "人民币元 600.00", single)
+        b.fill(dp(9), Draw.color(0xffeeeeee))
+        row("对方名称", "吴俊号", single)
+        row("对方账号", "6221 ****** 0636", single)
+        row("对方银行名称", "中国建设银行股份有限公司xxx支行", double)
+        row("交易类型", "跨行转账", single)
+        row("交易渠道/场所", "网上银行", double)
+        row("附言", "跨行转出", single)
+        row("交易时间", slashed(s.time), single)
+        b.fill(dp(9), Draw.color(0xffeeeeee))
+        b.leftBlock("可修改分类、备注、所属账本、交易对象和计入收支情况",
+                    x: padH, size: dp(11), color: Draw.color(0xff999999), padTop: dp(6.5))
+        b.fill(dp(9), Draw.color(0xffeeeeee))
+
+        let h = dp(35), blue = Draw.color(0xff2f6fd0)
+        b.actionRow("分类", value: s.value("分类", "其他收入"), action: "修改",
+                    size: size, height: h, padH: padH, valueX: valueX, actionColor: blue)
+        b.actionRow("交易备注", value: nil, action: "修改",
+                    size: size, height: h, padH: padH, valueX: valueX, actionColor: blue)
+        b.actionRow("所属账本", value: nil, action: "选择账本",
+                    size: size, height: h, padH: padH, valueX: valueX, actionColor: blue)
+        b.actionRow("交易对象", value: s.value("交易对象", "本人"), action: "修改",
+                    size: size, height: h, padH: padH, valueX: valueX, actionColor: blue)
+        b.actionRow("计入收支", value: s.value("计入收支", "计入"), action: nil,
+                    size: size, height: h, padH: padH, valueX: valueX,
+                    actionColor: blue, toggle: true)
+        b.bottomFill(Draw.color(0xffeeeeee),
+                     canvasHeight: showsTopTitle ? 2388 : 2388 - MockDetailScreen.headH)
     }
 
     // MARK: - 其余子页：明细（`buildDetail()`）

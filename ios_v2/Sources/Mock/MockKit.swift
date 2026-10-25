@@ -1366,6 +1366,31 @@ final class MockBuilder {
         y += h
     }
 
+    /// 设置行：标签 + 固定列值 + 右侧蓝色操作文字 / 开关（中行「分类 其他收入 修改」）
+    func actionRow(_ label: String, value: String?, action: String?, size: CGFloat,
+                   height: CGFloat, padH: CGFloat, valueX: CGFloat,
+                   actionColor: UIColor, toggle: Bool = false) {
+        let mid = y + height / 2
+        let baseline = mid + ascender(size) / 2 - size * 0.06
+        ops.append(.text(label, padH, baseline, size, MockInk.title, false))
+        if let value {
+            ops.append(.text(value, valueX, baseline, size, MockInk.value, false))
+        }
+        if let action {
+            ops.append(.right(action, width - padH, baseline, size, actionColor, false))
+        }
+        if toggle {
+            let tw = dp(40), th = dp(22)
+            let rect = CGRect(x: width - padH - tw, y: mid - th / 2, width: tw, height: th)
+            ops.append(.round(rect, th / 2, Draw.color(0xff009b6b)))
+            let knob = th - dp(2)
+            ops.append(.circle(rect.maxX - dp(1) - knob / 2, mid, knob / 2, MockInk.white))
+        }
+        y += height
+        ops.append(.hairline(y, padH, width - padH, MockInk.line))
+        y += dp(1) / 3
+    }
+
     /// 左对齐的一段大字（中行「收入金额 / 100.00」）
     func leftBlock(_ text: String, x: CGFloat, size: CGFloat, color: UIColor,
                    bold: Bool = false, padTop: CGFloat, padBottom: CGFloat = 0) {
