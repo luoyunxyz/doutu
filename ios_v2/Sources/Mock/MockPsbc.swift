@@ -15,7 +15,7 @@ enum MockPsbc {
         let b = MockBuilder(width: width, metrics: metrics)
         switch state.sub {
         case 0:
-            resultV2(b, state, showsTopTitle: showsTopTitle)
+            resultRef(b, state, showsTopTitle: showsTopTitle)
         case 3:
             receiptV2(b, state, showsTopTitle: showsTopTitle)
         case 4:
@@ -32,6 +32,30 @@ enum MockPsbc {
     }
 
     // MARK: - 0 转账结果
+
+    /// 0/00「转账结果」：按用户的 1280×2816 截图量（标题栏底 267）。
+    private static func resultRef(_ b: MockBuilder, _ s: MockState, showsTopTitle: Bool) {
+        if showsTopTitle { b.titleBar("转账结果") }
+        let green = Draw.color(0xff2fa83a)
+        b.checkBadge(diameter: dp(46), color: Draw.color(0xff58c04a),
+                     gapTop: dp(41), symbolSize: dp(22))
+        b.centerBlock("金额与状态", s.value("金额与状态", "¥100.00  转账成功"),
+                      size: dp(19), color: green, bold: true,
+                      padTop: dp(10), padBottom: dp(8))
+        b.dualLinks("继续转账", "转账记录", size: dp(15), color: green,
+                    separatorColor: Draw.color(0xffdddddd), padBottom: dp(8))
+        let size = dp(15), padH = dp(14)
+        for (label, fallback) in [("付款账号：", "6221***8142"), ("收款人：", "周虞虎"),
+                                  ("收款账号：", "6217 9958 0020 8094 158"),
+                                  ("开户行：", "中国邮政储蓄银行"), ("手续费：", "¥ 0.00"),
+                                  ("受理方式：", "实时"), ("交易日期：", "2026/10/25 21:39")] {
+            b.pairRow(label, s.value(label, fallback), size: size, padH: padH, padV: dp(5.2))
+        }
+        b.twoFilledButtons("完成", "电子回单", color: Draw.color(0xff3fae2a),
+                           height: dp(43.6), padH: dp(11), gap: dp(10),
+                           padV: dp(12), radius: dp(2), size: dp(16))
+        b.insetImage("mock_psbc_ad", padH: dp(11.3), gapTop: dp(8))
+    }
 
     private static func result(_ b: MockBuilder, _ s: MockState, showsTopTitle: Bool) {
         if showsTopTitle {

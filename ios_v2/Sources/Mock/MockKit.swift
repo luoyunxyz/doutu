@@ -1404,6 +1404,22 @@ final class MockBuilder {
         y += padTop + lh + padBottom
     }
 
+    /// 两个实心同色按钮（邮政「完成 / 电子回单」）
+    func twoFilledButtons(_ left: String, _ right: String, color: UIColor,
+                          height: CGFloat, padH: CGFloat, gap: CGFloat,
+                          padV: CGFloat, radius: CGFloat, size: CGFloat) {
+        y += padV
+        let w = (width - padH * 2 - gap) / 2
+        let l = CGRect(x: padH, y: y, width: w, height: height)
+        let r = CGRect(x: padH + w + gap, y: y, width: w, height: height)
+        ops.append(.round(l, radius, color))
+        ops.append(.round(r, radius, color))
+        let baseline = y + height / 2 + ascender(size) / 2 - size * 0.06
+        ops.append(.center(left, l.midX, baseline, size, MockInk.white, false))
+        ops.append(.center(right, r.midX, baseline, size, MockInk.white, false))
+        y += height + padV
+    }
+
     /// 居中的固定尺寸切图（中行「操作结果」的绿色 ✓）
     func centeredImage(_ name: String, width imgW: CGFloat, height imgH: CGFloat,
                        gapTop: CGFloat = 0) {
