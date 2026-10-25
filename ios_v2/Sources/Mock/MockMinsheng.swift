@@ -9,10 +9,13 @@ enum MockMinsheng {
     static func page(state: MockState, metrics: MockMetrics,
                      width: CGFloat, showsTopTitle: Bool) -> MockPage {
         let b = MockBuilder(width: width, metrics: metrics)
-        // 安卓 12_01 是「账单详情」，12_00/12_02 是支付成功/消息盒子；
-        // 目前先对齐 12_01，另外两页保持旧版式。
+        // 安卓 12_01 是「账单详情」，12_02 是「消息盒子」，12_00 是支付成功。
         if state.sub == 1 {
             bill(b, state, showsTopTitle: showsTopTitle)
+            return b.result
+        }
+        if state.sub == 2 {
+            messages(b, state, showsTopTitle: showsTopTitle)
             return b.result
         }
         let incoming = state.sub != 0
@@ -94,5 +97,51 @@ enum MockMinsheng {
         }
 
         b.gap(dp(24))
+    }
+
+    // MARK: - 12/02 消息盒子（三张通知卡，13sp）
+
+    private static func messages(_ b: MockBuilder, _ s: MockState, showsTopTitle: Bool) {
+        if showsTopTitle { b.titleBar("消息盒子") }
+        b.pageBackground = MockInk.page
+
+        let size = dp(13)
+        let gray = Draw.color(0xff8f8f8f)
+        let orange = Draw.color(0xffde6f2b)
+
+        func card(_ title: String, _ time: String,
+                  _ rows: [(String, String, UIColor)],
+                  _ big: String?) {
+            b.panel(gapTop: dp(10), margin: dp(10), pad: dp(14), bg: .white) { p in
+                p.pairRow(title, time, size: dp(13), padH: 0, padV: dp(4),
+                          labelColor: MockInk.title, valueColor: Draw.color(0xffbbbbbb))
+                if let big {
+                    p.sectionLabel(big, size: dp(16), color: MockInk.title,
+                                   padH: 0, padTop: dp(6), padBottom: dp(6))
+                }
+                for (label, value, color) in rows {
+                    p.pairRow(label, value, size: size, padH: 0, padV: dp(6),
+                              labelColor: gray, valueColor: color)
+                }
+                p.sectionLabel("查看详情", size: size, color: MockInk.title,
+                               padH: 0, padTop: dp(8), padBottom: 0)
+            }
+        }
+
+        card("商家服务", "10:00",
+             [("经营数据", "今日第1笔收入，共计¥100.00", MockInk.title),
+              ("备注", "已开通笔笔转入余额宝", MockInk.title),
+              ("本次奖励", "9月现金奖励等你赚取", orange)],
+             "收款金额¥100.00")
+        card("余额宝", "10:00",
+             [("昨日收益", "", gray),
+              ("收益日期", "09-25余额宝收益", MockInk.title),
+              ("本次奖励", "昨日有收益领芭芭农场肥料", orange)],
+             "+0.01")
+        card("支付宝会员", "10:00",
+             [("我的积分", "今日第1笔收款．共计¥100.00", MockInk.title),
+              ("领取提示", "积分奖励不领取会消失，请尽快领取哦", MockInk.title)],
+             "今日第1笔收款．共计¥100.00")
+        b.gap(dp(20))
     }
 }
