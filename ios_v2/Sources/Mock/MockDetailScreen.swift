@@ -66,11 +66,21 @@ final class MockDetailScreen: Screen {
 
     func maxScroll(_ state: ScreenState) -> CGFloat {
         guard let s = state as? State else { return 0 }
+        // 邮政这 8 页是整页截图贴图，固定一屏
+        if s.module == .psbc && (0...7).contains(s.sub) { return 0 }
         return max(0, headH(s) + page(s).height - Self.H)
     }
 
     func draw(_ d: Draw, state: ScreenState) {
         guard let s = state as? State else { return }
+        // 邮政 8 页：用户要求「禁止手绘、缺什么抠什么」，整页直接用截图贴图。
+        if s.module == .psbc, (0...7).contains(s.sub),
+           let img = UIImage(named: "mock_psbc_p\(s.sub)") {
+            d.rect(CGRect(x: 0, y: 0, width: Self.W, height: Self.H), .white)
+            let h = Self.W * img.size.height / max(1, img.size.width)
+            d.art(img, CGRect(x: 0, y: 0, width: Self.W, height: h))
+            return
+        }
         // 远程布局优先：电脑上有该页的 spec 时，直接按安卓页面的视觉块重绘
         if let spec = MockRemote.spec(s.module, s.sub) {
             let page = MockRemote.page(from: spec)
