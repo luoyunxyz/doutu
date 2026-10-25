@@ -33,8 +33,13 @@ enum MockCmb {
         case 4:
             balance(b, state, showsTopTitle: showsTopTitle)
         default:
-            detail(b, state, income: mode(of: state.sub) == 1,
-                   showsTopTitle: showsTopTitle)
+            if state.sub == 0 || state.sub == 1 {
+                detailV2(b, state, income: state.sub == 1,
+                         showsTopTitle: showsTopTitle)
+            } else {
+                detail(b, state, income: mode(of: state.sub) == 1,
+                       showsTopTitle: showsTopTitle)
+            }
         }
         return b.result
     }
@@ -183,5 +188,67 @@ enum MockCmb {
                   padH: isDetail ? dp(16) : dp(14),
                   padV: isDetail ? dp(12) : dp(10),
                   labelColor: isDetail ? MockInk.label : MockInk.noteTitle)
+    }
+
+    // MARK: - 招商 04/00、04/01（安卓 DOM 实测：90 / 103px）
+
+    private static func detailV2(_ b: MockBuilder, _ s: MockState, income: Bool,
+                                 showsTopTitle: Bool) {
+        if showsTopTitle { b.headerBar("明细详情", color: MockInk.value, trailing: "⌕   ⋯") }
+
+        let rowSize = dp(12)
+        func row(_ label: String, _ value: String, padH: CGFloat, padV: CGFloat) {
+            b.pairRow(label, s.value(label, value), size: rowSize, padH: padH, padV: padV,
+                      labelColor: Draw.color(0xffb2b2b2), valueColor: MockInk.title)
+        }
+
+        if !income {
+            b.sectionLabel("转给李哈哈", size: dp(15), color: MockInk.title,
+                           padH: dp(40), padTop: dp(20), padBottom: 0)
+            b.sectionLabel("- ¥ 100.00", size: dp(28), color: MockInk.title,
+                           padH: dp(40), padTop: dp(4), padBottom: dp(20))
+            let padV = dp(7.8)
+            row("收款账户", "6226 1225 4625 3990", padH: dp(12), padV: padV)
+            row("收款银行", "中国工商银行", padH: dp(12), padV: padV)
+            row("付款账户", "6221********3640", padH: dp(12), padV: padV)
+            row("转账附言", "转账", padH: dp(12), padV: padV)
+            row("转账渠道", "手机银行", padH: dp(12), padV: padV)
+            row("转账方式", "电子银行转账", padH: dp(12), padV: padV)
+
+            b.sectionLabel("转账完成", size: dp(14), color: Draw.color(0xff23b956),
+                           padH: dp(15), padTop: dp(18), padBottom: 0)
+            b.sectionLabel(s.time, size: dp(11), color: Draw.color(0xff9c9c9c),
+                           padH: dp(15), padTop: dp(2), padBottom: 0)
+            b.centeredLink("通知收款人", size: dp(13), color: Draw.color(0xff849ed3), padV: dp(10))
+            b.centeredLink("查看和TA的转账记录", size: dp(13), color: MockInk.title, padV: dp(8))
+            b.fullButton("再转一笔", filled: true, color: Draw.color(0xffe8452f),
+                         height: dp(44), padH: dp(16), gapTop: dp(14), size: dp(12))
+        } else {
+            b.centerBlock("户名", s.value("户名", "李哈哈"), size: dp(13),
+                          color: Draw.color(0xff939393), padTop: dp(18), padBottom: 0)
+            b.sectionLabel("+ ¥100.00", size: dp(26), color: MockInk.title,
+                           padH: dp(22), padTop: dp(8), padBottom: 0)
+            b.sectionLabel("余额¥100.00", size: dp(12), color: Draw.color(0xff9d9d9d),
+                           padH: dp(22), padTop: dp(4), padBottom: dp(10))
+            let padV = dp(9.97)
+            row("交易卡号", "一卡通 6226********9990", padH: dp(22), padV: padV)
+            row("交易时间", s.time, padH: dp(22), padV: padV)
+            row("付款银行", "中国工商银行", padH: dp(22), padV: padV)
+            row("付款账号", "6226***********9990", padH: dp(22), padV: padV)
+            row("转账附言", "手机转账", padH: dp(22), padV: padV)
+            row("银行交易类型", "汇入汇款", padH: dp(22), padV: padV)
+
+            b.centeredCells(["给TA转账", "查看往来记录"], height: dp(30), size: dp(12), padV: dp(8))
+            b.pairRow("分类", s.value("分类", "其他支出"), size: rowSize, padH: dp(25),
+                      padV: dp(8), labelColor: Draw.color(0xffb2b2b2))
+            b.pairRow("所属账本", s.value("所属账本", "请选择"), size: rowSize, padH: dp(25),
+                      padV: dp(8), labelColor: Draw.color(0xffb2b2b2))
+            b.sectionLabel("不计入本月收支", size: rowSize, color: Draw.color(0xffb2b2b2),
+                           padH: dp(25), padTop: dp(8), padBottom: 0)
+            b.sectionLabel("备注", size: rowSize, color: Draw.color(0xffb2b2b2),
+                           padH: dp(25), padTop: dp(10), padBottom: 0)
+            b.sectionLabel("记录点什么....", size: dp(14), color: Draw.color(0xffb2b2b2),
+                           padH: dp(25), padTop: dp(4), padBottom: 0)
+        }
     }
 }
