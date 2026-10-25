@@ -17,9 +17,11 @@ enum MockPsbc {
         case 0:
             resultRef(b, state, showsTopTitle: showsTopTitle)
         case 3:
-            receiptV2(b, state, showsTopTitle: showsTopTitle)
+            resultNew(b, state, showsTopTitle: showsTopTitle)
         case 4:
             recordV2(b, state, showsTopTitle: showsTopTitle)
+        case 7:
+            receiptV2(b, state, showsTopTitle: showsTopTitle)
         default:
             psbcV2(b, state, showsTopTitle: showsTopTitle)
         }
@@ -34,6 +36,32 @@ enum MockPsbc {
     // MARK: - 0 转账结果
 
     /// 0/00「转账结果」：按用户的 1280×2816 截图量（标题栏底 267）。
+    /// 0/03「转账结果（新/天天盈）」：白卡片 + 三个绿色链接 + 九行 + 两个按钮。
+    private static func resultNew(_ b: MockBuilder, _ s: MockState, showsTopTitle: Bool) {
+        if showsTopTitle { b.titleBar("转账结果") }
+        let green = Draw.color(0xff1fa02a)
+        b.checkBadge(diameter: dp(46), color: Draw.color(0xff2fae4a),
+                     gapTop: dp(38), symbolSize: dp(22))
+        b.centerBlock("金额", s.value("金额", "¥100.00"), size: dp(24),
+                      color: MockInk.title, bold: true, padTop: dp(8), padBottom: 0)
+        b.centerBlock(nil, "转账成功", size: dp(15), color: MockInk.title,
+                      padTop: 0, padBottom: dp(6))
+        b.centeredCells(["继续转账", "转账记录", "转入天天盈"], height: dp(46),
+                        size: dp(15), padV: dp(4))
+        let size = dp(15), padH = dp(16)
+        for (label, fallback) in [("收款人", "李哈哈"), ("收款账号", "6228 4809 0860 0283 7175"),
+                                  ("开户行", "中国工商银行"), ("手续费", "¥ 0.00"),
+                                  ("受理方式", "实时"), ("附言", "转账"),
+                                  ("付款账号", "6228 **** 8185"), ("可用余额", "¥ 19.50"),
+                                  ("交易日期", "2026-10-25 21:40")] {
+            b.pairRow(label, s.value(label, fallback), size: size, padH: padH, padV: dp(5.6),
+                      labelColor: Draw.color(0xff898989), valueColor: MockInk.title)
+        }
+        b.twoFilledButtons("完成", "通知收款人", color: Draw.color(0xff0c5f3f),
+                           height: dp(43.6), padH: dp(12), gap: dp(10),
+                           padV: dp(12), radius: dp(4), size: dp(16))
+    }
+
     private static func resultRef(_ b: MockBuilder, _ s: MockState, showsTopTitle: Bool) {
         if showsTopTitle { b.titleBar("转账结果") }
         let green = Draw.color(0xff2fa83a)
@@ -242,10 +270,10 @@ enum MockPsbc {
             amount = "+ ¥ 100.00"; amountSize = dp(28); balance = "账户余额¥10,129.50"
         case 2:
             amount = "+ ¥ 100.00"; amountSize = dp(24); balance = "账户余额 ¥ 10,129.50"
-        case 6:
+        case 5:
             amount = "-￥521.05"; amountSize = dp(21); balance = "余额￥521.05"
-        case 7:
-            amount = "-￥521.05"; amountSize = dp(21); balance = "账户余额￥521.05"
+        case 6:
+            amount = "+￥521.05"; amountSize = dp(21); balance = "余额￥51.05"
         default:
             amount = "+￥521.05"; amountSize = dp(21); balance = "余额￥51.05"
         }
@@ -279,16 +307,19 @@ enum MockPsbc {
             row("付款账号", "6226 **** 9995")
             row("付款行名", "中国工商银行")
             row("附言", "张三支付宝转账")
-        case 6:
+        case 5:
             row("交易卡号", "6217 **** 7856")
             row("交易时间", s.time)
-            row("收款账号", "6217 **** 3918")
-            row("收款银行", "中国农业银行股份有限公司")
-            row("附言", "付款")
-            row("摘要", "跨行汇出")
+            row("付款账号", "6217 **** 3918")
+            row("附言", "无附言")
+            row("摘要", "他行汇入")
             b.sectionLabel("交易类型", size: dp(14), color: MockInk.title,
                            padH: padH, padTop: dp(18), padBottom: 0)
+            b.sectionLabel("所属账本", size: dp(14), color: MockInk.title,
+                           padH: padH, padTop: dp(24), padBottom: 0)
             b.sectionLabel("不计入本月收支", size: dp(14), color: MockInk.title,
+                           padH: padH, padTop: dp(24), padBottom: 0)
+            b.sectionLabel("附注", size: dp(14), color: MockInk.title,
                            padH: padH, padTop: dp(24), padBottom: 0)
         case 7:
             row("交易卡号", "6217 **** 7856")
