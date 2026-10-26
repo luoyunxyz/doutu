@@ -123,7 +123,7 @@ enum MockDigitalWallet {
     /// 建设转出2 的灰色汇总区底色
     static let fullGrey = Draw.color(0xFFF7F8FA)
 
-    static func hasFullPage(_ sub: Int) -> Bool { sub == 0 || sub == 1 }
+    static func hasFullPage(_ sub: Int) -> Bool { sub == 0 || sub == 1 || sub == 2 }
 
     /// 数字钱包整页版式：0=建设转出1（转钱成功），1=建设转出2（交易详情）。
     /// 所有坐标/字号都从 1280×2816 的原图上量得。
@@ -285,6 +285,109 @@ enum MockDigitalWallet {
                           size: rowSize, color: Draw.color(0xFF474747), bold: false,
                           align: .center(639), baseline: 2535, kind: .text,
                           label: "修改「给TA转钱」", maxWidth: 600),
+            ]
+        }
+
+        if sub == 2 {
+            let labelColor = Draw.color(0xFF7C7C7C)
+            let valueColor = Draw.color(0xFF111111)
+            let greenText = Draw.color(0xFF2BA471)
+            let rowSize: CGFloat = 46
+
+            return [
+                FullField(key: "full2_title", fallback: "交易详情",
+                          clear: CGRect(x: 507, y: 158, width: 245, height: 72),
+                          size: 60, color: Draw.color(0xFF333333), bold: true,
+                          align: .center(640), baseline: 220, kind: .text,
+                          label: "修改页面标题", maxWidth: 900),
+                FullField(key: "full2_transfer", fallback: "充钱包-建设银行 (1597)",
+                          clear: CGRect(x: 383, y: 579, width: 512, height: 66),
+                          size: 55, color: Draw.color(0xFF000000), bold: true,
+                          align: .center(639), baseline: 636, kind: .text,
+                          label: "修改充值说明", bg: fullGrey, maxWidth: 1000),
+                FullField(key: "full2_amount", fallback: "+100.00",
+                          clear: CGRect(x: 445, y: 688, width: 390, height: 90),
+                          size: 101, color: Draw.color(0xFF000000), bold: false,
+                          align: .center(640), baseline: 770, kind: .signedAmount,
+                          label: "修改金额", bg: fullGrey, maxWidth: 1000),
+
+                FullField(key: "full2_status_label", fallback: "当前状态",
+                          clear: CGRect(x: 70, y: 938, width: 180, height: 55),
+                          size: rowSize, color: labelColor, bold: false,
+                          align: .left(78), baseline: 986, kind: .text,
+                          label: "修改「当前状态」"),
+                FullField(key: "full2_status_value", fallback: "交易成功",
+                          clear: CGRect(x: 1029, y: 938, width: 180, height: 55),
+                          size: rowSize, color: greenText, bold: false,
+                          align: .right(1202), baseline: 986, kind: .text,
+                          label: "修改交易状态"),
+
+                FullField(key: "full2_type_label", fallback: "银行卡类型",
+                          clear: CGRect(x: 69, y: 1088, width: 225, height: 55),
+                          size: rowSize, color: labelColor, bold: false,
+                          align: .left(77), baseline: 1136, kind: .text,
+                          label: "修改「银行卡类型」"),
+                FullField(key: "full2_type_value", fallback: "储蓄卡",
+                          clear: CGRect(x: 1068, y: 1088, width: 142, height: 55),
+                          size: rowSize, color: valueColor, bold: false,
+                          align: .right(1202), baseline: 1136, kind: .text,
+                          label: "修改银行卡类型"),
+
+                FullField(key: "full2_acct_label", fallback: "银行账户",
+                          clear: CGRect(x: 69, y: 1246, width: 180, height: 55),
+                          size: rowSize, color: labelColor, bold: false,
+                          align: .left(77), baseline: 1305, kind: .text,
+                          label: "修改「银行账户」"),
+                FullField(key: "full2_acct_value", fallback: "建设银行 (1597)",
+                          clear: CGRect(x: 892, y: 1252, width: 318, height: 55),
+                          size: rowSize, color: valueColor, bold: false,
+                          align: .right(1200), baseline: 1305, kind: .text,
+                          label: "修改银行账户", maxWidth: 300),
+
+                FullField(key: "full2_method_label", fallback: "充钱方式",
+                          clear: CGRect(x: 69, y: 1402, width: 180, height: 55),
+                          size: rowSize, color: labelColor, bold: false,
+                          align: .left(77), baseline: 1450, kind: .text,
+                          label: "修改「充钱方式」"),
+                FullField(key: "full2_method_value", fallback: "银行卡转入",
+                          clear: CGRect(x: 986, y: 1402, width: 224, height: 55),
+                          size: rowSize, color: valueColor, bold: false,
+                          align: .right(1202), baseline: 1450, kind: .text,
+                          label: "修改充钱方式", maxWidth: 800),
+
+                FullField(key: "full2_time_label", fallback: "交易时间",
+                          clear: CGRect(x: 69, y: 1553, width: 180, height: 55),
+                          size: rowSize, color: labelColor, bold: false,
+                          align: .left(77), baseline: 1600, kind: .text,
+                          label: "修改「交易时间」"),
+                FullField(key: "full2_time_value", fallback: "2026-10-26 17:27:32",
+                          clear: CGRect(x: 793, y: 1556, width: 418, height: 50),
+                          size: rowSize, color: valueColor, bold: false,
+                          align: .right(1202), baseline: 1600, kind: .text,
+                          label: "修改交易时间", maxWidth: 401),
+
+                FullField(key: "full2_voucher_label", fallback: "凭证号",
+                          clear: CGRect(x: 69, y: 1703, width: 140, height: 55),
+                          size: rowSize, color: labelColor, bold: false,
+                          align: .left(77), baseline: 1749, kind: .text,
+                          label: "修改「凭证号」"),
+                FullField(key: "full2_voucher_value",
+                          fallback: "10100195896870611960170230000000010000",
+                          clear: CGRect(x: 238, y: 1706, width: 945, height: 50),
+                          size: rowSize, color: valueColor, bold: false,
+                          align: .right(1202), baseline: 1749, kind: .text,
+                          label: "修改凭证号", maxWidth: 956),
+
+                FullField(key: "full2_related", fallback: "关联交易",
+                          clear: CGRect(x: 69, y: 1948, width: 180, height: 58),
+                          size: rowSize, color: Draw.color(0xFF111111), bold: true,
+                          align: .left(77), baseline: 1998, kind: .text,
+                          label: "修改「关联交易」", maxWidth: 900),
+                FullField(key: "full2_question", fallback: "对此订单有疑问",
+                          clear: CGRect(x: 68, y: 2152, width: 308, height: 58),
+                          size: rowSize, color: Draw.color(0xFF111111), bold: true,
+                          align: .left(76), baseline: 2203, kind: .text,
+                          label: "修改「对此订单有疑问」", maxWidth: 900),
             ]
         }
         return []
