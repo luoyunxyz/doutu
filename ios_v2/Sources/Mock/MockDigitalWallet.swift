@@ -122,10 +122,17 @@ enum MockDigitalWallet {
     static let fullPageSize = CGSize(width: 1280, height: 2816)
     /// 建设转出2 的灰色汇总区底色
     static let fullGrey = Draw.color(0xFFF7F8FA)
+    /// 建设存入的蓝色页头
+    static let fullBlue = Draw.color(0xFF426DD6)
+    /// 建设转出的浅灰页面底色
+    static let fullPage4Bg = Draw.color(0xFFF8F8F8)
 
-    static func hasFullPage(_ sub: Int) -> Bool { sub == 0 || sub == 1 || sub == 2 }
+    static func hasFullPage(_ sub: Int) -> Bool {
+        sub == 0 || sub == 1 || sub == 2 || sub == 3 || sub == 4
+    }
 
-    /// 数字钱包整页版式：0=建设转出1（转钱成功），1=建设转出2（交易详情）。
+    /// 数字钱包整页版式：0=建设转出1（转钱成功），1=建设转出2（交易详情），
+    /// 2=建设转入（交易详情），3=建设存入（存入成功），4=建设转出（支付成功）。
     /// 所有坐标/字号都从 1280×2816 的原图上量得。
     static func fullFields(_ sub: Int) -> [FullField] {
         if sub == 0 {
@@ -388,6 +395,159 @@ enum MockDigitalWallet {
                           size: rowSize, color: Draw.color(0xFF111111), bold: true,
                           align: .left(76), baseline: 2203, kind: .text,
                           label: "修改「对此订单有疑问」", maxWidth: 900),
+            ]
+        }
+
+        if sub == 3 {
+            let labelColor = Draw.color(0xFF7C7C7C)
+            let valueColor = Draw.color(0xFF111111)
+            let rowSize: CGFloat = 52
+
+            return [
+                FullField(key: "full3_title", fallback: "存入钱包",
+                          clear: CGRect(x: 514, y: 157, width: 246, height: 64),
+                          size: 56, color: .white, bold: true,
+                          align: .center(637), baseline: 214, kind: .text,
+                          label: "修改页面标题", bg: fullBlue, maxWidth: 600),
+                FullField(key: "full3_success", fallback: "存入成功",
+                          clear: CGRect(x: 469, y: 842, width: 338, height: 92),
+                          size: 86, color: Draw.color(0xFF333333), bold: true,
+                          align: .center(637), baseline: 926, kind: .text,
+                          label: "修改状态标题", maxWidth: 900),
+
+                FullField(key: "full3_wallet_label", fallback: "钱包编号",
+                          clear: CGRect(x: 44, y: 1105, width: 224, height: 62),
+                          size: rowSize, color: labelColor, bold: false,
+                          align: .left(52), baseline: 1159, kind: .text,
+                          label: "修改「钱包编号」"),
+                FullField(key: "full3_wallet_value", fallback: "0647***7386",
+                          clear: CGRect(x: 900, y: 1105, width: 335, height: 62),
+                          size: rowSize, color: valueColor, bold: false,
+                          align: .right(1227), baseline: 1159, kind: .text,
+                          label: "修改钱包编号", maxWidth: 319),
+
+                FullField(key: "full3_amount_label", fallback: "存入金额",
+                          clear: CGRect(x: 44, y: 1236, width: 224, height: 66),
+                          size: rowSize, color: labelColor, bold: false,
+                          align: .left(52), baseline: 1294, kind: .text,
+                          label: "修改「存入金额」"),
+                FullField(key: "full3_amount_value", fallback: "¥2,000.00",
+                          clear: CGRect(x: 962, y: 1236, width: 273, height: 66),
+                          size: rowSize, color: valueColor, bold: false,
+                          align: .right(1226), baseline: 1294, kind: .text,
+                          label: "修改存入金额", maxWidth: 264),
+
+                FullField(key: "full3_account_label", fallback: "充值账户",
+                          clear: CGRect(x: 45, y: 1367, width: 220, height: 62),
+                          size: rowSize, color: labelColor, bold: false,
+                          align: .left(53), baseline: 1428, kind: .text,
+                          label: "修改「充值账户」"),
+                FullField(key: "full3_account_value", fallback: "中国建设银行 龙卡通(7641)",
+                          clear: CGRect(x: 577, y: 1367, width: 660, height: 62),
+                          size: rowSize, color: valueColor, bold: false,
+                          align: .right(1224), baseline: 1428, kind: .text,
+                          label: "修改充值账户", maxWidth: 639),
+
+                FullField(key: "full3_done", fallback: "完成",
+                          clear: CGRect(x: 576, y: 2582, width: 130, height: 70),
+                          size: 62, color: Draw.color(0xFF4A6FC0), bold: false,
+                          align: .center(640), baseline: 2645, kind: .text,
+                          label: "修改「完成」按钮文字", maxWidth: 900),
+            ]
+        }
+
+        if sub == 4 {
+            let pageBg = fullPage4Bg
+            let rowSize: CGFloat = 52
+            let valueColor = Draw.color(0xFF5F5F5F)
+
+            return [
+                FullField(key: "full4_done", fallback: "完成",
+                          clear: CGRect(x: 1076, y: 167, width: 132, height: 74),
+                          size: 64, color: Draw.color(0xFF4A73B9), bold: false,
+                          align: .right(1200), baseline: 233, kind: .text,
+                          label: "修改右上角「完成」", bg: pageBg, maxWidth: 300),
+                FullField(key: "full4_amount", fallback: "2,000.00元",
+                          clear: CGRect(x: 380, y: 633, width: 520, height: 112),
+                          size: 100, color: Draw.color(0xFF000000), bold: false,
+                          align: .center(640), baseline: 735, kind: .text,
+                          label: "修改金额", bg: pageBg, maxWidth: 1200),
+                FullField(key: "full4_alipay", fallback: "支付宝",
+                          clear: CGRect(x: 549, y: 790, width: 180, height: 70),
+                          size: 59, color: Draw.color(0xFF111111), bold: false,
+                          align: .center(640), baseline: 850, kind: .text,
+                          label: "修改付款方式", bg: pageBg, maxWidth: 800),
+
+                FullField(key: "full4_pay_label", fallback: "付款账户",
+                          clear: CGRect(x: 44, y: 1077, width: 208, height: 62),
+                          size: rowSize, color: Draw.color(0xFF111111), bold: false,
+                          align: .left(52), baseline: 1136, kind: .text,
+                          label: "修改「付款账户」", bg: pageBg),
+                FullField(key: "full4_pay_value", fallback: "中国建设银行 储蓄账户(1234)",
+                          clear: CGRect(x: 570, y: 1077, width: 665, height: 66),
+                          size: rowSize, color: valueColor, bold: false,
+                          align: .right(1225), baseline: 1136, kind: .text,
+                          label: "修改付款账户", bg: pageBg, maxWidth: 647),
+
+                FullField(key: "full4_amt_label", fallback: "付款金额",
+                          clear: CGRect(x: 44, y: 1203, width: 212, height: 62),
+                          size: rowSize, color: Draw.color(0xFF111111), bold: false,
+                          align: .left(52), baseline: 1260, kind: .text,
+                          label: "修改「付款金额」", bg: pageBg),
+                FullField(key: "full4_amt_value", fallback: "2,000.00元",
+                          clear: CGRect(x: 969, y: 1203, width: 258, height: 62),
+                          size: rowSize, color: valueColor, bold: false,
+                          align: .right(1227), baseline: 1260, kind: .text,
+                          label: "修改付款金额", bg: pageBg, maxWidth: 250),
+
+                FullField(key: "full4_order_label", fallback: "订单号",
+                          clear: CGRect(x: 44, y: 1329, width: 160, height: 50),
+                          size: 42, color: Draw.color(0xFF111111), bold: false,
+                          align: .left(52), baseline: 1370, kind: .text,
+                          label: "修改「订单号」", bg: pageBg),
+                FullField(key: "full4_order1", fallback: "202403141309636",
+                          clear: CGRect(x: 338, y: 1332, width: 680, height: 52),
+                          size: 48, color: valueColor, bold: false,
+                          align: .left(347), baseline: 1370, kind: .text,
+                          label: "修改订单号第一行", bg: pageBg, maxWidth: 650),
+                FullField(key: "full4_order2", fallback: "0303684217243364",
+                          clear: CGRect(x: 338, y: 1391, width: 680, height: 58),
+                          size: 48, color: valueColor, bold: false,
+                          align: .left(347), baseline: 1438, kind: .text,
+                          label: "修改订单号第二行", bg: pageBg, maxWidth: 650),
+                FullField(key: "full4_copy", fallback: "复制",
+                          clear: CGRect(x: 1104, y: 1332, width: 110, height: 54),
+                          size: 44, color: Draw.color(0xFF6B6B6B), bold: false,
+                          align: .center(1155), baseline: 1379, kind: .text,
+                          label: "修改「复制」按钮文字", bg: pageBg, maxWidth: 160),
+
+                FullField(key: "full4_collapse", fallback: "点击收起",
+                          clear: CGRect(x: 520, y: 1487, width: 180, height: 55),
+                          size: 45, color: Draw.color(0xFF4A73B9), bold: false,
+                          align: .left(528), baseline: 1535, kind: .text,
+                          label: "修改「点击收起」", bg: pageBg, maxWidth: 168),
+
+                FullField(key: "full4_btn1", fallback: "话费充值",
+                          clear: CGRect(x: 140, y: 1677, width: 186, height: 58),
+                          size: 46, color: Draw.color(0xFF333333), bold: false,
+                          align: .center(233), baseline: 1726, kind: .text,
+                          label: "修改「话费充值」按钮", bg: pageBg, maxWidth: 300),
+                FullField(key: "full4_btn2", fallback: "查看财富",
+                          clear: CGRect(x: 547, y: 1677, width: 184, height: 58),
+                          size: 46, color: Draw.color(0xFF333333), bold: false,
+                          align: .center(639), baseline: 1726, kind: .text,
+                          label: "修改「查看财富」按钮", bg: pageBg, maxWidth: 300),
+                FullField(key: "full4_btn3", fallback: "龙支付",
+                          clear: CGRect(x: 977, y: 1677, width: 140, height: 58),
+                          size: 46, color: .white, bold: false,
+                          align: .center(1046), baseline: 1725, kind: .text,
+                          label: "修改「龙支付」按钮", bg: Draw.color(0xFF4679D8),
+                          maxWidth: 300),
+                FullField(key: "full4_more", fallback: "更多精彩",
+                          clear: CGRect(x: 45, y: 1907, width: 186, height: 58),
+                          size: 46, color: Draw.color(0xFF7C7C7C), bold: false,
+                          align: .left(53), baseline: 1956, kind: .text,
+                          label: "修改「更多精彩」", bg: pageBg, maxWidth: 600),
             ]
         }
         return []
