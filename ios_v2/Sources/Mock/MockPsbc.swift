@@ -39,6 +39,28 @@ enum MockPsbc {
     }
 
     static func overlayFields(_ sub: Int) -> [OverlayField] {
+        if sub == 2 {
+            return [
+                OverlayField(key: "金额", fallback: "+ ¥ 100.00",
+                             rect: CGRect(x: 340, y: 285, width: 400, height: 70),
+                             size: 66, color: MockInk.title, align: 1),
+                OverlayField(key: "余额", fallback: "账户余额 ¥ 10,129.50",
+                             rect: CGRect(x: 340, y: 364, width: 400, height: 44),
+                             size: 40, color: Draw.color(0xff898989), align: 1),
+                OverlayField(key: "交易卡号", fallback: "6226 **** 9990",
+                             rect: CGRect(x: 780, y: 492, width: 240, height: 42),
+                             size: 40, color: MockInk.title, align: 2),
+                OverlayField(key: "交易时间", fallback: "2026/10/26 11:40:22",
+                             rect: CGRect(x: 590, y: 575, width: 430, height: 46),
+                             size: 40, color: MockInk.title, align: 2),
+                OverlayField(key: "付款人", fallback: "李强",
+                             rect: CGRect(x: 870, y: 747, width: 150, height: 46),
+                             size: 40, color: MockInk.title, align: 2),
+                OverlayField(key: "付款账号", fallback: "6226 **** 9995",
+                             rect: CGRect(x: 540, y: 834, width: 480, height: 44),
+                             size: 40, color: MockInk.title, align: 2),
+            ]
+        }
         guard sub == 1 else { return [] }
         return [
             OverlayField(key: "金额", fallback: "+ ¥ 100.00",
