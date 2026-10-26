@@ -8,6 +8,70 @@ import UIKit
 /// 转钱成功、金额、收款方与卡号、完成按钮、通知收款人。
 enum MockDigitalWallet {
 
+    static func overlayFields(_ sub: Int) -> [MockPsbc.OverlayField] {
+        if sub == 0 {
+            return [
+                MockPsbc.OverlayField(key: "s0_0", fallback: "", rect: CGRect(x: 413, y: 496, width: 251, height: 71), size: 61, color: Draw.color(0xFF040404), bg: Draw.color(0xFFFFFFFF), align: 1),
+                MockPsbc.OverlayField(key: "s0_1", fallback: "", rect: CGRect(x: 420, y: 753, width: 294, height: 91), size: 82, color: Draw.color(0xFF010101), bg: Draw.color(0xFFFFFFFF), align: 2),
+                MockPsbc.OverlayField(key: "s0_2", fallback: "", rect: CGRect(x: 330, y: 940, width: 403, height: 66), size: 55, color: Draw.color(0xFF0A0A0A), bg: Draw.color(0xFFFFFFFF), align: 1),
+                MockPsbc.OverlayField(key: "s0_3", fallback: "", rect: CGRect(x: 267, y: 1026, width: 546, height: 54), size: 42, color: Draw.color(0xFF797979), bg: Draw.color(0xFFFFFFFF), align: 1),
+                MockPsbc.OverlayField(key: "s0_4", fallback: "", rect: CGRect(x: 490, y: 1982, width: 101, height: 57), size: 45, color: Draw.color(0xFF8E8E8E), bg: Draw.color(0xFFFFFFFF), align: 1),
+                MockPsbc.OverlayField(key: "s0_5", fallback: "", rect: CGRect(x: 427, y: 2136, width: 225, height: 56), size: 44, color: Draw.color(0xFF8A8A8A), bg: Draw.color(0xFFFFFFFF), align: 1),
+            ]
+        }
+        if sub == 1 {
+            return [
+                MockPsbc.OverlayField(key: "s1_0", fallback: "", rect: CGRect(x: 502, y: 266, width: 79, height: 48), size: 35, color: Draw.color(0xFF2E2F31), bg: Draw.color(0xFFFEFFFF), align: 1),
+                MockPsbc.OverlayField(key: "s1_1", fallback: "", rect: CGRect(x: 502, y: 300, width: 79, height: 48), size: 35, color: Draw.color(0xFF323335), bg: Draw.color(0xFFFEFFFF), align: 1),
+                MockPsbc.OverlayField(key: "s1_2", fallback: "", rect: CGRect(x: 413, y: 403, width: 253, height: 53), size: 41, color: Draw.color(0xFF1A1A1C), bg: Draw.color(0xFFFAFBFC), align: 1),
+                MockPsbc.OverlayField(key: "s1_3", fallback: "", rect: CGRect(x: 418, y: 517, width: 243, height: 73), size: 63, color: Draw.color(0xFF020204), bg: Draw.color(0xFFF7F8FA), align: 1),
+                MockPsbc.OverlayField(key: "s1_4", fallback: "", rect: CGRect(x: 865, y: 742, width: 157, height: 48), size: 35, color: Draw.color(0xFF73A987), bg: Draw.color(0xFFFFFFFF), align: 2),
+                MockPsbc.OverlayField(key: "s1_5", fallback: "", rect: CGRect(x: 831, y: 868, width: 191, height: 54), size: 42, color: Draw.color(0xFF4C4C4C), bg: Draw.color(0xFFFFFFFF), align: 2),
+                MockPsbc.OverlayField(key: "s1_6", fallback: "", rect: CGRect(x: 721, y: 995, width: 303, height: 49), size: 36, color: Draw.color(0xFF333333), bg: Draw.color(0xFFFFFFFF), align: 2),
+                MockPsbc.OverlayField(key: "s1_7", fallback: "", rect: CGRect(x: 650, y: 1125, width: 373, height: 49), size: 36, color: Draw.color(0xFF636363), bg: Draw.color(0xFFFFFFFF), align: 2),
+                MockPsbc.OverlayField(key: "s1_8", fallback: "", rect: CGRect(x: 664, y: 1254, width: 360, height: 48), size: 35, color: Draw.color(0xFF272727), bg: Draw.color(0xFFFFFFFF), align: 2),
+                MockPsbc.OverlayField(key: "s1_9", fallback: "", rect: CGRect(x: 510, y: 1508, width: 514, height: 48), size: 35, color: Draw.color(0xFF3A3A3A), bg: Draw.color(0xFFFFFFFF), align: 2),
+                MockPsbc.OverlayField(key: "s1_10", fallback: "", rect: CGRect(x: 977, y: 1691, width: 36, height: 54), size: 42, color: Draw.color(0xFFC4C4C4), bg: Draw.color(0xFFFFFFFF), align: 2),
+                MockPsbc.OverlayField(key: "s1_11", fallback: "", rect: CGRect(x: 977, y: 1845, width: 36, height: 52), size: 40, color: Draw.color(0xFFC2C2C2), bg: Draw.color(0xFFFFFFFF), align: 2),
+                MockPsbc.OverlayField(key: "s1_12", fallback: "", rect: CGRect(x: 449, y: 2009, width: 179, height: 54), size: 42, color: Draw.color(0xFF878787), bg: Draw.color(0xFFFFFFFF), align: 1),
+            ]
+        }
+        if sub == 2 {
+            return [
+                MockPsbc.OverlayField(key: "s2_0", fallback: "", rect: CGRect(x: 492, y: 255, width: 91, height: 88), size: 79, color: Draw.color(0xFF464749), bg: Draw.color(0xFFFEFFFF), align: 1),
+                MockPsbc.OverlayField(key: "s2_1", fallback: "", rect: CGRect(x: 320, y: 403, width: 437, height: 57), size: 45, color: Draw.color(0xFF131315), bg: Draw.color(0xFFF9FAFC), align: 1),
+                MockPsbc.OverlayField(key: "s2_2", fallback: "", rect: CGRect(x: 464, y: 496, width: 243, height: 77), size: 67, color: Draw.color(0xFF010204), bg: Draw.color(0xFFF7F8FA), align: 2),
+                MockPsbc.OverlayField(key: "s2_3", fallback: "", rect: CGRect(x: 865, y: 706, width: 157, height: 49), size: 36, color: Draw.color(0xFF749F8D), bg: Draw.color(0xFFFFFFFF), align: 2),
+                MockPsbc.OverlayField(key: "s2_4", fallback: "", rect: CGRect(x: 900, y: 833, width: 124, height: 49), size: 36, color: Draw.color(0xFF595959), bg: Draw.color(0xFFFFFFFF), align: 2),
+                MockPsbc.OverlayField(key: "s2_5", fallback: "", rect: CGRect(x: 692, y: 965, width: 330, height: 60), size: 48, color: Draw.color(0xFF3A458A), bg: Draw.color(0xFFFFFFFF), align: 2),
+                MockPsbc.OverlayField(key: "s2_6", fallback: "", rect: CGRect(x: 828, y: 1098, width: 196, height: 49), size: 36, color: Draw.color(0xFF4C4C4C), bg: Draw.color(0xFFFFFFFF), align: 2),
+                MockPsbc.OverlayField(key: "s2_7", fallback: "", rect: CGRect(x: 666, y: 1225, width: 358, height: 48), size: 35, color: Draw.color(0xFF272727), bg: Draw.color(0xFFFFFFFF), align: 2),
+                MockPsbc.OverlayField(key: "s2_8", fallback: "", rect: CGRect(x: 969, y: 1558, width: 40, height: 51), size: 38, color: Draw.color(0xFFA7A7A7), bg: Draw.color(0xFFFFFFFF), align: 2),
+                MockPsbc.OverlayField(key: "s2_9", fallback: "", rect: CGRect(x: 969, y: 1731, width: 40, height: 51), size: 38, color: Draw.color(0xFFA7A7A7), bg: Draw.color(0xFFFFFFFF), align: 2),
+            ]
+        }
+        if sub == 3 {
+            return [
+                MockPsbc.OverlayField(key: "s3_0", fallback: "", rect: CGRect(x: 393, y: 660, width: 289, height: 83), size: 74, color: Draw.color(0xFF616161), bg: Draw.color(0xFFFFFFFF), align: 1),
+                MockPsbc.OverlayField(key: "s3_1", fallback: "", rect: CGRect(x: 756, y: 892, width: 289, height: 56), size: 44, color: Draw.color(0xFF2B2B2B), bg: Draw.color(0xFFFFFFFF), align: 2),
+                MockPsbc.OverlayField(key: "s3_2", fallback: "", rect: CGRect(x: 808, y: 1008, width: 237, height: 59), size: 47, color: Draw.color(0xFF0D0D0D), bg: Draw.color(0xFFFFFFFF), align: 2),
+                MockPsbc.OverlayField(key: "s3_3", fallback: "", rect: CGRect(x: 484, y: 1124, width: 558, height: 62), size: 51, color: Draw.color(0xFF1B1B1B), bg: Draw.color(0xFFFFFFFF), align: 2),
+            ]
+        }
+        if sub == 4 {
+            return [
+                MockPsbc.OverlayField(key: "s4_0", fallback: "", rect: CGRect(x: 319, y: 450, width: 440, height: 94), size: 86, color: Draw.color(0xFF030303), bg: Draw.color(0xFFF6F6F6), align: 1),
+                MockPsbc.OverlayField(key: "s4_1", fallback: "", rect: CGRect(x: 460, y: 581, width: 158, height: 60), size: 48, color: Draw.color(0xFF141414), bg: Draw.color(0xFFF9F9F9), align: 1),
+                MockPsbc.OverlayField(key: "s4_2", fallback: "", rect: CGRect(x: 478, y: 823, width: 564, height: 59), size: 47, color: Draw.color(0xFF787878), bg: Draw.color(0xFFF8F8F8), align: 2),
+                MockPsbc.OverlayField(key: "s4_3", fallback: "", rect: CGRect(x: 814, y: 930, width: 230, height: 54), size: 42, color: Draw.color(0xFF6C6C6C), bg: Draw.color(0xFFF8F8F8), align: 2),
+                MockPsbc.OverlayField(key: "s4_4", fallback: "", rect: CGRect(x: 436, y: 1170, width: 210, height: 49), size: 36, color: Draw.color(0xFF7790B7), bg: Draw.color(0xFFF8F9FC), align: 1),
+                MockPsbc.OverlayField(key: "s4_5", fallback: "", rect: CGRect(x: 35, y: 1524, width: 162, height: 50), size: 37, color: Draw.color(0xFFA3A3A3), bg: Draw.color(0xFFFAFAFA), align: 1),
+            ]
+        }
+        return []
+    }
+
+
     /// 主题绿（截图取样）
     static let green = UIColor(red: 0x4c / 255.0, green: 0xaf / 255.0,
                                blue: 0x50 / 255.0, alpha: 1)
