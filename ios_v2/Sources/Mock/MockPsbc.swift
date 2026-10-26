@@ -35,8 +35,8 @@ enum MockPsbc {
         let rect: CGRect
         let size: CGFloat
         let color: UIColor
-        let align: Int   // 0 左 1 中 2 右
         var bg: UIColor = MockInk.white
+        let align: Int   // 0 左 1 中 2 右
     }
 
     static func overlayFields(_ sub: Int) -> [OverlayField] {
