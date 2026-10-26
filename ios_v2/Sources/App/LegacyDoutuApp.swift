@@ -171,6 +171,8 @@ final class Router {
                        animated: animated, backwards: true)
         host.previousSnapshot = historySnapshots.last
         host.canGoBack = !stack.isEmpty
+        MockChrome.hidesNavBar = previous.screen is MockEditorScreen
+            || previous.screen is MockDetailScreen
     }
 
     // MARK: - 娱乐页玩法行（`play:<key>`）
