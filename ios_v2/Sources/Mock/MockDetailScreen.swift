@@ -70,7 +70,7 @@ final class MockDetailScreen: Screen {
         if s.module == .psbc && (0...7).contains(s.sub) { return 0 }
         if s.module == .cmb && (s.sub == 0 || s.sub == 1) { return 0 }
         if s.module == .eank && (0...2).contains(s.sub) { return 0 }
-        if s.module == .jianshe, s.sub == 0, let img = UIImage(named: "mock_js_0") {
+        if s.module == .jianshe, (0...11).contains(s.sub), let img = UIImage(named: "mock_js_\(s.sub)") {
             return max(0, Self.W * img.size.height / max(1, img.size.width) - Self.H)
         }
         if s.module == .xingye, (0...4).contains(s.sub),
@@ -83,7 +83,7 @@ final class MockDetailScreen: Screen {
     func draw(_ d: Draw, state: ScreenState) {
         guard let s = state as? State else { return }
         // 建设 00 明细转出(旧)：整页贴图 + 数字热区
-        if s.module == .jianshe, s.sub == 0, let img = UIImage(named: "mock_js_0") {
+        if s.module == .jianshe, (0...11).contains(s.sub), let img = UIImage(named: "mock_js_\(s.sub)") {
             d.rect(CGRect(x: 0, y: 0, width: Self.W, height: Self.H), .white)
             let h = Self.W * img.size.height / max(1, img.size.width)
             d.art(img, CGRect(x: 0, y: 0, width: Self.W, height: h))
@@ -101,7 +101,7 @@ final class MockDetailScreen: Screen {
             return
         }
         // 兴业五页：整页贴图 + 数字热区
-        if s.module == .jianshe, s.sub == 0, let img = UIImage(named: "mock_js_0") {
+        if s.module == .jianshe, (0...11).contains(s.sub), let img = UIImage(named: "mock_js_\(s.sub)") {
             return max(0, Self.W * img.size.height / max(1, img.size.width) - Self.H)
         }
         if s.module == .xingye, (0...4).contains(s.sub),
@@ -320,7 +320,7 @@ final class MockDetailScreen: Screen {
             return "noop"
         }
         // 建设整页贴图上的数字热区
-        if s.module == .jianshe, s.sub == 0 {
+        if s.module == .jianshe, (0...11).contains(s.sub) {
             let p = CGPoint(x: x, y: y - scroll)
             for f in MockJianshe.overlayFields(s.sub) where f.rect.contains(p) {
                 return "mock:field:\(f.key)"
