@@ -112,8 +112,6 @@ enum MockModule: Int, CaseIterable {
     case zhongxin = 10 // 中信模拟（5 个子页，银行卡转账成功）
     case pufa = 11    // 浦发模拟（4 个子页，转账结果）
     case minsheng = 12 // 民生模拟（3 个子页，交易详情）
-    case wechat = 13   // 微信模拟（12+ 个子页，支付成功）
-    case alipay = 14   // 支付宝模拟（12 个子页，支付成功）
     case huiwang = 15  // 汇旺模拟（3 个子页，账单详情）
     case shuzi = 16    // 数字钱包（12+ 个子页，转钱成功）
     case yunshanfu = 24 // 云闪付（11 个子页，转账成功）—— 宫格索引 24
@@ -147,8 +145,6 @@ enum MockModule: Int, CaseIterable {
         case .zhongxin: return "中信模拟"
         case .pufa: return "浦发模拟"
         case .minsheng: return "民生模拟"
-        case .wechat: return "微信模拟"
-        case .alipay: return "支付宝"
         case .huiwang: return "汇旺模拟"
         case .shuzi: return "数字钱包"
         case .yunshanfu: return "云闪付"
@@ -214,16 +210,6 @@ enum MockModule: Int, CaseIterable {
         case .minsheng:
             // 安卓设备抽屉里的三项
             return ["明细转出", "明细转入", "明细转入支付宝"]
-        case .wechat:
-            // 安卓设备抽屉里的前 12 项（下面可能还有，后续照截图补）
-            return ["扫码转出1", "扫码转出2", "扫码转出2", "明细(转出)",
-                    "消息盒子", "收支明细", "扫码捐款", "扫码收款",
-                    "赞赏码转出", "赞赏码转出2", "赞赏码转入", "商户转出1"]
-        case .alipay:
-            // 安卓设备抽屉里的前 12 项
-            return ["扫码转出1", "扫码转出2", "对行转出", "对支付宝转出",
-                    "话费转出", "明细(转出)", "消息盒子", "收支明细",
-                    "扫码收款1", "扫码收款2", "商户转出1", "商户转出2"]
         case .huiwang:
             // 安卓设备抽屉里的三项
             return ["明细转出", "明细转入", "明细转出2"]
@@ -299,8 +285,6 @@ enum MockModule: Int, CaseIterable {
         case .zhongxin: return "mock_citic"
         case .pufa: return "mock_bufa"
         case .minsheng: return "mock_mingsheng"
-        case .wechat: return "mock_wechat"
-        case .alipay: return "mock_alipay"
         case .huiwang: return "mock_hw"
         case .shuzi: return "mock_shuzi"
         case .yunshanfu: return ""     // 宫格 logos[24] 也是空串
@@ -382,10 +366,6 @@ enum MockModule: Int, CaseIterable {
             return sub == 0 ? "转账结果" : (subs.indices.contains(sub) ? subs[sub] : title)
         case .minsheng:
             return sub == 0 ? "交易详情" : (subs.indices.contains(sub) ? subs[sub] : title)
-        case .wechat:
-            return sub == 0 ? "支付成功" : (subs.indices.contains(sub) ? subs[sub] : title)
-        case .alipay:
-            return sub == 0 ? "支付成功" : (subs.indices.contains(sub) ? subs[sub] : title)
         case .huiwang:
             return sub == 0 ? "账单详情" : (subs.indices.contains(sub) ? subs[sub] : title)
         case .shuzi:

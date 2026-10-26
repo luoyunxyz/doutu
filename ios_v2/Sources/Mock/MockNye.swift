@@ -55,11 +55,7 @@ enum MockComposer {
         case .minsheng:
             return MockMinsheng.page(state: state, metrics: metrics, width: width,
                                      showsTopTitle: showsTopTitle)
-        case .wechat:
-            return MockWechat.page(state: state, metrics: metrics, width: width,
                                    showsTopTitle: showsTopTitle)
-        case .alipay:
-            return MockAlipay.page(state: state, metrics: metrics, width: width,
                                    showsTopTitle: showsTopTitle)
         case .huiwang:
             return MockHuiwang.page(state: state, metrics: metrics, width: width,
@@ -119,7 +115,7 @@ enum MockComposer {
         switch module {
         case .nye, .icbc, .boc, .psbc, .cmb, .eank,
              .xingye, .jianshe, .pingan, .jiaotong, .zhongxin, .pufa,
-             .minsheng, .wechat, .alipay, .huiwang, .shuzi,
+             .minsheng, .huiwang, .shuzi,
              .yunshanfu, .cbi, .tp, .okx, .douyin, .yindu,
              .duanxin, .huidan, .liushui, .liaotian, .huafei,
              .nongxin, .qq, .jd:
