@@ -7,6 +7,29 @@ import UIKit
 /// 这里按安卓设备截图逐块复刻；其余子页先给占位。
 enum MockJianshe {
 
+    static func overlayFields(_ sub: Int) -> [MockPsbc.OverlayField] {
+        if sub == 0 {
+            return [
+                MockPsbc.OverlayField(key: "j0_0", fallback: "", rect: CGRect(x: 396, y: 470, width: 284, height: 78), size: 68, color: MockInk.title, align: 1),
+                MockPsbc.OverlayField(key: "j0_1", fallback: "", rect: CGRect(x: 766, y: 610, width: 224, height: 57), size: 45, color: MockInk.title, align: 2),
+                MockPsbc.OverlayField(key: "j0_2", fallback: "", rect: CGRect(x: 850, y: 682, width: 139, height: 55), size: 43, color: MockInk.title, align: 2),
+                MockPsbc.OverlayField(key: "j0_3", fallback: "", rect: CGRect(x: 53, y: 755, width: 159, height: 54), size: 42, color: MockInk.title, align: 1),
+                MockPsbc.OverlayField(key: "j0_4", fallback: "", rect: CGRect(x: 813, y: 911, width: 177, height: 54), size: 42, color: MockInk.title, align: 2),
+                MockPsbc.OverlayField(key: "j0_5", fallback: "", rect: CGRect(x: 594, y: 1035, width: 397, height: 55), size: 43, color: MockInk.title, align: 2),
+                MockPsbc.OverlayField(key: "j0_6", fallback: "", rect: CGRect(x: 744, y: 1159, width: 246, height: 55), size: 43, color: MockInk.title, align: 2),
+                MockPsbc.OverlayField(key: "j0_7", fallback: "", rect: CGRect(x: 737, y: 1288, width: 253, height: 54), size: 42, color: MockInk.title, align: 2),
+                MockPsbc.OverlayField(key: "j0_8", fallback: "", rect: CGRect(x: 813, y: 1412, width: 177, height: 55), size: 43, color: MockInk.title, align: 2),
+                MockPsbc.OverlayField(key: "j0_9", fallback: "", rect: CGRect(x: 419, y: 1512, width: 226, height: 51), size: 38, color: MockInk.title, align: 1),
+                MockPsbc.OverlayField(key: "j0_10", fallback: "", rect: CGRect(x: 86, y: 1691, width: 871, height: 100), size: 92, color: MockInk.title, align: 1),
+                MockPsbc.OverlayField(key: "j0_11", fallback: "", rect: CGRect(x: 41, y: 1852, width: 169, height: 51), size: 38, color: MockInk.title, align: 1),
+                MockPsbc.OverlayField(key: "j0_12", fallback: "", rect: CGRect(x: 38, y: 1953, width: 1003, height: 388), size: 409, color: MockInk.title, align: 1),
+                MockPsbc.OverlayField(key: "j0_13", fallback: "", rect: CGRect(x: 37, y: 2394, width: 1004, height: 382), size: 403, color: MockInk.title, align: 1),
+            ]
+        }
+        return []
+    }
+
+
     /// 建设的主题金（截图取自页面大标题与描边胶囊）
     static let gold = UIColor(red: 0xb8 / 255.0, green: 0x86 / 255.0,
                               blue: 0x0b / 255.0, alpha: 1)
