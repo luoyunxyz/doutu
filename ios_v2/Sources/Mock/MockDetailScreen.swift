@@ -88,7 +88,7 @@ final class MockDetailScreen: Screen {
             for f in MockXingye.overlayFields(s.sub) {
                 if let v = s.fields[f.key], !v.isEmpty {
                     d.rect(f.rect, .white)
-                    let base = f.rect.midY + Draw.font(size: f.size).ascender / 2 - f.size * 0.06
+                    let base = f.rect.maxY - 6
                     switch f.align {
                     case 1: d.centerText(v, cx: f.rect.midX, baseline: base, size: f.size, f.color)
                     case 2: d.rightText(v, right: f.rect.maxX, baseline: base, size: f.size, f.color)
@@ -107,7 +107,7 @@ final class MockDetailScreen: Screen {
             for f in MockEank.overlayFields(s.sub) {
                 if let v = s.fields[f.key], !v.isEmpty {
                     d.rect(f.rect, .white)
-                    let base = f.rect.midY + Draw.font(size: f.size).ascender / 2 - f.size * 0.06
+                    let base = f.rect.maxY - 6
                     switch f.align {
                     case 1: d.centerText(v, cx: f.rect.midX, baseline: base, size: f.size, f.color)
                     case 2: d.rightText(v, right: f.rect.maxX, baseline: base, size: f.size, f.color)
@@ -126,7 +126,7 @@ final class MockDetailScreen: Screen {
             for f in MockCmb.overlayFields(s.sub) {
                 if let v = s.fields[f.key], !v.isEmpty {
                     d.rect(f.rect, .white)
-                    let base = f.rect.midY + Draw.font(size: f.size).ascender / 2 - f.size * 0.06
+                    let base = f.rect.maxY - 6
                     switch f.align {
                     case 1: d.centerText(v, cx: f.rect.midX, baseline: base, size: f.size, f.color)
                     case 2: d.rightText(v, right: f.rect.maxX, baseline: base, size: f.size, f.color)
