@@ -15,42 +15,46 @@ import UIKit
 enum MockCmb {
     /// 招商只有两页：0 明细转出、1 明细转入。整页贴图上的数字热区。
     static func overlayFields(_ sub: Int) -> [MockPsbc.OverlayField] {
-        if sub == 0 {
+        switch sub {
+        case 0:
             return [
-                MockPsbc.OverlayField(key: "金额", fallback: "- ¥ 100.00",
-                    rect: CGRect(x: 340, y: 264, width: 400, height: 92), size: 84,
-                    color: MockInk.title, align: 1),
-                MockPsbc.OverlayField(key: "收款账户", fallback: "6226 1225 4625 3990",
-                    rect: CGRect(x: 590, y: 617, width: 460, height: 52), size: 40,
-                    color: MockInk.title, align: 2),
-                MockPsbc.OverlayField(key: "付款账户", fallback: "6221********3640",
-                    rect: CGRect(x: 590, y: 815, width: 460, height: 52), size: 40,
-                    color: MockInk.title, align: 2),
-                MockPsbc.OverlayField(key: "交易时间", fallback: "2026-10-26 11:52:43",
-                    rect: CGRect(x: 40, y: 1325, width: 420, height: 52), size: 36,
-                    color: Draw.color(0xff898989), align: 0),
+                MockPsbc.OverlayField(key: "c0_0", fallback: "", rect: CGRect(x: 420, y: 163, width: 239, height: 58), size: 40, color: MockInk.title, align: 1),
+                MockPsbc.OverlayField(key: "c0_1", fallback: "", rect: CGRect(x: 476, y: 279, width: 252, height: 78), size: 59, color: MockInk.title, align: 2),
+                MockPsbc.OverlayField(key: "c0_2", fallback: "", rect: CGRect(x: 675, y: 588, width: 376, height: 48), size: 30, color: MockInk.title, align: 2),
+                MockPsbc.OverlayField(key: "c0_3", fallback: "", rect: CGRect(x: 821, y: 678, width: 230, height: 50), size: 32, color: MockInk.title, align: 2),
+                MockPsbc.OverlayField(key: "c0_4", fallback: "", rect: CGRect(x: 738, y: 770, width: 313, height: 47), size: 29, color: MockInk.title, align: 2),
+                MockPsbc.OverlayField(key: "c0_5", fallback: "", rect: CGRect(x: 963, y: 860, width: 88, height: 49), size: 31, color: MockInk.title, align: 2),
+                MockPsbc.OverlayField(key: "c0_6", fallback: "", rect: CGRect(x: 892, y: 951, width: 159, height: 49), size: 31, color: MockInk.title, align: 2),
+                MockPsbc.OverlayField(key: "c0_7", fallback: "", rect: CGRect(x: 821, y: 1041, width: 230, height: 49), size: 31, color: MockInk.title, align: 2),
+                MockPsbc.OverlayField(key: "c0_8", fallback: "", rect: CGRect(x: 808, y: 1220, width: 235, height: 98), size: 78, color: MockInk.title, align: 2),
+                MockPsbc.OverlayField(key: "c0_9", fallback: "", rect: CGRect(x: 1007, y: 1435, width: 36, height: 51), size: 33, color: MockInk.title, align: 2),
+                MockPsbc.OverlayField(key: "c0_10", fallback: "", rect: CGRect(x: 1007, y: 1583, width: 36, height: 51), size: 33, color: MockInk.title, align: 2),
+                MockPsbc.OverlayField(key: "c0_11", fallback: "", rect: CGRect(x: 25, y: 1723, width: 1028, height: 136), size: 90, color: MockInk.title, align: 1),
+                MockPsbc.OverlayField(key: "c0_12", fallback: "", rect: CGRect(x: 34, y: 1958, width: 85, height: 43), size: 26, color: MockInk.title, align: 1),
+                MockPsbc.OverlayField(key: "c0_13", fallback: "", rect: CGRect(x: 34, y: 2013, width: 983, height: 44), size: 27, color: MockInk.title, align: 1),
+                MockPsbc.OverlayField(key: "c0_14", fallback: "", rect: CGRect(x: 34, y: 2069, width: 121, height: 43), size: 26, color: MockInk.title, align: 1),
+                MockPsbc.OverlayField(key: "c0_15", fallback: "", rect: CGRect(x: 35, y: 2123, width: 693, height: 45), size: 28, color: MockInk.title, align: 1),
             ]
-        }
-        if sub == 1 {
+        case 1:
             return [
-                MockPsbc.OverlayField(key: "金额", fallback: "+ ¥100.00",
-                    rect: CGRect(x: 330, y: 290, width: 420, height: 90), size: 84,
-                    color: MockInk.title, align: 1),
-                MockPsbc.OverlayField(key: "余额", fallback: "余额¥100.00",
-                    rect: CGRect(x: 380, y: 420, width: 320, height: 48), size: 40,
-                    color: Draw.color(0xff898989), align: 1),
-                MockPsbc.OverlayField(key: "交易卡号", fallback: "一卡通 6226********9990",
-                    rect: CGRect(x: 560, y: 588, width: 490, height: 50), size: 40,
-                    color: MockInk.title, align: 2),
-                MockPsbc.OverlayField(key: "交易时间", fallback: "2026-10-26 11:53:00",
-                    rect: CGRect(x: 560, y: 693, width: 490, height: 50), size: 40,
-                    color: MockInk.title, align: 2),
-                MockPsbc.OverlayField(key: "付款账号", fallback: "6226**********9990",
-                    rect: CGRect(x: 540, y: 902, width: 510, height: 50), size: 40,
-                    color: MockInk.title, align: 2),
+                MockPsbc.OverlayField(key: "c1_0", fallback: "", rect: CGRect(x: 441, y: 164, width: 198, height: 69), size: 50, color: MockInk.title, align: 1),
+                MockPsbc.OverlayField(key: "c1_1", fallback: "", rect: CGRect(x: 331, y: 279, width: 417, height: 73), size: 54, color: MockInk.title, align: 1),
+                MockPsbc.OverlayField(key: "c1_2", fallback: "", rect: CGRect(x: 429, y: 401, width: 221, height: 47), size: 29, color: MockInk.title, align: 1),
+                MockPsbc.OverlayField(key: "c1_3", fallback: "", rect: CGRect(x: 587, y: 560, width: 434, height: 48), size: 30, color: MockInk.title, align: 2),
+                MockPsbc.OverlayField(key: "c1_4", fallback: "", rect: CGRect(x: 662, y: 664, width: 359, height: 47), size: 29, color: MockInk.title, align: 2),
+                MockPsbc.OverlayField(key: "c1_5", fallback: "", rect: CGRect(x: 791, y: 765, width: 230, height: 50), size: 32, color: MockInk.title, align: 2),
+                MockPsbc.OverlayField(key: "c1_6", fallback: "", rect: CGRect(x: 655, y: 869, width: 366, height: 47), size: 29, color: MockInk.title, align: 2),
+                MockPsbc.OverlayField(key: "c1_7", fallback: "", rect: CGRect(x: 861, y: 971, width: 160, height: 49), size: 31, color: MockInk.title, align: 2),
+                MockPsbc.OverlayField(key: "c1_8", fallback: "", rect: CGRect(x: 862, y: 1073, width: 159, height: 49), size: 31, color: MockInk.title, align: 2),
+                MockPsbc.OverlayField(key: "c1_9", fallback: "", rect: CGRect(x: 610, y: 1248, width: 409, height: 50), size: 32, color: MockInk.title, align: 2),
+                MockPsbc.OverlayField(key: "c1_10", fallback: "", rect: CGRect(x: 710, y: 1387, width: 303, height: 54), size: 36, color: MockInk.title, align: 2),
+                MockPsbc.OverlayField(key: "c1_11", fallback: "", rect: CGRect(x: 826, y: 1516, width: 188, height: 48), size: 30, color: MockInk.title, align: 2),
+                MockPsbc.OverlayField(key: "c1_12", fallback: "", rect: CGRect(x: 888, y: 1630, width: 21, height: 48), size: 30, color: MockInk.title, align: 2),
+                MockPsbc.OverlayField(key: "c1_13", fallback: "", rect: CGRect(x: 945, y: 1861, width: 64, height: 58), size: 40, color: MockInk.title, align: 2),
+                MockPsbc.OverlayField(key: "c1_14", fallback: "", rect: CGRect(x: 694, y: 2072, width: 231, height: 48), size: 30, color: MockInk.title, align: 2),
             ]
+        default: return []
         }
-        return []
     }
 
 

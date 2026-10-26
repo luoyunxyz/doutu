@@ -2874,7 +2874,7 @@ final class Router {
             switch verb {
             case "field":
                 guard !arg.isEmpty else { return }
-                EditPrompt.present(title: arg, current: ds.renderState.currentValue(arg),
+                EditPrompt.present(title: (arg.hasPrefix("p") || arg.hasPrefix("c")) ? "修改内容" : arg, current: ds.renderState.currentValue(arg),
                                    numeric: false) { [weak self] text in
                     if arg == "交易时间" {
                         ds.time = text
