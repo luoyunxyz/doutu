@@ -72,6 +72,7 @@ final class MockDetailScreen: Screen {
         if s.module == .eank && (0...2).contains(s.sub) { return 0 }
         if s.module == .pingan && (0...4).contains(s.sub) { return 0 }
         if s.module == .jiaotong && (0...9).contains(s.sub) { return 0 }
+        if s.module == .zhongxin && s.sub == 0 { return 0 }
         if s.module == .jianshe, (0...11).contains(s.sub), let img = UIImage(named: "mock_js_\(s.sub)") {
             return max(0, Self.W * img.size.height / max(1, img.size.width) - Self.H)
         }
@@ -84,6 +85,25 @@ final class MockDetailScreen: Screen {
 
     func draw(_ d: Draw, state: ScreenState) {
         guard let s = state as? State else { return }
+        // 中信 明细转出1(旧)：整页贴图 + 数字热区
+        if s.module == .zhongxin, s.sub == 0, let img = UIImage(named: "mock_zx_0") {
+            d.rect(CGRect(x: 0, y: 0, width: Self.W, height: Self.H), .white)
+            let h = Self.W * img.size.height / max(1, img.size.width)
+            d.art(img, CGRect(x: 0, y: 0, width: Self.W, height: h))
+            d.rect(CGRect(x: 0, y: h - dp(40), width: Self.W, height: dp(40)), MockInk.white)
+            for f in MockZhongxin.overlayFields(s.sub) {
+                if let v = s.fields[f.key], !v.isEmpty {
+                    d.rect(f.rect, f.bg)
+                    let base = f.rect.maxY - 6
+                    switch f.align {
+                    case 1: d.centerText(v, cx: f.rect.midX, baseline: base, size: f.size, f.color)
+                    case 2: d.rightText(v, right: f.rect.maxX, baseline: base, size: f.size, f.color)
+                    default: d.text(v, x: f.rect.minX, baseline: base, size: f.size, f.color)
+                    }
+                }
+            }
+            return
+        }
         // 交通十页：整页贴图 + 数字热区
         if s.module == .jiaotong, (0...9).contains(s.sub),
            let img = UIImage(named: "mock_jt_\(s.sub)") {
@@ -362,6 +382,13 @@ final class MockDetailScreen: Screen {
         if y >= scroll && y < scroll + barH {
             if x < dp(60) { return "back" }
             return "noop"
+        }
+        // 中信整页贴图上的数字热区
+        if s.module == .zhongxin, s.sub == 0 {
+            let p = CGPoint(x: x, y: y - scroll)
+            for f in MockZhongxin.overlayFields(s.sub) where f.rect.contains(p) {
+                return "mock:field:\(f.key)"
+            }
         }
         // 交通整页贴图上的数字热区
         if s.module == .jiaotong, (0...9).contains(s.sub) {

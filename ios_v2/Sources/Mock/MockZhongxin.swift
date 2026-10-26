@@ -8,6 +8,27 @@ import UIKit
 /// 「猜您需要」三条入口、「返回首页」红按钮。
 enum MockZhongxin {
 
+    static func overlayFields(_ sub: Int) -> [MockPsbc.OverlayField] {
+        if sub == 0 {
+            return [
+                MockPsbc.OverlayField(key: "z0_0", fallback: "", rect: CGRect(x: 437, y: 414, width: 203, height: 59), size: 47, color: Draw.color(0xFF0F1010), bg: Draw.color(0xFFFFFFFF), align: 1),
+                MockPsbc.OverlayField(key: "z0_1", fallback: "", rect: CGRect(x: 355, y: 555, width: 123, height: 49), size: 36, color: Draw.color(0xFF595959), bg: Draw.color(0xFFFFFFFF), align: 2),
+                MockPsbc.OverlayField(key: "z0_2", fallback: "", rect: CGRect(x: 355, y: 653, width: 439, height: 49), size: 36, color: Draw.color(0xFF434343), bg: Draw.color(0xFFFFFFFF), align: 2),
+                MockPsbc.OverlayField(key: "z0_3", fallback: "", rect: CGRect(x: 357, y: 751, width: 229, height: 50), size: 37, color: Draw.color(0xFF343434), bg: Draw.color(0xFFFFFFFF), align: 2),
+                MockPsbc.OverlayField(key: "z0_4", fallback: "", rect: CGRect(x: 355, y: 850, width: 130, height: 48), size: 35, color: Draw.color(0xFF212121), bg: Draw.color(0xFFFFFFFF), align: 2),
+                MockPsbc.OverlayField(key: "z0_5", fallback: "", rect: CGRect(x: 355, y: 948, width: 91, height: 49), size: 36, color: Draw.color(0xFF1E1E1E), bg: Draw.color(0xFFFFFFFF), align: 2),
+                MockPsbc.OverlayField(key: "z0_6", fallback: "", rect: CGRect(x: 355, y: 1046, width: 160, height: 49), size: 36, color: Draw.color(0xFF565656), bg: Draw.color(0xFFFFFFFF), align: 2),
+                MockPsbc.OverlayField(key: "z0_7", fallback: "", rect: CGRect(x: 355, y: 1144, width: 231, height: 50), size: 37, color: Draw.color(0xFF535353), bg: Draw.color(0xFFFFFFFF), align: 2),
+                MockPsbc.OverlayField(key: "z0_8", fallback: "", rect: CGRect(x: 22, y: 1292, width: 159, height: 49), size: 36, color: Draw.color(0xFF545246), bg: Draw.color(0xFFFFFFED), align: 1),
+                MockPsbc.OverlayField(key: "z0_9", fallback: "", rect: CGRect(x: 1007, y: 1389, width: 36, height: 68), size: 57, color: Draw.color(0xFFBDBDBD), bg: Draw.color(0xFFFFFFFF), align: 2),
+                MockPsbc.OverlayField(key: "z0_10", fallback: "", rect: CGRect(x: 1007, y: 1533, width: 37, height: 68), size: 57, color: Draw.color(0xFFBFBFBF), bg: Draw.color(0xFFFFFFFF), align: 2),
+                MockPsbc.OverlayField(key: "z0_11", fallback: "", rect: CGRect(x: 1007, y: 1677, width: 36, height: 68), size: 57, color: Draw.color(0xFFBDBDBD), bg: Draw.color(0xFFFFFFFF), align: 2),
+            ]
+        }
+        return []
+    }
+
+
     /// 中信红（截图取样）
     static let red = UIColor(red: 0xcc / 255.0, green: 0x2f / 255.0,
                              blue: 0x2a / 255.0, alpha: 1)
