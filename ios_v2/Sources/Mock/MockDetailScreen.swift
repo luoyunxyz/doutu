@@ -88,12 +88,39 @@ final class MockDetailScreen: Screen {
 
     func draw(_ d: Draw, state: ScreenState) {
         guard let s = state as? State else { return }
-        // 汇旺三页：整页贴图（带水印，不做白边、不覆盖任何区域）
+        // 汇旺三页：水印底图 + 原生文字（改字时用水印层补回纹理）
         if s.module == .huiwang, (0...2).contains(s.sub),
            let img = UIImage(named: "mock_hw_\(s.sub)") {
             d.rect(CGRect(x: 0, y: 0, width: Self.W, height: Self.H), MockInk.white)
             let h = Self.W * img.size.height / max(1, img.size.width)
             d.art(img, CGRect(x: 0, y: 0, width: Self.W, height: h))
+            let wo = UIImage(named: "mock_hw_wo_\(s.sub)")
+            for f in MockHuiwang.overlayFields(s.sub) {
+                guard let v = s.fields[f.key], !v.isEmpty else { continue }
+                d.rect(f.rect, f.bg)
+                if let wo, wo.size.width > 0 {
+                    let tw = wo.size.width, th = wo.size.height
+                    let oy = h - 420
+                    d.ctx.saveGState()
+                    d.ctx.clip(to: f.rect)
+                    var m = Int(floor((f.rect.minY - oy) / th)) - 1
+                    while oy + CGFloat(m) * th < f.rect.maxY + th {
+                        var x = -tw
+                        while x < Self.W + tw {
+                            d.art(wo, CGRect(x: x, y: oy + CGFloat(m) * th, width: tw, height: th))
+                            x += tw
+                        }
+                        m += 1
+                    }
+                    d.ctx.restoreGState()
+                }
+                let base = f.rect.maxY - 6
+                switch f.align {
+                case 1: d.centerText(v, cx: f.rect.midX, baseline: base, size: f.size, f.color)
+                case 2: d.rightText(v, right: f.rect.maxX, baseline: base, size: f.size, f.color)
+                default: d.text(v, x: f.rect.minX, baseline: base, size: f.size, f.color)
+                }
+            }
             return
         }
         // 民生三页：整页贴图 + 数字热区
@@ -433,6 +460,13 @@ final class MockDetailScreen: Screen {
         if y >= scroll && y < scroll + barH {
             if x < dp(60) { return "back" }
             return "noop"
+        }
+        // 汇旺整页贴图上的数字热区
+        if s.module == .huiwang, (0...2).contains(s.sub) {
+            let p = CGPoint(x: x, y: y - scroll)
+            for f in MockHuiwang.overlayFields(s.sub) where f.rect.contains(p) {
+                return "mock:field:\(f.key)"
+            }
         }
         // 民生整页贴图上的数字热区
         if s.module == .minsheng, (0...2).contains(s.sub) {
