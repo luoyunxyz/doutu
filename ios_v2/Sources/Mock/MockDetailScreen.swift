@@ -68,11 +68,31 @@ final class MockDetailScreen: Screen {
         guard let s = state as? State else { return 0 }
         // 邮政这 8 页是整页截图贴图，固定一屏
         if s.module == .psbc && (0...7).contains(s.sub) { return 0 }
+        if s.module == .cmb && (s.sub == 0 || s.sub == 1) { return 0 }
         return max(0, headH(s) + page(s).height - Self.H)
     }
 
     func draw(_ d: Draw, state: ScreenState) {
         guard let s = state as? State else { return }
+        // 招商两页：整页贴图 + 数字热区
+        if s.module == .cmb, (s.sub == 0 || s.sub == 1),
+           let img = UIImage(named: s.sub == 0 ? "mock_cmb_out" : "mock_cmb_in") {
+            d.rect(CGRect(x: 0, y: 0, width: Self.W, height: Self.H), .white)
+            let h = Self.W * img.size.height / max(1, img.size.width)
+            d.art(img, CGRect(x: 0, y: 0, width: Self.W, height: h))
+            for f in MockCmb.overlayFields(s.sub) {
+                if let v = s.fields[f.key], !v.isEmpty {
+                    d.rect(f.rect, .white)
+                    let base = f.rect.midY + Draw.font(size: f.size).ascender / 2 - f.size * 0.06
+                    switch f.align {
+                    case 1: d.centerText(v, cx: f.rect.midX, baseline: base, size: f.size, f.color)
+                    case 2: d.rightText(v, right: f.rect.maxX, baseline: base, size: f.size, f.color)
+                    default: d.text(v, x: f.rect.minX, baseline: base, size: f.size, f.color)
+                    }
+                }
+            }
+            return
+        }
         // 邮政 8 页：用户要求「禁止手绘、缺什么抠什么」，整页直接用截图贴图。
         if s.module == .psbc, (0...7).contains(s.sub),
            let img = UIImage(named: "mock_psbc_p\(s.sub)") {
@@ -231,6 +251,13 @@ final class MockDetailScreen: Screen {
         if y >= scroll && y < scroll + barH {
             if x < dp(60) { return "back" }
             return "noop"
+        }
+        // 招商整页贴图上的数字热区
+        if s.module == .cmb, (s.sub == 0 || s.sub == 1) {
+            let p = CGPoint(x: x, y: y - scroll)
+            for f in MockCmb.overlayFields(s.sub) where f.rect.contains(p) {
+                return "mock:field:\(f.key)"
+            }
         }
         // 邮政整页贴图上的数字热区
         if s.module == .psbc, (0...7).contains(s.sub) {

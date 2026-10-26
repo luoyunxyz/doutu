@@ -13,6 +13,46 @@ import UIKit
 /// 编辑页与成品页共用这些版式，差别在字号/内边距（成品页大一圈），
 /// 以及成品页的「账户 / 余额」那种彩色头部由 `MockDetailScreen` 的白头替代。
 enum MockCmb {
+    /// 招商只有两页：0 明细转出、1 明细转入。整页贴图上的数字热区。
+    static func overlayFields(_ sub: Int) -> [MockPsbc.OverlayField] {
+        if sub == 0 {
+            return [
+                MockPsbc.OverlayField(key: "金额", fallback: "- ¥ 100.00",
+                    rect: CGRect(x: 340, y: 264, width: 400, height: 92), size: 84,
+                    color: MockInk.title, align: 1),
+                MockPsbc.OverlayField(key: "收款账户", fallback: "6226 1225 4625 3990",
+                    rect: CGRect(x: 590, y: 617, width: 460, height: 52), size: 40,
+                    color: MockInk.title, align: 2),
+                MockPsbc.OverlayField(key: "付款账户", fallback: "6221********3640",
+                    rect: CGRect(x: 590, y: 815, width: 460, height: 52), size: 40,
+                    color: MockInk.title, align: 2),
+                MockPsbc.OverlayField(key: "交易时间", fallback: "2026-10-26 11:52:43",
+                    rect: CGRect(x: 40, y: 1325, width: 420, height: 52), size: 36,
+                    color: Draw.color(0xff898989), align: 0),
+            ]
+        }
+        if sub == 1 {
+            return [
+                MockPsbc.OverlayField(key: "金额", fallback: "+ ¥100.00",
+                    rect: CGRect(x: 330, y: 290, width: 420, height: 90), size: 84,
+                    color: MockInk.title, align: 1),
+                MockPsbc.OverlayField(key: "余额", fallback: "余额¥100.00",
+                    rect: CGRect(x: 380, y: 420, width: 320, height: 48), size: 40,
+                    color: Draw.color(0xff898989), align: 1),
+                MockPsbc.OverlayField(key: "交易卡号", fallback: "一卡通 6226********9990",
+                    rect: CGRect(x: 560, y: 588, width: 490, height: 50), size: 40,
+                    color: MockInk.title, align: 2),
+                MockPsbc.OverlayField(key: "交易时间", fallback: "2026-10-26 11:53:00",
+                    rect: CGRect(x: 560, y: 693, width: 490, height: 50), size: 40,
+                    color: MockInk.title, align: 2),
+                MockPsbc.OverlayField(key: "付款账号", fallback: "6226**********9990",
+                    rect: CGRect(x: 540, y: 902, width: 510, height: 50), size: 40,
+                    color: MockInk.title, align: 2),
+            ]
+        }
+        return []
+    }
+
 
     /// 与 `CmbActivity.MODES` 完全一致
     static let modes: [Int] = [0, 1, 0, 1, 1, 0, 1, 2, 3, 4, 1, 0]
