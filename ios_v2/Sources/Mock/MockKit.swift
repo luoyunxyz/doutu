@@ -93,6 +93,11 @@ enum MockAssets {
 // MARK: - 六个已交付的银行模块
 
 /// 与 `SimulationActivity.TARGETS` 前 6 项一一对应。
+/// 模拟页（编辑/成品）显示时，隐藏 App 底部的 5 格切换栏
+enum MockChrome {
+    static var hidesNavBar = false
+}
+
 enum MockModule: Int, CaseIterable {
     case nye = 0      // 农业模拟（NyeActivity）
     case icbc = 1     // 工商模拟（IcbcActivity）

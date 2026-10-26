@@ -155,6 +155,7 @@ final class Router {
         host.canGoBack = true
         // 与 iOS 原生导航一致：旧页面向左推出，新页面在下面接管。
         host.setScreen(screen, state: state, animated: true)
+        MockChrome.hidesNavBar = screen is MockEditorScreen || screen is MockDetailScreen
     }
 
     /// 返回上一页；栈空时什么也不做。

@@ -244,6 +244,7 @@ final class HomeV2Screen: Screen {
 
     /// 底部五格（与 Android 完全一致：首页 / 工具 / 模拟 / 娱乐 / 我）
     func drawNav(_ d: Draw, state: State) {
+        guard !MockChrome.hidesNavBar else { return }
         d.rect(CGRect(x: 0, y: Self.navTop, width: Self.W, height: Self.H - Self.navTop), navBg)
         d.hairline(Self.navTop, from: 0, to: Self.W, navLine, width: 1.6)
 
