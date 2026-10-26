@@ -37,7 +37,7 @@ enum MockHuiwang {
         }
         if sub == 2 {
             return [
-                MockPsbc.OverlayField(key: "w2_amt", fallback: "", rect: CGRect(x: 70, y: 318, width: 290, height: 82), size: 64, color: Draw.color(0xFF303030), bg: Draw.color(0xFFFFFFFF), align: 0),
+                MockPsbc.OverlayField(key: "w2_amt", fallback: "", rect: CGRect(x: 80, y: 320, width: 140, height: 84), size: 96, color: Draw.color(0xFF303030), bg: Draw.color(0xFFFFFFFF), align: 0),
                 MockPsbc.OverlayField(key: "w2_0", fallback: "", rect: CGRect(x: 76, y: 279, width: 188, height: 52), size: 40, color: Draw.color(0xFF303030), bg: Draw.color(0xFFFFFFFF), align: 1),
                 MockPsbc.OverlayField(key: "w2_1", fallback: "", rect: CGRect(x: 805, y: 630, width: 224, height: 53), size: 41, color: Draw.color(0xFFA2A2A2), bg: Draw.color(0xFFFFFFFF), align: 2),
                 MockPsbc.OverlayField(key: "w2_2", fallback: "", rect: CGRect(x: 802, y: 1072, width: 229, height: 55), size: 43, color: Draw.color(0xFFA0A0A0), bg: Draw.color(0xFFFFFFFF), align: 2),
