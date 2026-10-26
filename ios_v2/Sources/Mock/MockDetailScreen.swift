@@ -72,7 +72,7 @@ final class MockDetailScreen: Screen {
         if s.module == .eank && (0...2).contains(s.sub) { return 0 }
         if s.module == .pingan && (0...4).contains(s.sub) { return 0 }
         if s.module == .jiaotong && (0...9).contains(s.sub) { return 0 }
-        if s.module == .zhongxin && s.sub == 0 { return 0 }
+        if s.module == .zhongxin && (0...1).contains(s.sub) { return 0 }
         if s.module == .jianshe, (0...11).contains(s.sub), let img = UIImage(named: "mock_js_\(s.sub)") {
             return max(0, Self.W * img.size.height / max(1, img.size.width) - Self.H)
         }
@@ -86,7 +86,7 @@ final class MockDetailScreen: Screen {
     func draw(_ d: Draw, state: ScreenState) {
         guard let s = state as? State else { return }
         // 中信 明细转出1(旧)：整页贴图 + 数字热区
-        if s.module == .zhongxin, s.sub == 0, let img = UIImage(named: "mock_zx_0") {
+        if s.module == .zhongxin, (0...1).contains(s.sub), let img = UIImage(named: "mock_zx_\(s.sub)") {
             d.rect(CGRect(x: 0, y: 0, width: Self.W, height: Self.H), .white)
             let h = Self.W * img.size.height / max(1, img.size.width)
             d.art(img, CGRect(x: 0, y: 0, width: Self.W, height: h))
@@ -384,7 +384,7 @@ final class MockDetailScreen: Screen {
             return "noop"
         }
         // 中信整页贴图上的数字热区
-        if s.module == .zhongxin, s.sub == 0 {
+        if s.module == .zhongxin, (0...1).contains(s.sub) {
             let p = CGPoint(x: x, y: y - scroll)
             for f in MockZhongxin.overlayFields(s.sub) where f.rect.contains(p) {
                 return "mock:field:\(f.key)"
