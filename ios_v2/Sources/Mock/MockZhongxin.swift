@@ -40,6 +40,18 @@ enum MockZhongxin {
                 MockPsbc.OverlayField(key: "z1_10", fallback: "", rect: CGRect(x: 328, y: 1330, width: 597, height: 57), size: 45, color: Draw.color(0xFF111111), bg: Draw.color(0xFFFFFFFF), align: 2),
             ]
         }
+        if sub == 2 {
+            return [
+                MockPsbc.OverlayField(key: "z2_0", fallback: "", rect: CGRect(x: 322, y: 557, width: 434, height: 66), size: 55, color: Draw.color(0xFF131313), bg: Draw.color(0xFFFFFFFF), align: 1),
+                MockPsbc.OverlayField(key: "z2_1", fallback: "", rect: CGRect(x: 332, y: 657, width: 412, height: 93), size: 85, color: Draw.color(0xFF010101), bg: Draw.color(0xFFFFFFFF), align: 1),
+                MockPsbc.OverlayField(key: "z2_2", fallback: "", rect: CGRect(x: 907, y: 776, width: 150, height: 57), size: 45, color: Draw.color(0xFF202020), bg: Draw.color(0xFFFFFFFF), align: 2),
+                MockPsbc.OverlayField(key: "z2_3", fallback: "", rect: CGRect(x: 729, y: 875, width: 325, height: 63), size: 52, color: Draw.color(0xFF181818), bg: Draw.color(0xFFFFFFFF), align: 2),
+                MockPsbc.OverlayField(key: "z2_4", fallback: "", rect: CGRect(x: 710, y: 1194, width: 292, height: 60), size: 48, color: Draw.color(0xFF747E98), bg: Draw.color(0xFFFFFFFF), align: 2),
+                MockPsbc.OverlayField(key: "z2_5", fallback: "", rect: CGRect(x: 94, y: 1353, width: 225, height: 56), size: 44, color: Draw.color(0xFFB7938C), bg: Draw.color(0xFFFAE7E3), align: 1),
+                MockPsbc.OverlayField(key: "z2_6", fallback: "", rect: CGRect(x: 811, y: 1525, width: 145, height: 82), size: 73, color: Draw.color(0xFFFC9A9F), bg: Draw.color(0xFFFCEAE6), align: 2),
+                MockPsbc.OverlayField(key: "z2_7", fallback: "", rect: CGRect(x: 127, y: 1992, width: 267, height: 64), size: 53, color: Draw.color(0xFF1A1A1A), bg: Draw.color(0xFFFAFAFA), align: 1),
+            ]
+        }
         return []
     }
 
