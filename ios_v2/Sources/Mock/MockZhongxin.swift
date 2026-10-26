@@ -52,6 +52,19 @@ enum MockZhongxin {
                 MockPsbc.OverlayField(key: "z2_7", fallback: "", rect: CGRect(x: 127, y: 1992, width: 267, height: 64), size: 53, color: Draw.color(0xFF1A1A1A), bg: Draw.color(0xFFFAFAFA), align: 1),
             ]
         }
+        if sub == 3 {
+            return [
+                MockPsbc.OverlayField(key: "z3_0", fallback: "", rect: CGRect(x: 322, y: 527, width: 434, height: 66), size: 55, color: Draw.color(0xFF131313), bg: Draw.color(0xFFFFFFFF), align: 1),
+                MockPsbc.OverlayField(key: "z3_1", fallback: "", rect: CGRect(x: 332, y: 684, width: 412, height: 92), size: 84, color: Draw.color(0xFF010101), bg: Draw.color(0xFFFFFFFF), align: 1),
+                MockPsbc.OverlayField(key: "z3_2", fallback: "", rect: CGRect(x: 889, y: 893, width: 150, height: 57), size: 45, color: Draw.color(0xFF1C1C1C), bg: Draw.color(0xFFFFFFFF), align: 2),
+                MockPsbc.OverlayField(key: "z3_3", fallback: "", rect: CGRect(x: 711, y: 1040, width: 325, height: 62), size: 51, color: Draw.color(0xFF171717), bg: Draw.color(0xFFFFFFFF), align: 2),
+                MockPsbc.OverlayField(key: "z3_4", fallback: "", rect: CGRect(x: 876, y: 1198, width: 94, height: 81), size: 72, color: Draw.color(0xFFC5C9CD), bg: Draw.color(0xFFFFFFFF), align: 2),
+                MockPsbc.OverlayField(key: "z3_5", fallback: "", rect: CGRect(x: 806, y: 1516, width: 188, height: 55), size: 43, color: Draw.color(0xFF7F9BB6), bg: Draw.color(0xFFFEFEFE), align: 2),
+                MockPsbc.OverlayField(key: "z3_6", fallback: "", rect: CGRect(x: 1013, y: 1644, width: 20, height: 59), size: 47, color: Draw.color(0xFF333333), bg: Draw.color(0xFFFFECE6), align: 2),
+                MockPsbc.OverlayField(key: "z3_7", fallback: "", rect: CGRect(x: 820, y: 1833, width: 142, height: 95), size: 87, color: Draw.color(0xFFFC9DA2), bg: Draw.color(0xFFFFECE6), align: 2),
+                MockPsbc.OverlayField(key: "z3_8", fallback: "", rect: CGRect(x: 850, y: 1959, width: 80, height: 103), size: 96, color: Draw.color(0xFFF5B1A8), bg: Draw.color(0xFFFFEBED), align: 2),
+            ]
+        }
         return []
     }
 
