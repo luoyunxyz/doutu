@@ -8,14 +8,24 @@ import UIKit
 ///   · 同一份版式换成成品度量（字号 / 内边距各 +1~2dp，见 `MockMetrics.detail`）；
 ///   · **不再有右上角「保存」**（交接文档里明确要求四类页面都没有）。
 final class MockDetailScreen: Screen {
-    let canvasSize = CGSize(width: 1080, height: 2388)
+    let canvasSize: CGSize
     let selfScrolls = false
     /// 成品页是一张「整屏截图」：按参考画布原比例铺满，避免安全区把整页纵向压扁 11.5%
     let keepsReferenceAspect = true
+    /// 数字钱包·建设转出1：原图自带状态栏/手势条，整页从 y=0 铺，不扣安全区。
+    private let usesFullReference: Bool
+
+    init(canvasSize: CGSize = CGSize(width: 1080, height: 2388),
+         fullReference: Bool = false) {
+        self.canvasSize = canvasSize
+        self.usesFullReference = fullReference
+    }
 
     static let W: CGFloat = 1080
     static let H: CGFloat = 2388
     static let headH = dp(52)
+
+    func fullBleed(_ state: ScreenState) -> Bool { usesFullReference }
 
     final class State: ScreenState {
         let module: MockModule
@@ -46,6 +56,24 @@ final class MockDetailScreen: Screen {
             state.time = time
             state.fields = fields
             return state
+        }
+
+        /// 编辑框预填：整页贴图类字段没有经过 `MockState.value()`，要回退到原图文字。
+        func currentValue(_ key: String) -> String {
+            if module == .shuzi, sub == 0,
+               let field = MockDigitalWallet.fullField(key) {
+                return fields[key] ?? field.fallback
+            }
+            return renderState.currentValue(key)
+        }
+
+        /// 编辑框标题：整页贴图类字段用语义化标题，其余保持原有逻辑。
+        func editTitle(_ key: String) -> String {
+            if module == .shuzi, sub == 0,
+               let field = MockDigitalWallet.fullField(key) {
+                return field.label
+            }
+            return (key.hasPrefix("p") || key.hasPrefix("c")) ? "修改内容" : key
         }
     }
 
@@ -80,6 +108,8 @@ final class MockDetailScreen: Screen {
 
     func maxScroll(_ state: ScreenState) -> CGFloat {
         guard let s = state as? State else { return 0 }
+        // 建设转出1 的整页原图是固定一屏
+        if usesFullReference, s.module == .shuzi, s.sub == 0 { return 0 }
         // 邮政这 8 页是整页截图贴图，固定一屏
         if s.module == .psbc && (0...7).contains(s.sub) { return 0 }
         if s.module == .cmb && (s.sub == 0 || s.sub == 1) { return 0 }
@@ -103,6 +133,19 @@ final class MockDetailScreen: Screen {
 
     func draw(_ d: Draw, state: ScreenState) {
         guard let s = state as? State else { return }
+        // 数字钱包·建设转出1：原图 1280×2816 整页铺满（含状态栏），所有文字都是热区
+        if usesFullReference, s.module == .shuzi, s.sub == 0,
+           let img = UIImage(named: "mock_sz_full_0") {
+            d.rect(CGRect(origin: .zero, size: canvasSize), .white)
+            d.art(img, CGRect(origin: .zero, size: canvasSize))
+            for f in MockDigitalWallet.fullFields() {
+                if let v = s.fields[f.key], !v.isEmpty {
+                    d.rect(f.clear, .white)
+                    MockDigitalWallet.drawFullField(d, f, v)
+                }
+            }
+            return
+        }
         // 数字钱包五页：整页贴图 + 数字热区
         if s.module == .shuzi, (0...4).contains(s.sub),
            let img = UIImage(named: "mock_sz_\(s.sub)") {
@@ -437,6 +480,17 @@ final class MockDetailScreen: Screen {
     func hitTest(_ state: ScreenState, x: CGFloat, y: CGFloat) -> ActionToken {
         guard let s = state as? State else { return "noop" }
         let scroll = s.scroll
+        // 建设转出1 整页原图上的文字热区
+        if usesFullReference, s.module == .shuzi, s.sub == 0 {
+            let p = CGPoint(x: x, y: y - scroll)
+            // 左上角 ✕ 是关闭（原图里是图标，不是文字）
+            if p.x > 60, p.x < 180, p.y > 160, p.y < 260 { return "back" }
+            for f in MockDigitalWallet.fullFields()
+            where f.clear.insetBy(dx: -6, dy: -6).contains(p) {
+                return "mock:field:\(f.key)"
+            }
+            return "noop"
+        }
         let barH = headH(s)
         if y >= scroll && y < scroll + barH {
             if x < dp(60) { return "back" }

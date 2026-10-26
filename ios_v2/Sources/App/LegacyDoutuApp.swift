@@ -2879,17 +2879,46 @@ final class Router {
             switch verb {
             case "field":
                 guard !arg.isEmpty else { return }
-                EditPrompt.present(title: (arg.hasPrefix("p") || arg.hasPrefix("c")) ? "修改内容" : arg, current: ds.renderState.currentValue(arg),
-                                   numeric: false) { [weak self] text in
+                EditPrompt.present(title: ds.editTitle(arg),
+                                   current: ds.currentValue(arg),
+                                   numeric: arg == "full_amount") { [weak self] text in
+                    // 「改回原图文字」等价于恢复原图：不画覆盖层
+                    let restoresOriginal = text.isEmpty
+                        || (arg.hasPrefix("full_")
+                            && MockDigitalWallet.fullField(arg)?.fallback == text)
                     if arg == "交易时间" {
                         ds.time = text
+                    } else if restoresOriginal {
+                        ds.fields.removeValue(forKey: arg)
                     } else {
                         ds.fields[arg] = text
+                    }
+                    // 把成品页的修改同步回编辑页的 State，返回后再点「生成图片」不会丢
+                    if let self {
+                        for (screen, st) in self.stack where screen is MockEditorScreen {
+                            if let es = st as? MockEditorScreen.State {
+                                if restoresOriginal {
+                                    es.fields.removeValue(forKey: arg)
+                                } else {
+                                    es.fields[arg] = text
+                                }
+                            }
+                        }
                     }
                     self?.host?.setNeedsDisplay()
                 }
             case "reset":
                 ds.time = MockState.nowString()
+                host?.setNeedsDisplay()
+            case "demoedit":
+                // 调试用：一次把所有热区改成另一组文案，方便在真机上核对重绘位置
+                ds.fields["full_title"] = "转账成功"
+                ds.fields["full_amount"] = "1234.56"
+                ds.fields["full_recipient"] = "转钱给 张三"
+                ds.fields["full_bank"] = "中国工商银行 6222****8888"
+                ds.fields["full_continue"] = "继续转账"
+                ds.fields["full_done"] = "完成"
+                ds.fields["full_notify"] = "通知收款人"
                 host?.setNeedsDisplay()
             default:
                 break
@@ -2916,7 +2945,13 @@ final class Router {
                 host?.setNeedsDisplay()
             }
         case "gen":
-            let detail = MockDetailScreen()
+            // 数字钱包·建设转出1 用 1280×2816 原图整页铺（含状态栏），其余页仍是 1080×2388
+            let fullReference = es.module == .shuzi && es.sub == 0
+            let detail = MockDetailScreen(
+                canvasSize: fullReference
+                    ? MockDigitalWallet.fullPageSize
+                    : CGSize(width: MockDetailScreen.W, height: MockDetailScreen.H),
+                fullReference: fullReference)
             push(detail, state: MockDetailScreen.State(module: es.module, sub: es.sub,
                                                        time: es.time, fields: es.fields))
             // 调试用：有远程 spec 就拉下来，到了之后按安卓页面的视觉块重绘

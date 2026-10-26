@@ -68,6 +68,9 @@ protocol Screen: AnyObject {
     var usesCameraBackground: Bool { get }
     /// 是否按参考画布的**原比例**铺满（见 `ScreenHostView.canvasBounds`）。
     var keepsReferenceAspect: Bool { get }
+    /// 是否连状态栏/底部手势条一起铺（模拟「整屏截图」类页面用）。
+    /// 默认 `false`：画布避开安全区；返回 `true` 时从 y=0 开始，整页铺满屏幕。
+    func fullBleed(_ state: ScreenState) -> Bool
 }
 
 extension Screen {
@@ -149,6 +152,9 @@ extension Screen {
     /// 这类页面把本项置 `true`：按**宽度**等比缩放，画布底部超出屏幕的部分被裁掉
     /// （模拟成品页下方本来就是空白），上下比例与参考图一致。
     var keepsReferenceAspect: Bool { false }
+
+    /// 默认避开安全区；整屏截图页（模拟成品页）自己覆盖成 `true`。
+    func fullBleed(_ state: ScreenState) -> Bool { false }
 
     /// 支模块五格底栏的当前选中项（0 首页 / 1 理财 / 2 视频 / 3 消息 / 4 我的）。
     ///
@@ -620,6 +626,14 @@ final class ScreenHostView: UIView, UIScrollViewDelegate {
     /// 高度 = 宽度 × 画布纵横比，顶部仍从安全区开始，底部超出屏幕的部分裁掉。
     /// 这样文字不会被纵向压扁（390×763 铺 1080×2388 会压掉 11.5%）。
     private var canvasBounds: CGRect {
+        // 整屏截图类页面：从屏幕最顶上开始画，按宽度等比缩放（底部超出部分裁掉）。
+        // 这类页面本身已经把 Android 状态栏/手势条画进图里了，再扣安全区会多出一条白边。
+        if screen.fullBleed(state) {
+            guard screen.keepsReferenceAspect,
+                  bounds.width > 0, screen.canvasSize.width > 0 else { return bounds }
+            let h = bounds.width * screen.canvasSize.height / screen.canvasSize.width
+            return CGRect(x: 0, y: 0, width: bounds.width, height: h)
+        }
         if screen.keepsReferenceAspect,
            bounds.width > 0, screen.canvasSize.width > 0 {
             let h = bounds.width * screen.canvasSize.height / screen.canvasSize.width

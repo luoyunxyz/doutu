@@ -76,6 +76,145 @@ enum MockDigitalWallet {
     static let green = UIColor(red: 0x4c / 255.0, green: 0xaf / 255.0,
                                blue: 0x50 / 255.0, alpha: 1)
 
+    // MARK: - 「建设转出1」整页还原（1280×2816 原图）
+
+    /// 用户给的参考图就是 1280×2816 的整屏截图（含 Android 状态栏、底部手势条），
+    /// 所以这张不裁状态栏、也不借用系统安全区：整页按原图铺，热区坐标就是原图坐标。
+    ///
+    /// `clear` 是改字时要先擦掉的矩形（文字外扩 8px），`baseline` / `size` 是按原图
+    /// 墨迹高度反推出来的；没改过的字段不绘制，保留原图像素。
+    struct FullField {
+        enum Kind {
+            /// 普通文字（居中 / 右对齐）
+            case text
+            /// 金额：固定保留「¥」，数字用 Archivo 数字字体
+            case amount
+            /// 「转钱给 xxx ✏」：文字居中，铅笔图标跟着文字走
+            case recipient
+        }
+
+        enum Align {
+            case left(CGFloat)
+            case center(CGFloat)
+            case right(CGFloat)
+        }
+
+        let key: String
+        /// 编辑框预填值 + 「改回默认就恢复原图」的判定值
+        let fallback: String
+        let clear: CGRect
+        let size: CGFloat
+        let color: UIColor
+        let bold: Bool
+        let align: Align
+        let baseline: CGFloat
+        let kind: Kind
+        /// 弹出编辑框时的标题
+        let label: String
+    }
+
+    static let fullPageSize = CGSize(width: 1280, height: 2816)
+
+    /// 建设转出1（子页 0）的文字热区。数字全部从 1280×2816 的参考图上量得。
+    static func fullFields() -> [FullField] {
+        [
+            FullField(key: "full_title", fallback: "转钱成功",
+                      clear: CGRect(x: 489, y: 687, width: 302, height: 86),
+                      size: 75, color: Draw.color(0xFF000000), bold: true,
+                      align: .center(640), baseline: 764, kind: .text,
+                      label: "修改状态标题"),
+            FullField(key: "full_amount", fallback: "70.00",
+                      clear: CGRect(x: 441, y: 991, width: 402, height: 108),
+                      size: 123, color: Draw.color(0xFF000000), bold: true,
+                      align: .center(642), baseline: 1090, kind: .amount,
+                      label: "修改金额"),
+            FullField(key: "full_recipient", fallback: "转钱给 零花钱",
+                      clear: CGRect(x: 394, y: 1214, width: 474, height: 77),
+                      size: 67, color: Draw.color(0xFF000000), bold: true,
+                      align: .center(631), baseline: 1282, kind: .recipient,
+                      label: "修改收款方"),
+            FullField(key: "full_bank", fallback: "中国建设银行 0051****1679",
+                      clear: CGRect(x: 320, y: 1316, width: 641, height: 64),
+                      size: 53, color: Draw.color(0xFF6E6E6E), bold: false,
+                      align: .center(640), baseline: 1371, kind: .text,
+                      label: "修改收款卡号"),
+            FullField(key: "full_continue", fallback: "继续转钱",
+                      clear: CGRect(x: 999, y: 171, width: 212, height: 64),
+                      size: 54, color: Draw.color(0xFF6E6E6E), bold: false,
+                      align: .right(1203), baseline: 227, kind: .text,
+                      label: "修改右上角文字"),
+            FullField(key: "full_done", fallback: "完成",
+                      clear: CGRect(x: 584, y: 2450, width: 113, height: 65),
+                      size: 56, color: Draw.color(0xFF333333), bold: false,
+                      align: .center(640), baseline: 2507, kind: .text,
+                      label: "修改「完成」按钮文字"),
+            FullField(key: "full_notify", fallback: "通知收款人",
+                      clear: CGRect(x: 510, y: 2632, width: 260, height: 64),
+                      size: 55, color: Draw.color(0xFF4A4A4A), bold: false,
+                      align: .center(640), baseline: 2688, kind: .text,
+                      label: "修改「通知收款人」"),
+        ]
+    }
+
+    static func fullField(_ key: String) -> FullField? {
+        fullFields().first { $0.key == key }
+    }
+
+    /// 重画一个被改过的字段。调用前 `clear` 内已经铺过白底。
+    static func drawFullField(_ d: Draw, _ f: FullField, _ raw: String) {
+        var value = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !value.isEmpty else { return }
+
+        switch f.kind {
+        case .amount:
+            // 用户可能把 ¥ 一起打进来，这里只保留数字部分，¥ 用原图里抠出的字形。
+            if value.hasPrefix("¥") || value.hasPrefix("￥") { value.removeFirst() }
+            value = value.trimmingCharacters(in: .whitespaces)
+            let yenW: CGFloat = 49
+            let gap: CGFloat = 16
+            let font = Fonts.number(f.size)
+            let w = (value as NSString).size(withAttributes: [.font: font]).width
+            let cx: CGFloat
+            if case .center(let c) = f.align { cx = c } else { cx = f.clear.midX }
+            let start = cx - (yenW + gap + w) / 2
+            d.art(UIImage(named: "mock_sz_yen"),
+                  CGRect(x: start, y: 999, width: yenW, height: 94))
+            d.text(value, x: start + yenW + gap, baseline: f.baseline,
+                   size: f.size, f.color, useNumberFace: true)
+
+        case .recipient:
+            let font = Draw.font(size: f.size, bold: true)
+            let textW = (value as NSString).size(withAttributes: [.font: font]).width
+            let pencil = UIImage(named: "mock_sz_pencil")
+            let scale = f.size / 67
+            let penW = 56 * scale
+            let penH = 62 * scale
+            let gap = 34 * scale
+            let total = textW + gap + penW
+            let center: CGFloat
+            if case .center(let c) = f.align { center = c } else { center = f.clear.midX }
+            let start = center - total / 2
+            d.text(value, x: start, baseline: f.baseline, size: f.size,
+                   f.color, bold: true)
+            d.art(pencil, CGRect(x: start + textW + gap,
+                                 y: f.baseline - penH + 5 * scale,
+                                 width: penW, height: penH))
+
+        case .text:
+            switch f.align {
+            case .left(let x):
+                d.text(value, x: x, baseline: f.baseline, size: f.size,
+                       f.color, bold: f.bold)
+            case .center(let cx):
+                d.centerText(value, cx: cx, baseline: f.baseline, size: f.size,
+                             f.color, bold: f.bold)
+            case .right(let right):
+                d.rightText(value, right: right, baseline: f.baseline, size: f.size,
+                            f.color, bold: f.bold)
+            }
+        }
+    }
+
     static func page(state: MockState, metrics: MockMetrics,
                      width: CGFloat, showsTopTitle: Bool) -> MockPage {
         let b = MockBuilder(width: width, metrics: metrics)
