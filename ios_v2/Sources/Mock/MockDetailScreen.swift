@@ -484,8 +484,9 @@ final class MockDetailScreen: Screen {
         if usesFullReference, s.module == .shuzi,
            MockDigitalWallet.hasFullPage(s.sub) {
             let p = CGPoint(x: x, y: y - scroll)
-            // 左上角 ✕ / ‹ 是返回（原图里是图标，不是文字）；建设转出页没有返回图标
-            if s.sub != 4, p.x > 55, p.x < 180, p.y > 150, p.y < 270 { return "back" }
+            // 左上角 ✕ / ‹ 是返回（原图里是图标，不是文字）；没有返回图标的页不响应
+            if [0, 1, 2, 3, 5].contains(s.sub),
+               p.x > 55, p.x < 180, p.y > 150, p.y < 270 { return "back" }
             for f in MockDigitalWallet.fullFields(s.sub)
             where f.clear.insetBy(dx: -6, dy: -6).contains(p) {
                 return "mock:field:\(f.key)"
