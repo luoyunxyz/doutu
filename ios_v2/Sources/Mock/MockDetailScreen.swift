@@ -75,6 +75,7 @@ final class MockDetailScreen: Screen {
         if s.module == .zhongxin && (0...4).contains(s.sub) { return 0 }
         if s.module == .pufa && (0...3).contains(s.sub) { return 0 }
         if s.module == .minsheng && (0...2).contains(s.sub) { return 0 }
+        if s.module == .huiwang && (0...2).contains(s.sub) { return 0 }
         if s.module == .jianshe, (0...11).contains(s.sub), let img = UIImage(named: "mock_js_\(s.sub)") {
             return max(0, Self.W * img.size.height / max(1, img.size.width) - Self.H)
         }
@@ -87,6 +88,14 @@ final class MockDetailScreen: Screen {
 
     func draw(_ d: Draw, state: ScreenState) {
         guard let s = state as? State else { return }
+        // 汇旺三页：整页贴图（带水印，不做白边、不覆盖任何区域）
+        if s.module == .huiwang, (0...2).contains(s.sub),
+           let img = UIImage(named: "mock_hw_\(s.sub)") {
+            d.rect(CGRect(x: 0, y: 0, width: Self.W, height: Self.H), MockInk.white)
+            let h = Self.W * img.size.height / max(1, img.size.width)
+            d.art(img, CGRect(x: 0, y: 0, width: Self.W, height: h))
+            return
+        }
         // 民生三页：整页贴图 + 数字热区
         if s.module == .minsheng, (0...2).contains(s.sub),
            let img = UIImage(named: "mock_ms_\(s.sub)") {
