@@ -55,8 +55,6 @@ enum MockComposer {
         case .minsheng:
             return MockMinsheng.page(state: state, metrics: metrics, width: width,
                                      showsTopTitle: showsTopTitle)
-                                   showsTopTitle: showsTopTitle)
-                                   showsTopTitle: showsTopTitle)
         case .huiwang:
             return MockHuiwang.page(state: state, metrics: metrics, width: width,
                                     showsTopTitle: showsTopTitle)
