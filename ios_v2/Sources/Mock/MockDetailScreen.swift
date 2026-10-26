@@ -90,6 +90,7 @@ final class MockDetailScreen: Screen {
             d.rect(CGRect(x: 0, y: 0, width: Self.W, height: Self.H), .white)
             let h = Self.W * img.size.height / max(1, img.size.width)
             d.art(img, CGRect(x: 0, y: 0, width: Self.W, height: h))
+            d.rect(CGRect(x: 0, y: h - dp(40), width: Self.W, height: dp(40)), MockInk.white)
             for f in MockJiaotong.overlayFields(s.sub) {
                 if let v = s.fields[f.key], !v.isEmpty {
                     d.rect(f.rect, f.bg)
@@ -109,6 +110,7 @@ final class MockDetailScreen: Screen {
             d.rect(CGRect(x: 0, y: 0, width: Self.W, height: Self.H), .white)
             let h = Self.W * img.size.height / max(1, img.size.width)
             d.art(img, CGRect(x: 0, y: 0, width: Self.W, height: h))
+            d.rect(CGRect(x: 0, y: h - dp(40), width: Self.W, height: dp(40)), MockInk.white)
             for f in MockPingan.overlayFields(s.sub) {
                 if let v = s.fields[f.key], !v.isEmpty {
                     d.rect(f.rect, f.bg)
@@ -127,6 +129,7 @@ final class MockDetailScreen: Screen {
             d.rect(CGRect(x: 0, y: 0, width: Self.W, height: Self.H), .white)
             let h = Self.W * img.size.height / max(1, img.size.width)
             d.art(img, CGRect(x: 0, y: 0, width: Self.W, height: h))
+            d.rect(CGRect(x: 0, y: h - dp(40), width: Self.W, height: dp(40)), MockInk.white)
             for f in MockJianshe.overlayFields(s.sub) {
                 if let v = s.fields[f.key], !v.isEmpty {
                     d.rect(f.rect, f.bg)
@@ -146,6 +149,7 @@ final class MockDetailScreen: Screen {
             d.rect(CGRect(x: 0, y: 0, width: Self.W, height: Self.H), .white)
             let h = Self.W * img.size.height / max(1, img.size.width)
             d.art(img, CGRect(x: 0, y: 0, width: Self.W, height: h))
+            d.rect(CGRect(x: 0, y: h - dp(40), width: Self.W, height: dp(40)), MockInk.white)
             for f in MockXingye.overlayFields(s.sub) {
                 if let v = s.fields[f.key], !v.isEmpty {
                     d.rect(f.rect, f.bg)
@@ -165,6 +169,7 @@ final class MockDetailScreen: Screen {
             d.rect(CGRect(x: 0, y: 0, width: Self.W, height: Self.H), .white)
             let h = Self.W * img.size.height / max(1, img.size.width)
             d.art(img, CGRect(x: 0, y: 0, width: Self.W, height: h))
+            d.rect(CGRect(x: 0, y: h - dp(40), width: Self.W, height: dp(40)), MockInk.white)
             for f in MockEank.overlayFields(s.sub) {
                 if let v = s.fields[f.key], !v.isEmpty {
                     d.rect(f.rect, f.bg)
@@ -184,6 +189,7 @@ final class MockDetailScreen: Screen {
             d.rect(CGRect(x: 0, y: 0, width: Self.W, height: Self.H), .white)
             let h = Self.W * img.size.height / max(1, img.size.width)
             d.art(img, CGRect(x: 0, y: 0, width: Self.W, height: h))
+            d.rect(CGRect(x: 0, y: h - dp(40), width: Self.W, height: dp(40)), MockInk.white)
             for f in MockCmb.overlayFields(s.sub) {
                 if let v = s.fields[f.key], !v.isEmpty {
                     d.rect(f.rect, f.bg)
@@ -203,6 +209,7 @@ final class MockDetailScreen: Screen {
             d.rect(CGRect(x: 0, y: 0, width: Self.W, height: Self.H), MockInk.white)
             let h = Self.W * img.size.height / max(1, img.size.width)
             d.art(img, CGRect(x: 0, y: 0, width: Self.W, height: h))
+            d.rect(CGRect(x: 0, y: h - dp(40), width: Self.W, height: dp(40)), MockInk.white)
             // 数字热区：改过的值覆盖在原位，没改过保持截图原样
             for f in MockPsbc.overlayFields(s.sub) {
                 if let v = s.fields[f.key], !v.isEmpty {
