@@ -2856,7 +2856,9 @@ final class Router {
             let index = Int(rest.dropFirst("home:".count)) ?? 0
             guard index >= 0, index < MockHome.labels.count else { return }
             let name = MockHome.labels[index]
-            guard let module = MockModule(rawValue: index), module.isBuilt else {
+            // 已移除「微信模拟 / 支付宝」两格：宫格下标 13 起顺延 2 个
+            let moduleIndex = index < 13 ? index : index + 2
+            guard let module = MockModule(rawValue: moduleIndex), module.isBuilt else {
                 // 与 Android `SimulationActivity.card()` 的 else 分支一致
                 showToast("\(name) 制作中", ok: false)
                 return
