@@ -134,12 +134,20 @@ enum MockDigitalWallet {
     static let fullRed5 = Draw.color(0xFFF4514E)
     /// 工商转出的红色按钮
     static let fullRed7 = Draw.color(0xFFF45154)
+    /// 工商转出2 的红色按钮
+    static let fullRed8 = Draw.color(0xFFF9565B)
+    /// 农业转出的橙色按钮
+    static let fullOrange9 = Draw.color(0xFFEAAE40)
+    /// 兴业转出的蓝色按钮
+    static let fullBlue10 = Draw.color(0xFF4B7AC0)
+    /// 兴业转出的提示文字
+    static let fullWarn10 = Draw.color(0xFF8A93A8)
 
-    static func hasFullPage(_ sub: Int) -> Bool { (0...7).contains(sub) }
+    static func hasFullPage(_ sub: Int) -> Bool { (0...10).contains(sub) }
 
     /// 数字钱包整页版式：0=建设转出1（转钱成功），1=建设转出2（交易详情），
     /// 2=建设转入（交易详情），3=建设存入（存入成功），4=建设转出（支付成功），
-    /// 5=招商结果，6=招商转出，7=工商转出。
+    /// 5=招商结果，6=招商转出，7=工商转出，8=工商转出2，9=农业转出，10=兴业转出。
     /// 所有坐标/字号都从 1280×2816 的原图上量得。
     static func fullFields(_ sub: Int) -> [FullField] {
         if sub == 0 {
@@ -737,6 +745,279 @@ enum MockDigitalWallet {
                           size: 74, color: Draw.color(0xFFD14A4A), bold: false,
                           align: .center(640), baseline: 1768, kind: .text,
                           label: "修改白色按钮文字", maxWidth: 1100),
+            ]
+        }
+
+        if sub == 8 {
+            let labelColor = Draw.color(0xFF7C7C7C)
+            let valueColor = Draw.color(0xFF050505)
+            let discount = Draw.color(0xFFA4555F)
+            let rowSize: CGFloat = 52
+
+            return [
+                FullField(key: "full8_title", fallback: "支付结果",
+                          clear: CGRect(x: 513, y: 170, width: 252, height: 72),
+                          size: 62, color: Draw.color(0xFF6E7474), bold: false,
+                          align: .center(639), baseline: 235, kind: .text,
+                          label: "修改页面标题", maxWidth: 600),
+                FullField(key: "full8_success", fallback: "成功",
+                          clear: CGRect(x: 708, y: 470, width: 134, height: 78),
+                          size: 66, color: Draw.color(0xFF64A67D), bold: false,
+                          align: .left(716), baseline: 539, kind: .text,
+                          label: "修改状态文字", maxWidth: 300),
+                FullField(key: "full8_amount", fallback: "¥2,888.00",
+                          clear: CGRect(x: 363, y: 704, width: 575, height: 122),
+                          size: 112, color: Draw.color(0xFF000000), bold: false,
+                          align: .center(650), baseline: 818, kind: .text,
+                          label: "修改金额", maxWidth: 1000),
+                FullField(key: "full8_sub", fallback: "R*6",
+                          clear: CGRect(x: 589, y: 907, width: 102, height: 62),
+                          size: 52, color: Draw.color(0xFF000000), bold: false,
+                          align: .center(640), baseline: 960, kind: .text,
+                          label: "修改付款说明", maxWidth: 600),
+
+                FullField(key: "full8_order_label", fallback: "订单号",
+                          clear: CGRect(x: 44, y: 1116, width: 180, height: 66),
+                          size: rowSize, color: labelColor, bold: false,
+                          align: .left(52), baseline: 1184, kind: .text,
+                          label: "修改「订单号」"),
+                FullField(key: "full8_order_value", fallback: "08Jdqwlt4_xaQx190787153621736",
+                          clear: CGRect(x: 309, y: 1119, width: 925, height: 72),
+                          size: rowSize, color: valueColor, bold: false,
+                          align: .right(1226), baseline: 1184, kind: .text,
+                          label: "修改订单号", maxWidth: 910),
+
+                FullField(key: "full8_card_label", fallback: "交易卡号",
+                          clear: CGRect(x: 45, y: 1246, width: 240, height: 66),
+                          size: rowSize, color: labelColor, bold: false,
+                          align: .left(53), baseline: 1314, kind: .text,
+                          label: "修改「交易卡号」"),
+                FullField(key: "full8_card_value", fallback: "工商银行借记卡(9635)",
+                          clear: CGRect(x: 653, y: 1246, width: 580, height: 74),
+                          size: rowSize, color: valueColor, bold: false,
+                          align: .right(1223), baseline: 1314, kind: .text,
+                          label: "修改交易卡号", maxWidth: 560),
+
+                FullField(key: "full8_disc_label", fallback: "优惠卷抵扣",
+                          clear: CGRect(x: 44, y: 1377, width: 292, height: 66),
+                          size: rowSize, color: labelColor, bold: false,
+                          align: .left(52), baseline: 1436, kind: .text,
+                          label: "修改「优惠卷抵扣」"),
+                FullField(key: "full8_disc_value", fallback: "- ¥0.00",
+                          clear: CGRect(x: 1024, y: 1381, width: 210, height: 60),
+                          size: rowSize, color: discount, bold: false,
+                          align: .right(1226), baseline: 1436, kind: .text,
+                          label: "修改优惠卷抵扣", maxWidth: 200),
+
+                FullField(key: "full8_sale_label", fallback: "消费立减",
+                          clear: CGRect(x: 45, y: 1508, width: 240, height: 66),
+                          size: rowSize, color: labelColor, bold: false,
+                          align: .left(53), baseline: 1567, kind: .text,
+                          label: "修改「消费立减」"),
+                FullField(key: "full8_sale_value", fallback: "¥0.00",
+                          clear: CGRect(x: 1060, y: 1512, width: 175, height: 60),
+                          size: rowSize, color: discount, bold: false,
+                          align: .right(1226), baseline: 1567, kind: .text,
+                          label: "修改消费立减", maxWidth: 170),
+
+                FullField(key: "full8_points_label", fallback: "积分抵扣",
+                          clear: CGRect(x: 44, y: 1638, width: 240, height: 66),
+                          size: rowSize, color: labelColor, bold: false,
+                          align: .left(52), baseline: 1698, kind: .text,
+                          label: "修改「积分抵扣」"),
+                FullField(key: "full8_points_value", fallback: "0.00",
+                          clear: CGRect(x: 1105, y: 1643, width: 130, height: 58),
+                          size: rowSize, color: discount, bold: false,
+                          align: .right(1226), baseline: 1698, kind: .text,
+                          label: "修改积分抵扣", maxWidth: 125),
+
+                FullField(key: "full8_time_label", fallback: "交易时间",
+                          clear: CGRect(x: 45, y: 1769, width: 240, height: 66),
+                          size: rowSize, color: labelColor, bold: false,
+                          align: .left(53), baseline: 1828, kind: .text,
+                          label: "修改「交易时间」"),
+                FullField(key: "full8_time_value", fallback: "2026-10-26 19:17:20",
+                          clear: CGRect(x: 684, y: 1773, width: 550, height: 62),
+                          size: rowSize, color: valueColor, bold: false,
+                          align: .right(1226), baseline: 1828, kind: .text,
+                          label: "修改交易时间", maxWidth: 535),
+
+                FullField(key: "full8_red_button", fallback: "返回",
+                          clear: CGRect(x: 583, y: 1945, width: 116, height: 64),
+                          size: 56, color: .white, bold: false,
+                          align: .center(641), baseline: 1999, kind: .text,
+                          label: "修改红色按钮文字", bg: fullRed8, maxWidth: 900),
+                FullField(key: "full8_white_button", fallback: "开通指纹/刷脸支付,安全又便捷",
+                          clear: CGRect(x: 229, y: 2121, width: 818, height: 74),
+                          size: 56, color: Draw.color(0xFFC96374), bold: false,
+                          align: .center(638), baseline: 2186, kind: .text,
+                          label: "修改白色按钮文字", maxWidth: 1000),
+            ]
+        }
+
+        if sub == 9 {
+            let gray = Draw.color(0xFF808080)
+            let rowSize: CGFloat = 50
+
+            return [
+                FullField(key: "full9_title", fallback: "交易成功",
+                          clear: CGRect(x: 520, y: 167, width: 236, height: 70),
+                          size: 56, color: Draw.color(0xFF080808), bold: false,
+                          align: .center(638), baseline: 228, kind: .text,
+                          label: "修改页面标题", maxWidth: 600),
+                FullField(key: "full9_status", fallback: "交易成功",
+                          clear: CGRect(x: 511, y: 974, width: 256, height: 76),
+                          size: 64, color: Draw.color(0xFF404040), bold: false,
+                          align: .center(638), baseline: 1041, kind: .text,
+                          label: "修改状态标题", maxWidth: 600),
+
+                FullField(key: "full9_pay_label", fallback: "付款账户：",
+                          clear: CGRect(x: 18, y: 1263, width: 210, height: 60),
+                          size: rowSize, color: gray, bold: false,
+                          align: .left(26), baseline: 1313, kind: .text,
+                          label: "修改「付款账户」", maxWidth: 300),
+                FullField(key: "full9_pay_value", fallback: "6228****6026",
+                          clear: CGRect(x: 924, y: 1267, width: 336, height: 56),
+                          size: rowSize, color: gray, bold: false,
+                          align: .right(1252), baseline: 1313, kind: .text,
+                          label: "修改付款账户", maxWidth: 325),
+
+                FullField(key: "full9_amt_label", fallback: "付款金额：",
+                          clear: CGRect(x: 18, y: 1343, width: 210, height: 60),
+                          size: rowSize, color: gray, bold: false,
+                          align: .left(26), baseline: 1394, kind: .text,
+                          label: "修改「付款金额」", maxWidth: 300),
+                FullField(key: "full9_amt_value", fallback: "3,000.00元",
+                          clear: CGRect(x: 993, y: 1347, width: 266, height: 58),
+                          size: rowSize, color: gray, bold: false,
+                          align: .right(1251), baseline: 1394, kind: .text,
+                          label: "修改付款金额", maxWidth: 255),
+
+                FullField(key: "full9_disc_label", fallback: "优惠金额：",
+                          clear: CGRect(x: 19, y: 1423, width: 210, height: 60),
+                          size: rowSize, color: gray, bold: false,
+                          align: .left(27), baseline: 1476, kind: .text,
+                          label: "修改「优惠金额」", maxWidth: 300),
+                FullField(key: "full9_disc_value", fallback: "0.00元",
+                          clear: CGRect(x: 1095, y: 1427, width: 164, height: 54),
+                          size: rowSize, color: gray, bold: false,
+                          align: .right(1251), baseline: 1476, kind: .text,
+                          label: "修改优惠金额", maxWidth: 155),
+
+                FullField(key: "full9_done", fallback: "完成",
+                          clear: CGRect(x: 574, y: 2330, width: 128, height: 68),
+                          size: 58, color: .white, bold: false,
+                          align: .center(638), baseline: 2391, kind: .text,
+                          label: "修改「完成」按钮文字", bg: fullOrange9, maxWidth: 900),
+            ]
+        }
+
+        if sub == 10 {
+            let textColor = Draw.color(0xFF343434)
+            let rowSize: CGFloat = 50
+
+            return [
+                FullField(key: "full10_title", fallback: "钱包充值结果",
+                          clear: CGRect(x: 450, y: 153, width: 384, height: 76),
+                          size: 68, color: Draw.color(0xFF2B2A31), bold: false,
+                          align: .center(642), baseline: 222, kind: .text,
+                          label: "修改页面标题", maxWidth: 700),
+                FullField(key: "full10_status", fallback: "充值成功",
+                          clear: CGRect(x: 512, y: 726, width: 256, height: 76),
+                          size: 68, color: Draw.color(0xFF2B2A31), bold: false,
+                          align: .center(640), baseline: 795, kind: .text,
+                          label: "修改状态标题", maxWidth: 600),
+
+                FullField(key: "full10_amt_label", fallback: "充值金额",
+                          clear: CGRect(x: 48, y: 1058, width: 180, height: 58),
+                          size: rowSize, color: textColor, bold: false,
+                          align: .left(56), baseline: 1105, kind: .text,
+                          label: "修改「充值金额」"),
+                FullField(key: "full10_amt_value", fallback: "¥2.00",
+                          clear: CGRect(x: 1091, y: 1070, width: 140, height: 50),
+                          size: rowSize, color: textColor, bold: false,
+                          align: .right(1223), baseline: 1112, kind: .text,
+                          label: "修改充值金额", maxWidth: 130),
+
+                FullField(key: "full10_bank_label", fallback: "银行账户",
+                          clear: CGRect(x: 47, y: 1184, width: 180, height: 58),
+                          size: rowSize, color: textColor, bold: false,
+                          align: .left(55), baseline: 1232, kind: .text,
+                          label: "修改「银行账户」"),
+                FullField(key: "full10_bank_value", fallback: "6229 **** 5752*",
+                          clear: CGRect(x: 888, y: 1194, width: 342, height: 56),
+                          size: rowSize, color: textColor, bold: false,
+                          align: .right(1222), baseline: 1232, kind: .text,
+                          label: "修改银行账户", maxWidth: 330),
+
+                FullField(key: "full10_name_label", fallback: "钱包名称",
+                          clear: CGRect(x: 47, y: 1311, width: 180, height: 58),
+                          size: rowSize, color: textColor, bold: false,
+                          align: .left(55), baseline: 1360, kind: .text,
+                          label: "修改「钱包名称」"),
+                FullField(key: "full10_name_value", fallback: "卢103",
+                          clear: CGRect(x: 1098, y: 1319, width: 133, height: 60),
+                          size: rowSize, color: textColor, bold: false,
+                          align: .right(1223), baseline: 1370, kind: .text,
+                          label: "修改钱包名称", maxWidth: 125),
+
+                FullField(key: "full10_id_label", fallback: "钱包编号",
+                          clear: CGRect(x: 47, y: 1439, width: 180, height: 58),
+                          size: rowSize, color: textColor, bold: false,
+                          align: .left(55), baseline: 1487, kind: .text,
+                          label: "修改「钱包编号」"),
+                FullField(key: "full10_id_value", fallback: "0092****3625",
+                          clear: CGRect(x: 930, y: 1448, width: 300, height: 54),
+                          size: rowSize, color: textColor, bold: false,
+                          align: .right(1223), baseline: 1487, kind: .text,
+                          label: "修改钱包编号", maxWidth: 290),
+
+                FullField(key: "full10_org_label", fallback: "所属机构",
+                          clear: CGRect(x: 47, y: 1565, width: 180, height: 58),
+                          size: rowSize, color: textColor, bold: false,
+                          align: .left(55), baseline: 1614, kind: .text,
+                          label: "修改「所属机构」"),
+                FullField(key: "full10_org_value", fallback: "交通银行",
+                          clear: CGRect(x: 1036, y: 1573, width: 196, height: 60),
+                          size: rowSize, color: textColor, bold: false,
+                          align: .right(1224), baseline: 1614, kind: .text,
+                          label: "修改所属机构", maxWidth: 185),
+
+                FullField(key: "full10_blue_button", fallback: "访问兴业银行App",
+                          clear: CGRect(x: 418, y: 1799, width: 446, height: 74),
+                          size: 58, color: .white, bold: false,
+                          align: .center(640), baseline: 1865, kind: .text,
+                          label: "修改蓝色按钮文字", bg: fullBlue10, maxWidth: 1100),
+                FullField(key: "full10_white_button", fallback: "返回数字人民币App",
+                          clear: CGRect(x: 388, y: 2008, width: 504, height: 76),
+                          size: 58, color: Draw.color(0xFF466492), bold: false,
+                          align: .center(639), baseline: 2076, kind: .text,
+                          label: "修改白色按钮文字", maxWidth: 1100),
+
+                FullField(key: "full10_warn1",
+                          fallback: "温馨提示：您可通过兴业银行App>>数字人民币专区>>",
+                          clear: CGRect(x: 54, y: 2191, width: 1172, height: 64),
+                          size: 50, color: fullWarn10, bold: false,
+                          align: .left(54), baseline: 2249, kind: .text,
+                          label: "修改提示第一行", bg: fullPage5Bg, maxWidth: 1172),
+                FullField(key: "full10_warn2",
+                          fallback: "交易明细功能，查询本次交易详情。如有任何疑问，请",
+                          clear: CGRect(x: 52, y: 2267, width: 1172, height: 62),
+                          size: 50, color: fullWarn10, bold: false,
+                          align: .left(52), baseline: 2323, kind: .text,
+                          label: "修改提示第二行", bg: fullPage5Bg, maxWidth: 1172),
+                FullField(key: "full10_warn3",
+                          fallback: "您通过在线客服或拨打兴业银行官方客服电话95561寻",
+                          clear: CGRect(x: 55, y: 2342, width: 1172, height: 58),
+                          size: 50, color: fullWarn10, bold: false,
+                          align: .left(55), baseline: 2394, kind: .text,
+                          label: "修改提示第三行", bg: fullPage5Bg, maxWidth: 1172),
+                FullField(key: "full10_warn4",
+                          fallback: "求帮助，感谢您的理解与支持！",
+                          clear: CGRect(x: 56, y: 2418, width: 640, height: 58),
+                          size: 50, color: fullWarn10, bold: false,
+                          align: .left(56), baseline: 2470, kind: .text,
+                          label: "修改提示第四行", bg: fullPage5Bg, maxWidth: 1172),
             ]
         }
         return []
