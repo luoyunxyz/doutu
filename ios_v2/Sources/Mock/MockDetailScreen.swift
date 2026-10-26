@@ -101,9 +101,6 @@ final class MockDetailScreen: Screen {
             return
         }
         // 兴业五页：整页贴图 + 数字热区
-        if s.module == .jianshe, (0...11).contains(s.sub), let img = UIImage(named: "mock_js_\(s.sub)") {
-            return max(0, Self.W * img.size.height / max(1, img.size.width) - Self.H)
-        }
         if s.module == .xingye, (0...4).contains(s.sub),
            let img = UIImage(named: "mock_xy_\(s.sub)") {
             d.rect(CGRect(x: 0, y: 0, width: Self.W, height: Self.H), .white)
