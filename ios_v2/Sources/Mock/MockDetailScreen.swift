@@ -89,7 +89,7 @@ final class MockDetailScreen: Screen {
             d.art(img, CGRect(x: 0, y: 0, width: Self.W, height: h))
             for f in MockJianshe.overlayFields(s.sub) {
                 if let v = s.fields[f.key], !v.isEmpty {
-                    d.rect(f.rect, .white)
+                    d.rect(f.rect, f.bg)
                     let base = f.rect.maxY - 6
                     switch f.align {
                     case 1: d.centerText(v, cx: f.rect.midX, baseline: base, size: f.size, f.color)
@@ -108,7 +108,7 @@ final class MockDetailScreen: Screen {
             d.art(img, CGRect(x: 0, y: 0, width: Self.W, height: h))
             for f in MockXingye.overlayFields(s.sub) {
                 if let v = s.fields[f.key], !v.isEmpty {
-                    d.rect(f.rect, .white)
+                    d.rect(f.rect, f.bg)
                     let base = f.rect.maxY - 6
                     switch f.align {
                     case 1: d.centerText(v, cx: f.rect.midX, baseline: base, size: f.size, f.color)
@@ -127,7 +127,7 @@ final class MockDetailScreen: Screen {
             d.art(img, CGRect(x: 0, y: 0, width: Self.W, height: h))
             for f in MockEank.overlayFields(s.sub) {
                 if let v = s.fields[f.key], !v.isEmpty {
-                    d.rect(f.rect, .white)
+                    d.rect(f.rect, f.bg)
                     let base = f.rect.maxY - 6
                     switch f.align {
                     case 1: d.centerText(v, cx: f.rect.midX, baseline: base, size: f.size, f.color)
@@ -146,7 +146,7 @@ final class MockDetailScreen: Screen {
             d.art(img, CGRect(x: 0, y: 0, width: Self.W, height: h))
             for f in MockCmb.overlayFields(s.sub) {
                 if let v = s.fields[f.key], !v.isEmpty {
-                    d.rect(f.rect, .white)
+                    d.rect(f.rect, f.bg)
                     let base = f.rect.maxY - 6
                     switch f.align {
                     case 1: d.centerText(v, cx: f.rect.midX, baseline: base, size: f.size, f.color)
