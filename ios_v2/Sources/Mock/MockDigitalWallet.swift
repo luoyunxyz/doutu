@@ -143,11 +143,12 @@ enum MockDigitalWallet {
     /// 兴业转出的提示文字
     static let fullWarn10 = Draw.color(0xFF8A93A8)
 
-    static func hasFullPage(_ sub: Int) -> Bool { (0...10).contains(sub) }
+    static func hasFullPage(_ sub: Int) -> Bool { (0...11).contains(sub) }
 
     /// 数字钱包整页版式：0=建设转出1（转钱成功），1=建设转出2（交易详情），
     /// 2=建设转入（交易详情），3=建设存入（存入成功），4=建设转出（支付成功），
-    /// 5=招商结果，6=招商转出，7=工商转出，8=工商转出2，9=农业转出，10=兴业转出。
+    /// 5=招商结果，6=招商转出，7=工商转出，8=工商转出2，9=农业转出，10=兴业转出，
+    /// 11=邮政转出（交易详情）。
     /// 所有坐标/字号都从 1280×2816 的原图上量得。
     static func fullFields(_ sub: Int) -> [FullField] {
         if sub == 0 {
@@ -1018,6 +1019,129 @@ enum MockDigitalWallet {
                           size: 50, color: fullWarn10, bold: false,
                           align: .left(56), baseline: 2470, kind: .text,
                           label: "修改提示第四行", bg: fullPage5Bg, maxWidth: 1172),
+            ]
+        }
+
+        if sub == 11 {
+            let labelColor = Draw.color(0xFF7F7F7F)
+            let valueColor = Draw.color(0xFF070707)
+            let rowSize: CGFloat = 52
+
+            return [
+                FullField(key: "full11_title", fallback: "交易详情",
+                          clear: CGRect(x: 483, y: 184, width: 264, height: 76),
+                          size: 68, color: Draw.color(0xFF323232), bold: false,
+                          align: .center(639), baseline: 253, kind: .text,
+                          label: "修改页面标题", maxWidth: 600),
+                FullField(key: "full11_wallet", fallback: "我的钱包密5",
+                          clear: CGRect(x: 494, y: 420, width: 291, height: 64),
+                          size: 54, color: Draw.color(0xFF040404), bold: false,
+                          align: .center(640), baseline: 476, kind: .text,
+                          label: "修改钱包名称", maxWidth: 600),
+                FullField(key: "full11_amount", fallback: "- ¥521.05",
+                          clear: CGRect(x: 469, y: 554, width: 341, height: 76),
+                          size: 76, color: Draw.color(0xFF020202), bold: false,
+                          align: .center(640), baseline: 621, kind: .text,
+                          label: "修改金额", maxWidth: 600),
+                FullField(key: "full11_balance", fallback: "余额 ¥521.05",
+                          clear: CGRect(x: 509, y: 648, width: 262, height: 54),
+                          size: 46, color: Draw.color(0xFF7F7F7F), bold: false,
+                          align: .center(640), baseline: 694, kind: .text,
+                          label: "修改余额", maxWidth: 500),
+
+                FullField(key: "full11_card_label", fallback: "交易卡号",
+                          clear: CGRect(x: 112, y: 798, width: 210, height: 62),
+                          size: rowSize, color: labelColor, bold: false,
+                          align: .left(120), baseline: 852, kind: .text,
+                          label: "修改「交易卡号」"),
+                FullField(key: "full11_card_value", fallback: "6217 **** 7856",
+                          clear: CGRect(x: 812, y: 802, width: 356, height: 58),
+                          size: rowSize, color: valueColor, bold: false,
+                          align: .right(1160), baseline: 852, kind: .text,
+                          label: "修改交易卡号", maxWidth: 340),
+
+                FullField(key: "full11_time_label", fallback: "交易时间",
+                          clear: CGRect(x: 112, y: 942, width: 210, height: 62),
+                          size: rowSize, color: labelColor, bold: false,
+                          align: .left(120), baseline: 996, kind: .text,
+                          label: "修改「交易时间」"),
+                FullField(key: "full11_time_value", fallback: "2026-10-26 19:22:16",
+                          clear: CGRect(x: 685, y: 946, width: 483, height: 58),
+                          size: rowSize, color: valueColor, bold: false,
+                          align: .right(1160), baseline: 996, kind: .text,
+                          label: "修改交易时间", maxWidth: 468),
+
+                FullField(key: "full11_acct_label", fallback: "收款账号",
+                          clear: CGRect(x: 113, y: 1087, width: 210, height: 62),
+                          size: rowSize, color: labelColor, bold: false,
+                          align: .left(121), baseline: 1140, kind: .text,
+                          label: "修改「收款账号」"),
+                FullField(key: "full11_acct_value", fallback: "6217 **** 3918",
+                          clear: CGRect(x: 818, y: 1090, width: 350, height: 58),
+                          size: rowSize, color: valueColor, bold: false,
+                          align: .right(1160), baseline: 1140, kind: .text,
+                          label: "修改收款账号", maxWidth: 334),
+
+                FullField(key: "full11_bank_label", fallback: "收款银行",
+                          clear: CGRect(x: 113, y: 1230, width: 210, height: 62),
+                          size: rowSize, color: labelColor, bold: false,
+                          align: .left(121), baseline: 1284, kind: .text,
+                          label: "修改「收款银行」"),
+                FullField(key: "full11_bank_value", fallback: "中国农业银行",
+                          clear: CGRect(x: 861, y: 1230, width: 306, height: 62),
+                          size: rowSize, color: valueColor, bold: false,
+                          align: .right(1160), baseline: 1284, kind: .text,
+                          label: "修改收款银行", maxWidth: 291),
+
+                FullField(key: "full11_note_label", fallback: "附言",
+                          clear: CGRect(x: 114, y: 1375, width: 120, height: 62),
+                          size: rowSize, color: labelColor, bold: false,
+                          align: .left(122), baseline: 1428, kind: .text,
+                          label: "修改「附言」"),
+                FullField(key: "full11_note_value", fallback: "汇款兑出",
+                          clear: CGRect(x: 958, y: 1374, width: 205, height: 62),
+                          size: rowSize, color: valueColor, bold: false,
+                          align: .right(1155), baseline: 1428, kind: .text,
+                          label: "修改附言", maxWidth: 190),
+
+                FullField(key: "full11_summary_label", fallback: "摘要",
+                          clear: CGRect(x: 112, y: 1519, width: 120, height: 62),
+                          size: rowSize, color: labelColor, bold: false,
+                          align: .left(120), baseline: 1572, kind: .text,
+                          label: "修改「摘要」"),
+                FullField(key: "full11_summary_value", fallback: "支取数币",
+                          clear: CGRect(x: 958, y: 1518, width: 207, height: 62),
+                          size: rowSize, color: valueColor, bold: false,
+                          align: .right(1157), baseline: 1572, kind: .text,
+                          label: "修改摘要", maxWidth: 192),
+
+                FullField(key: "full11_type_label", fallback: "交易类型",
+                          clear: CGRect(x: 112, y: 1751, width: 210, height: 62),
+                          size: rowSize, color: Draw.color(0xFF111111), bold: false,
+                          align: .left(120), baseline: 1812, kind: .text,
+                          label: "修改「交易类型」"),
+                FullField(key: "full11_type_value", fallback: "转账给他人",
+                          clear: CGRect(x: 837, y: 1751, width: 260, height: 62),
+                          size: rowSize, color: Draw.color(0xFF111111), bold: false,
+                          align: .right(1088), baseline: 1812, kind: .text,
+                          label: "修改交易类型", maxWidth: 244),
+
+                FullField(key: "full11_book_label", fallback: "所属账本",
+                          clear: CGRect(x: 111, y: 1945, width: 210, height: 62),
+                          size: rowSize, color: Draw.color(0xFF111111), bold: false,
+                          align: .left(119), baseline: 1999, kind: .text,
+                          label: "修改「所属账本」"),
+                FullField(key: "full11_book_value", fallback: "请选择",
+                          clear: CGRect(x: 935, y: 1945, width: 160, height: 62),
+                          size: rowSize, color: Draw.color(0xFF999999), bold: false,
+                          align: .right(1086), baseline: 1999, kind: .text,
+                          label: "修改所属账本", maxWidth: 144),
+
+                FullField(key: "full11_toggle_label", fallback: "不计入本月收支",
+                          clear: CGRect(x: 112, y: 2152, width: 358, height: 78),
+                          size: rowSize, color: Draw.color(0xFF111111), bold: false,
+                          align: .left(120), baseline: 2223, kind: .text,
+                          label: "修改「不计入本月收支」", maxWidth: 340),
             ]
         }
         return []
