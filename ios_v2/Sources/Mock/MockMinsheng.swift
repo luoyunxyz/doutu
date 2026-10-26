@@ -6,6 +6,48 @@ import UIKit
 /// 0 号是「交易详情」：白卡金额 + 六行明细，下面单独一张「分类」卡。
 enum MockMinsheng {
 
+    static func overlayFields(_ sub: Int) -> [MockPsbc.OverlayField] {
+        if sub == 0 {
+            return [
+                MockPsbc.OverlayField(key: "m0_0", fallback: "", rect: CGRect(x: 393, y: 300, width: 425, height: 98), size: 90, color: Draw.color(0xFF010101), bg: Draw.color(0xFFFFFFFF), align: 2),
+                MockPsbc.OverlayField(key: "m0_1", fallback: "", rect: CGRect(x: 832, y: 480, width: 171, height: 51), size: 38, color: Draw.color(0xFF666666), bg: Draw.color(0xFFFFFFFF), align: 2),
+                MockPsbc.OverlayField(key: "m0_2", fallback: "", rect: CGRect(x: 507, y: 570, width: 496, height: 52), size: 40, color: Draw.color(0xFF616161), bg: Draw.color(0xFFFFFFFF), align: 2),
+                MockPsbc.OverlayField(key: "m0_3", fallback: "", rect: CGRect(x: 871, y: 661, width: 132, height: 52), size: 40, color: Draw.color(0xFF626262), bg: Draw.color(0xFFFFFFFF), align: 2),
+                MockPsbc.OverlayField(key: "m0_4", fallback: "", rect: CGRect(x: 625, y: 752, width: 378, height: 51), size: 38, color: Draw.color(0xFF5A5A5A), bg: Draw.color(0xFFFFFFFF), align: 2),
+                MockPsbc.OverlayField(key: "m0_5", fallback: "", rect: CGRect(x: 756, y: 843, width: 247, height: 51), size: 38, color: Draw.color(0xFF5F5F5F), bg: Draw.color(0xFFFFFFFF), align: 2),
+                MockPsbc.OverlayField(key: "m0_6", fallback: "", rect: CGRect(x: 628, y: 934, width: 375, height: 51), size: 38, color: Draw.color(0xFF565656), bg: Draw.color(0xFFFFFFFF), align: 2),
+                MockPsbc.OverlayField(key: "m0_7", fallback: "", rect: CGRect(x: 702, y: 1132, width: 306, height: 67), size: 56, color: Draw.color(0xFF737373), bg: Draw.color(0xFFFFFFFF), align: 2),
+            ]
+        }
+        if sub == 1 {
+            return [
+                MockPsbc.OverlayField(key: "m1_0", fallback: "", rect: CGRect(x: 403, y: 300, width: 425, height: 98), size: 90, color: Draw.color(0xFF010101), bg: Draw.color(0xFFFFFFFF), align: 2),
+                MockPsbc.OverlayField(key: "m1_1", fallback: "", rect: CGRect(x: 910, y: 480, width: 93, height: 51), size: 38, color: Draw.color(0xFF666666), bg: Draw.color(0xFFFFFFFF), align: 2),
+                MockPsbc.OverlayField(key: "m1_2", fallback: "", rect: CGRect(x: 507, y: 570, width: 496, height: 52), size: 40, color: Draw.color(0xFF5E5E5E), bg: Draw.color(0xFFFFFFFF), align: 2),
+                MockPsbc.OverlayField(key: "m1_3", fallback: "", rect: CGRect(x: 871, y: 661, width: 132, height: 52), size: 40, color: Draw.color(0xFF626262), bg: Draw.color(0xFFFFFFFF), align: 2),
+                MockPsbc.OverlayField(key: "m1_4", fallback: "", rect: CGRect(x: 597, y: 752, width: 406, height: 51), size: 38, color: Draw.color(0xFF575757), bg: Draw.color(0xFFFFFFFF), align: 2),
+                MockPsbc.OverlayField(key: "m1_5", fallback: "", rect: CGRect(x: 756, y: 843, width: 247, height: 51), size: 38, color: Draw.color(0xFF5F5F5F), bg: Draw.color(0xFFFFFFFF), align: 2),
+                MockPsbc.OverlayField(key: "m1_6", fallback: "", rect: CGRect(x: 627, y: 934, width: 376, height: 51), size: 38, color: Draw.color(0xFF5B5B5B), bg: Draw.color(0xFFFFFFFF), align: 2),
+                MockPsbc.OverlayField(key: "m1_7", fallback: "", rect: CGRect(x: 702, y: 1131, width: 306, height: 68), size: 57, color: Draw.color(0xFF747474), bg: Draw.color(0xFFFFFFFF), align: 2),
+            ]
+        }
+        if sub == 2 {
+            return [
+                MockPsbc.OverlayField(key: "m2_0", fallback: "", rect: CGRect(x: 403, y: 300, width: 425, height: 98), size: 90, color: Draw.color(0xFF010101), bg: Draw.color(0xFFFFFFFF), align: 2),
+                MockPsbc.OverlayField(key: "m2_1", fallback: "", rect: CGRect(x: 464, y: 480, width: 538, height: 51), size: 38, color: Draw.color(0xFF666666), bg: Draw.color(0xFFFFFFFF), align: 2),
+                MockPsbc.OverlayField(key: "m2_2", fallback: "", rect: CGRect(x: 949, y: 527, width: 54, height: 49), size: 36, color: Draw.color(0xFF727272), bg: Draw.color(0xFFFFFFFF), align: 1),
+                MockPsbc.OverlayField(key: "m2_3", fallback: "", rect: CGRect(x: 507, y: 616, width: 496, height: 52), size: 40, color: Draw.color(0xFF5C5C5C), bg: Draw.color(0xFFFFFFFF), align: 2),
+                MockPsbc.OverlayField(key: "m2_4", fallback: "", rect: CGRect(x: 910, y: 707, width: 93, height: 51), size: 38, color: Draw.color(0xFF676767), bg: Draw.color(0xFFFFFFFF), align: 2),
+                MockPsbc.OverlayField(key: "m2_5", fallback: "", rect: CGRect(x: 764, y: 798, width: 239, height: 51), size: 38, color: Draw.color(0xFF5B5B5B), bg: Draw.color(0xFFFFFFFF), align: 2),
+                MockPsbc.OverlayField(key: "m2_6", fallback: "", rect: CGRect(x: 871, y: 888, width: 132, height: 52), size: 40, color: Draw.color(0xFF646464), bg: Draw.color(0xFFFFFFFF), align: 2),
+                MockPsbc.OverlayField(key: "m2_7", fallback: "", rect: CGRect(x: 633, y: 980, width: 370, height: 51), size: 38, color: Draw.color(0xFF575757), bg: Draw.color(0xFFFFFFFF), align: 2),
+                MockPsbc.OverlayField(key: "m2_8", fallback: "", rect: CGRect(x: 702, y: 1177, width: 306, height: 68), size: 57, color: Draw.color(0xFF707070), bg: Draw.color(0xFFFFFFFF), align: 2),
+            ]
+        }
+        return []
+    }
+
+
     static func page(state: MockState, metrics: MockMetrics,
                      width: CGFloat, showsTopTitle: Bool) -> MockPage {
         let b = MockBuilder(width: width, metrics: metrics)
