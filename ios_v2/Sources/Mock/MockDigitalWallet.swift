@@ -76,19 +76,21 @@ enum MockDigitalWallet {
     static let green = UIColor(red: 0x4c / 255.0, green: 0xaf / 255.0,
                                blue: 0x50 / 255.0, alpha: 1)
 
-    // MARK: - 「建设转出1」整页还原（1280×2816 原图）
+    // MARK: - 数字钱包整页还原（1280×2816 参考图）
 
     /// 用户给的参考图就是 1280×2816 的整屏截图（含 Android 状态栏、底部手势条），
-    /// 所以这张不裁状态栏、也不借用系统安全区：整页按原图铺，热区坐标就是原图坐标。
+    /// 所以这些页面不裁状态栏、也不借用系统安全区：整页按原图铺，热区坐标就是原图坐标。
     ///
     /// `clear` 是改字时要先擦掉的矩形（文字外扩 8px），`baseline` / `size` 是按原图
     /// 墨迹高度反推出来的；没改过的字段不绘制，保留原图像素。
     struct FullField {
         enum Kind {
-            /// 普通文字（居中 / 右对齐）
+            /// 普通文字（居中 / 右对齐 / 左对齐）
             case text
-            /// 金额：固定保留「¥」，数字用 Archivo 数字字体
+            /// 「¥70.00」：保留原图 ¥ 字形，数字用 Archivo 数字字体
             case amount
+            /// 「-70.00」：没有货币符号，整串用数字字体
+            case signedAmount
             /// 「转钱给 xxx ✏」：文字居中，铅笔图标跟着文字走
             case recipient
         }
@@ -111,56 +113,188 @@ enum MockDigitalWallet {
         let kind: Kind
         /// 弹出编辑框时的标题
         let label: String
+        /// 擦除区域的底色（整页里的灰色汇总区要填灰，不能填白）
+        var bg: UIColor = MockInk.white
+        /// 最长宽度；超过时按比例缩小字号，避免改成长文案后压到旁边的元素
+        var maxWidth: CGFloat = 0
     }
 
     static let fullPageSize = CGSize(width: 1280, height: 2816)
+    /// 建设转出2 的灰色汇总区底色
+    static let fullGrey = Draw.color(0xFFF7F8FA)
 
-    /// 建设转出1（子页 0）的文字热区。数字全部从 1280×2816 的参考图上量得。
-    static func fullFields() -> [FullField] {
-        [
-            FullField(key: "full_title", fallback: "转钱成功",
-                      clear: CGRect(x: 489, y: 687, width: 302, height: 86),
-                      size: 75, color: Draw.color(0xFF000000), bold: true,
-                      align: .center(640), baseline: 764, kind: .text,
-                      label: "修改状态标题"),
-            FullField(key: "full_amount", fallback: "70.00",
-                      clear: CGRect(x: 441, y: 991, width: 402, height: 108),
-                      size: 123, color: Draw.color(0xFF000000), bold: true,
-                      align: .center(642), baseline: 1090, kind: .amount,
-                      label: "修改金额"),
-            FullField(key: "full_recipient", fallback: "转钱给 零花钱",
-                      clear: CGRect(x: 394, y: 1214, width: 474, height: 77),
-                      size: 67, color: Draw.color(0xFF000000), bold: true,
-                      align: .center(631), baseline: 1282, kind: .recipient,
-                      label: "修改收款方"),
-            FullField(key: "full_bank", fallback: "中国建设银行 0051****1679",
-                      clear: CGRect(x: 320, y: 1316, width: 641, height: 64),
-                      size: 53, color: Draw.color(0xFF6E6E6E), bold: false,
-                      align: .center(640), baseline: 1371, kind: .text,
-                      label: "修改收款卡号"),
-            FullField(key: "full_continue", fallback: "继续转钱",
-                      clear: CGRect(x: 999, y: 171, width: 212, height: 64),
-                      size: 54, color: Draw.color(0xFF6E6E6E), bold: false,
-                      align: .right(1203), baseline: 227, kind: .text,
-                      label: "修改右上角文字"),
-            FullField(key: "full_done", fallback: "完成",
-                      clear: CGRect(x: 584, y: 2450, width: 113, height: 65),
-                      size: 56, color: Draw.color(0xFF333333), bold: false,
-                      align: .center(640), baseline: 2507, kind: .text,
-                      label: "修改「完成」按钮文字"),
-            FullField(key: "full_notify", fallback: "通知收款人",
-                      clear: CGRect(x: 510, y: 2632, width: 260, height: 64),
-                      size: 55, color: Draw.color(0xFF4A4A4A), bold: false,
-                      align: .center(640), baseline: 2688, kind: .text,
-                      label: "修改「通知收款人」"),
-        ]
+    static func hasFullPage(_ sub: Int) -> Bool { sub == 0 || sub == 1 }
+
+    /// 数字钱包整页版式：0=建设转出1（转钱成功），1=建设转出2（交易详情）。
+    /// 所有坐标/字号都从 1280×2816 的原图上量得。
+    static func fullFields(_ sub: Int) -> [FullField] {
+        if sub == 0 {
+            return [
+                FullField(key: "full_title", fallback: "转钱成功",
+                          clear: CGRect(x: 489, y: 687, width: 302, height: 86),
+                          size: 75, color: Draw.color(0xFF000000), bold: true,
+                          align: .center(640), baseline: 764, kind: .text,
+                          label: "修改状态标题"),
+                FullField(key: "full_amount", fallback: "70.00",
+                          clear: CGRect(x: 441, y: 991, width: 402, height: 108),
+                          size: 123, color: Draw.color(0xFF000000), bold: true,
+                          align: .center(642), baseline: 1090, kind: .amount,
+                          label: "修改金额"),
+                FullField(key: "full_recipient", fallback: "转钱给 零花钱",
+                          clear: CGRect(x: 394, y: 1214, width: 474, height: 77),
+                          size: 67, color: Draw.color(0xFF000000), bold: true,
+                          align: .center(631), baseline: 1282, kind: .recipient,
+                          label: "修改收款方"),
+                FullField(key: "full_bank", fallback: "中国建设银行 0051****1679",
+                          clear: CGRect(x: 320, y: 1316, width: 641, height: 64),
+                          size: 53, color: Draw.color(0xFF6E6E6E), bold: false,
+                          align: .center(640), baseline: 1371, kind: .text,
+                          label: "修改收款卡号"),
+                FullField(key: "full_continue", fallback: "继续转钱",
+                          clear: CGRect(x: 999, y: 171, width: 212, height: 64),
+                          size: 54, color: Draw.color(0xFF6E6E6E), bold: false,
+                          align: .right(1203), baseline: 227, kind: .text,
+                          label: "修改右上角文字"),
+                FullField(key: "full_done", fallback: "完成",
+                          clear: CGRect(x: 584, y: 2450, width: 113, height: 65),
+                          size: 56, color: Draw.color(0xFF333333), bold: false,
+                          align: .center(640), baseline: 2507, kind: .text,
+                          label: "修改「完成」按钮文字"),
+                FullField(key: "full_notify", fallback: "通知收款人",
+                          clear: CGRect(x: 510, y: 2632, width: 260, height: 64),
+                          size: 55, color: Draw.color(0xFF4A4A4A), bold: false,
+                          align: .center(640), baseline: 2688, kind: .text,
+                          label: "修改「通知收款人」"),
+            ]
+        }
+
+        if sub == 1 {
+            let labelColor = Draw.color(0xFF7C7C7C)
+            let valueColor = Draw.color(0xFF111111)
+            let greenText = Draw.color(0xFF2BA471)
+            let rowSize: CGFloat = 46
+
+            return [
+                FullField(key: "full1_title", fallback: "交易详情",
+                          clear: CGRect(x: 511, y: 169, width: 257, height: 76),
+                          size: 68, color: Draw.color(0xFF222222), bold: true,
+                          align: .center(640), baseline: 238, kind: .text,
+                          label: "修改页面标题", maxWidth: 900),
+                FullField(key: "full1_transfer", fallback: "转钱-转给建6",
+                          clear: CGRect(x: 493, y: 579, width: 294, height: 60),
+                          size: 50, color: Draw.color(0xFF000000), bold: true,
+                          align: .center(640), baseline: 632, kind: .text,
+                          label: "修改转账说明", bg: fullGrey, maxWidth: 900),
+                FullField(key: "full1_amount", fallback: "-70.00",
+                          clear: CGRect(x: 499, y: 714, width: 282, height: 84),
+                          size: 94, color: Draw.color(0xFF000000), bold: false,
+                          align: .center(640), baseline: 790, kind: .signedAmount,
+                          label: "修改金额", bg: fullGrey, maxWidth: 1000),
+
+                FullField(key: "full1_status_label", fallback: "当前状态",
+                          clear: CGRect(x: 70, y: 980, width: 180, height: 55),
+                          size: rowSize, color: labelColor, bold: false,
+                          align: .left(78), baseline: 1027, kind: .text,
+                          label: "修改「当前状态」"),
+                FullField(key: "full1_status_value", fallback: "交易成功",
+                          clear: CGRect(x: 1029, y: 980, width: 180, height: 55),
+                          size: rowSize, color: greenText, bold: false,
+                          align: .right(1202), baseline: 1027, kind: .text,
+                          label: "修改交易状态"),
+
+                FullField(key: "full1_pay_label", fallback: "付款钱包",
+                          clear: CGRect(x: 69, y: 1130, width: 182, height: 60),
+                          size: rowSize, color: labelColor, bold: false,
+                          align: .left(78), baseline: 1178, kind: .text,
+                          label: "修改「付款钱包」"),
+                FullField(key: "full1_pay_value", fallback: "花花(3691)",
+                          clear: CGRect(x: 988, y: 1130, width: 222, height: 60),
+                          size: rowSize, color: valueColor, bold: false,
+                          align: .right(1202), baseline: 1178, kind: .text,
+                          label: "修改付款钱包"),
+
+                FullField(key: "full1_recv_label", fallback: "收款钱包",
+                          clear: CGRect(x: 70, y: 1280, width: 180, height: 55),
+                          size: rowSize, color: labelColor, bold: false,
+                          align: .left(78), baseline: 1328, kind: .text,
+                          label: "修改「收款钱包」"),
+                FullField(key: "full1_recv_value", fallback: "建设银行匿名钱包",
+                          clear: CGRect(x: 858, y: 1280, width: 352, height: 55),
+                          size: rowSize, color: valueColor, bold: false,
+                          align: .right(1202), baseline: 1328, kind: .text,
+                          label: "修改收款钱包", maxWidth: 800),
+
+                FullField(key: "full1_acct_label", fallback: "收款钱包编号",
+                          clear: CGRect(x: 70, y: 1434, width: 265, height: 55),
+                          size: rowSize, color: labelColor, bold: false,
+                          align: .left(78), baseline: 1482, kind: .text,
+                          label: "修改「收款钱包编号」"),
+                FullField(key: "full1_acct_value", fallback: "2393*********0001",
+                          clear: CGRect(x: 774, y: 1438, width: 365, height: 50),
+                          size: rowSize, color: valueColor, bold: false,
+                          align: .right(1127), baseline: 1482, kind: .text,
+                          label: "修改收款钱包编号", maxWidth: 345),
+
+                FullField(key: "full1_time_label", fallback: "交易时间",
+                          clear: CGRect(x: 69, y: 1588, width: 180, height: 55),
+                          size: rowSize, color: labelColor, bold: false,
+                          align: .left(77), baseline: 1634, kind: .text,
+                          label: "修改「交易时间」"),
+                FullField(key: "full1_time_value", fallback: "2026-10-26 17:27:20",
+                          clear: CGRect(x: 791, y: 1591, width: 420, height: 50),
+                          size: rowSize, color: valueColor, bold: false,
+                          align: .right(1202), baseline: 1634, kind: .text,
+                          label: "修改交易时间", maxWidth: 403),
+
+                FullField(key: "full1_voucher_label", fallback: "凭证号",
+                          clear: CGRect(x: 68, y: 1738, width: 140, height: 55),
+                          size: rowSize, color: labelColor, bold: false,
+                          align: .left(76), baseline: 1784, kind: .text,
+                          label: "修改「凭证号」"),
+                FullField(key: "full1_voucher_value",
+                          fallback: "69473776967547746432233661807635137574",
+                          clear: CGRect(x: 276, y: 1741, width: 935, height: 50),
+                          size: rowSize, color: valueColor, bold: false,
+                          align: .right(1202), baseline: 1784, kind: .text,
+                          label: "修改凭证号", maxWidth: 918),
+
+                FullField(key: "full1_serial_label", fallback: "流水号",
+                          clear: CGRect(x: 69, y: 1888, width: 140, height: 55),
+                          size: rowSize, color: labelColor, bold: false,
+                          align: .left(77), baseline: 1934, kind: .text,
+                          label: "修改「流水号」"),
+                FullField(key: "full1_serial_value",
+                          fallback: "1012631964134212734867737",
+                          clear: CGRect(x: 608, y: 1891, width: 600, height: 50),
+                          size: rowSize, color: valueColor, bold: false,
+                          align: .right(1202), baseline: 1934, kind: .text,
+                          label: "修改流水号", maxWidth: 586),
+
+                FullField(key: "full1_notice", fallback: "通知收款人",
+                          clear: CGRect(x: 73, y: 2105, width: 245, height: 60),
+                          size: rowSize, color: Draw.color(0xFF4D4D4D), bold: false,
+                          align: .left(81), baseline: 2158, kind: .text,
+                          label: "修改「通知收款人」", maxWidth: 900),
+                FullField(key: "full1_question", fallback: "对此订单有疑问",
+                          clear: CGRect(x: 73, y: 2288, width: 333, height: 60),
+                          size: rowSize, color: Draw.color(0xFF494949), bold: false,
+                          align: .left(81), baseline: 2339, kind: .text,
+                          label: "修改「对此订单有疑问」", maxWidth: 900),
+                FullField(key: "full1_send", fallback: "给TA转钱",
+                          clear: CGRect(x: 536, y: 2482, width: 210, height: 60),
+                          size: rowSize, color: Draw.color(0xFF474747), bold: false,
+                          align: .center(639), baseline: 2535, kind: .text,
+                          label: "修改「给TA转钱」", maxWidth: 600),
+            ]
+        }
+        return []
     }
 
-    static func fullField(_ key: String) -> FullField? {
-        fullFields().first { $0.key == key }
+    static func fullField(_ sub: Int, _ key: String) -> FullField? {
+        fullFields(sub).first { $0.key == key }
     }
 
-    /// 重画一个被改过的字段。调用前 `clear` 内已经铺过白底。
+    /// 重画一个被改过的字段。调用前 `clear` 内已经铺过底色。
     static func drawFullField(_ d: Draw, _ f: FullField, _ raw: String) {
         var value = raw.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !value.isEmpty else { return }
@@ -182,6 +316,20 @@ enum MockDigitalWallet {
             d.text(value, x: start + yenW + gap, baseline: f.baseline,
                    size: f.size, f.color, useNumberFace: true)
 
+        case .signedAmount:
+            var size = f.size
+            if f.maxWidth > 0 {
+                let base = Fonts.number(size)
+                let w = (value as NSString).size(withAttributes: [.font: base]).width
+                if w > f.maxWidth { size *= f.maxWidth / w }
+            }
+            let font = Fonts.number(size)
+            let w = (value as NSString).size(withAttributes: [.font: font]).width
+            let cx: CGFloat
+            if case .center(let c) = f.align { cx = c } else { cx = f.clear.midX }
+            d.text(value, x: cx - w / 2, baseline: f.baseline,
+                   size: size, f.color, useNumberFace: true)
+
         case .recipient:
             let font = Draw.font(size: f.size, bold: true)
             let textW = (value as NSString).size(withAttributes: [.font: font]).width
@@ -201,15 +349,24 @@ enum MockDigitalWallet {
                                  width: penW, height: penH))
 
         case .text:
+            var size = f.size
+            var font = Draw.font(size: size, bold: f.bold)
+            if f.maxWidth > 0 {
+                let w = (value as NSString).size(withAttributes: [.font: font]).width
+                if w > f.maxWidth {
+                    size *= f.maxWidth / w
+                    font = Draw.font(size: size, bold: f.bold)
+                }
+            }
             switch f.align {
             case .left(let x):
-                d.text(value, x: x, baseline: f.baseline, size: f.size,
+                d.text(value, x: x, baseline: f.baseline, size: size,
                        f.color, bold: f.bold)
             case .center(let cx):
-                d.centerText(value, cx: cx, baseline: f.baseline, size: f.size,
+                d.centerText(value, cx: cx, baseline: f.baseline, size: size,
                              f.color, bold: f.bold)
             case .right(let right):
-                d.rightText(value, right: right, baseline: f.baseline, size: f.size,
+                d.rightText(value, right: right, baseline: f.baseline, size: size,
                             f.color, bold: f.bold)
             }
         }
