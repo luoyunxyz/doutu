@@ -28,6 +28,40 @@ enum MockPsbc {
         return b.result
     }
 
+    /// 整页贴图上的可点数字（邮政各页通用；目前先接 sub 1）
+    struct OverlayField {
+        let key: String
+        let fallback: String
+        let rect: CGRect
+        let size: CGFloat
+        let color: UIColor
+        let align: Int   // 0 左 1 中 2 右
+    }
+
+    static func overlayFields(_ sub: Int) -> [OverlayField] {
+        guard sub == 1 else { return [] }
+        return [
+            OverlayField(key: "金额", fallback: "+ ¥ 100.00",
+                         rect: CGRect(x: 330, y: 242, width: 420, height: 84),
+                         size: 84, color: MockInk.title, align: 1),
+            OverlayField(key: "余额", fallback: "账户余额¥10,129.50",
+                         rect: CGRect(x: 360, y: 398, width: 360, height: 46),
+                         size: 42, color: Draw.color(0xff898989), align: 1),
+            OverlayField(key: "交易卡号", fallback: "6226***9990",
+                         rect: CGRect(x: 780, y: 560, width: 260, height: 46),
+                         size: 42, color: MockInk.title, align: 2),
+            OverlayField(key: "交易时间", fallback: "2026/10/26 11:40:22",
+                         rect: CGRect(x: 590, y: 642, width: 450, height: 46),
+                         size: 42, color: MockInk.title, align: 2),
+            OverlayField(key: "付款人", fallback: "李强",
+                         rect: CGRect(x: 880, y: 806, width: 160, height: 46),
+                         size: 42, color: MockInk.title, align: 2),
+            OverlayField(key: "付款账号", fallback: "622143551800063640",
+                         rect: CGRect(x: 540, y: 888, width: 500, height: 48),
+                         size: 42, color: MockInk.title, align: 2),
+        ]
+    }
+
     /// `yyyy-MM-dd HH:mm:ss` → `yyyy/MM/dd HH:mm:ss`
     private static func slashed(_ text: String) -> String {
         text.replacingOccurrences(of: "-", with: "/")

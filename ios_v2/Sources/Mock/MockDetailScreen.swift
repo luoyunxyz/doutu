@@ -76,9 +76,22 @@ final class MockDetailScreen: Screen {
         // 邮政 8 页：用户要求「禁止手绘、缺什么抠什么」，整页直接用截图贴图。
         if s.module == .psbc, (0...7).contains(s.sub),
            let img = UIImage(named: "mock_psbc_p\(s.sub)") {
-            d.rect(CGRect(x: 0, y: 0, width: Self.W, height: Self.H), .white)
+            d.rect(CGRect(x: 0, y: 0, width: Self.W, height: Self.H), MockInk.white)
             let h = Self.W * img.size.height / max(1, img.size.width)
             d.art(img, CGRect(x: 0, y: 0, width: Self.W, height: h))
+            // 数字热区：改过的值覆盖在原位，没改过保持截图原样
+            for f in MockPsbc.overlayFields(s.sub) {
+                if let v = s.fields[f.key], !v.isEmpty {
+                    d.rect(f.rect, MockInk.white)
+                    let mid = f.rect.midY
+                    let base = mid + Draw.font(size: f.size).ascender / 2 - f.size * 0.06
+                    switch f.align {
+                    case 1: d.centerText(v, cx: f.rect.midX, baseline: base, size: f.size, f.color)
+                    case 2: d.rightText(v, right: f.rect.maxX, baseline: base, size: f.size, f.color)
+                    default: d.text(v, x: f.rect.minX, baseline: base, size: f.size, f.color)
+                    }
+                }
+            }
             return
         }
         // 远程布局优先：电脑上有该页的 spec 时，直接按安卓页面的视觉块重绘
@@ -218,6 +231,13 @@ final class MockDetailScreen: Screen {
         if y >= scroll && y < scroll + barH {
             if x < dp(60) { return "back" }
             return "noop"
+        }
+        // 邮政整页贴图上的数字热区
+        if s.module == .psbc, (0...7).contains(s.sub) {
+            let p = CGPoint(x: x, y: y - scroll)
+            for f in MockPsbc.overlayFields(s.sub) where f.rect.contains(p) {
+                return "mock:field:\(f.key)"
+            }
         }
         // 成品页里的文字同样可点改（Android 的成品页也 `bind()` 了每一个值）
         let page = self.page(s)
