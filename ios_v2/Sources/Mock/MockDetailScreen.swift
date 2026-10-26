@@ -59,6 +59,20 @@ final class MockDetailScreen: Screen {
         s.module.detailTitle(s.sub)
     }
 
+    /// 贴图页改字：按原字形墨迹高度反推字号，数字/CJK 分别用不同比例
+    private func drawOverlay(_ d: Draw, _ f: MockPsbc.OverlayField, _ v: String) {
+        d.rect(f.rect, f.bg)
+        let inkH = max(8, f.rect.height - 16)
+        let numeric = v.allSatisfy { "0123456789.,-+*/:()（） ".contains($0) }
+        let size = numeric ? inkH / 0.72 : inkH / 0.88
+        let base = f.rect.maxY - 8
+        switch f.align {
+        case 1: d.centerText(v, cx: f.rect.midX, baseline: base, size: size, f.color)
+        case 2: d.rightText(v, right: f.rect.maxX - 10, baseline: base, size: size, f.color)
+        default: d.text(v, x: f.rect.minX + 10, baseline: base, size: size, f.color)
+        }
+    }
+
     /// 各页标题栏高度（中行「操作结果」的标题栏比默认的 52dp 矮得多）
     private func headH(_ s: State) -> CGFloat {
         (s.module == .boc || (s.module == .psbc && s.sub == 0)) ? dp(31.5) : Self.headH
@@ -98,13 +112,7 @@ final class MockDetailScreen: Screen {
             d.rect(CGRect(x: 0, y: h - dp(40), width: Self.W, height: dp(40)), MockInk.white)
             for f in MockDigitalWallet.overlayFields(s.sub) {
                 if let v = s.fields[f.key], !v.isEmpty {
-                    d.rect(f.rect, f.bg)
-                    let base = f.rect.maxY - 6
-                    switch f.align {
-                    case 1: d.centerText(v, cx: f.rect.midX, baseline: base, size: f.size, f.color)
-                    case 2: d.rightText(v, right: f.rect.maxX, baseline: base, size: f.size, f.color)
-                    default: d.text(v, x: f.rect.minX, baseline: base, size: f.size, f.color)
-                    }
+                    drawOverlay(d, f, v)
                 }
             }
             return
@@ -159,13 +167,7 @@ final class MockDetailScreen: Screen {
             d.rect(CGRect(x: 0, y: h - dp(40), width: Self.W, height: dp(40)), MockInk.white)
             for f in MockMinsheng.overlayFields(s.sub) {
                 if let v = s.fields[f.key], !v.isEmpty {
-                    d.rect(f.rect, f.bg)
-                    let base = f.rect.maxY - 6
-                    switch f.align {
-                    case 1: d.centerText(v, cx: f.rect.midX, baseline: base, size: f.size, f.color)
-                    case 2: d.rightText(v, right: f.rect.maxX, baseline: base, size: f.size, f.color)
-                    default: d.text(v, x: f.rect.minX, baseline: base, size: f.size, f.color)
-                    }
+                    drawOverlay(d, f, v)
                 }
             }
             return
@@ -179,13 +181,7 @@ final class MockDetailScreen: Screen {
             d.rect(CGRect(x: 0, y: h - dp(40), width: Self.W, height: dp(40)), MockInk.white)
             for f in MockPufa.overlayFields(s.sub) {
                 if let v = s.fields[f.key], !v.isEmpty {
-                    d.rect(f.rect, f.bg)
-                    let base = f.rect.maxY - 6
-                    switch f.align {
-                    case 1: d.centerText(v, cx: f.rect.midX, baseline: base, size: f.size, f.color)
-                    case 2: d.rightText(v, right: f.rect.maxX, baseline: base, size: f.size, f.color)
-                    default: d.text(v, x: f.rect.minX, baseline: base, size: f.size, f.color)
-                    }
+                    drawOverlay(d, f, v)
                 }
             }
             return
@@ -198,13 +194,7 @@ final class MockDetailScreen: Screen {
             d.rect(CGRect(x: 0, y: h - dp(40), width: Self.W, height: dp(40)), MockInk.white)
             for f in MockZhongxin.overlayFields(s.sub) {
                 if let v = s.fields[f.key], !v.isEmpty {
-                    d.rect(f.rect, f.bg)
-                    let base = f.rect.maxY - 6
-                    switch f.align {
-                    case 1: d.centerText(v, cx: f.rect.midX, baseline: base, size: f.size, f.color)
-                    case 2: d.rightText(v, right: f.rect.maxX, baseline: base, size: f.size, f.color)
-                    default: d.text(v, x: f.rect.minX, baseline: base, size: f.size, f.color)
-                    }
+                    drawOverlay(d, f, v)
                 }
             }
             return
@@ -218,13 +208,7 @@ final class MockDetailScreen: Screen {
             d.rect(CGRect(x: 0, y: h - dp(40), width: Self.W, height: dp(40)), MockInk.white)
             for f in MockJiaotong.overlayFields(s.sub) {
                 if let v = s.fields[f.key], !v.isEmpty {
-                    d.rect(f.rect, f.bg)
-                    let base = f.rect.maxY - 6
-                    switch f.align {
-                    case 1: d.centerText(v, cx: f.rect.midX, baseline: base, size: f.size, f.color)
-                    case 2: d.rightText(v, right: f.rect.maxX, baseline: base, size: f.size, f.color)
-                    default: d.text(v, x: f.rect.minX, baseline: base, size: f.size, f.color)
-                    }
+                    drawOverlay(d, f, v)
                 }
             }
             return
@@ -238,13 +222,7 @@ final class MockDetailScreen: Screen {
             d.rect(CGRect(x: 0, y: h - dp(40), width: Self.W, height: dp(40)), MockInk.white)
             for f in MockPingan.overlayFields(s.sub) {
                 if let v = s.fields[f.key], !v.isEmpty {
-                    d.rect(f.rect, f.bg)
-                    let base = f.rect.maxY - 6
-                    switch f.align {
-                    case 1: d.centerText(v, cx: f.rect.midX, baseline: base, size: f.size, f.color)
-                    case 2: d.rightText(v, right: f.rect.maxX, baseline: base, size: f.size, f.color)
-                    default: d.text(v, x: f.rect.minX, baseline: base, size: f.size, f.color)
-                    }
+                    drawOverlay(d, f, v)
                 }
             }
             return
@@ -257,13 +235,7 @@ final class MockDetailScreen: Screen {
             d.rect(CGRect(x: 0, y: h - dp(40), width: Self.W, height: dp(40)), MockInk.white)
             for f in MockJianshe.overlayFields(s.sub) {
                 if let v = s.fields[f.key], !v.isEmpty {
-                    d.rect(f.rect, f.bg)
-                    let base = f.rect.maxY - 6
-                    switch f.align {
-                    case 1: d.centerText(v, cx: f.rect.midX, baseline: base, size: f.size, f.color)
-                    case 2: d.rightText(v, right: f.rect.maxX, baseline: base, size: f.size, f.color)
-                    default: d.text(v, x: f.rect.minX, baseline: base, size: f.size, f.color)
-                    }
+                    drawOverlay(d, f, v)
                 }
             }
             return
@@ -277,13 +249,7 @@ final class MockDetailScreen: Screen {
             d.rect(CGRect(x: 0, y: h - dp(40), width: Self.W, height: dp(40)), MockInk.white)
             for f in MockXingye.overlayFields(s.sub) {
                 if let v = s.fields[f.key], !v.isEmpty {
-                    d.rect(f.rect, f.bg)
-                    let base = f.rect.maxY - 6
-                    switch f.align {
-                    case 1: d.centerText(v, cx: f.rect.midX, baseline: base, size: f.size, f.color)
-                    case 2: d.rightText(v, right: f.rect.maxX, baseline: base, size: f.size, f.color)
-                    default: d.text(v, x: f.rect.minX, baseline: base, size: f.size, f.color)
-                    }
+                    drawOverlay(d, f, v)
                 }
             }
             return
@@ -297,13 +263,7 @@ final class MockDetailScreen: Screen {
             d.rect(CGRect(x: 0, y: h - dp(40), width: Self.W, height: dp(40)), MockInk.white)
             for f in MockEank.overlayFields(s.sub) {
                 if let v = s.fields[f.key], !v.isEmpty {
-                    d.rect(f.rect, f.bg)
-                    let base = f.rect.maxY - 6
-                    switch f.align {
-                    case 1: d.centerText(v, cx: f.rect.midX, baseline: base, size: f.size, f.color)
-                    case 2: d.rightText(v, right: f.rect.maxX, baseline: base, size: f.size, f.color)
-                    default: d.text(v, x: f.rect.minX, baseline: base, size: f.size, f.color)
-                    }
+                    drawOverlay(d, f, v)
                 }
             }
             return
@@ -317,13 +277,7 @@ final class MockDetailScreen: Screen {
             d.rect(CGRect(x: 0, y: h - dp(40), width: Self.W, height: dp(40)), MockInk.white)
             for f in MockCmb.overlayFields(s.sub) {
                 if let v = s.fields[f.key], !v.isEmpty {
-                    d.rect(f.rect, f.bg)
-                    let base = f.rect.maxY - 6
-                    switch f.align {
-                    case 1: d.centerText(v, cx: f.rect.midX, baseline: base, size: f.size, f.color)
-                    case 2: d.rightText(v, right: f.rect.maxX, baseline: base, size: f.size, f.color)
-                    default: d.text(v, x: f.rect.minX, baseline: base, size: f.size, f.color)
-                    }
+                    drawOverlay(d, f, v)
                 }
             }
             return
