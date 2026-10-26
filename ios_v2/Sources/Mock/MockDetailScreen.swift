@@ -100,13 +100,14 @@ final class MockDetailScreen: Screen {
                 d.rect(f.rect, f.bg)
                 if let wo, wo.size.width > 0 {
                     let tw = wo.size.width, th = wo.size.height
-                    let oy = h - 420
+                    let origins: [(CGFloat, CGFloat)] = [(270, 1160), (180, 1160), (180, 1540)]
+                    let (ox, oy) = origins[min(s.sub, 2)]
                     d.ctx.saveGState()
                     d.ctx.clip(to: f.rect)
                     var m = Int(floor((f.rect.minY - oy) / th)) - 1
                     while oy + CGFloat(m) * th < f.rect.maxY + th {
-                        var x = -tw
-                        while x < Self.W + tw {
+                        var x = ox + floor((f.rect.minX - ox) / tw) * tw - tw
+                        while x < f.rect.maxX + tw {
                             d.art(wo, CGRect(x: x, y: oy + CGFloat(m) * th, width: tw, height: th))
                             x += tw
                         }
