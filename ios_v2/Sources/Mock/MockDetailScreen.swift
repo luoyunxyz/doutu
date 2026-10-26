@@ -115,10 +115,15 @@ final class MockDetailScreen: Screen {
                     d.ctx.restoreGState()
                 }
                 let base = f.rect.maxY - 6
+                // 金额行保留原来的 + / - 号（符号不参与编辑）
+                var text = v
+                if f.size > 60 {
+                    if s.sub == 0 { text = "-" + v } else if s.sub == 1 { text = "+" + v }
+                }
                 switch f.align {
-                case 1: d.centerText(v, cx: f.rect.midX, baseline: base, size: f.size, f.color)
-                case 2: d.rightText(v, right: f.rect.maxX, baseline: base, size: f.size, f.color)
-                default: d.text(v, x: f.rect.minX, baseline: base, size: f.size, f.color)
+                case 1: d.centerText(text, cx: f.rect.midX, baseline: base, size: f.size, f.color)
+                case 2: d.rightText(text, right: f.rect.maxX, baseline: base, size: f.size, f.color)
+                default: d.text(text, x: f.rect.minX, baseline: base, size: f.size, f.color)
                 }
             }
             return
