@@ -108,19 +108,20 @@ enum MockJiaotong {
         }
         if sub == 6 {
             return [
-                MockPsbc.OverlayField(key: "t6_0", fallback: "", rect: CGRect(x: 448, y: 222, width: 183, height: 55), size: 43, color: Draw.color(0xFF141414), bg: Draw.color(0xFFFFFFFF), align: 1),
-                MockPsbc.OverlayField(key: "t6_1", fallback: "", rect: CGRect(x: 375, y: 325, width: 330, height: 81), size: 72, color: Draw.color(0xFFE87480), bg: Draw.color(0xFFFFFFFF), align: 1),
-                MockPsbc.OverlayField(key: "t6_2", fallback: "", rect: CGRect(x: 430, y: 440, width: 219, height: 53), size: 41, color: Draw.color(0xFF979797), bg: Draw.color(0xFFFFFFFF), align: 1),
-                MockPsbc.OverlayField(key: "t6_3", fallback: "", rect: CGRect(x: 603, y: 615, width: 442, height: 54), size: 42, color: Draw.color(0xFF212121), bg: Draw.color(0xFFFFFFFF), align: 2),
-                MockPsbc.OverlayField(key: "t6_4", fallback: "", rect: CGRect(x: 621, y: 691, width: 424, height: 54), size: 42, color: Draw.color(0xFF090909), bg: Draw.color(0xFFFFFFFF), align: 2),
-                MockPsbc.OverlayField(key: "t6_5", fallback: "", rect: CGRect(x: 835, y: 778, width: 210, height: 72), size: 62, color: Draw.color(0xFF2B77D8), bg: Draw.color(0xFFFFFFFF), align: 2),
-                MockPsbc.OverlayField(key: "t6_6", fallback: "", rect: CGRect(x: 484, y: 864, width: 561, height: 105), size: 98, color: Draw.color(0xFF121212), bg: Draw.color(0xFFFFFFFF), align: 2),
-                MockPsbc.OverlayField(key: "t6_7", fallback: "", rect: CGRect(x: 633, y: 991, width: 412, height: 54), size: 42, color: Draw.color(0xFF080808), bg: Draw.color(0xFFFFFFFF), align: 2),
-                MockPsbc.OverlayField(key: "t6_8", fallback: "", rect: CGRect(x: 904, y: 1068, width: 141, height: 54), size: 42, color: Draw.color(0xFF121212), bg: Draw.color(0xFFFFFFFF), align: 2),
-                MockPsbc.OverlayField(key: "t6_9", fallback: "", rect: CGRect(x: 948, y: 1143, width: 97, height: 59), size: 47, color: Draw.color(0xFF191919), bg: Draw.color(0xFFFFFFFF), align: 2),
-                MockPsbc.OverlayField(key: "t6_10", fallback: "", rect: CGRect(x: 490, y: 1193, width: 554, height: 59), size: 47, color: Draw.color(0xFF0F0F0F), bg: Draw.color(0xFFFFFFFF), align: 2),
-                MockPsbc.OverlayField(key: "t6_11", fallback: "", rect: CGRect(x: 861, y: 1243, width: 183, height: 55), size: 43, color: Draw.color(0xFF1A1A1A), bg: Draw.color(0xFFFFFFFF), align: 1),
-                MockPsbc.OverlayField(key: "t6_12", fallback: "", rect: CGRect(x: 782, y: 2066, width: 42, height: 36), size: 22, color: Draw.color(0xFFE9433B), bg: Draw.color(0xFFFFFFFF), align: 1),
+                MockPsbc.OverlayField(key: "t6_0", fallback: "", rect: CGRect(x: 448, y: 269, width: 183, height: 55), size: 43, color: Draw.color(0xFF121212), bg: Draw.color(0xFFFFFFFF), align: 1),
+                MockPsbc.OverlayField(key: "t6_1", fallback: "", rect: CGRect(x: 375, y: 372, width: 330, height: 81), size: 72, color: Draw.color(0xFFE87480), bg: Draw.color(0xFFFFFFFF), align: 1),
+                MockPsbc.OverlayField(key: "t6_2", fallback: "", rect: CGRect(x: 430, y: 487, width: 219, height: 53), size: 41, color: Draw.color(0xFF979797), bg: Draw.color(0xFFFFFFFF), align: 1),
+                MockPsbc.OverlayField(key: "t6_3", fallback: "", rect: CGRect(x: 603, y: 662, width: 442, height: 54), size: 42, color: Draw.color(0xFF212121), bg: Draw.color(0xFFFFFFFF), align: 2),
+                MockPsbc.OverlayField(key: "t6_4", fallback: "", rect: CGRect(x: 621, y: 738, width: 424, height: 54), size: 42, color: Draw.color(0xFF090909), bg: Draw.color(0xFFFFFFFF), align: 2),
+                MockPsbc.OverlayField(key: "t6_5", fallback: "", rect: CGRect(x: 835, y: 825, width: 210, height: 72), size: 62, color: Draw.color(0xFF2977D8), bg: Draw.color(0xFFFFFFFF), align: 2),
+                MockPsbc.OverlayField(key: "t6_6", fallback: "", rect: CGRect(x: 484, y: 912, width: 561, height: 104), size: 97, color: Draw.color(0xFF100F10), bg: Draw.color(0xFFFFFFFF), align: 2),
+                MockPsbc.OverlayField(key: "t6_7", fallback: "", rect: CGRect(x: 633, y: 1038, width: 412, height: 54), size: 42, color: Draw.color(0xFF090909), bg: Draw.color(0xFFFFFFFF), align: 2),
+                MockPsbc.OverlayField(key: "t6_8", fallback: "", rect: CGRect(x: 904, y: 1115, width: 141, height: 54), size: 42, color: Draw.color(0xFF121212), bg: Draw.color(0xFFFFFFFF), align: 2),
+                MockPsbc.OverlayField(key: "t6_9", fallback: "", rect: CGRect(x: 948, y: 1190, width: 97, height: 59), size: 47, color: Draw.color(0xFF191919), bg: Draw.color(0xFFFFFFFF), align: 2),
+                MockPsbc.OverlayField(key: "t6_10", fallback: "", rect: CGRect(x: 490, y: 1240, width: 554, height: 59), size: 47, color: Draw.color(0xFF0F0F0F), bg: Draw.color(0xFFFFFFFF), align: 2),
+                MockPsbc.OverlayField(key: "t6_11", fallback: "", rect: CGRect(x: 861, y: 1290, width: 183, height: 55), size: 43, color: Draw.color(0xFF191919), bg: Draw.color(0xFFFFFFFF), align: 1),
+                MockPsbc.OverlayField(key: "t6_12", fallback: "", rect: CGRect(x: 782, y: 2113, width: 42, height: 36), size: 22, color: Draw.color(0xFFE94239), bg: Draw.color(0xFFFFFFFF), align: 1),
+                MockPsbc.OverlayField(key: "t6_13", fallback: "", rect: CGRect(x: 941, y: 2135, width: 60, height: 55), size: 43, color: Draw.color(0xFFA5A5AA), bg: Draw.color(0xFFFFFFFF), align: 2),
             ]
         }
         if sub == 7 {
